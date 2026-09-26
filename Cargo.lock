@@ -100,6 +100,10 @@ dependencies = [
 [[package]]
 name = "apsis-handover"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-math",
+]
 
 [[package]]
 name = "apsis-interference"
