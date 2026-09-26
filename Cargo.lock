@@ -160,6 +160,11 @@ version = "0.1.0"
 [[package]]
 name = "apsis-mesh"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-math",
+ "apsis-topology",
+]
 
 [[package]]
 name = "apsis-noise"
