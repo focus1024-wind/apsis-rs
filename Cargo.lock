@@ -295,6 +295,10 @@ dependencies = [
 [[package]]
 name = "apsis-topology"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-math",
+]
 
 [[package]]
 name = "apsis-units"
