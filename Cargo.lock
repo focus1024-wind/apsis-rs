@@ -281,6 +281,12 @@ dependencies = [
 [[package]]
 name = "apsis-scheduler"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-resource",
+ "apsis-schedule",
+ "apsis-task",
+]
 
 [[package]]
 name = "apsis-sgp4"
