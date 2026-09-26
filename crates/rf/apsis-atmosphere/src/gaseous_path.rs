@@ -168,3 +168,135 @@ pub fn slant_path_attenuation(
     }
     Some(zenith_attenuation(frequency_ghz, atmosphere)? / elevation.sin())
 }
+
+/// The number of layer boundaries used by the exact slant path integration.
+///
+/// Recommendation P.676 defines the boundaries by
+/// `delta_i = 1e-4 exp(i / 100)` for `i` from zero to 921, which gives 922
+/// boundaries. The layers between them are thin near the surface and grow
+/// with height, so the integration resolves the dense lower atmosphere where
+/// the absorption is concentrated.
+const EXACT_BOUNDARY_COUNT: usize = 922;
+
+/// The Earth radius used by the ray trace, in kilometers.
+///
+/// The recommendation uses the mean radius, not the geopotential radius of
+/// the standard atmosphere, because this value enters the geometry of the
+/// ray rather than the definition of the height.
+const RAY_TRACE_EARTH_RADIUS_KM: f64 = 6_371.0;
+
+/// Returns the attenuation along a slant path by the exact method of
+/// Recommendation P.676.
+///
+/// The exact method divides the atmosphere into a stack of layers whose
+/// thickness grows exponentially with height, evaluates the specific
+/// attenuation in each, and sums the contribution of each layer weighted by
+/// the ray path length through it. Because the ray is refracted, the path
+/// length is found by ray tracing with Snell's law applied to the ratio of
+/// the refractive indices of adjacent layers, which the approximate method
+/// ignores.
+///
+/// This is the form to use at low elevation, where the plane parallel
+/// approximation that [`slant_path_attenuation`] uses is inaccurate. It is
+/// far more expensive, so the approximate form remains available for the
+/// high elevation case where it is adequate.
+///
+/// The frequency is in gigahertz, the elevation in radians, and the surface
+/// atmosphere supplies the pressure, the water vapour density, and the
+/// temperature at ground level. The surface water vapour density scales the
+/// exponential vapour profile, so the atmosphere defines the whole stack.
+///
+/// Returns `None` when the frequency, elevation, or atmosphere is not
+/// usable.
+///
+/// Source: ITU-R Recommendation P.676-12, equations 13 through 19, with the
+/// layered atmosphere of ITU-R Recommendation P.835-6.
+pub fn slant_path_attenuation_exact(
+    frequency_ghz: f64,
+    elevation: f64,
+    atmosphere: Atmosphere,
+) -> Option<f64> {
+    if !frequency_ghz.is_finite() || frequency_ghz <= 0.0 || !atmosphere.is_valid() {
+        return None;
+    }
+    if !elevation.is_finite() || elevation <= 0.0 || elevation > core::f64::consts::FRAC_PI_2 {
+        return None;
+    }
+
+    // Build the stack of layer boundaries. Each entry holds the geometric
+    // height, the thickness, the profile values, and the refractive index.
+    let thickness_step = (1.0_f64 / 100.0).exp();
+    let mut heights = [0.0_f64; EXACT_BOUNDARY_COUNT];
+    let mut thicknesses = [0.0_f64; EXACT_BOUNDARY_COUNT];
+    let mut temperatures = [0.0_f64; EXACT_BOUNDARY_COUNT];
+    let mut pressures = [0.0_f64; EXACT_BOUNDARY_COUNT];
+    let mut densities = [0.0_f64; EXACT_BOUNDARY_COUNT];
+    let mut indices = [1.0_f64; EXACT_BOUNDARY_COUNT];
+
+    for index in 0..EXACT_BOUNDARY_COUNT {
+        let exponent = index as f64 / 100.0;
+        thicknesses[index] = 1.0e-4 * exponent.exp();
+        // Equation 15: the geometric height of the boundary.
+        heights[index] = 1.0e-4 * (exponent.exp() - 1.0) / (thickness_step - 1.0);
+
+        let temperature = crate::p835::standard_temperature(heights[index]);
+        let pressure = crate::p835::standard_pressure(heights[index]);
+        let density = crate::p835::standard_water_vapour_density(
+            heights[index],
+            atmosphere.water_vapour_density,
+        );
+        temperatures[index] = temperature;
+        pressures[index] = pressure;
+        densities[index] = density;
+
+        // The refractive index takes the total pressure, as the
+        // recommendation specifies, not the dry air pressure.
+        let vapour_pressure = density * temperature / 216.7;
+        indices[index] =
+            crate::p835::radio_refractive_index(pressure, vapour_pressure, temperature);
+    }
+
+    // The ray starts below the local horizon by the complement of the
+    // elevation, and is bent upward as it climbs.
+    let mut angle = core::f64::consts::FRAC_PI_2 - elevation;
+    let mut total = 0.0;
+
+    for index in 0..EXACT_BOUNDARY_COUNT {
+        let layer_atmosphere =
+            Atmosphere::new(pressures[index], densities[index], temperatures[index]);
+        let specific = crate::gaseous::specific_attenuation(frequency_ghz, layer_atmosphere)?;
+
+        // Equation 17: the path length through the layer.
+        let radius = RAY_TRACE_EARTH_RADIUS_KM + heights[index];
+        let delta = thicknesses[index];
+        let length = -radius * angle.cos()
+            + 0.5
+                * (4.0 * radius * radius * angle.cos().powi(2)
+                    + 8.0 * radius * delta
+                    + 4.0 * delta * delta)
+                    .sqrt();
+        total += length * specific;
+
+        // Equation 18a: the angle at which the ray leaves the layer.
+        let cosine_argument = ((-length * length - 2.0 * radius * delta - delta * delta)
+            / (2.0 * length * radius + 2.0 * length * delta))
+            .clamp(-1.0, 1.0);
+        let leave_angle = core::f64::consts::PI - cosine_argument.acos();
+
+        // Equation 19a: Snell's law at the boundary, using the ratio of the
+        // refractive index here to the one above. The topmost boundary has
+        // no layer above it, so its ratio is one.
+        let next = (index + 1).min(EXACT_BOUNDARY_COUNT - 1);
+        let ratio = if next == index {
+            1.0
+        } else {
+            indices[index] / indices[next]
+        };
+        angle = (leave_angle.sin() * ratio).clamp(-1.0, 1.0).asin();
+        if !angle.is_finite() {
+            break;
+        }
+    }
+
+    Some(total)
+}

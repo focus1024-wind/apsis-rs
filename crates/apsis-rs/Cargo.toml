@@ -177,3 +177,7 @@ required-features = ["rf"]
 [[example]]
 name = "dump_p839"
 required-features = ["rf"]
+
+[[example]]
+name = "dump_gas_exact"
+required-features = ["rf"]

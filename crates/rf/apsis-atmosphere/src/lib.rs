@@ -50,6 +50,7 @@
 mod gaseous;
 mod gaseous_path;
 mod geometry;
+mod p835;
 mod p839;
 mod p839_table;
 mod rain;
@@ -59,9 +60,14 @@ pub use gaseous::{
     specific_attenuation_water_vapour,
 };
 pub use gaseous_path::{
-    EquivalentHeights, equivalent_heights, slant_path_attenuation, zenith_attenuation,
+    EquivalentHeights, equivalent_heights, slant_path_attenuation, slant_path_attenuation_exact,
+    zenith_attenuation,
 };
 pub use geometry::{air_mass, elevation_from_zenith, zenith_to_elevation};
+pub use p835::{
+    geopotential_height, radio_refractive_index, standard_pressure, standard_temperature,
+    standard_water_vapour_density,
+};
 pub use p839::{RAIN_HEIGHT_OFFSET_KM, grid_step_degrees, rain_height, zero_isotherm_height};
 pub use rain::{
     DEFAULT_RAIN_HEIGHT_KM, RainAttenuation, polarisation_tilt, rain_attenuation,

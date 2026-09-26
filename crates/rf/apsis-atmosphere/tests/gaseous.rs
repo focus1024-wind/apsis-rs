@@ -255,3 +255,79 @@ fn slant_path_attenuation_rejects_an_elevation_at_the_horizon() {
     assert_eq!(slant_path_attenuation(12.0, -0.1, reference()), None);
     assert_eq!(slant_path_attenuation(12.0, f64::NAN, reference()), None);
 }
+
+#[test]
+fn the_exact_slant_path_matches_the_recommendation() {
+    use apsis_atmosphere::slant_path_attenuation_exact;
+    // These values are from a reference implementation of the exact method
+    // of ITU-R Recommendation P.676-12.
+    let cases: [(f64, f64, f64); 10] = [
+        (12.0, 90.0, 0.059926619268),
+        (12.0, 30.0, 0.119683280157),
+        (12.0, 10.0, 0.340072667215),
+        (12.0, 5.0, 0.651451990239),
+        (12.0, 1.0, 2.054182412438),
+        (20.0, 30.0, 0.504703085886),
+        (20.0, 5.0, 2.793084848959),
+        (30.0, 10.0, 1.319753394647),
+        (60.0, 30.0, 309.245091571274),
+        (100.0, 5.0, 10.109978745794),
+    ];
+    for (frequency, elevation_degrees, expected) in cases {
+        let actual =
+            slant_path_attenuation_exact(frequency, elevation_degrees.to_radians(), reference())
+                .expect("valid arguments");
+        let relative = (actual - expected).abs() / expected;
+        assert!(
+            relative < 1e-6,
+            "{frequency} GHz at {elevation_degrees} degrees: got {actual}, expected {expected}"
+        );
+    }
+}
+
+#[test]
+fn the_exact_and_approximate_methods_agree_at_high_elevation() {
+    use apsis_atmosphere::{slant_path_attenuation, slant_path_attenuation_exact};
+    // The two methods use different formulations, so they agree to a few
+    // per cent rather than exactly even at the zenith, where the plane
+    // parallel geometry is exact. The recommendation notes that the
+    // approximate method is intended only for the elevation range above
+    // about five degrees and for rough work.
+    let exact = slant_path_attenuation_exact(12.0, core::f64::consts::FRAC_PI_2, reference())
+        .expect("valid");
+    let approximate =
+        slant_path_attenuation(12.0, core::f64::consts::FRAC_PI_2, reference()).expect("valid");
+    let relative = (exact - approximate).abs() / approximate;
+    assert!(relative < 0.05, "exact {exact}, approximate {approximate}");
+}
+
+#[test]
+fn the_exact_method_exceeds_the_approximate_one_at_low_elevation() {
+    use apsis_atmosphere::{slant_path_attenuation, slant_path_attenuation_exact};
+    // At a low elevation the curved path through the thinning atmosphere is
+    // shorter than the plane parallel estimate, and the refraction bends
+    // the ray downward, so the two methods diverge.
+    let elevation = 2.0_f64.to_radians();
+    let exact = slant_path_attenuation_exact(12.0, elevation, reference()).expect("valid");
+    let approximate = slant_path_attenuation(12.0, elevation, reference()).expect("valid");
+    assert!(
+        (exact - approximate).abs() / approximate > 0.001,
+        "exact {exact}, approximate {approximate}"
+    );
+}
+
+#[test]
+fn the_exact_method_rejects_unusable_arguments() {
+    use apsis_atmosphere::slant_path_attenuation_exact;
+    assert_eq!(slant_path_attenuation_exact(0.0, 1.0, reference()), None);
+    assert_eq!(slant_path_attenuation_exact(12.0, 0.0, reference()), None);
+    assert_eq!(slant_path_attenuation_exact(12.0, -0.1, reference()), None);
+    assert_eq!(
+        slant_path_attenuation_exact(12.0, f64::NAN, reference()),
+        None
+    );
+    assert_eq!(
+        slant_path_attenuation_exact(12.0, 1.0, Atmosphere::new(0.0, 7.5, 288.15)),
+        None
+    );
+}
