@@ -197,3 +197,7 @@ required-features = ["physics"]
 [[example]]
 name = "integrate_ops"
 required-features = ["ops"]
+
+[[example]]
+name = "integrate_sim"
+required-features = ["sim"]

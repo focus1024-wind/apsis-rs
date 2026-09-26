@@ -313,6 +313,17 @@ dependencies = [
 [[package]]
 name = "apsis-sim"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-event",
+ "apsis-output",
+ "apsis-resource",
+ "apsis-scenario",
+ "apsis-schedule",
+ "apsis-scheduler",
+ "apsis-sim-engine",
+ "apsis-task",
+]
 
 [[package]]
 name = "apsis-sim-engine"
