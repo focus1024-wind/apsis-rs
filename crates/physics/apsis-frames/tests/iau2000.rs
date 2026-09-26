@@ -396,3 +396,114 @@ fn a_matrix_at_two_epochs_separated_by_a_century_differs_by_the_precession() {
         "the rotation angle is {degrees} degrees"
     );
 }
+
+#[test]
+fn the_1982_sidereal_time_matches_the_reference() {
+    // Greenwich mean sidereal time from the 1982 expression, which is the
+    // one the SGP4 theory was fitted against. The values are from ERFA.
+    let cases = [
+        (51_544.5, 4.894_961_212_823_059),
+        (60_476.999_999_810_5, 4.620_858_198_832_686),
+        (40_587.0, 1.749_337_177_344_97),
+    ];
+    for (mjd, expected) in cases {
+        let actual = apsis_frames::iau2000::greenwich_mean_sidereal_time_1982(2_400_000.5, mjd);
+        assert!(
+            (actual - expected).abs() < 1e-15,
+            "MJD {mjd}: {actual} against {expected}"
+        );
+    }
+}
+
+#[test]
+fn the_1982_sidereal_time_is_a_full_turn_per_day() {
+    // Sidereal time advances by one turn plus the excess of the sidereal
+    // day over the solar day, which is 0.9856 degrees per day.
+    let first = apsis_frames::iau2000::greenwich_mean_sidereal_time_1982(2_400_000.5, 60_000.0);
+    let second = apsis_frames::iau2000::greenwich_mean_sidereal_time_1982(2_400_000.5, 60_001.0);
+    let advance = (second - first).rem_euclid(2.0 * PI);
+    assert!(
+        (advance.to_degrees() - 0.985_6).abs() < 0.001,
+        "advance {} degrees",
+        advance.to_degrees()
+    );
+}
+
+#[test]
+fn the_teme_transformation_to_earth_fixed_matches_the_reference() {
+    use apsis_frames::iau2000::{PolarMotion, teme_to_terrestrial_matrix};
+    use apsis_math::Vec3;
+
+    // The reference values are ERFA's `gmst82` applied as a third axis
+    // rotation with the identity polar motion.
+    let cases = [
+        (
+            60_481.5,
+            [7_000.0, 1_000.0, 2_000.0],
+            [1_098.716_242_792, -6_985.185_940_104, 2_000.0],
+        ),
+        (
+            51_544.5,
+            [7_000.0, -3_000.0, 1_000.0],
+            [4_221.057_369_867, 6_338.980_571_061, 1_000.0],
+        ),
+    ];
+    for (mjd, position, expected) in cases {
+        let matrix = teme_to_terrestrial_matrix(2_400_000.5, mjd, PolarMotion::NONE);
+        let result = matrix * Vec3::new(position[0], position[1], position[2]);
+        let expected = Vec3::new(expected[0], expected[1], expected[2]);
+        assert!(
+            (result - expected).norm() < 1e-6,
+            "MJD {mjd}: {result} against {expected}"
+        );
+    }
+}
+
+#[test]
+fn the_teme_transformation_preserves_length() {
+    use apsis_frames::iau2000::{PolarMotion, teme_to_terrestrial_matrix};
+    use apsis_math::Vec3;
+
+    let matrix = teme_to_terrestrial_matrix(2_400_000.5, 60_000.0, PolarMotion::NONE);
+    assert!(matrix.is_rotation(1e-12));
+    let vector = Vec3::new(7_000.0, -1_000.0, 500.0);
+    assert!(
+        ((matrix * vector).norm() - vector.norm()).abs() < 1e-9,
+        "the length changed"
+    );
+}
+
+#[test]
+fn the_teme_frame_uses_the_mean_equinox_not_the_true_one() {
+    // The distinction matters. TEME's first axis is the mean equinox, so it
+    // pairs with a mean sidereal time. Substituting the apparent value, or
+    // the modern mean value, rotates the result by a fraction of a degree,
+    // which is many kilometres of ground position.
+    use apsis_frames::iau2000::{
+        greenwich_apparent_sidereal_time, greenwich_mean_sidereal_time,
+        greenwich_mean_sidereal_time_1982,
+    };
+
+    let mjd = 60_481.5;
+    let tt = mjd + 2_400_000.5 + 69.184 / 86_400.0;
+    let sidereal_1982 = greenwich_mean_sidereal_time_1982(2_400_000.5, mjd);
+    let apparent = greenwich_apparent_sidereal_time(tt, tt);
+    let modern_mean = greenwich_mean_sidereal_time(tt, tt);
+
+    // The apparent value includes the equation of the equinoxes, which is a
+    // few thousandths of a degree.
+    let equation = (apparent - modern_mean).abs().to_degrees();
+    assert!(
+        equation > 1e-4 && equation < 1e-2,
+        "the equation of the equinoxes is {equation} degrees"
+    );
+
+    // The 1982 expression, which TEME is fitted against, differs from the
+    // modern mean value by a fraction of a degree, because the precession
+    // model changed between them.
+    let secular = (sidereal_1982 - modern_mean).abs().to_degrees();
+    assert!(
+        secular > 0.1 && secular < 1.0,
+        "the difference is {secular} degrees"
+    );
+}

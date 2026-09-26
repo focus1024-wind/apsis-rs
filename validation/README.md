@@ -86,6 +86,10 @@ cargo run -p apsis-rs --features rf --example dump_gas_exact \
 # IAU 2000/2006 地球定向（岁差、章动、框架偏移、GCRS→ITRF）
 cargo run -p apsis-rs --features physics --example dump_iau2000 \
     > validation/data/expected/rust_iau2000.csv
+
+# TEME → 地固系（SGP4 输出链路）
+cargo run -p apsis-rs --features physics --example dump_teme \
+    > validation/data/expected/rust_teme.csv
 ```
 
 Python 侧读取同一批输入，用参考实现重算并输出误差表：
@@ -102,6 +106,7 @@ pixi run python validation/python/link/check_s465.py
 pixi run python validation/python/atmosphere/check_p839.py
 pixi run python validation/python/atmosphere/check_gas_exact.py
 pixi run python validation/python/time/check_iau2000.py
+pixi run python validation/python/coord/check_teme.py
 ```
 
 两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。
@@ -134,6 +139,7 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 | `atmosphere/check_p839.py` | 零度等温线高度，15 个全球点 | `itur` 的 ITU-R P.839-4 实现 | 3.3e-13 km |
 | `atmosphere/check_gas_exact.py` | 精确斜路径，11 个场景（1–100 GHz，1°–90° 仰角） | `itur` 的 ITU-R P.676-12 exact 方法 | 9.6e-9（相对） |
 | `time/check_iau2000.py` | 岁差、章动、框架偏移、GAST、GCRS→ITRF，8 个历元 × 28 个量 | ERFA 2.0.1（IAU SOFA 派生） | 章动 6.6e-15 rad；BPN 矩阵 6.0e-15；GAST 1.1e-11 rad |
+| `coord/check_teme.py` | TEME → 地固系，4 个历元 | ERFA 的 `gmst82` 与 `pom00`（同为 0 极移） | 4.9e-10 km |
 
 ### 关于射频层对拍的说明
 

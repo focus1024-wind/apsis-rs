@@ -37,6 +37,7 @@ mod fundamental;
 mod nutation;
 mod nutation_table;
 mod precession;
+mod teme;
 mod terrestrial;
 
 pub use fundamental::{
@@ -52,6 +53,7 @@ pub use precession::{
     bias_precession_matrix, frame_bias_matrix, frame_to_mean_of_date, mean_obliquity,
     precession_angles, rotation_z,
 };
+pub use teme::{greenwich_mean_sidereal_time_1982, teme_to_terrestrial_matrix};
 pub use terrestrial::{
     PolarMotion, bias_precession_nutation_matrix, celestial_to_terrestrial_matrix,
     earth_rotation_angle, equation_of_the_equinoxes, equation_of_the_equinoxes_complementary_terms,
