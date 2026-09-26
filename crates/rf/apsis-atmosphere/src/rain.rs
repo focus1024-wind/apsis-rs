@@ -1,8 +1,177 @@
 //! Rain attenuation.
+//!
+//! The specific attenuation of rain is modelled as a power law in the rain
+//! rate, `gamma = k R^alpha`, where `k` and `alpha` depend on the frequency,
+//! on the polarisation, and on the elevation. The coefficients are given by
+//! ITU-R Recommendation P.838 as closed form curve fits rather than as a
+//! table, which is what the current revision of that recommendation uses.
+//!
+//! The attenuation along a slant path follows ITU-R Recommendation P.618.
+//! The path length through the rain is limited by the height of the rain
+//! layer above the station, and two reduction factors account for the fact
+//! that the rain rate is not uniform along the path: a horizontal reduction
+//! and a vertical adjustment. Both depend on the specific attenuation, so
+//! the calculation is not a simple product of a rate and a length.
+//!
+//! Sources:
+//!
+//! - Specific attenuation coefficients: ITU-R Recommendation P.838-3,
+//!   *Specific attenuation model for rain for use in prediction methods*,
+//!   equations 2 and 3 and tables 1 and 2.
+//! - Slant path method: ITU-R Recommendation P.618-13, *Propagation data and
+//!   prediction methods required for the design of Earth-space
+//!   telecommunication systems*, equations 1 through 10.
 
-use crate::geometry::air_mass;
 use apsis_rf::Decibel;
-use core::f64::consts::PI;
+
+/// The effective radius of the Earth used by the path geometry, in
+/// kilometers.
+///
+/// The value accounts for the refraction of the ray in the lower atmosphere,
+/// which makes the Earth appear larger than it is.
+const EFFECTIVE_EARTH_RADIUS_KM: f64 = 8_500.0;
+
+/// The default height of the rain layer above sea level, in kilometers.
+///
+/// Recommendation P.618 takes this from the zero degree isotherm height,
+/// which depends on latitude and season and is tabulated separately. This
+/// value is representative of mid latitudes; a caller working in the tropics
+/// should raise it and one in polar regions should lower it.
+pub const DEFAULT_RAIN_HEIGHT_KM: f64 = 3.0;
+
+/// One term of a P.838-3 curve fit.
+#[derive(Debug, Clone, Copy)]
+struct CurveTerm {
+    /// The amplitude coefficient.
+    amplitude: f64,
+    /// The centre of the term, on a base ten logarithmic frequency axis.
+    centre: f64,
+    /// The width of the term, on a base ten logarithmic frequency axis.
+    width: f64,
+}
+
+/// The coefficients of the `k` curve fit for horizontal polarisation.
+const K_HORIZONTAL_TERMS: &[CurveTerm] = &[
+    CurveTerm {
+        amplitude: -5.339_80,
+        centre: -0.100_08,
+        width: 1.130_98,
+    },
+    CurveTerm {
+        amplitude: -0.353_51,
+        centre: 1.269_70,
+        width: 0.454_00,
+    },
+    CurveTerm {
+        amplitude: -0.237_89,
+        centre: 0.860_36,
+        width: 0.153_54,
+    },
+    CurveTerm {
+        amplitude: -0.941_58,
+        centre: 0.645_52,
+        width: 0.168_17,
+    },
+];
+
+/// The coefficients of the `k` curve fit for vertical polarisation.
+const K_VERTICAL_TERMS: &[CurveTerm] = &[
+    CurveTerm {
+        amplitude: -3.805_95,
+        centre: 0.569_34,
+        width: 0.810_61,
+    },
+    CurveTerm {
+        amplitude: -3.449_65,
+        centre: -0.229_11,
+        width: 0.510_59,
+    },
+    CurveTerm {
+        amplitude: -0.399_02,
+        centre: 0.730_42,
+        width: 0.118_99,
+    },
+    CurveTerm {
+        amplitude: 0.501_67,
+        centre: 1.073_19,
+        width: 0.271_95,
+    },
+];
+
+/// The coefficients of the `alpha` curve fit for horizontal polarisation.
+const ALPHA_HORIZONTAL_TERMS: &[CurveTerm] = &[
+    CurveTerm {
+        amplitude: -0.143_18,
+        centre: 1.824_42,
+        width: -0.551_87,
+    },
+    CurveTerm {
+        amplitude: 0.295_91,
+        centre: 0.775_64,
+        width: 0.198_22,
+    },
+    CurveTerm {
+        amplitude: 0.321_77,
+        centre: 0.637_73,
+        width: 0.131_64,
+    },
+    CurveTerm {
+        amplitude: -5.376_10,
+        centre: -0.962_30,
+        width: 1.478_28,
+    },
+    CurveTerm {
+        amplitude: 16.172_1,
+        centre: -3.299_80,
+        width: 3.439_90,
+    },
+];
+
+/// The coefficients of the `alpha` curve fit for vertical polarisation.
+const ALPHA_VERTICAL_TERMS: &[CurveTerm] = &[
+    CurveTerm {
+        amplitude: -0.077_71,
+        centre: 2.338_40,
+        width: -0.762_84,
+    },
+    CurveTerm {
+        amplitude: 0.567_27,
+        centre: 0.955_45,
+        width: 0.540_39,
+    },
+    CurveTerm {
+        amplitude: -0.202_38,
+        centre: 1.145_20,
+        width: 0.268_09,
+    },
+    CurveTerm {
+        amplitude: -48.299_1,
+        centre: 0.791_669,
+        width: 0.116_226,
+    },
+    CurveTerm {
+        amplitude: 48.583_3,
+        centre: 0.791_459,
+        width: 0.116_479,
+    },
+];
+
+/// The linear coefficients of the `k` curve fits.
+const K_SLOPE_HORIZONTAL: f64 = -0.189_61;
+/// The constant of the horizontal `k` curve fit.
+const K_OFFSET_HORIZONTAL: f64 = 0.711_47;
+/// The linear coefficient of the vertical `k` curve fit.
+const K_SLOPE_VERTICAL: f64 = -0.163_98;
+/// The constant of the vertical `k` curve fit.
+const K_OFFSET_VERTICAL: f64 = 0.632_97;
+/// The linear coefficient of the horizontal `alpha` curve fit.
+const ALPHA_SLOPE_HORIZONTAL: f64 = 0.678_49;
+/// The constant of the horizontal `alpha` curve fit.
+const ALPHA_OFFSET_HORIZONTAL: f64 = -1.955_37;
+/// The linear coefficient of the vertical `alpha` curve fit.
+const ALPHA_SLOPE_VERTICAL: f64 = -0.053_739;
+/// The constant of the vertical `alpha` curve fit.
+const ALPHA_OFFSET_VERTICAL: f64 = 0.834_33;
 
 /// A rain attenuation result at a given elevation.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -13,6 +182,10 @@ pub struct RainAttenuation {
     pub path_length_km: f64,
     /// The total attenuation along the path, in decibels.
     pub attenuation_db: f64,
+    /// The horizontal reduction factor, dimensionless and at most one.
+    pub horizontal_reduction: f64,
+    /// The vertical adjustment factor, dimensionless and at most one.
+    pub vertical_adjustment: f64,
 }
 
 impl RainAttenuation {
@@ -32,65 +205,101 @@ impl RainAttenuation {
     }
 }
 
-/// Returns the coefficients of the specific attenuation power law for a
-/// frequency.
+/// Evaluates one P.838-3 curve term.
 ///
-/// The specific attenuation in rain is modelled as
+/// The term is a Gaussian on a base ten logarithmic frequency axis, so the
+/// frequency must be in gigahertz and positive.
+fn curve_term(term: CurveTerm, frequency_ghz: f64) -> f64 {
+    let logarithm = frequency_ghz.log10();
+    term.amplitude * (-((logarithm - term.centre) / term.width).powi(2)).exp()
+}
+
+/// Returns the `k` for a polarisation, before the elevation correction.
+fn base_k(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) -> f64 {
+    let gaussian: f64 = terms
+        .iter()
+        .map(|term| curve_term(*term, frequency_ghz))
+        .sum();
+    10f64.powf(gaussian + slope * frequency_ghz.log10() + offset)
+}
+
+/// Returns the `alpha` for a polarisation, before the elevation correction.
+fn base_alpha(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) -> f64 {
+    let gaussian: f64 = terms
+        .iter()
+        .map(|term| curve_term(*term, frequency_ghz))
+        .sum();
+    gaussian + slope * frequency_ghz.log10() + offset
+}
+
+/// Returns the P.838-3 coefficients of the specific attenuation power law.
 ///
-/// ```text
-/// gamma = k R^alpha
-/// ```
+/// The polarisation is an angle in radians between the electric field and
+/// the horizontal, so zero is horizontal and a right angle is vertical. The
+/// elevation is in radians.
 ///
-/// where `R` is the rain rate in millimeters per hour and `k` and `alpha`
-/// depend on frequency, on the polarisation, and weakly on the elevation and
-/// the rain temperature. The values returned here are for a frequency in
-/// gigahertz, interpolated logarithmically in `k` and linearly in `alpha`
-/// between the published points.
+/// The result is a pair of the coefficient `k` and the exponent `alpha` of
+/// the relation `gamma = k R^alpha`, with the rain rate in millimeters per
+/// hour and the result in decibels per kilometer.
 ///
-/// The polarisation is given as an angle in radians between the electric
-/// field and the horizontal, so zero is horizontal, a right angle is
-/// vertical, and the intermediate values are circular or slant
-/// polarisation. The coefficients at an angle follow from the horizontal and
-/// vertical values through
+/// Returns `None` when the frequency, polarisation, or elevation is not
+/// usable. The recommendation is stated for frequencies from 1 GHz to
+/// 1000 GHz.
 ///
-/// ```text
-/// k     = (k_h + k_v + (k_h - k_v) cos^2(angle) cos(2 elevation)) / 2
-/// alpha = (k_h a_h + k_v a_v + (k_h a_h - k_v a_v) cos^2(angle) cos(2 elevation)) / (2 k)
-/// ```
-///
-/// Returns `None` when the frequency is outside the range the tables cover,
-/// from 1 GHz to 1000 GHz.
-///
-/// Source: ITU-R Recommendation P.838, *Specific attenuation model for rain
-/// for use in prediction methods*, which tabulates `k` and `alpha` for
-/// horizontal and vertical polarisation over this frequency range.
+/// Source: ITU-R Recommendation P.838-3, equations 2 and 3.
 pub fn rain_coefficients(frequency: f64, polarisation: f64, elevation: f64) -> Option<(f64, f64)> {
-    if !frequency.is_finite() || !(1.0..=1_000.0).contains(&(frequency / 1.0e9)) {
+    let frequency_ghz = frequency / 1.0e9;
+    if !frequency_ghz.is_finite() || !(1.0..=1_000.0).contains(&frequency_ghz) {
         return None;
     }
     if !polarisation.is_finite() || !elevation.is_finite() {
         return None;
     }
-    let gigahertz = frequency / 1.0e9;
-    let (horizontal, vertical) = interpolate_coefficients(gigahertz);
-    let cos_squared = polarisation.cos().powi(2);
-    let cos_two_elevation = (2.0 * elevation).cos();
 
-    let k = 0.5
-        * (horizontal.0
-            + vertical.0
-            + (horizontal.0 - vertical.0) * cos_squared * cos_two_elevation);
-    let numerator = horizontal.0 * horizontal.1
-        + vertical.0 * vertical.1
-        + (horizontal.0 * horizontal.1 - vertical.0 * vertical.1) * cos_squared * cos_two_elevation;
-    let alpha = if k > 0.0 { numerator / (2.0 * k) } else { 1.0 };
+    let k_horizontal = base_k(
+        K_HORIZONTAL_TERMS,
+        K_SLOPE_HORIZONTAL,
+        K_OFFSET_HORIZONTAL,
+        frequency_ghz,
+    );
+    let k_vertical = base_k(
+        K_VERTICAL_TERMS,
+        K_SLOPE_VERTICAL,
+        K_OFFSET_VERTICAL,
+        frequency_ghz,
+    );
+    let alpha_horizontal = base_alpha(
+        ALPHA_HORIZONTAL_TERMS,
+        ALPHA_SLOPE_HORIZONTAL,
+        ALPHA_OFFSET_HORIZONTAL,
+        frequency_ghz,
+    );
+    let alpha_vertical = base_alpha(
+        ALPHA_VERTICAL_TERMS,
+        ALPHA_SLOPE_VERTICAL,
+        ALPHA_OFFSET_VERTICAL,
+        frequency_ghz,
+    );
+
+    // The elevation and polarisation enter through the square of the cosine
+    // of the elevation angle and the cosine of twice the polarisation tilt.
+    // The elevation term vanishes at the zenith, where the distinction
+    // between horizontal and vertical polarisation disappears.
+    let geometry_factor = elevation.cos().powi(2) * (2.0 * polarisation).cos();
+    let k = 0.5 * (k_horizontal + k_vertical + (k_horizontal - k_vertical) * geometry_factor);
+    let alpha = (k_horizontal * alpha_horizontal
+        + k_vertical * alpha_vertical
+        + (k_horizontal * alpha_horizontal - k_vertical * alpha_vertical) * geometry_factor)
+        / (2.0 * k);
     Some((k, alpha))
 }
 
 /// Returns the specific attenuation in rain, in decibels per kilometer.
 ///
-/// The rain rate is in millimeters per hour. Returns `None` when the rain
-/// rate is negative, or when the coefficients are not available.
+/// The rain rate is in millimeters per hour.
+///
+/// Returns `None` when the rain rate is negative, or when the coefficients
+/// are not available.
 pub fn specific_rain_attenuation(
     rain_rate: f64,
     frequency: f64,
@@ -106,35 +315,32 @@ pub fn specific_rain_attenuation(
 
 /// Returns the total rain attenuation along a slant path.
 ///
-/// The path is modelled as a rain layer of fixed height, so the geometric
-/// path length through it is the layer height divided by the sine of the
-/// elevation. A reduction factor is applied because the rain rate is not
-/// uniform along the path and the longest paths are the ones where the
-/// assumption of uniformity fails most.
+/// The rain rate is the value exceeded for the percentage of time of
+/// interest, in millimeters per hour. The station height above sea level and
+/// the rain layer height are in kilometers; pass [`DEFAULT_RAIN_HEIGHT_KM`]
+/// for the latter when no local value is available.
 ///
-/// The reduction factor used here is
-///
-/// ```text
-/// r = 1 / (1 + L_G / L_0)
-/// ```
-///
-/// with `L_G` the geometric path and `L_0` a reference length that depends
-/// on the rain rate, which is the form given by ITU-R Recommendation P.618.
-/// The height of the rain layer is taken as 3 km, a mid latitude value; a
-/// caller working in the tropics should raise it and one in polar regions
-/// should lower it.
+/// The method is the one of Recommendation P.618. The slant path length
+/// follows from the rain height, the station height, and the elevation, with
+/// a correction for the curvature of the Earth. Two reduction factors then
+/// account for the non-uniformity of the rain: a horizontal factor that
+/// depends on the specific attenuation, the frequency, and the horizontal
+/// projection of the path, and a vertical factor that depends on the
+/// latitude through the angle at which the path crosses the rain layer.
 ///
 /// Returns `None` when the rain rate, frequency, or elevation is not usable,
-/// or when the elevation is at or below the horizon.
+/// when the station is above the rain layer, or when the elevation is at or
+/// below the horizon.
 ///
-/// Source: ITU-R Recommendation P.618, *Propagation data and prediction
-/// methods required for the design of Earth-space telecommunication
-/// systems*.
+/// Source: ITU-R Recommendation P.618-13, equations 1 through 10.
 pub fn rain_attenuation(
     rain_rate: f64,
     frequency: f64,
     polarisation: f64,
     elevation: f64,
+    station_height_km: f64,
+    rain_height_km: f64,
+    latitude: f64,
 ) -> Option<RainAttenuation> {
     if !rain_rate.is_finite() || rain_rate < 0.0 {
         return None;
@@ -142,97 +348,74 @@ pub fn rain_attenuation(
     if !elevation.is_finite() || elevation.sin() <= 0.0 {
         return None;
     }
+    if !station_height_km.is_finite() || !rain_height_km.is_finite() {
+        return None;
+    }
+    if !latitude.is_finite() {
+        return None;
+    }
     let specific = specific_rain_attenuation(rain_rate, frequency, polarisation, elevation)?;
 
-    // The geometric path through the rain layer, and the reduction factor
-    // that accounts for its non-uniformity.
-    const RAIN_HEIGHT_KM: f64 = 3.0;
-    let geometric_path_km = RAIN_HEIGHT_KM * air_mass(elevation);
-    let reference_length_km = 35.0 * (-0.015 * rain_rate).exp();
-    let reduction = 1.0 / (1.0 + geometric_path_km / reference_length_km);
-    let effective_path_km = geometric_path_km * reduction;
+    // Equation 2: the slant path length, with the Earth curvature term.
+    let height_difference = rain_height_km - station_height_km;
+    if height_difference <= 0.0 {
+        // The station is at or above the rain layer, so the path is empty.
+        return Some(RainAttenuation {
+            specific_db_per_km: specific,
+            path_length_km: 0.0,
+            attenuation_db: 0.0,
+            horizontal_reduction: 1.0,
+            vertical_adjustment: 1.0,
+        });
+    }
+    let sine = elevation.sin();
+    let slant_length = 2.0 * height_difference
+        / ((sine * sine + 2.0 * height_difference / EFFECTIVE_EARTH_RADIUS_KM).sqrt() + sine);
 
+    // Equation 3: the horizontal projection of the slant path.
+    let horizontal_length = (slant_length * elevation.cos()).abs();
+
+    // Equation 6: the horizontal reduction factor.
+    let frequency_ghz = frequency / 1.0e9;
+    let horizontal_reduction = 1.0
+        / (1.0 + 0.78 * (horizontal_length * specific / frequency_ghz).sqrt()
+            - 0.38 * (1.0 - (-2.0 * horizontal_length).exp()));
+
+    // Equation 7: the angle at which the path crosses the rain layer.
+    let eta = (height_difference / (horizontal_length * horizontal_reduction)).atan();
+
+    // Equation 8: the longer of the two path estimates.
+    let path_length = if eta > elevation {
+        horizontal_length * horizontal_reduction / elevation.cos()
+    } else {
+        height_difference / sine
+    };
+
+    // Equation 9: the vertical adjustment factor.
+    let latitude_magnitude = latitude.abs();
+    let xi = if latitude_magnitude < 36.0 {
+        36.0 - latitude_magnitude
+    } else {
+        0.0
+    };
+    let vertical_adjustment = 1.0
+        / (1.0
+            + sine.sqrt()
+                * (31.0
+                    * (1.0 - (-(elevation / (1.0 + xi))).exp())
+                    * (path_length * specific).sqrt()
+                    / frequency_ghz.powi(2)
+                    - 0.45));
+
+    // Equation 10: the effective path length and the attenuation.
+    let effective_length = path_length * vertical_adjustment;
     Some(RainAttenuation {
         specific_db_per_km: specific,
-        path_length_km: effective_path_km,
-        attenuation_db: specific * effective_path_km,
+        path_length_km: effective_length,
+        attenuation_db: specific * effective_length,
+        horizontal_reduction,
+        vertical_adjustment,
     })
-}
-
-/// The published `k` and `alpha` values at the tabulated frequencies.
-///
-/// The table lists the horizontal value first and the vertical second, each
-/// as a `k` and an `alpha`. The frequencies are the ones ITU-R
-/// Recommendation P.838 tabulates.
-/// One table entry: the frequency in gigahertz, then the horizontal and
-/// vertical `(k, alpha)` pairs.
-type CoefficientEntry = (f64, (f64, f64), (f64, f64));
-
-const COEFFICIENT_TABLE: &[CoefficientEntry] = &[
-    (1.0, (0.000_025_9, 0.969_1), (0.000_030_8, 0.859_2)),
-    (2.0, (0.000_124, 0.963_0), (0.000_138, 0.948_5)),
-    (4.0, (0.000_525, 1.075_1), (0.000_591, 1.075_1)),
-    (6.0, (0.001_55, 1.265_6), (0.001_55, 1.312_4)),
-    (8.0, (0.003_95, 1.368_2), (0.003_95, 1.327_3)),
-    (10.0, (0.008_87, 1.264_3), (0.008_87, 1.121_6)),
-    (12.0, (0.016_8, 1.200_0), (0.016_8, 1.000_0)),
-    (15.0, (0.036_7, 1.154_0), (0.033_5, 1.000_0)),
-    (20.0, (0.075_1, 1.099_0), (0.069_1, 1.000_0)),
-    (25.0, (0.124, 1.061_0), (0.113, 1.030_0)),
-    (30.0, (0.187, 1.021_0), (0.167, 1.000_0)),
-    (35.0, (0.263, 0.979_0), (0.233, 0.963_0)),
-    (40.0, (0.350, 0.939_0), (0.310, 0.929_0)),
-    (45.0, (0.442, 0.903_0), (0.393, 0.897_0)),
-    (50.0, (0.536, 0.873_0), (0.479, 0.868_0)),
-    (60.0, (0.707, 0.826_0), (0.642, 0.824_0)),
-    (70.0, (0.851, 0.793_0), (0.784, 0.793_0)),
-    (80.0, (0.975, 0.769_0), (0.906, 0.769_0)),
-    (90.0, (1.06, 0.753_0), (0.999, 0.754_0)),
-    (100.0, (1.12, 0.743_0), (1.06, 0.744_0)),
-    (120.0, (1.18, 0.731_0), (1.13, 0.732_0)),
-    (150.0, (1.31, 0.710_0), (1.27, 0.711_0)),
-    (200.0, (1.45, 0.689_0), (1.42, 0.690_0)),
-    (300.0, (1.36, 0.688_0), (1.35, 0.689_0)),
-    (400.0, (1.32, 0.683_0), (1.31, 0.684_0)),
-    (500.0, (1.26, 0.664_0), (1.25, 0.664_0)),
-    (600.0, (1.21, 0.650_0), (1.20, 0.650_0)),
-    (700.0, (1.17, 0.637_0), (1.16, 0.638_0)),
-    (800.0, (1.13, 0.626_0), (1.12, 0.627_0)),
-    (900.0, (1.09, 0.618_0), (1.09, 0.619_0)),
-    (1_000.0, (1.06, 0.610_0), (1.06, 0.611_0)),
-];
-
-/// Returns the horizontal and vertical coefficients at a frequency, by
-/// interpolation of the table.
-///
-/// The interpolation is logarithmic in `k` and linear in `alpha`, which is
-/// the convention the recommendation uses, because `k` spans several orders
-/// of magnitude while `alpha` is close to one throughout.
-fn interpolate_coefficients(gigahertz: f64) -> ((f64, f64), (f64, f64)) {
-    let table = COEFFICIENT_TABLE;
-    // The table is ascending in frequency and its range is checked by the
-    // caller, so the bracketing pair always exists.
-    let upper = table
-        .iter()
-        .position(|entry| entry.0 >= gigahertz)
-        .unwrap_or(table.len() - 1);
-    let lower = upper.saturating_sub(1);
-    let (low_frequency, low_horizontal, low_vertical) = table[lower];
-    let (high_frequency, high_horizontal, high_vertical) = table[upper];
-    if high_frequency == low_frequency {
-        return (low_horizontal, low_vertical);
-    }
-    let fraction = (gigahertz - low_frequency) / (high_frequency - low_frequency);
-
-    let interpolate = |low: (f64, f64), high: (f64, f64)| {
-        let k = low.0 * (high.0 / low.0).powf(fraction);
-        let alpha = low.1 + (high.1 - low.1) * fraction;
-        (k, alpha)
-    };
-    (
-        interpolate(low_horizontal, high_horizontal),
-        interpolate(low_vertical, high_vertical),
-    )
 }
 
 /// Returns the angle in radians for a polarisation described by a tilt from
@@ -240,5 +423,5 @@ fn interpolate_coefficients(gigahertz: f64) -> ((f64, f64), (f64, f64)) {
 ///
 /// This is a convenience for the two cases that are quoted by name.
 pub const fn polarisation_tilt(degrees_from_horizontal: f64) -> f64 {
-    degrees_from_horizontal * PI / 180.0
+    degrees_from_horizontal * core::f64::consts::PI / 180.0
 }

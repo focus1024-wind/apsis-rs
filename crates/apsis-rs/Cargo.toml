@@ -157,3 +157,11 @@ apsis-scenario = { workspace = true, optional = true }
 apsis-event = { workspace = true, optional = true }
 apsis-output = { workspace = true, optional = true }
 apsis-sim = { workspace = true, optional = true }
+
+[[example]]
+name = "dump_gas"
+required-features = ["rf"]
+
+[[example]]
+name = "dump_rain"
+required-features = ["rf"]

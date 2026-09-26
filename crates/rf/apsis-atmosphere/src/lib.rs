@@ -4,61 +4,65 @@
 //! mechanisms that are treated separately because they behave differently
 //! with frequency, elevation, and weather.
 //!
-//! Gaseous absorption comes from oxygen and water vapour. Oxygen has
-//! absorption lines near 60 GHz and 118 GHz and water vapour near 22 GHz, so
-//! the effect is small below about 10 GHz and grows rapidly above 20 GHz.
-//! It depends on the elevation angle through the air mass along the path.
+//! Gaseous absorption comes from the absorption lines of oxygen and water
+//! vapour. Oxygen has a dense group of lines between 50 and 70 GHz and an
+//! isolated line at 118.75 GHz, and water vapour has a strong line at
+//! 22.235 GHz and a much stronger one at 183.31 GHz. The attenuation is the
+//! line-by-line sum over those lines, which makes it negligible below about
+//! 10 GHz and severe in the absorption bands.
 //!
-//! Rain attenuation is caused by scattering and absorption in precipitation.
-//! It is negligible below about 4 GHz, grows roughly as a power of the rain
-//! rate with an exponent near one, and depends strongly on elevation.
+//! Rain attenuation is caused by scattering and absorption in
+//! precipitation. It is negligible below about 4 GHz, grows as a power of
+//! the rain rate, and depends strongly on elevation and polarisation.
 //!
 //! Both are functions of the elevation angle through the same path
-//! geometry: a signal at a low elevation crosses more atmosphere. The air
-//! mass for a flat atmosphere is `1 / sin(theta)` for elevation `theta`,
-//! and this crate uses that form with an optional correction for the
-//! curvature of the Earth.
+//! geometry: a signal at a low elevation crosses more atmosphere.
 //!
 //! Sources:
 //!
-//! - Gaseous attenuation: ITU-R Recommendation P.676, *Attenuation by
-//!   atmospheric gases*.
-//! - Rain specific attenuation coefficients: ITU-R Recommendation P.838,
+//! - Gaseous specific attenuation and equivalent heights: ITU-R
+//!   Recommendation P.676-12, *Attenuation by atmospheric gases*.
+//! - Rain specific attenuation coefficients: ITU-R Recommendation P.838-3,
 //!   *Specific attenuation model for rain for use in prediction methods*.
-//! - Rain path and elevation dependence: ITU-R Recommendation P.618,
+//! - Rain path and elevation dependence: ITU-R Recommendation P.618-13,
 //!   *Propagation data and prediction methods required for the design of
 //!   Earth-space telecommunication systems*.
 //!
 //! ```
-//! use apsis_atmosphere::{air_mass, elevation_from_zenith, zenith_to_elevation};
+//! use apsis_atmosphere::{Atmosphere, slant_path_attenuation, zenith_attenuation};
 //!
-//! // At the zenith the path is the shortest.
-//! assert_eq!(air_mass(zenith_to_elevation(0.0)), 1.0);
+//! // At the reference atmosphere the 60 GHz oxygen complex is heavily
+//! // attenuated while a Ku band link is barely affected.
+//! let ku = zenith_attenuation(12.0, Atmosphere::REFERENCE).expect("valid");
+//! let oxygen = zenith_attenuation(60.0, Atmosphere::REFERENCE).expect("valid");
+//! assert!(ku < 0.1);
+//! assert!(oxygen > 100.0);
 //!
-//! // At thirty degrees elevation the air mass is twice as large, because
-//! // the cosecant of thirty degrees is two.
-//! let thirty = core::f64::consts::PI / 6.0;
-//! assert!((air_mass(thirty) - 2.0).abs() < 1e-9);
-//!
-//! // Elevation and zenith angle are complementary.
-//! assert!((elevation_from_zenith(thirty) + thirty - core::f64::consts::FRAC_PI_2).abs() < 1e-12);
+//! // A lower elevation crosses more atmosphere.
+//! let zenith = zenith_attenuation(12.0, Atmosphere::REFERENCE).expect("valid");
+//! let low = slant_path_attenuation(12.0, 0.2, Atmosphere::REFERENCE).expect("valid");
+//! assert!(low > zenith);
 //! ```
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
 mod gaseous;
+mod gaseous_path;
 mod geometry;
 mod rain;
 
 pub use gaseous::{
-    GaseousAttenuation, gaseous_attenuation, oxygen_zenith_attenuation,
-    water_vapour_zenith_attenuation,
+    Atmosphere, specific_attenuation, specific_attenuation_dry_air,
+    specific_attenuation_water_vapour,
+};
+pub use gaseous_path::{
+    EquivalentHeights, equivalent_heights, slant_path_attenuation, zenith_attenuation,
 };
 pub use geometry::{air_mass, elevation_from_zenith, zenith_to_elevation};
 pub use rain::{
-    RainAttenuation, polarisation_tilt, rain_attenuation, rain_coefficients,
-    specific_rain_attenuation,
+    DEFAULT_RAIN_HEIGHT_KM, RainAttenuation, polarisation_tilt, rain_attenuation,
+    rain_coefficients, specific_rain_attenuation,
 };
 
 pub use apsis_rf::Decibel;
