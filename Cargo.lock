@@ -101,6 +101,12 @@ version = "0.1.0"
 [[package]]
 name = "apsis-link"
 version = "0.1.0"
+dependencies = [
+ "apsis-antenna",
+ "apsis-core",
+ "apsis-noise",
+ "apsis-rf",
+]
 
 [[package]]
 name = "apsis-macros"

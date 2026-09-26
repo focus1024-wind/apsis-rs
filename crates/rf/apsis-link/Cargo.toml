@@ -11,3 +11,7 @@ publish = false
 workspace = true
 
 [dependencies]
+apsis-core.workspace = true
+apsis-rf.workspace = true
+apsis-noise.workspace = true
+apsis-antenna.workspace = true
