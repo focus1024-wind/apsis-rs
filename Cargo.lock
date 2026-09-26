@@ -53,6 +53,11 @@ version = "0.1.0"
 [[package]]
 name = "apsis-coverage"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-geodesy",
+ "apsis-math",
+]
 
 [[package]]
 name = "apsis-doppler"

@@ -1,0 +1,135 @@
+//! The spherical geometry of a satellite, a ground point, and the Earth's
+//! centre.
+//!
+//! The three points form a triangle. The angles of that triangle are the
+//! elevation at the ground point, the nadir angle at the satellite, and the
+//! central angle at the centre of the Earth. Because the ground point is
+//! directly below the local horizon, the elevation and the adjacent angle at
+//! the ground point are complementary, so the three angles satisfy
+//!
+//! ```text
+//! elevation + nadir + central = 90 degrees
+//! ```
+//!
+//! The quantities of interest follow from the law of sines applied to that
+//! triangle:
+//!
+//! ```text
+//! sin(nadir) / body_radius = cos(elevation) / satellite_radius
+//! ```
+//!
+//! where the cosine appears because the angle at the ground point, inside
+//! the triangle, is the complement of the elevation.
+//!
+//! All angles are in radians and all lengths in kilometers. The body radius
+//! is the distance from the centre of the Earth to the ground point, so a
+//! station above sea level should pass its own radius rather than the
+//! equatorial radius.
+
+use core::f64::consts::FRAC_PI_2;
+
+/// Returns the nadir angle at the satellite, in radians.
+///
+/// The nadir angle is measured at the satellite between the direction to the
+/// centre of the Earth and the direction to the ground point. It is zero when
+/// the ground point is directly below the satellite and grows as the point
+/// moves toward the horizon.
+///
+/// Returns `None` when the radii are not usable, when the body radius
+/// exceeds the satellite radius, or when the elevation is not finite.
+pub fn nadir_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
+    if !satellite_radius.is_finite() || !body_radius.is_finite() || !elevation.is_finite() {
+        return None;
+    }
+    if body_radius <= 0.0 || satellite_radius < body_radius {
+        return None;
+    }
+    let sine = body_radius * elevation.cos() / satellite_radius;
+    // Rounding can push the sine a little above one for a grazing geometry.
+    Some(sine.clamp(-1.0, 1.0).asin())
+}
+
+/// Returns the earth central angle between the sub-satellite point and the
+/// ground point, in radians.
+///
+/// The central angle is the angle at the centre of the Earth between the two
+/// radial directions. It is the distance along the surface, divided by the
+/// body radius.
+///
+/// Returns `None` when the geometry is not usable.
+pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
+    let nadir = nadir_angle(satellite_radius, body_radius, elevation)?;
+    // Rounding can leave a small negative value at the zenith, where the
+    // true angle is zero. The negative part is not physical, so it is
+    // removed before the result is returned.
+    Some((FRAC_PI_2 - elevation - nadir).max(0.0))
+}
+
+/// Returns the slant range between the satellite and the ground point, in
+/// kilometers.
+///
+/// The range is the straight line distance, not the distance along the
+/// surface. It is the quantity a link budget needs, because it sets the free
+/// space path loss.
+///
+/// The relation is the law of cosines applied to the triangle formed by the
+/// satellite, the ground point, and the centre of the Earth,
+///
+/// ```text
+/// range^2 = satellite_radius^2 + body_radius^2
+///           - 2 satellite_radius body_radius cos(central)
+/// ```
+///
+/// The law of cosines is used rather than the equivalent form
+/// `Rs sin(central) / cos(elevation)` because the latter is singular at the
+/// zenith, where the elevation is a right angle and its cosine is zero,
+/// even though the range there is simply the altitude.
+///
+/// Returns `None` when the geometry is not usable.
+pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
+    let central = earth_central_angle(satellite_radius, body_radius, elevation)?;
+    if !central.is_finite() || central < 0.0 {
+        return None;
+    }
+    let squared = satellite_radius * satellite_radius + body_radius * body_radius
+        - 2.0 * satellite_radius * body_radius * central.cos();
+    if squared < 0.0 {
+        return None;
+    }
+    Some(squared.sqrt())
+}
+
+/// Returns the elevation angle for a central angle, in radians.
+///
+/// This inverts [`earth_central_angle`]. It is used when the position of a
+/// ground point relative to the sub-satellite point is known and the
+/// elevation at that point is wanted.
+///
+/// The relation is
+///
+/// ```text
+/// tan(elevation) = (cos(central) - body_radius / satellite_radius)
+///                  / sin(central)
+/// ```
+///
+/// Returns `None` when the radii are not usable or when the central angle is
+/// not finite.
+pub fn elevation_from_central_angle(
+    satellite_radius: f64,
+    body_radius: f64,
+    central_angle: f64,
+) -> Option<f64> {
+    if !satellite_radius.is_finite() || !body_radius.is_finite() || !central_angle.is_finite() {
+        return None;
+    }
+    if body_radius <= 0.0 || satellite_radius < body_radius {
+        return None;
+    }
+    let ratio = body_radius / satellite_radius;
+    let sine = central_angle.sin();
+    if sine == 0.0 {
+        // Directly below the satellite the elevation is a right angle.
+        return Some(FRAC_PI_2);
+    }
+    Some(((central_angle.cos() - ratio) / sine).atan())
+}
