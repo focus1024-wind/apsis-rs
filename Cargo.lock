@@ -271,6 +271,11 @@ dependencies = [
 [[package]]
 name = "apsis-scenario"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-resource",
+ "apsis-task",
+]
 
 [[package]]
 name = "apsis-schedule"
