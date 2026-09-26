@@ -60,7 +60,6 @@ apsis-rs = { path = "...", features = ["orbit"] }
 - 默认禁止任何第三方 crate，包括开发依赖与 `build.rs`
 - 库代码不使用 `unwrap()` / `expect()` / `panic!` / `unsafe`
 - 公共 API 必须有文档注释，注释自包含
-- 测试放在各 crate 的 `tests/` 目录，与 `src/` 分离；测试为集成测试，只通过公共 API 访问被测 crate，不使用 `#[cfg(test)]` 内联测试模块
 
 ## 目录
 
@@ -68,10 +67,24 @@ apsis-rs = { path = "...", features = ["orbit"] }
 apsis-rs/
 ├── Cargo.toml
 ├── crates/          # Rust 工作区成员
-├── tests/           # 集成测试
-├── benches/         # 基准测试
+│   └── apsis-rs/
+│       ├── examples/   # 对拍导出与跨层集成检查
+│       └── ...
 ├── validation/      # Python 对拍验证
 └── docs/design/     # 设计文档
+```
+
+测试在各 crate 的 `tests/` 目录，为集成测试，只通过公共 API 访问被测 crate。
+跨层集成检查与零依赖基准测试是 `apsis-rs` 的 example：
+
+```bash
+# 跨层集成检查（CI 会执行）
+cargo run -p apsis-rs --features network --example integrate_network
+cargo run -p apsis-rs --features ops --example integrate_ops
+cargo run -p apsis-rs --features sim --example integrate_sim
+
+# 热点路径基准（release 下运行）
+cargo run --release -p apsis-rs --features full --example bench
 ```
 
 ## 许可

@@ -23,6 +23,20 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Test
         run: cargo test --workspace
+      - name: Integration checks
+        # The cross-layer checks are examples rather than tests, because they
+        # are also meant to be read and run by hand. `cargo test` does not run
+        # them, so without this step a change that breaks one layer's
+        # assumptions about another would pass CI silently.
+        run: |
+          cargo run -p apsis-rs --features network --example integrate_network
+          cargo run -p apsis-rs --features ops --example integrate_ops
+          cargo run -p apsis-rs --features sim --example integrate_sim
+      - name: Build the benchmark
+        # The benchmark is not run in CI, because its timings are only
+        # meaningful on a quiet machine, but it must still compile so that it
+        # does not rot.
+        run: cargo build -p apsis-rs --features full --example bench
       - name: Verify dependency freedom
         run: |
           # Every package in the graph must be a workspace crate. `--prefix

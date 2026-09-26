@@ -201,3 +201,7 @@ required-features = ["ops"]
 [[example]]
 name = "integrate_sim"
 required-features = ["sim"]
+
+[[example]]
+name = "bench"
+required-features = ["full"]
