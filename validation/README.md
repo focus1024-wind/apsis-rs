@@ -49,6 +49,10 @@ cargo run -p apsis-rs --features physics --example dump_geodesy \
 # 时间尺度换算
 cargo run -p apsis-rs --features physics --example dump_time \
     > validation/data/expected/rust_time.csv
+
+# SGP4/SDP4 传播
+cargo run -p apsis-rs --features orbit --example dump_orbit \
+    > validation/data/expected/rust_sgp4.csv
 ```
 
 Python 侧读取同一批输入，用参考实现重算并输出误差表：
@@ -56,6 +60,7 @@ Python 侧读取同一批输入，用参考实现重算并输出误差表：
 ```bash
 pixi run python validation/python/coord/check_geodetic.py
 pixi run python validation/python/time/check_time.py
+pixi run python validation/python/orbit/check_sgp4.py
 ```
 
 两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。
@@ -79,6 +84,13 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 | --- | --- | --- | --- |
 | `coord/check_geodetic.py` | `Geodetic` → ECEF，280 个点，覆盖全球纬度、经度与高度 | `astropy.coordinates.EarthLocation` | 1.1e-8 m |
 | `time/check_time.py` | UTC → TAI，117 个时刻，覆盖全部闰秒边界 | `astropy.time.Time` | 5.3e-7 s |
+| `orbit/check_sgp4.py` | SGP4/SDP4 传播，4 组 TLE（近地、高偏心、深空、GTO）× 9 个时刻 | `sgp4` 参考库 | 位置 1.2e-8 km，速度 5.3e-12 km/s |
+
+### 关于 SGP4 对拍的约定
+
+TLE 的历元是 UTC 日历时刻，但 SGP4 把它当作均匀时间原点使用，这是理论拟合时
+采用的约定。若先把历元换算到 TAI 再送入传播器，会引入约 33 秒的闰秒偏移，该偏移
+会传播到深空分支的日月摄动级数中。对拍时两侧都直接使用 TLE 写明的 UTC MJD。
 
 ### 关于时间对拍的约定差异
 
