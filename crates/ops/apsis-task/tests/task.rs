@@ -31,7 +31,7 @@ fn a_new_task_has_the_given_duration_and_nothing_else() {
     // A task with no window is unbounded at both ends.
     assert!(task.earliest_start.is_infinite() && task.earliest_start < 0.0);
     assert!(task.latest_end.is_infinite() && task.latest_end > 0.0);
-    assert!(task.window_is_too_short() == false);
+    assert!(!task.window_is_too_short());
 }
 
 #[test]
