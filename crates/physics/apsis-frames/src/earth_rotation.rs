@@ -1,7 +1,6 @@
 //! The Earth Rotation Angle and the rotation it defines between the
 //! inertial and Earth-fixed frames.
 
-use crate::frame::{Ecef, Eci};
 use apsis_math::Mat3;
 use core::f64::consts::PI;
 
@@ -124,20 +123,4 @@ pub fn rotation_eci_to_ecef(angle: EarthRotationAngle) -> Mat3 {
 /// matrix is also its inverse.
 pub fn rotation_ecef_to_eci(angle: EarthRotationAngle) -> Mat3 {
     rotation_eci_to_ecef(angle).transpose()
-}
-
-impl Eci {
-    /// Converts this inertial vector to the Earth-fixed frame at the given
-    /// Earth Rotation Angle.
-    pub fn to_ecef(self, angle: EarthRotationAngle) -> Ecef {
-        Ecef::new(rotation_eci_to_ecef(angle) * self.0)
-    }
-}
-
-impl Ecef {
-    /// Converts this Earth-fixed vector to the inertial frame at the given
-    /// Earth Rotation Angle.
-    pub fn to_eci(self, angle: EarthRotationAngle) -> Eci {
-        Eci::new(rotation_ecef_to_eci(angle) * self.0)
-    }
 }

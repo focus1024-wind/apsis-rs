@@ -1,8 +1,8 @@
 //! Tests for the Earth Rotation Angle and the frame rotations.
 
 use apsis_frames::{
-    ERA_RATE_TURNS_PER_DAY, EarthRotationAngle, Ecef, Eci, rotation_ecef_to_eci,
-    rotation_eci_to_ecef, ut1_days_from_j2000,
+    ERA_RATE_TURNS_PER_DAY, EarthRotationAngle, rotation_ecef_to_eci, rotation_eci_to_ecef,
+    ut1_days_from_j2000,
 };
 use apsis_math::Vec3;
 use core::f64::consts::PI;
@@ -123,38 +123,6 @@ fn rotation_carries_the_second_axis_toward_the_first() {
     let rotated = rotation * Vec3::Y;
     assert!(rotated.x > 0.0, "expected positive x, got {}", rotated.x);
     assert!((rotated.norm() - 1.0).abs() < EPS);
-}
-
-#[test]
-fn frame_conversions_round_trip() {
-    let angle = EarthRotationAngle::from_ut1_days(9.25);
-    let original = Eci::new(Vec3::new(7_000.0, -1_500.0, 3_200.0));
-    let ecef = original.to_ecef(angle);
-    let back = ecef.to_eci(angle);
-    assert!((back.vector() - original.vector()).norm() < 1e-9);
-}
-
-#[test]
-fn frame_conversion_preserves_length() {
-    let angle = EarthRotationAngle::from_ut1_days(-3.5);
-    let vector = Vec3::new(6_878_137.0, 0.0, 0.0);
-    let converted = Eci::new(vector).to_ecef(angle);
-    assert!((converted.vector().norm() - vector.norm()).abs() < 1e-6);
-}
-
-#[test]
-fn rotating_background_returns_a_ground_point_to_the_same_longitude() {
-    // A point on the equator at zero longitude in the Earth-fixed frame is
-    // rotated by minus the Earth Rotation Angle in the inertial frame.
-    let angle = EarthRotationAngle::from_ut1_days(1.5);
-    let ground = Ecef::new(Vec3::new(6_378_137.0, 0.0, 0.0));
-    let inertial = ground.to_eci(angle);
-    let expected = Vec3::new(
-        6_378_137.0 * angle.radians_positive().cos(),
-        6_378_137.0 * angle.radians_positive().sin(),
-        0.0,
-    );
-    assert!((inertial.vector() - expected).norm() < 1e-6);
 }
 
 #[test]

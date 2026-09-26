@@ -1,8 +1,11 @@
-//! Reference frame definitions and the transformations between them.
+//! Reference frame definitions and the rotation between the inertial and
+//! Earth-fixed frames.
 //!
 //! A reference frame fixes the orientation and origin that a vector is
-//! expressed relative to. This crate defines the two frames used for
-//! near-Earth work and the rotation between them.
+//! expressed relative to. This crate names the two frames used for
+//! near-Earth work and computes the rotation between them. Concrete
+//! position types that carry a frame are defined in `apsis-coord`; this
+//! crate works with the rotation matrix and the angle that defines it.
 //!
 //! The inertial frame is the Earth-centered inertial (ECI) frame aligned
 //! with the mean equator and equinox of J2000.0. Its axes are fixed in
@@ -11,16 +14,16 @@
 //!
 //! The rotating frame is the Earth-centered Earth-fixed (ECEF) frame. Its
 //! third axis is the Earth's rotation axis and its first axis follows the
-//! prime meridian, so a point fixed to the ground has constant
-//! coordinates in it.
+//! prime meridian, so a point fixed to the ground has constant coordinates
+//! in it.
 //!
 //! The two are related by a rotation of [`EarthRotationAngle`] about the
-//! common third axis. This crate models the Earth's rotation with the
-//! Earth Rotation Angle, which is a function of UT1 only. It does not
-//! apply precession or nutation, because an angle accurate to a few
-//! hundredths of a degree is sufficient for pointing and coverage work and
-//! the full model needs the orientation of the celestial pole, which is a
-//! separate computation.
+//! common third axis. This crate models the Earth's rotation with the Earth
+//! Rotation Angle, which is a function of UT1 only. It does not apply
+//! precession or nutation, because an angle accurate to a few hundredths of
+//! a degree is sufficient for pointing and coverage work and the full model
+//! needs the orientation of the celestial pole, which is a separate
+//! computation.
 //!
 //! Source: the Earth Rotation Angle expression is from the International
 //! Astronomical Union, as given in the *IERS Conventions (2010)*, equation
@@ -43,10 +46,8 @@
 #![deny(missing_docs)]
 
 mod earth_rotation;
-mod frame;
 
 pub use earth_rotation::{
     ERA_J2000_TURNS, ERA_RATE_TURNS_PER_DAY, EarthRotationAngle, rotation_ecef_to_eci,
     rotation_eci_to_ecef, ut1_days_from_j2000,
 };
-pub use frame::{Ecef, Eci};
