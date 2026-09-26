@@ -18,6 +18,7 @@ pixi install
 - `astropy`：时间、坐标对拍
 - `numpy`：数值计算
 - `skyfield`：轨道、可见性对拍（可选）
+- `itur`：ITU-R 建议书参考实现（P.676、P.838、P.618），用于大气与雨衰对拍
 
 引入新的 Python 库前需要评估并确认。
 
@@ -57,6 +58,18 @@ cargo run -p apsis-rs --features orbit --example dump_orbit \
 # 链路预算
 cargo run -p apsis-rs --features rf --example dump_link \
     > validation/data/expected/rust_link.csv
+
+# ITU-R P.676-12 气体吸收
+cargo run -p apsis-rs --features rf --example dump_gas \
+    > validation/data/expected/rust_gas.csv
+
+# ITU-R P.838-3 雨衰系数
+cargo run -p apsis-rs --features rf --example dump_rain \
+    > validation/data/expected/rust_rain.csv
+
+# ITU-R P.618-13 雨衰斜路径
+cargo run -p apsis-rs --features rf --example dump_rain_path \
+    > validation/data/expected/rust_rain_path.csv
 ```
 
 Python 侧读取同一批输入，用参考实现重算并输出误差表：
@@ -66,6 +79,9 @@ pixi run python validation/python/coord/check_geodetic.py
 pixi run python validation/python/time/check_time.py
 pixi run python validation/python/orbit/check_sgp4.py
 pixi run python validation/python/link/check_link.py
+pixi run python validation/python/atmosphere/check_gas.py
+pixi run python validation/python/atmosphere/check_rain.py
+pixi run python validation/python/atmosphere/check_rain_path.py
 ```
 
 两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。
@@ -91,18 +107,21 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 | `time/check_time.py` | UTC → TAI，117 个时刻，覆盖全部闰秒边界 | `astropy.time.Time` | 5.3e-7 s |
 | `orbit/check_sgp4.py` | SGP4/SDP4 传播，4 组 TLE（近地、高偏心、深空、GTO）× 9 个时刻 | `sgp4` 参考库 | 位置 1.2e-8 km，速度 5.3e-12 km/s |
 | `link/check_link.py` | 链路预算，4 个场景（Ku 下行、S 波段、Ka 宽带、L 波段） | 链路方程闭式解（Python 手写） | 5.0e-13 dB |
+| `atmosphere/check_gas.py` | 气体吸收，18 个频率，涵盖 60 GHz 氧气复体、22/183 GHz 水汽线 | `itur` 的 ITU-R P.676-12 实现 | 干空气 6.1e-11，水汽 6.4e-9（相对） |
+| `atmosphere/check_rain.py` | 雨衰系数，17 个频率 × 4 组仰角/极化 | `itur` 的 ITU-R P.838-3 实现 | k 7.5e-9，alpha 6.5e-13（相对） |
+| `atmosphere/check_rain_path.py` | 雨衰斜路径，8 个场景 | ITU-R P.618-13 方程（Python 转写，系数来自 `itur`） | 3.4e-13 km / 4.3e-13 dB |
 
 ### 关于射频层对拍的说明
 
-射频层没有可直接对拍的权威 Python 库，因此采用两种策略：
+射频层分两类：有权威参考实现的模型与纯闭式算式。
 
-- 闭式解手写对拍：链路预算的每一步都是初等运算，`check_link.py` 用 Python 独立
-  重写同一方程，常数取自 SI 定义，与 Rust 侧一致。
-- 解析性质断言：各 crate 的单元测试验证模型必须满足的性质，例如 3 dB 点、平方
-  律下降、Friis 公式的级联行为、以及 ITU-R P.838 系数表在表列频率处的取值。
+- 有参考实现的，直接对拍：大气与雨衰用 `itur`，它是 ITU-R 研究组维护的建议书实现；
+  链路预算的每一步都是初等运算，`check_link.py` 用 Python 独立重写同一方程。
+- 其余以解析性质断言为主：各 crate 的单元测试验证模型必须满足的性质，例如 3 dB 点、
+  平方律下降、Friis 级联行为、P.838-3 系数在表列频率处的取值。
 
-ITU-R 建议书（P.676、P.838、P.618）与 ITU-R M.1853 的公式均以数值表或闭式
-形式写在源码注释中，未引入外部数据文件。
+所有建议书均采用**现行版本**：P.676-12、P.838-3、P.618-13、S.465。
+P.838-3 的系数是闭式曲线拟合，不是已被取代的 P.838-1 数值表。
 
 ### 关于 SGP4 对拍的约定
 
