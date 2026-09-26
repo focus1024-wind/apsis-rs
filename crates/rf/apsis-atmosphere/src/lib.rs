@@ -50,6 +50,8 @@
 mod gaseous;
 mod gaseous_path;
 mod geometry;
+mod p839;
+mod p839_table;
 mod rain;
 
 pub use gaseous::{
@@ -60,6 +62,7 @@ pub use gaseous_path::{
     EquivalentHeights, equivalent_heights, slant_path_attenuation, zenith_attenuation,
 };
 pub use geometry::{air_mass, elevation_from_zenith, zenith_to_elevation};
+pub use p839::{RAIN_HEIGHT_OFFSET_KM, grid_step_degrees, rain_height, zero_isotherm_height};
 pub use rain::{
     DEFAULT_RAIN_HEIGHT_KM, RainAttenuation, polarisation_tilt, rain_attenuation,
     rain_coefficients, specific_rain_attenuation,

@@ -74,6 +74,10 @@ cargo run -p apsis-rs --features rf --example dump_rain_path \
 # ITU-R S.465 参考天线方向图
 cargo run -p apsis-rs --features rf --example dump_s465 \
     > validation/data/expected/rust_s465.csv
+
+# ITU-R P.839-4 零度等温线高度
+cargo run -p apsis-rs --features rf --example dump_p839 \
+    > validation/data/expected/rust_p839.csv
 ```
 
 Python 侧读取同一批输入，用参考实现重算并输出误差表：
@@ -87,6 +91,7 @@ pixi run python validation/python/atmosphere/check_gas.py
 pixi run python validation/python/atmosphere/check_rain.py
 pixi run python validation/python/atmosphere/check_rain_path.py
 pixi run python validation/python/link/check_s465.py
+pixi run python validation/python/atmosphere/check_p839.py
 ```
 
 两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。
@@ -116,6 +121,7 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 | `atmosphere/check_rain.py` | 雨衰系数，17 个频率 × 4 组仰角/极化 | `itur` 的 ITU-R P.838-3 实现 | k 7.5e-9，alpha 6.5e-13（相对） |
 | `atmosphere/check_rain_path.py` | 雨衰斜路径，8 个场景 | ITU-R P.618-13 方程（Python 转写，系数来自 `itur`） | 3.4e-13 km / 4.3e-13 dB |
 | `link/check_s465.py` | 参考天线方向图，3 种口径 × 8 个离轴角 | ITU-R S.465 方程（Python 转写） | 4.0e-10 dB |
+| `atmosphere/check_p839.py` | 零度等温线高度，15 个全球点 | `itur` 的 ITU-R P.839-4 实现 | 3.3e-13 km |
 
 ### 关于射频层对拍的说明
 
@@ -126,7 +132,7 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 - 其余以解析性质断言为主：各 crate 的单元测试验证模型必须满足的性质，例如 3 dB 点、
   平方律下降、Friis 级联行为、P.838-3 系数在表列频率处的取值。
 
-所有建议书均采用**现行版本**：P.676-12、P.838-3、P.618-13、S.465。
+所有建议书均采用**现行版本**：P.676-12、P.838-3、P.618-13、P.839-4、S.465。
 P.838-3 的系数是闭式曲线拟合，不是已被取代的 P.838-1 数值表。
 
 ### 关于 SGP4 对拍的约定
