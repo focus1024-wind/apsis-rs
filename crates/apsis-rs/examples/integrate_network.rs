@@ -223,21 +223,44 @@ fn main() {
             .has_edge(0, neighbour)
     );
 
-    // A cross-check of the frame conversion against the geodetic layer: the
-    // propagated position must convert to a geodetic position at the
-    // altitude the orbit layer implies, and the sub-satellite point derived
-    // from it must sit at zero height.
-    // The orbit layer works in kilometers while the coordinate layer works
-    // in meters, so the conversion needs an explicit scale. Mixing the two
-    // silently places the satellite inside the Earth.
+    // A cross-check of the frame conversion against the geodetic layer. Two
+    // things must hold.
+    //
+    // First, the rotation into the Earth-fixed frame preserves the radius,
+    // so the geocentric radius of the converted position equals the radius
+    // the propagator reports. This is the property that catches a unit
+    // mistake: the orbit layer works in kilometers and the coordinate layer
+    // in meters, so mixing the two silently places the satellite inside the
+    // Earth.
     let propagated = position_ecef_km(&satellite, 0.0);
+    let state = satellite
+        .propagate_minutes(0.0)
+        .expect("the sample orbit propagates");
+    let propagated_radius_km = state.altitude_radius();
+    assert!(
+        (propagated.norm() - propagated_radius_km).abs() < 1e-6,
+        "the converted radius {} km does not match the propagated {} km",
+        propagated.norm(),
+        propagated_radius_km
+    );
+
+    // Second, the geodetic height agrees with the radius to within the
+    // flattening. A point at geocentric radius `r` has a geodetic height
+    // between `r - a` and `r - b`, where `a` and `b` are the equatorial and
+    // polar radii: the difference is at most the flattening times the
+    // equatorial radius, about twenty one kilometers. Bracketing the height
+    // tests the conversion without assuming an altitude the element set does
+    // not have.
     let ecef = Ecef::new(propagated * 1_000.0);
     let geodetic = ecef
         .to_geodetic(apsis_coord::WGS84)
         .expect("the satellite is off the polar axis");
+    let radius_m = propagated_radius_km * 1_000.0;
+    let lower = radius_m - apsis_coord::WGS84.semi_major_axis();
+    let upper = radius_m - apsis_coord::WGS84.semi_minor_axis();
     assert!(
-        (geodetic.height() - 550_000.0).abs() < 50_000.0,
-        "the altitude {} m is not near the expected 550 km",
+        (lower - 1.0..=upper + 1.0).contains(&geodetic.height()),
+        "the geodetic height {} m is outside [{lower:.1}, {upper:.1}]",
         geodetic.height()
     );
     assert!(geodetic.ellipsoidal().is_valid());
