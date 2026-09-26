@@ -70,6 +70,10 @@ cargo run -p apsis-rs --features rf --example dump_rain \
 # ITU-R P.618-13 雨衰斜路径
 cargo run -p apsis-rs --features rf --example dump_rain_path \
     > validation/data/expected/rust_rain_path.csv
+
+# ITU-R S.465 参考天线方向图
+cargo run -p apsis-rs --features rf --example dump_s465 \
+    > validation/data/expected/rust_s465.csv
 ```
 
 Python 侧读取同一批输入，用参考实现重算并输出误差表：
@@ -82,6 +86,7 @@ pixi run python validation/python/link/check_link.py
 pixi run python validation/python/atmosphere/check_gas.py
 pixi run python validation/python/atmosphere/check_rain.py
 pixi run python validation/python/atmosphere/check_rain_path.py
+pixi run python validation/python/link/check_s465.py
 ```
 
 两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。
@@ -110,6 +115,7 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 | `atmosphere/check_gas.py` | 气体吸收，18 个频率，涵盖 60 GHz 氧气复体、22/183 GHz 水汽线 | `itur` 的 ITU-R P.676-12 实现 | 干空气 6.1e-11，水汽 6.4e-9（相对） |
 | `atmosphere/check_rain.py` | 雨衰系数，17 个频率 × 4 组仰角/极化 | `itur` 的 ITU-R P.838-3 实现 | k 7.5e-9，alpha 6.5e-13（相对） |
 | `atmosphere/check_rain_path.py` | 雨衰斜路径，8 个场景 | ITU-R P.618-13 方程（Python 转写，系数来自 `itur`） | 3.4e-13 km / 4.3e-13 dB |
+| `link/check_s465.py` | 参考天线方向图，3 种口径 × 8 个离轴角 | ITU-R S.465 方程（Python 转写） | 4.0e-10 dB |
 
 ### 关于射频层对拍的说明
 

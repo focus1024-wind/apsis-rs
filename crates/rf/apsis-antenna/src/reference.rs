@@ -115,6 +115,12 @@ pub fn main_lobe_break_angle(diameter_over_wavelength: f64) -> Option<f64> {
 /// head is 29 for a large aperture and 32 for a small one, and the floor
 /// angle is 36 or 48 degrees accordingly.
 ///
+/// The falling sidelobe expression does not reach exactly minus ten decibels
+/// at the floor angle, so the pattern has a step of a few hundredths of a
+/// decibel there. This is a property of the recommendation, which defines
+/// the regions separately, and it is reproduced here rather than smoothed
+/// over.
+///
 /// Returns `None` when the ratio or the angle is not usable.
 pub fn reference_pattern_gain(diameter_over_wavelength: f64, off_axis_angle: f64) -> Option<f64> {
     if !off_axis_angle.is_finite() || off_axis_angle < 0.0 {
@@ -133,7 +139,6 @@ pub fn reference_pattern_gain(diameter_over_wavelength: f64, off_axis_angle: f64
         Some(-10.0)
     }
 }
-
 /// Returns the gain of the S.465 reference pattern as a decibel value.
 ///
 /// Returns `None` when the ratio or the angle is not usable.
