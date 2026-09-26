@@ -25,8 +25,9 @@ use core::f64::consts::PI;
 /// The WGS 84 equatorial radius, in kilometers.
 ///
 /// The coverage geometry is spherical, so a single radius is used. The
-/// equatorial value is the one the orbit layer works in.
-const BODY_RADIUS_KM: f64 = 6_378.137;
+/// value comes from the shared constants rather than being repeated, so a
+/// change to the ellipsoid reaches here.
+const BODY_RADIUS_KM: f64 = apsis_core::constant::EARTH_EQUATORIAL_RADIUS;
 
 /// One coverage case: an orbital radius and an elevation mask.
 struct Case {

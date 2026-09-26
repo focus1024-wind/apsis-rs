@@ -41,7 +41,9 @@ use apsis_tle::TwoLineElement;
 use apsis_topology::{Topology, TopologySample, TopologySeries};
 
 /// The Earth equatorial radius, in kilometers, used for the link geometry.
-const BODY_RADIUS_KM: f64 = 6_378.137;
+///
+/// The value comes from the shared constants rather than being repeated.
+const BODY_RADIUS_KM: f64 = apsis_core::constant::EARTH_EQUATORIAL_RADIUS;
 
 /// The element set of a satellite in a 550 km orbit, used as the source of
 /// the propagated track.
