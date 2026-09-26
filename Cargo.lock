@@ -25,6 +25,12 @@ version = "0.1.0"
 [[package]]
 name = "apsis-coord"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-frames",
+ "apsis-geodesy",
+ "apsis-math",
+]
 
 [[package]]
 name = "apsis-core"
@@ -49,10 +55,18 @@ version = "0.1.0"
 [[package]]
 name = "apsis-frames"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-math",
+]
 
 [[package]]
 name = "apsis-geodesy"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-math",
+]
 
 [[package]]
 name = "apsis-handover"
@@ -195,6 +209,10 @@ version = "0.1.0"
 [[package]]
 name = "apsis-time"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-leap",
+]
 
 [[package]]
 name = "apsis-tle"

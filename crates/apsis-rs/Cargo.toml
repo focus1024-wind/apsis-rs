@@ -11,6 +11,17 @@ publish = false
 name = "apsis"
 path = "src/lib.rs"
 
+# Examples that produce validation input. Each needs the layers it reads
+# from, so it is built only when the matching feature is enabled.
+
+[[example]]
+name = "dump_geodesy"
+required-features = ["physics"]
+
+[[example]]
+name = "dump_time"
+required-features = ["physics"]
+
 [lints]
 workspace = true
 
