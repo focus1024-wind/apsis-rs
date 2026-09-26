@@ -278,7 +278,7 @@ impl KeplerianElements {
 /// The rotation is a product of three elementary rotations: by the argument
 /// of perigee about the third axis, then the inclination about the first,
 /// then the right ascension about the third.
-pub(crate) fn perifocal_to_inertial(
+pub fn perifocal_to_inertial(
     argument_of_perigee: f64,
     inclination: f64,
     right_ascension: f64,

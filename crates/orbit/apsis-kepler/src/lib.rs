@@ -45,5 +45,5 @@ pub use anomaly::{
     eccentric_from_mean, eccentric_from_true, mean_from_eccentric, mean_from_true,
     true_from_eccentric, true_from_mean, wrap_to_pi,
 };
-pub use elements::{KeplerianElements, State};
+pub use elements::{KeplerianElements, State, perifocal_to_inertial};
 pub use parameter::GravityParameter;
