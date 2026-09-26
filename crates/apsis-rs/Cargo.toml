@@ -165,3 +165,7 @@ required-features = ["rf"]
 [[example]]
 name = "dump_rain"
 required-features = ["rf"]
+
+[[example]]
+name = "dump_rain_path"
+required-features = ["rf"]

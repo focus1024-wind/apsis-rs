@@ -27,9 +27,10 @@
 //! - Half power beam width of a circular aperture: `theta = k lambda / D`
 //!   with `k` about 1.02 for uniform illumination and close to 1.2 for
 //!   typical illumination tapers.
-//! - The idealised element pattern: ITU-R Recommendation M.1853, which gives
-//!   `G = -min(12 (theta / theta_0)^2, G_0)` for the co-polar pattern of a
-//!   simple Earth station antenna.
+//! - The co-polar reference pattern of a simple Earth station antenna, which
+//!   falls as the square of the off-axis angle down to a sidelobe floor. This
+//!   is the form used by ITU-R Recommendation S.465 to bound interference
+//!   from one satellite system into another.
 //!
 //! ```
 //! use apsis_antenna::ParabolicAperture;

@@ -184,7 +184,12 @@ pub struct RainAttenuation {
     pub attenuation_db: f64,
     /// The horizontal reduction factor, dimensionless and at most one.
     pub horizontal_reduction: f64,
-    /// The vertical adjustment factor, dimensionless and at most one.
+    /// The vertical adjustment factor, dimensionless.
+    ///
+    /// The factor is the ratio of the effective path length to the longer
+    /// of the two geometric path estimates. It is at most one when the path
+    /// meets the rain layer at a steep angle and can exceed one at a shallow
+    /// angle, which is the behaviour Recommendation P.618 gives.
     pub vertical_adjustment: f64,
 }
 
@@ -392,17 +397,22 @@ pub fn rain_attenuation(
     };
 
     // Equation 9: the vertical adjustment factor.
+    //
+    // The exponential takes the elevation in degrees, not radians, because
+    // the coefficients of 31 and 0.45 were fitted with degrees. The sine
+    // takes the elevation in radians, as usual.
     let latitude_magnitude = latitude.abs();
     let xi = if latitude_magnitude < 36.0 {
         36.0 - latitude_magnitude
     } else {
         0.0
     };
+    let elevation_degrees = elevation.to_degrees();
     let vertical_adjustment = 1.0
         / (1.0
             + sine.sqrt()
                 * (31.0
-                    * (1.0 - (-(elevation / (1.0 + xi))).exp())
+                    * (1.0 - (-(elevation_degrees / (1.0 + xi))).exp())
                     * (path_length * specific).sqrt()
                     / frequency_ghz.powi(2)
                     - 0.45));

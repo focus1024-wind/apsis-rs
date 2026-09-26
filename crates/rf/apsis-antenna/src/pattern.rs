@@ -7,8 +7,9 @@ use core::f64::consts::PI;
 /// Returns the gain of an antenna at an angle from boresight, given a peak
 /// gain and a half power beam width.
 ///
-/// The model is the one used for interference analysis in ITU-R
-/// Recommendation M.1853 and adopted in the Radio Regulations. The gain
+/// This is the squared angle model used for interference analysis, in the
+/// form adopted by the Radio Regulations and by ITU-R Recommendation S.465
+/// for the reference pattern of a simple Earth station antenna. The gain
 /// falls as the square of the off-axis angle until it reaches the peak gain
 /// minus a fixed floor, and stays there beyond. In decibels,
 ///
