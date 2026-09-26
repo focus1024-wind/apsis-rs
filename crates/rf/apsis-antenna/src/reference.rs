@@ -16,7 +16,7 @@
 //! models the sidelobe region only and takes the main lobe width as an
 //! input. The two share the shape of the sidelobe region.
 //!
-//! Source: ITU-R Recommendation S.465, *Reference earth-station radiation
+//! Source: ITU-R Recommendation S.465-6, *Reference earth-station radiation
 //! pattern for use in coordination and interference assessment in the
 //! frequency range from 2 to about 30 GHz*.
 
