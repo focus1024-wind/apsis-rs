@@ -32,7 +32,7 @@ validation/
 │   ├── time/            # 时间尺度、儒略日对拍
 │   ├── coord/           # 坐标变换对拍
 │   ├── link/            # 链路预算对拍
-│   └── constellation/   # 星座覆盖对拍
+│   └── constellation/   # 覆盖几何对拍
 └── data/
     ├── tle/             # 公开 TLE 样本
     └── expected/        # Rust 侧导出的待比对数据
@@ -90,6 +90,10 @@ cargo run -p apsis-rs --features physics --example dump_iau2000 \
 # TEME → 地固系（SGP4 输出链路）
 cargo run -p apsis-rs --features physics --example dump_teme \
     > validation/data/expected/rust_teme.csv
+
+# 覆盖几何（仰角、星下点角、地心角、斜距、覆盖面积）
+cargo run -p apsis-rs --features network --example dump_coverage \
+    > validation/data/expected/rust_coverage.csv
 ```
 
 Python 侧读取同一批输入，用参考实现重算并输出误差表：
@@ -107,6 +111,7 @@ pixi run python validation/python/atmosphere/check_p839.py
 pixi run python validation/python/atmosphere/check_gas_exact.py
 pixi run python validation/python/time/check_iau2000.py
 pixi run python validation/python/coord/check_teme.py
+pixi run python validation/python/constellation/check_coverage.py
 ```
 
 两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。

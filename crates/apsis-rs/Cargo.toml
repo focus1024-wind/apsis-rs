@@ -205,3 +205,7 @@ required-features = ["sim"]
 [[example]]
 name = "bench"
 required-features = ["full"]
+
+[[example]]
+name = "dump_coverage"
+required-features = ["network"]
