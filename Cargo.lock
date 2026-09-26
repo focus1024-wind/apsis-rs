@@ -87,6 +87,10 @@ version = "0.1.0"
 [[package]]
 name = "apsis-interference"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-rf",
+]
 
 [[package]]
 name = "apsis-isl"
