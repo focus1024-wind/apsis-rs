@@ -65,7 +65,7 @@ pub use geometry::{air_mass, elevation_from_zenith, zenith_to_elevation};
 pub use p839::{RAIN_HEIGHT_OFFSET_KM, grid_step_degrees, rain_height, zero_isotherm_height};
 pub use rain::{
     DEFAULT_RAIN_HEIGHT_KM, RainAttenuation, polarisation_tilt, rain_attenuation,
-    rain_coefficients, specific_rain_attenuation,
+    rain_attenuation_at, rain_coefficients, specific_rain_attenuation,
 };
 
 pub use apsis_rf::Decibel;

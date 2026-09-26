@@ -393,3 +393,44 @@ fn polarisation_tilt_converts_degrees() {
         "forty five degrees",
     );
 }
+
+#[test]
+fn the_integrated_path_uses_the_p839_rain_height() {
+    use apsis_atmosphere::{rain_attenuation_at, rain_height};
+    let latitude = 45.0;
+    let longitude = 0.0;
+    let integrated = rain_attenuation_at(
+        20.0,
+        12.0e9,
+        HORIZONTAL,
+        THIRTY_DEGREES,
+        0.0,
+        latitude,
+        longitude,
+    )
+    .expect("valid");
+    let explicit = rain_attenuation(
+        20.0,
+        12.0e9,
+        HORIZONTAL,
+        THIRTY_DEGREES,
+        0.0,
+        rain_height(latitude, longitude).expect("valid coordinates"),
+        latitude,
+    )
+    .expect("valid");
+    assert!((integrated.attenuation_db - explicit.attenuation_db).abs() < 1e-12);
+}
+
+#[test]
+fn the_integrated_path_rejects_unusable_coordinates() {
+    use apsis_atmosphere::rain_attenuation_at;
+    assert_eq!(
+        rain_attenuation_at(20.0, 12.0e9, HORIZONTAL, THIRTY_DEGREES, 0.0, 91.0, 0.0),
+        None
+    );
+    assert_eq!(
+        rain_attenuation_at(20.0, 12.0e9, HORIZONTAL, THIRTY_DEGREES, 0.0, 0.0, f64::NAN),
+        None
+    );
+}

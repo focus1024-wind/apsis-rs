@@ -31,12 +31,12 @@ use apsis_rf::Decibel;
 /// which makes the Earth appear larger than it is.
 const EFFECTIVE_EARTH_RADIUS_KM: f64 = 8_500.0;
 
-/// The default height of the rain layer above sea level, in kilometers.
+/// A mid latitude rain height, in kilometers above sea level.
 ///
-/// Recommendation P.618 takes this from the zero degree isotherm height,
-/// which depends on latitude and season and is tabulated separately. This
-/// value is representative of mid latitudes; a caller working in the tropics
-/// should raise it and one in polar regions should lower it.
+/// Recommendation P.618 takes the rain height from the zero degree isotherm
+/// height of Recommendation P.839, which is tabulated as a function of
+/// latitude and longitude. Prefer [`rain_attenuation_at`], which looks the
+/// value up, over [`rain_attenuation`] with this constant.
 pub const DEFAULT_RAIN_HEIGHT_KM: f64 = 3.0;
 
 /// One term of a P.838-3 curve fit.
@@ -434,4 +434,40 @@ pub fn rain_attenuation(
 /// This is a convenience for the two cases that are quoted by name.
 pub const fn polarisation_tilt(degrees_from_horizontal: f64) -> f64 {
     degrees_from_horizontal * core::f64::consts::PI / 180.0
+}
+
+/// Returns the total rain attenuation along a slant path, taking the rain
+/// height from the Recommendation P.839 model.
+///
+/// This is the same calculation as [`rain_attenuation`], with the rain layer
+/// height looked up from the tabulated zero degree isotherm height at the
+/// given latitude and longitude rather than supplied by the caller. It is
+/// the form to use unless a locally measured isotherm height is available.
+///
+/// The station height must be given; pass zero for a station at sea level.
+///
+/// Returns `None` when the coordinates are not usable, or when any of the
+/// other arguments is rejected by [`rain_attenuation`].
+///
+/// Source: the rain height is from ITU-R Recommendation P.839-4 and the path
+/// method from ITU-R Recommendation P.618-13.
+pub fn rain_attenuation_at(
+    rain_rate: f64,
+    frequency: f64,
+    polarisation: f64,
+    elevation: f64,
+    station_height_km: f64,
+    latitude: f64,
+    longitude: f64,
+) -> Option<RainAttenuation> {
+    let rain_height_km = crate::p839::rain_height(latitude, longitude)?;
+    rain_attenuation(
+        rain_rate,
+        frequency,
+        polarisation,
+        elevation,
+        station_height_km,
+        rain_height_km,
+        latitude,
+    )
 }
