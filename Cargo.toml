@@ -77,6 +77,12 @@ authors = ["ApsisRS contributors"]
 unsafe_code = "forbid"
 missing_docs = "deny"
 
+[workspace.lints.clippy]
+# Numeric literals here follow the grouping of the quantity they express,
+# such as the digits of a reference value, rather than a fixed width. The
+# style lint would force a regrouping that obscures the source of a value.
+inconsistent_digit_grouping = "allow"
+
 [workspace.dependencies]
 apsis-core = { path = "crates/foundation/apsis-core" }
 apsis-units = { path = "crates/foundation/apsis-units" }

@@ -83,6 +83,12 @@ version = "0.1.0"
 [[package]]
 name = "apsis-kepler"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-math",
+ "apsis-time",
+ "apsis-tle",
+]
 
 [[package]]
 name = "apsis-leap"
@@ -193,6 +199,12 @@ version = "0.1.0"
 [[package]]
 name = "apsis-sgp4"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-math",
+ "apsis-time",
+ "apsis-tle",
+]
 
 [[package]]
 name = "apsis-sim"
@@ -217,6 +229,10 @@ dependencies = [
 [[package]]
 name = "apsis-tle"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-time",
+]
 
 [[package]]
 name = "apsis-topology"
