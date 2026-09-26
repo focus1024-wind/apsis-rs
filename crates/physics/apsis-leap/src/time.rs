@@ -55,45 +55,29 @@ pub fn tai_mjd_from_utc_mjd(utc_mjd: f64) -> Option<f64> {
 /// Converts a TAI Modified Julian Date to the corresponding UTC Modified
 /// Julian Date.
 ///
-/// The offset that applies depends on the UTC instant being sought, so the
-/// value is recovered by a monotone iteration. The iteration starts from
-/// the smallest possible answer, obtained with the largest offset in the
-/// table, and increases until the offset stops changing. Because the offset
-/// is a non-decreasing step function of UTC, the sequence is non-decreasing
-/// and reaches the fixed point in as many steps as there are offset changes
-/// between the seed and the answer, which is a small number.
+/// Each candidate offset from the table is tried in turn. A candidate is
+/// accepted when the offset in force at the resulting UTC instant is the
+/// same offset that produced it. At most one offset can satisfy that
+/// condition for a given input, so the search is unambiguous.
 ///
-/// Returns `None` when the instant precedes the start of the table, or when
-/// the result would fall before that boundary.
+/// Returns `None` in two cases. The first is an instant before the start of
+/// the table, where UTC carried fractional offsets that this table does not
+/// describe. The second is an instant that falls strictly inside an
+/// inserted leap second. Such an instant has no UTC representation, because
+/// the UTC clock labels that interval `23:59:60`, a value that does not
+/// exist on the continuous Modified Julian Date scale.
 pub fn utc_mjd_from_tai_mjd(tai_mjd: f64) -> Option<f64> {
     if !tai_mjd.is_finite() {
         return None;
     }
-    // Seed with the largest offset, which gives the smallest candidate UTC.
-    let mut utc_mjd = tai_mjd - TAI_MINUS_UTC_AFTER_LAST_ENTRY / SECONDS_PER_DAY;
-    for _ in 0..64 {
-        let offset = offset_for_iteration(utc_mjd);
-        let next = tai_mjd - offset / SECONDS_PER_DAY;
-        if next == utc_mjd {
-            break;
+    for entry in LEAP_SECONDS {
+        let offset = entry.tai_minus_utc;
+        let candidate = tai_mjd - offset / SECONDS_PER_DAY;
+        if tai_minus_utc_at_mjd(candidate) == Some(offset) {
+            return Some(candidate);
         }
-        utc_mjd = next;
     }
-    if utc_mjd < TABLE_COVERS_FROM_MJD {
-        return None;
-    }
-    Some(utc_mjd)
-}
-
-/// Returns the offset in force near `utc_mjd`, using the first table entry
-/// for instants below the start of the table.
-///
-/// This is used only while iterating in [`utc_mjd_from_tai_mjd`], where a
-/// candidate may transiently precede the boundary even though the answer
-/// does not. Callers that need to distinguish an out of range instant from
-/// a valid one must use [`tai_minus_utc_at_mjd`].
-fn offset_for_iteration(utc_mjd: f64) -> f64 {
-    tai_minus_utc_at_mjd(utc_mjd).unwrap_or(LEAP_SECONDS[0].tai_minus_utc)
+    None
 }
 
 /// Converts a proleptic Gregorian calendar date at 00:00:00 to a Modified
