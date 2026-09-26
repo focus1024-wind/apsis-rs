@@ -1,1 +1,8 @@
 /target
+
+# Python environment managed by pixi.
+/validation/.pixi
+
+# Generated validation data. Regenerate with the example commands listed in
+# validation/README.md.
+/validation/data/expected/*.csv
