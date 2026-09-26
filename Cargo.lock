@@ -309,6 +309,10 @@ version = "0.1.0"
 [[package]]
 name = "apsis-sim-engine"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-event",
+]
 
 [[package]]
 name = "apsis-task"
