@@ -17,9 +17,15 @@ foundation -> physics -> orbit -> rf -> network -> ops -> sim -> apsis-rs
 
 约束：
 
-- 依赖只能从左向右，禁止反向依赖
-- 禁止跨层跳跃，例如 `orbit` 不得直接依赖 `network`
-- 层内允许依赖该层的基准 crate：`foundation` 内 `apsis-core` 为基准，其余 crate 可依赖它；其余层内部以各自的门面 crate（`apsis-orbit`、`apsis-rf`、`apsis-sim` 等）作为整合点
+- 依赖只能从左向右。下层可依赖其上任意层，上层不得依赖其下任意层。
+  例如 `network` 可以依赖 `orbit`（向左），但 `orbit` 不得依赖 `network`
+  （向右，即反向）。左向依赖不限层数，允许跨层，因为把 `orbit` 的值
+  传到 `network` 时中间层未必提供中转类型。
+- `foundation` 的 `apsis-core` 是全局基准，任何层任何 crate 均可依赖它。
+  `apsis-math` 同理，因为线性代数被各层共用。
+- 层内以该层的门面 crate（`apsis-orbit`、`apsis-rf`、`apsis-sim`）作为整合点。
+
+这套规则由 `scripts/check-layers.sh` 强制，CI 会运行它。
 
 各层内容：
 
@@ -70,6 +76,7 @@ apsis-rs/
 │   └── apsis-rs/
 │       ├── examples/   # 对拍导出与跨层集成检查
 │       └── ...
+├── scripts/         # 仓库检查脚本
 ├── validation/      # Python 对拍验证
 └── docs/design/     # 设计文档
 ```

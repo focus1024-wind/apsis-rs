@@ -37,6 +37,11 @@ jobs:
         # meaningful on a quiet machine, but it must still compile so that it
         # does not rot.
         run: cargo build -p apsis-rs --features full --example bench
+      - name: Check the layer rule
+        # README.md states that a crate may only depend on layers to its
+        # left. Nothing else in the build enforces that, so a reverse
+        # dependency would otherwise pass CI silently.
+        run: bash scripts/check-layers.sh
       - name: Verify dependency freedom
         run: |
           # Every package in the graph must be a workspace crate. `--prefix

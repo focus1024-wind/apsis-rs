@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+#
+# Checks the layer dependency rule stated in README.md.
+#
+# The workspace is organized into dependency ordered layers:
+#
+#     foundation -> physics -> orbit -> rf -> network -> ops -> sim
+#
+# A crate may depend on any crate in a layer to its left, but never on one to
+# its right. This script reads every workspace manifest, works out which
+# layer each dependency belongs to, and fails if any dependency points to the
+# right.
+#
+# `apsis-core` and `apsis-math` are exempt as global prerequisites: they sit
+# in `foundation` and every layer may use them, which the left-only rule
+# already permits, so no special case is needed for them.
+#
+# Usage:
+#
+#     scripts/check-layers.sh
+#
+# Exit status is zero when the rule holds and one otherwise.
+
+set -euo pipefail
+
+# The layer order, left to right. A dependency to a layer with a lower index
+# is allowed; to a higher index is a reverse dependency and fails.
+LAYERS=(foundation physics orbit rf network ops sim)
+
+# The root of the workspace, taken from this script's location so that the
+# check works from any working directory.
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$root"
+
+# Returns the index of a layer name, or an empty string when the name is not
+# a layer. A crate outside these directories is not part of the layer scheme
+# and is skipped rather than reported.
+layer_index() {
+    local name="$1"
+    local index=0
+    for layer in "${LAYERS[@]}"; do
+        if [ "$layer" = "$name" ]; then
+            echo "$index"
+            return 0
+        fi
+        index=$((index + 1))
+    done
+    echo ""
+}
+
+failures=0
+checked=0
+
+for manifest in $(find crates -name Cargo.toml | sort); do
+    directory="$(dirname "$manifest")"
+    # The layer directory is the second path component, as in
+    # `crates/<layer>/<crate>/Cargo.toml`.
+    layer="$(echo "$directory" | cut -d/ -f2)"
+    source_index="$(layer_index "$layer")"
+    [ -z "$source_index" ] && continue
+
+    # Every `apsis-...` name in the manifest is a dependency or a package
+    # name. The package name is the crate itself, which resolves to the same
+    # layer and is skipped by the index comparison below.
+    for dependency in $(grep -oE 'apsis-[a-z-]+' "$manifest" | sort -u); do
+        dependency_directory="$(find crates -maxdepth 2 -type d -name "$dependency" 2>/dev/null | head -1)"
+        [ -z "$dependency_directory" ] && continue
+        dependency_layer="$(echo "$dependency_directory" | cut -d/ -f2)"
+        dependency_index="$(layer_index "$dependency_layer")"
+        [ -z "$dependency_index" ] && continue
+
+        if [ "$dependency_index" -gt "$source_index" ]; then
+            echo "reverse dependency: $layer -> $dependency_layer ($(basename "$directory") -> $dependency)" >&2
+            failures=$((failures + 1))
+        fi
+        checked=$((checked + 1))
+    done
+done
+
+if [ "$failures" -gt 0 ]; then
+    echo "layer check failed: $failures reverse dependency(ies)" >&2
+    exit 1
+fi
+
+echo "layer check passed: $checked dependency edge(s), none reversed"
