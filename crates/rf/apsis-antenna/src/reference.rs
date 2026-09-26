@@ -1,0 +1,178 @@
+//! The ITU-R S.465 reference antenna pattern.
+//!
+//! Recommendation S.465 defines a reference pattern for an Earth station
+//! antenna, used to assess interference between satellite networks. The
+//! pattern has three regions: a main lobe that falls as the square of the
+//! off-axis angle, a sidelobe region that falls as the logarithm of the
+//! angle, and a floor.
+//!
+//! The pattern is selected only by the ratio of the antenna diameter to the
+//! wavelength. The recommendation gives one pattern for antennas with
+//! `D / lambda` of at least 100 and another for smaller antennas, whose main
+//! lobe is broader and whose sidelobe region therefore begins later.
+//!
+//! The main lobe expression is what distinguishes this pattern from the
+//! generic reference pattern of the Radio Regulations Appendix 8, which
+//! models the sidelobe region only and takes the main lobe width as an
+//! input. The two share the shape of the sidelobe region.
+//!
+//! Source: ITU-R Recommendation S.465, *Reference earth-station radiation
+//! pattern for use in coordination and interference assessment in the
+//! frequency range from 2 to about 30 GHz*.
+
+use apsis_rf::Decibel;
+use core::f64::consts::PI;
+
+/// The peak gain offset of the reference pattern, in decibels.
+///
+/// The recommendation gives the peak gain as `20 log10(D / lambda) + 7.7`,
+/// which corresponds to an aperture efficiency near 0.6. It is slightly
+/// below what a well adjusted dish reaches, because the reference pattern
+/// represents a typical rather than an optimal antenna.
+pub const PEAK_GAIN_OFFSET_DB: f64 = 7.7;
+
+/// The diameter to wavelength ratio at which the pattern changes form.
+///
+/// A larger antenna has a narrower main lobe, so its sidelobe region begins
+/// earlier and reaches the floor earlier.
+const LARGE_APERTURE_RATIO: f64 = 100.0;
+
+/// The constant and floor angle of the sidelobe region.
+///
+/// The constant is the value of `G + 25 log10(phi_deg)` in the sidelobe
+/// region, and the floor angle is the angle at which the region reaches its
+/// floor.
+fn sidelobe_branch(diameter_over_wavelength: f64) -> (f64, f64) {
+    if diameter_over_wavelength >= LARGE_APERTURE_RATIO {
+        (29.0, 36.0)
+    } else {
+        (32.0, 48.0)
+    }
+}
+
+/// Returns the peak gain of the reference pattern, in decibels relative to an
+/// isotropic radiator.
+///
+/// The expression is `20 log10(D / lambda) + 7.7`.
+///
+/// Returns `None` when the ratio is not positive and finite.
+pub fn reference_peak_gain(diameter_over_wavelength: f64) -> Option<f64> {
+    if !diameter_over_wavelength.is_finite() || diameter_over_wavelength <= 0.0 {
+        return None;
+    }
+    Some(20.0 * diameter_over_wavelength.log10() + PEAK_GAIN_OFFSET_DB)
+}
+
+/// Returns the angle at which the main lobe meets the sidelobe region, in
+/// degrees.
+///
+/// The two expressions intersect at this angle, and there is no closed form,
+/// so the value is found by bisection. The main lobe falls as the square of
+/// the angle while the sidelobe region falls as its logarithm, so the
+/// difference has a single zero in the interval searched, which makes
+/// bisection reliable.
+///
+/// The result lies between zero and the floor angle of the sidelobe region.
+pub fn main_lobe_break_angle(diameter_over_wavelength: f64) -> Option<f64> {
+    let peak = reference_peak_gain(diameter_over_wavelength)?;
+    let (head, floor_angle) = sidelobe_branch(diameter_over_wavelength);
+
+    let difference = |angle_degrees: f64| {
+        let main_lobe = peak - 2.5e-3 * (diameter_over_wavelength * angle_degrees).powi(2);
+        let sidelobe = head - 25.0 * angle_degrees.log10();
+        main_lobe - sidelobe
+    };
+
+    // The main lobe dominates at very small angles and the sidelobe
+    // expression dominates at the floor angle, so the zero lies between.
+    let mut low = 1.0e-9;
+    let mut high = floor_angle;
+    if difference(high) > 0.0 {
+        return Some(high);
+    }
+    for _ in 0..100 {
+        let middle = 0.5 * (low + high);
+        if difference(middle) > 0.0 {
+            low = middle;
+        } else {
+            high = middle;
+        }
+    }
+    Some(0.5 * (low + high))
+}
+
+/// Returns the gain of the S.465 reference pattern at an off-axis angle.
+///
+/// The angle is in radians. The three regions are
+///
+/// ```text
+/// G = G_max - 2.5e-3 (D/lambda phi_deg)^2   for 0 <= phi < phi_break
+/// G = head - 25 log10(phi_deg)              for phi_break <= phi < phi_floor
+/// G = -10                                   for phi_floor <= phi <= 180
+/// ```
+///
+/// where `phi_break` is the angle returned by [`main_lobe_break_angle`], the
+/// head is 29 for a large aperture and 32 for a small one, and the floor
+/// angle is 36 or 48 degrees accordingly.
+///
+/// Returns `None` when the ratio or the angle is not usable.
+pub fn reference_pattern_gain(diameter_over_wavelength: f64, off_axis_angle: f64) -> Option<f64> {
+    if !off_axis_angle.is_finite() || off_axis_angle < 0.0 {
+        return None;
+    }
+    let peak = reference_peak_gain(diameter_over_wavelength)?;
+    let break_angle = main_lobe_break_angle(diameter_over_wavelength)?;
+    let (head, floor_angle) = sidelobe_branch(diameter_over_wavelength);
+    let angle_degrees = off_axis_angle.to_degrees();
+
+    if angle_degrees < break_angle {
+        Some(peak - 2.5e-3 * (diameter_over_wavelength * angle_degrees).powi(2))
+    } else if angle_degrees <= floor_angle {
+        Some(head - 25.0 * angle_degrees.log10())
+    } else {
+        Some(-10.0)
+    }
+}
+
+/// Returns the gain of the S.465 reference pattern as a decibel value.
+///
+/// Returns `None` when the ratio or the angle is not usable.
+pub fn reference_pattern_decibel(
+    diameter_over_wavelength: f64,
+    off_axis_angle: f64,
+) -> Option<Decibel> {
+    let gain = reference_pattern_gain(diameter_over_wavelength, off_axis_angle)?;
+    Decibel::from_db(gain)
+        .is_finite()
+        .then_some(Decibel::from_db(gain))
+}
+
+/// Returns the diameter to wavelength ratio of an antenna with a given peak
+/// gain.
+///
+/// This inverts the peak gain expression, which is useful when a station is
+/// specified by its gain rather than its size.
+///
+/// Returns `None` when the gain is not finite.
+pub fn diameter_over_wavelength_from_peak_gain(peak_gain_dbi: f64) -> Option<f64> {
+    if !peak_gain_dbi.is_finite() {
+        return None;
+    }
+    Some(10f64.powf((peak_gain_dbi - PEAK_GAIN_OFFSET_DB) / 20.0))
+}
+
+/// Returns the half power beam width of the reference pattern main lobe, in
+/// radians.
+///
+/// The main lobe falls to three decibels at
+/// `phi = sqrt(3 / 2.5e-3) / (D / lambda)` degrees from boresight, so the
+/// full width between the two three decibel points is twice that value.
+///
+/// Returns `None` when the ratio is not positive and finite.
+pub fn reference_beam_width(diameter_over_wavelength: f64) -> Option<f64> {
+    if !diameter_over_wavelength.is_finite() || diameter_over_wavelength <= 0.0 {
+        return None;
+    }
+    let half_angle_degrees = (3.0_f64 / 2.5e-3).sqrt() / diameter_over_wavelength;
+    Some(2.0 * half_angle_degrees * PI / 180.0)
+}

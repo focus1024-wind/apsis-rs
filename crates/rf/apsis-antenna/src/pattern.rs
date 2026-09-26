@@ -7,11 +7,10 @@ use core::f64::consts::PI;
 /// Returns the gain of an antenna at an angle from boresight, given a peak
 /// gain and a half power beam width.
 ///
-/// This is the squared angle model used for interference analysis, in the
-/// form adopted by the Radio Regulations and by ITU-R Recommendation S.465
-/// for the reference pattern of a simple Earth station antenna. The gain
-/// falls as the square of the off-axis angle until it reaches the peak gain
-/// minus a fixed floor, and stays there beyond. In decibels,
+/// This is the squared angle model that several interference assessments
+/// use, expressed in terms of the half power beam width so that any antenna
+/// can be described by the two numbers a link budget has to hand. In
+/// decibels,
 ///
 /// ```text
 /// G(theta) = G_peak - min(12 (theta / theta_0)^2, G_floor)
@@ -22,6 +21,14 @@ use core::f64::consts::PI;
 /// law comes from the first term of the Airy pattern of a uniformly
 /// illuminated aperture, which is a good approximation down to the first
 /// sidelobe.
+///
+/// The coefficient twelve is chosen so that the attenuation reaches three
+/// decibels at `theta_0 / 2`, which is the definition of the half power beam
+/// width. A pattern taken from a recommendation should be used in place of
+/// this one where the recommendation applies: see
+/// [`reference_pattern_gain`](crate::reference_pattern_gain) for the ITU-R
+/// S.465 pattern, which differs from this model in the main lobe and also in
+/// the shape of its sidelobe region.
 ///
 /// Returns `None` when the peak gain has no decibel form, or when the beam
 /// width or floor is not positive and finite.

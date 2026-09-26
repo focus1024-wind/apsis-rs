@@ -50,6 +50,11 @@
 
 mod parabolic;
 mod pattern;
+mod reference;
 
 pub use parabolic::{ParabolicAperture, beam_width, floor_angle};
 pub use pattern::{ElementPattern, Pattern, mask_gain, off_axis_attenuation};
+pub use reference::{
+    PEAK_GAIN_OFFSET_DB, diameter_over_wavelength_from_peak_gain, main_lobe_break_angle,
+    reference_beam_width, reference_pattern_decibel, reference_pattern_gain, reference_peak_gain,
+};
