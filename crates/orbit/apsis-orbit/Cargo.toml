@@ -1,0 +1,13 @@
+[package]
+name = "apsis-orbit"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Orbital state facade that integrates the orbit layer."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]

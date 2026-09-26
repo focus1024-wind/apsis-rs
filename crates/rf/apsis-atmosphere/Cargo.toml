@@ -1,0 +1,13 @@
+[package]
+name = "apsis-atmosphere"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Atmospheric attenuation and refraction models."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]

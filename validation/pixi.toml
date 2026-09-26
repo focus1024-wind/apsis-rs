@@ -1,0 +1,19 @@
+[project]
+name = "apsis-validation"
+version = "0.1.0"
+description = "Reference-implementation cross-checks for the ApsisRS numerical kernels."
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
+
+[dependencies]
+python = "3.12.*"
+
+# Reference implementations used only for cross-checking Rust output.
+# These packages are not dependencies of any Rust crate.
+[pypi-dependencies]
+numpy = "*"
+sgp4 = "*"
+astropy = "*"
+skyfield = "*"
+
+[tasks]

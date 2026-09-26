@@ -1,0 +1,13 @@
+[package]
+name = "apsis-tle"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Two-Line Element set parsing."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]

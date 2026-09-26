@@ -1,0 +1,1 @@
+//! Mesh connectivity abstractions.

@@ -1,0 +1,13 @@
+[package]
+name = "apsis-sim"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Simulation facade that integrates the simulation layer."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]

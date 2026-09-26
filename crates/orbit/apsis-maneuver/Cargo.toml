@@ -1,0 +1,13 @@
+[package]
+name = "apsis-maneuver"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Impulsive and finite orbital maneuver models."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]

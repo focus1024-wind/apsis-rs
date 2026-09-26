@@ -1,0 +1,126 @@
+# ApsisRS Rust workspace root.
+#
+# The workspace resolves without any external dependency so that the
+# numerical kernels stay self-contained and auditable. Every member crate
+# is unpublished.
+
+[workspace]
+resolver = "2"
+
+members = [
+    # foundation
+    "crates/foundation/apsis-core",
+    "crates/foundation/apsis-units",
+    "crates/foundation/apsis-math",
+    "crates/foundation/apsis-macros",
+
+    # physics
+    "crates/physics/apsis-time",
+    "crates/physics/apsis-leap",
+    "crates/physics/apsis-coord",
+    "crates/physics/apsis-geodesy",
+    "crates/physics/apsis-frames",
+
+    # orbit
+    "crates/orbit/apsis-tle",
+    "crates/orbit/apsis-sgp4",
+    "crates/orbit/apsis-kepler",
+    "crates/orbit/apsis-ephemeris",
+    "crates/orbit/apsis-maneuver",
+    "crates/orbit/apsis-orbit",
+
+    # rf
+    "crates/rf/apsis-rf",
+    "crates/rf/apsis-antenna",
+    "crates/rf/apsis-doppler",
+    "crates/rf/apsis-atmosphere",
+    "crates/rf/apsis-noise",
+    "crates/rf/apsis-interference",
+    "crates/rf/apsis-link",
+
+    # network
+    "crates/network/apsis-constellation",
+    "crates/network/apsis-coverage",
+    "crates/network/apsis-access",
+    "crates/network/apsis-topology",
+    "crates/network/apsis-isl",
+    "crates/network/apsis-routing",
+    "crates/network/apsis-handover",
+    "crates/network/apsis-mesh",
+
+    # ops
+    "crates/ops/apsis-resource",
+    "crates/ops/apsis-task",
+    "crates/ops/apsis-scheduler",
+    "crates/ops/apsis-conflict",
+    "crates/ops/apsis-schedule",
+
+    # sim
+    "crates/sim/apsis-sim-engine",
+    "crates/sim/apsis-scenario",
+    "crates/sim/apsis-event",
+    "crates/sim/apsis-output",
+    "crates/sim/apsis-sim",
+
+    # facade
+    "crates/apsis-rs",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "GPL-3.0-or-later"
+authors = ["ApsisRS contributors"]
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "deny"
+
+[workspace.dependencies]
+apsis-core = { path = "crates/foundation/apsis-core" }
+apsis-units = { path = "crates/foundation/apsis-units" }
+apsis-math = { path = "crates/foundation/apsis-math" }
+apsis-macros = { path = "crates/foundation/apsis-macros" }
+
+apsis-time = { path = "crates/physics/apsis-time" }
+apsis-leap = { path = "crates/physics/apsis-leap" }
+apsis-coord = { path = "crates/physics/apsis-coord" }
+apsis-geodesy = { path = "crates/physics/apsis-geodesy" }
+apsis-frames = { path = "crates/physics/apsis-frames" }
+
+apsis-tle = { path = "crates/orbit/apsis-tle" }
+apsis-sgp4 = { path = "crates/orbit/apsis-sgp4" }
+apsis-kepler = { path = "crates/orbit/apsis-kepler" }
+apsis-ephemeris = { path = "crates/orbit/apsis-ephemeris" }
+apsis-maneuver = { path = "crates/orbit/apsis-maneuver" }
+apsis-orbit = { path = "crates/orbit/apsis-orbit" }
+
+apsis-rf = { path = "crates/rf/apsis-rf" }
+apsis-antenna = { path = "crates/rf/apsis-antenna" }
+apsis-doppler = { path = "crates/rf/apsis-doppler" }
+apsis-atmosphere = { path = "crates/rf/apsis-atmosphere" }
+apsis-noise = { path = "crates/rf/apsis-noise" }
+apsis-interference = { path = "crates/rf/apsis-interference" }
+apsis-link = { path = "crates/rf/apsis-link" }
+
+apsis-constellation = { path = "crates/network/apsis-constellation" }
+apsis-coverage = { path = "crates/network/apsis-coverage" }
+apsis-access = { path = "crates/network/apsis-access" }
+apsis-topology = { path = "crates/network/apsis-topology" }
+apsis-isl = { path = "crates/network/apsis-isl" }
+apsis-routing = { path = "crates/network/apsis-routing" }
+apsis-handover = { path = "crates/network/apsis-handover" }
+apsis-mesh = { path = "crates/network/apsis-mesh" }
+
+apsis-resource = { path = "crates/ops/apsis-resource" }
+apsis-task = { path = "crates/ops/apsis-task" }
+apsis-scheduler = { path = "crates/ops/apsis-scheduler" }
+apsis-conflict = { path = "crates/ops/apsis-conflict" }
+apsis-schedule = { path = "crates/ops/apsis-schedule" }
+
+apsis-sim-engine = { path = "crates/sim/apsis-sim-engine" }
+apsis-scenario = { path = "crates/sim/apsis-scenario" }
+apsis-event = { path = "crates/sim/apsis-event" }
+apsis-output = { path = "crates/sim/apsis-output" }
+apsis-sim = { path = "crates/sim/apsis-sim" }

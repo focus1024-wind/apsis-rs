@@ -1,0 +1,13 @@
+[package]
+name = "apsis-task"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Task modeling for satellite operations."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]

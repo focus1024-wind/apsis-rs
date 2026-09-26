@@ -1,0 +1,140 @@
+[package]
+name = "apsis-rs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Public facade for the ApsisRS computational kernels."
+publish = false
+
+[lib]
+name = "apsis"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[features]
+default = []
+
+# Enabling a layer also enables the layers it is allowed to depend on.
+foundation = [
+    "dep:apsis-core",
+    "dep:apsis-units",
+    "dep:apsis-math",
+    "dep:apsis-macros",
+]
+
+physics = [
+    "foundation",
+    "dep:apsis-time",
+    "dep:apsis-leap",
+    "dep:apsis-coord",
+    "dep:apsis-geodesy",
+    "dep:apsis-frames",
+]
+
+orbit = [
+    "physics",
+    "dep:apsis-tle",
+    "dep:apsis-sgp4",
+    "dep:apsis-kepler",
+    "dep:apsis-ephemeris",
+    "dep:apsis-maneuver",
+    "dep:apsis-orbit",
+]
+
+rf = [
+    "orbit",
+    "dep:apsis-rf",
+    "dep:apsis-antenna",
+    "dep:apsis-doppler",
+    "dep:apsis-atmosphere",
+    "dep:apsis-noise",
+    "dep:apsis-interference",
+    "dep:apsis-link",
+]
+
+network = [
+    "rf",
+    "dep:apsis-constellation",
+    "dep:apsis-coverage",
+    "dep:apsis-access",
+    "dep:apsis-topology",
+    "dep:apsis-isl",
+    "dep:apsis-routing",
+    "dep:apsis-handover",
+    "dep:apsis-mesh",
+]
+
+ops = [
+    "network",
+    "dep:apsis-resource",
+    "dep:apsis-task",
+    "dep:apsis-scheduler",
+    "dep:apsis-conflict",
+    "dep:apsis-schedule",
+]
+
+# The simulation layer aggregates every other layer, so it enables `ops`.
+# Enable `ops` instead of `full` when the simulation layer is not needed.
+sim = [
+    "ops",
+    "dep:apsis-sim-engine",
+    "dep:apsis-scenario",
+    "dep:apsis-event",
+    "dep:apsis-output",
+    "dep:apsis-sim",
+]
+
+# Every layer, including `sim`. Enabling `sim` pulls in `ops` and, through
+# it, every lower layer.
+full = ["sim"]
+
+[dependencies]
+apsis-core = { workspace = true, optional = true }
+apsis-units = { workspace = true, optional = true }
+apsis-math = { workspace = true, optional = true }
+apsis-macros = { workspace = true, optional = true }
+
+apsis-time = { workspace = true, optional = true }
+apsis-leap = { workspace = true, optional = true }
+apsis-coord = { workspace = true, optional = true }
+apsis-geodesy = { workspace = true, optional = true }
+apsis-frames = { workspace = true, optional = true }
+
+apsis-tle = { workspace = true, optional = true }
+apsis-sgp4 = { workspace = true, optional = true }
+apsis-kepler = { workspace = true, optional = true }
+apsis-ephemeris = { workspace = true, optional = true }
+apsis-maneuver = { workspace = true, optional = true }
+apsis-orbit = { workspace = true, optional = true }
+
+apsis-rf = { workspace = true, optional = true }
+apsis-antenna = { workspace = true, optional = true }
+apsis-doppler = { workspace = true, optional = true }
+apsis-atmosphere = { workspace = true, optional = true }
+apsis-noise = { workspace = true, optional = true }
+apsis-interference = { workspace = true, optional = true }
+apsis-link = { workspace = true, optional = true }
+
+apsis-constellation = { workspace = true, optional = true }
+apsis-coverage = { workspace = true, optional = true }
+apsis-access = { workspace = true, optional = true }
+apsis-topology = { workspace = true, optional = true }
+apsis-isl = { workspace = true, optional = true }
+apsis-routing = { workspace = true, optional = true }
+apsis-handover = { workspace = true, optional = true }
+apsis-mesh = { workspace = true, optional = true }
+
+apsis-resource = { workspace = true, optional = true }
+apsis-task = { workspace = true, optional = true }
+apsis-scheduler = { workspace = true, optional = true }
+apsis-conflict = { workspace = true, optional = true }
+apsis-schedule = { workspace = true, optional = true }
+
+apsis-sim-engine = { workspace = true, optional = true }
+apsis-scenario = { workspace = true, optional = true }
+apsis-event = { workspace = true, optional = true }
+apsis-output = { workspace = true, optional = true }
+apsis-sim = { workspace = true, optional = true }

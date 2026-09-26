@@ -1,0 +1,13 @@
+[package]
+name = "apsis-frames"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Reference frame definitions and transformation primitives."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]

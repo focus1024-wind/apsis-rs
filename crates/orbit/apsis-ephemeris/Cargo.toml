@@ -1,0 +1,13 @@
+[package]
+name = "apsis-ephemeris"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Ephemeris sampling and interpolation."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]

@@ -1,0 +1,13 @@
+[package]
+name = "apsis-coord"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Coordinate frame markers and Earth-centered inertial, Earth-centered Earth-fixed, and geodetic transformations."
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
