@@ -3,7 +3,7 @@
 //! Each quantity is a newtype over `f64` that carries its unit in the type
 //! system, so a length cannot be passed where a duration is expected. Units
 //! of the same dimension convert through
-//! [`Quantity::to_unit`](apsis_core::Quantity::to_unit), and each unit also
+//! [`Quantity::to_unit`], and each unit also
 //! offers direct conversions for the common cases.
 //!
 //! A newtype implements both [`Unit`] and [`Quantity`], with its own type as

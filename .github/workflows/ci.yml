@@ -37,6 +37,12 @@ jobs:
         # meaningful on a quiet machine, but it must still compile so that it
         # does not rot.
         run: cargo build -p apsis-rs --features full --example bench
+      - name: Documentation
+        # Catches a doc link that no longer resolves, which is how a doc
+        # comment drifts away from the code it describes.
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --all-features --no-deps
       - name: Check the layer rule
         # README.md states that a crate may only depend on layers to its
         # left. Nothing else in the build enforces that, so a reverse

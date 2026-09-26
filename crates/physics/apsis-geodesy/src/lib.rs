@@ -6,7 +6,7 @@
 //! differ by up to about 0.19 degrees at mid latitudes, so the distinction
 //! matters for pointing and ranging.
 //!
-//! [`Wgs84`] is the ellipsoid used by GPS and by almost all satellite work.
+//! [`WGS84`] is the ellipsoid used by GPS and by almost all satellite work.
 //! Its defining parameters are the semi-major axis and the inverse
 //! flattening; every other quantity is derived from those two, so the
 //! derived values agree with the ones published in the standard to the

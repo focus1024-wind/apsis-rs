@@ -78,7 +78,7 @@ pub fn eccentric_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
 /// by Newton's method. The starting guess is the mean anomaly plus a term
 /// proportional to the eccentricity, which keeps the iteration stable for
 /// eccentricities approaching one. The iteration always terminates, and the
-/// result is the value reached after at most [`MAX_ITERATIONS`] steps.
+/// result is the value reached after at most a fixed number of steps.
 pub fn eccentric_from_mean(mean_anomaly: f64, eccentricity: f64) -> f64 {
     let mean = wrap_to_pi(mean_anomaly);
     // A first order correction to the circular guess.

@@ -13,7 +13,7 @@
 //!   two-body theory, or read from a file all work the same way.
 //! - [`Sampler`] fills a table by calling a function that produces a state
 //!   from a time. In this workspace that function is normally
-//!   [`apsis_sgp4::Satellite::propagate_at`], but the sampler only requires
+//!   `apsis_sgp4::Satellite::propagate_at`, but the sampler only requires
 //!   a closure, so a test can use an analytic function.
 //!
 //! Interpolation is Hermite cubic, which uses both the position and the

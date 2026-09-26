@@ -13,7 +13,7 @@
 //! implementation meaningful.
 //!
 //! The engine stops for one of four reasons, reported as a
-//! [`StopReason`](crate::StopReason):
+//! [`StopReason`]:
 //! the queue empties, the simulation reaches its time limit, the caller asks
 //! it to stop, or an event limit is reached. The last two exist so that a
 //! model that schedules events forever cannot run without bound.

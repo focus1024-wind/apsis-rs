@@ -2,7 +2,7 @@
 //!
 //! The topology of a satellite network changes as the satellites move, so a
 //! route is only valid over an interval. This crate computes least cost
-//! routes through a [`Topology`](apsis_topology::Topology) and reports the
+//! routes through a [`Topology`] and reports the
 //! route together with the time it remains valid.
 //!
 //! Two forms of routing are provided:

@@ -94,7 +94,7 @@ impl Sampler {
     ///
     /// The function maps a time in seconds to a position and velocity. In
     /// this workspace it is normally a closure over
-    /// [`apsis_sgp4::Satellite::propagate_at`], but any function works, so
+    /// `apsis_sgp4::Satellite::propagate_at`, but any function works, so
     /// the sampler can be tested against an analytic orbit.
     ///
     /// Returns an error when the sampler is not usable or when the function

@@ -165,7 +165,7 @@ pub(crate) fn rotation_x(angle: f64) -> Mat3 {
 
 /// Returns a rotation of `angle` about the second axis, in radians.
 ///
-/// The convention is the one of [`rotation_x`].
+/// The sign convention matches the other axis rotations in this module.
 fn rotation_y(angle: f64) -> Mat3 {
     let (sine, cosine) = angle.sin_cos();
     Mat3::from_rows([cosine, 0.0, -sine], [0.0, 1.0, 0.0], [sine, 0.0, cosine])
@@ -173,7 +173,7 @@ fn rotation_y(angle: f64) -> Mat3 {
 
 /// Returns a rotation of `angle` about the third axis, in radians.
 ///
-/// The convention is the one of [`rotation_x`].
+/// The sign convention matches the other axis rotations in this module.
 pub fn rotation_z(angle: f64) -> Mat3 {
     let (sine, cosine) = angle.sin_cos();
     Mat3::from_rows([cosine, sine, 0.0], [-sine, cosine, 0.0], [0.0, 0.0, 1.0])

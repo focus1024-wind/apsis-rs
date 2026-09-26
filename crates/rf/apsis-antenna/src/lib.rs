@@ -17,7 +17,7 @@
 //!   uniformly illuminated circular aperture it is about minus 17.6 dB.
 //!
 //! Every function here takes or returns angles in radians and gains as
-//! [`Gain`], so a result can be fed straight into a link budget.
+//! [`apsis_rf::Gain`], so a result can be fed straight into a link budget.
 //!
 //! Sources:
 //!
