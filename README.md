@@ -60,6 +60,7 @@ apsis-rs = { path = "...", features = ["orbit"] }
 - 默认禁止任何第三方 crate，包括开发依赖与 `build.rs`
 - 库代码不使用 `unwrap()` / `expect()` / `panic!` / `unsafe`
 - 公共 API 必须有文档注释，注释自包含
+- 测试放在各 crate 的 `tests/` 目录，与 `src/` 分离；测试为集成测试，只通过公共 API 访问被测 crate，不使用 `#[cfg(test)]` 内联测试模块
 
 ## 目录
 
