@@ -193,3 +193,7 @@ required-features = ["physics"]
 [[example]]
 name = "dump_teme"
 required-features = ["physics"]
+
+[[example]]
+name = "integrate_ops"
+required-features = ["ops"]
