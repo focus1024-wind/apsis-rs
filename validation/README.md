@@ -34,7 +34,6 @@ validation/
 │   ├── link/            # 链路预算对拍
 │   └── constellation/   # 覆盖几何对拍
 └── data/
-    ├── tle/             # 公开 TLE 样本
     └── expected/        # Rust 侧导出的待比对数据
 ```
 
