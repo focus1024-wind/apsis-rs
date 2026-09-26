@@ -17,9 +17,9 @@ foundation -> physics -> orbit -> rf -> network -> ops -> sim -> apsis-rs
 
 约束：
 
-- 依赖只能从左向右
+- 依赖只能从左向右，禁止反向依赖
 - 禁止跨层跳跃，例如 `orbit` 不得直接依赖 `network`
-- 禁止同层平级依赖
+- 层内允许依赖该层的基准 crate：`foundation` 内 `apsis-core` 为基准，其余 crate 可依赖它；其余层内部以各自的门面 crate（`apsis-orbit`、`apsis-rf`、`apsis-sim` 等）作为整合点
 
 各层内容：
 

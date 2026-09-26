@@ -207,3 +207,6 @@ version = "0.1.0"
 [[package]]
 name = "apsis-units"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+]
