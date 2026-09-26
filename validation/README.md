@@ -119,9 +119,16 @@ pixi run python validation/python/constellation/check_coverage.py
 
 | 量 | 容差 |
 | --- | --- |
-| 位置 | < 1e-3 km |
+| 位置、距离 | < 1e-3 km（SGP4 传播）或 1e-9 km（几何量） |
 | 速度 | < 1e-6 km/s |
 | 时间 | < 1e-6 s |
+| 角度（覆盖几何） | 1e-12 rad |
+| 面积、覆盖占比 | 相对 1e-12 |
+| 链路预算、衰减 | 1e-6 至 1e-9 dB，视模型而定 |
+| 地球定向矩阵 | 1e-9 |
+
+各脚本把容差写成其源文件顶部的具名常量，值按所比较的物理量设定，见
+`docs/design/errors.md` 的"对拍容差"一节。
 
 超差时修正 Rust 侧算法，不放宽容差，除非经确认。
 
@@ -144,6 +151,7 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 | `atmosphere/check_gas_exact.py` | 精确斜路径，11 个场景（1–100 GHz，1°–90° 仰角） | `itur` 的 ITU-R P.676-12 exact 方法 | 9.6e-9（相对） |
 | `time/check_iau2000.py` | 岁差、章动、框架偏移、GAST、GCRS→ITRF，8 个历元 × 28 个量 | ERFA 2.0.1（IAU SOFA 派生） | 章动 6.6e-15 rad；BPN 矩阵 6.0e-15；GAST 1.1e-11 rad |
 | `coord/check_teme.py` | TEME → 地固系，4 个历元 | ERFA 的 `gmst82` 与 `pom00`（同为 0 极移） | 4.9e-10 km |
+| `constellation/check_coverage.py` | 覆盖几何，6 个场景（LEO/MEO/GEO × 低/常规/严格遮蔽角）；以及地心角与仰角的往返 | 球面三角关系（Python 从几何独立重写） | 角度 0，面积相对 2.2e-16 |
 
 ### 关于射频层对拍的说明
 
