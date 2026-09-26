@@ -26,6 +26,10 @@ required-features = ["physics"]
 name = "dump_orbit"
 required-features = ["orbit"]
 
+[[example]]
+name = "dump_link"
+required-features = ["rf"]
+
 [lints]
 workspace = true
 

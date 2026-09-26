@@ -53,6 +53,10 @@ cargo run -p apsis-rs --features physics --example dump_time \
 # SGP4/SDP4 传播
 cargo run -p apsis-rs --features orbit --example dump_orbit \
     > validation/data/expected/rust_sgp4.csv
+
+# 链路预算
+cargo run -p apsis-rs --features rf --example dump_link \
+    > validation/data/expected/rust_link.csv
 ```
 
 Python 侧读取同一批输入，用参考实现重算并输出误差表：
@@ -61,6 +65,7 @@ Python 侧读取同一批输入，用参考实现重算并输出误差表：
 pixi run python validation/python/coord/check_geodetic.py
 pixi run python validation/python/time/check_time.py
 pixi run python validation/python/orbit/check_sgp4.py
+pixi run python validation/python/link/check_link.py
 ```
 
 两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。
@@ -85,6 +90,19 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 | `coord/check_geodetic.py` | `Geodetic` → ECEF，280 个点，覆盖全球纬度、经度与高度 | `astropy.coordinates.EarthLocation` | 1.1e-8 m |
 | `time/check_time.py` | UTC → TAI，117 个时刻，覆盖全部闰秒边界 | `astropy.time.Time` | 5.3e-7 s |
 | `orbit/check_sgp4.py` | SGP4/SDP4 传播，4 组 TLE（近地、高偏心、深空、GTO）× 9 个时刻 | `sgp4` 参考库 | 位置 1.2e-8 km，速度 5.3e-12 km/s |
+| `link/check_link.py` | 链路预算，4 个场景（Ku 下行、S 波段、Ka 宽带、L 波段） | 链路方程闭式解（Python 手写） | 5.0e-13 dB |
+
+### 关于射频层对拍的说明
+
+射频层没有可直接对拍的权威 Python 库，因此采用两种策略：
+
+- 闭式解手写对拍：链路预算的每一步都是初等运算，`check_link.py` 用 Python 独立
+  重写同一方程，常数取自 SI 定义，与 Rust 侧一致。
+- 解析性质断言：各 crate 的单元测试验证模型必须满足的性质，例如 3 dB 点、平方
+  律下降、Friis 公式的级联行为、以及 ITU-R P.838 系数表在表列频率处的取值。
+
+ITU-R 建议书（P.676、P.838、P.618）与 ITU-R M.1853 的公式均以数值表或闭式
+形式写在源码注释中，未引入外部数据文件。
 
 ### 关于 SGP4 对拍的约定
 
