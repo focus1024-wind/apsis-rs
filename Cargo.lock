@@ -141,6 +141,9 @@ version = "0.1.0"
 [[package]]
 name = "apsis-rf"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+]
 
 [[package]]
 name = "apsis-routing"
