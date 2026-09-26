@@ -25,7 +25,18 @@ jobs:
         run: cargo test --workspace
       - name: Verify dependency freedom
         run: |
-          if cargo tree --workspace --edges normal,build 2>/dev/null | grep -v '^apsis' | grep -q '('; then
-            echo "unexpected external dependency detected" >&2
+          # Every package in the graph must be a workspace crate. `--prefix
+          # none` prints bare `name version` lines, one per package, which the
+          # box drawing prefix of the default format would otherwise hide.
+          external=$(cargo tree --workspace --all-features \
+              --edges normal,build,dev --prefix none 2>/dev/null \
+            | sed -E 's/ \(\*\)$//; s/ \([^)]*\)$//' \
+            | awk 'NF {print $1}' \
+            | sort -u \
+            | grep -v '^apsis' || true)
+          if [ -n "$external" ]; then
+            echo "unexpected external dependency detected:" >&2
+            echo "$external" >&2
             exit 1
           fi
+          echo "dependency check passed: workspace crates only"
