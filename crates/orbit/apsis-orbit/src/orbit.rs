@@ -222,6 +222,7 @@ impl Orbit {
 
 /// A failure while sampling an orbit into an ephemeris.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum EphemerisSamplingError {
     /// The requested grid is not usable: the step is not positive or the
     /// range is empty or reversed.
@@ -247,6 +248,7 @@ impl core::error::Error for EphemerisSamplingError {}
 
 /// A failure while applying a burn to an orbit.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ManeuverApplicationError {
     /// The state before the burn could not be propagated.
     Propagation(PropagationError),

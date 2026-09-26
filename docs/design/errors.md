@@ -40,6 +40,14 @@ impl core::error::Error for FooError {}
 
 - **`ErrorKind` 标注 `#[non_exhaustive]`**，这样新增一个失败类别不会破坏
   下游的匹配。当前 15 个 `ErrorKind` 全部标注。
+- **错误枚举本身也标注 `#[non_exhaustive]`**，包括同时携带数据的错误枚举
+  （如 `apsis-orbit` 的 `EphemerisSamplingError`，其变体包裹下层错误）。
+- **非错误的状态枚举不标注。** 领域状态（`TaskState`、`LinkState`、
+  `TimeScale`、`HandoverDecision`、`Pattern` 的选择等）在单仓库
+  工作区内以**可穷尽匹配为优点**：新增一个变体时，编译器会指出每一处需要
+  更新的 `match`。这与错误的取舍相反——错误类别多一个，调用方应能继续
+  走默认分支；状态多一个，调用方通常必须显式处理。判断标准：该 enum 的
+  变体是否会被调用方 `match` 后对某些分支走默认？会，则标；不会，则不标。
 - **`kind` 可精确匹配，`detail` 供人阅读。** 调用方按 `kind` 写恢复逻辑，
   把 `detail` 记入日志。`detail` 不参与匹配，因此其措辞可自由改动。
 - **`Display` 输出 `kind`，有 `detail` 时追加 `": detail"`。** 这样日志行
