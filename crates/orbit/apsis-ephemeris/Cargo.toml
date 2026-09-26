@@ -11,3 +11,8 @@ publish = false
 workspace = true
 
 [dependencies]
+apsis-core.workspace = true
+apsis-math.workspace = true
+
+[dev-dependencies]
+apsis-kepler.workspace = true

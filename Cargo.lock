@@ -82,6 +82,11 @@ dependencies = [
 [[package]]
 name = "apsis-ephemeris"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-kepler",
+ "apsis-math",
+]
 
 [[package]]
 name = "apsis-event"
