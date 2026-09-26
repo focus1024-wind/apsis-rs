@@ -1,9 +1,12 @@
 //! The combined orbit type.
 
+use apsis_ephemeris::EphemerisError;
 use apsis_kepler::{GravityParameter, KeplerianElements};
+use apsis_maneuver::ManeuverError;
 use apsis_math::Vec3;
 use apsis_sgp4::{Elements, GravityModel, PropagationError, Satellite, State};
 use apsis_tle::TwoLineElement;
+use core::fmt;
 
 /// A satellite orbit, held as mean elements ready for propagation.
 ///
@@ -131,7 +134,140 @@ impl Orbit {
     pub fn position_at(&self, minutes: f64) -> Result<Vec3, PropagationError> {
         self.propagate_minutes(minutes).map(|state| state.position)
     }
+
+    /// Samples the orbit into an ephemeris over a range of minutes.
+    ///
+    /// The propagation is the expensive part of a track, so a table built
+    /// once and queried many times is worth the memory. The sample times are
+    /// minutes from the element epoch, matching the rest of this type, while
+    /// the returned ephemeris keeps seconds, matching `apsis-ephemeris`.
+    ///
+    /// The table is built with position and velocity from the propagator,
+    /// so the Hermite interpolation has exact endpoint slopes and the error
+    /// between samples is tiny; there is no need to use the position only
+    /// route except for a source that has no velocity.
+    ///
+    /// Returns an error when the grid is not usable or when a sample cannot
+    /// be propagated, which happens when the elements have decayed or the
+    /// range leaves the region where the model is defined.
+    pub fn sample_ephemeris(
+        &self,
+        start_minutes: f64,
+        end_minutes: f64,
+        step_minutes: f64,
+    ) -> Result<apsis_ephemeris::Ephemeris, EphemerisSamplingError> {
+        let sampler = apsis_ephemeris::Sampler::new(
+            start_minutes * 60.0,
+            end_minutes * 60.0,
+            step_minutes * 60.0,
+        );
+        if !sampler.is_valid() {
+            return Err(EphemerisSamplingError::InvalidGrid);
+        }
+        let mut failure = None;
+        let ephemeris = sampler.sample(|seconds| {
+            // The minutes are recovered from the seconds the sampler uses,
+            // so a non-integer step stays consistent with the grid.
+            match self.propagate_minutes(seconds / 60.0) {
+                Ok(state) => apsis_ephemeris::Sample::new(seconds, state.position, state.velocity),
+                Err(error) => {
+                    // The sampler cannot report the propagation failure, so
+                    // it is recorded and the sample is filled with a value
+                    // the table constructor will then reject.
+                    failure = Some(error);
+                    apsis_ephemeris::Sample::new(
+                        seconds,
+                        Vec3::new(f64::NAN, f64::NAN, f64::NAN),
+                        Vec3::new(f64::NAN, f64::NAN, f64::NAN),
+                    )
+                }
+            }
+        });
+        if let Some(error) = failure {
+            return Err(EphemerisSamplingError::Propagation(error));
+        }
+        ephemeris.map_err(EphemerisSamplingError::Ephemeris)
+    }
+
+    /// Applies a finite burn and returns the resulting osculating elements.
+    ///
+    /// The burn is applied to the osculating state at the given time, so the
+    /// manoeuvre is described relative to the orbit the satellite is
+    /// actually on rather than the mean elements. The resulting elements are
+    /// the osculating elements of the post burn state, which is what a
+    /// following propagation needs. Because the underlying propagator is
+    /// built for one element set, this is a planning result rather than a
+    /// new propagator; a caller that wants to propagate the new orbit starts
+    /// a fresh `Orbit` from the returned elements.
+    pub fn apply_burn(
+        &self,
+        minutes: f64,
+        burn: apsis_maneuver::FiniteBurn,
+        steps: usize,
+    ) -> Result<KeplerianElements, ManeuverApplicationError> {
+        let state = self
+            .propagate_minutes(minutes)
+            .map_err(ManeuverApplicationError::Propagation)?;
+        let kepler_state = apsis_kepler::State {
+            position: state.position,
+            velocity: state.velocity,
+        };
+        let outcome = burn
+            .apply(kepler_state, self.parameter, steps)
+            .map_err(ManeuverApplicationError::Maneuver)?;
+        KeplerianElements::from_state(&outcome.state, self.parameter)
+            .ok_or(ManeuverApplicationError::NotElliptical)
+    }
 }
+
+/// A failure while sampling an orbit into an ephemeris.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EphemerisSamplingError {
+    /// The requested grid is not usable: the step is not positive or the
+    /// range is empty or reversed.
+    InvalidGrid,
+    /// A sample could not be propagated.
+    Propagation(PropagationError),
+    /// The table rejected the samples, which should not happen for a valid
+    /// grid and is reported rather than hidden.
+    Ephemeris(EphemerisError),
+}
+
+impl fmt::Display for EphemerisSamplingError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidGrid => f.write_str("the sampling grid is not usable"),
+            Self::Propagation(error) => write!(f, "a sample could not be propagated: {error}"),
+            Self::Ephemeris(error) => write!(f, "the ephemeris rejected the samples: {error}"),
+        }
+    }
+}
+
+impl core::error::Error for EphemerisSamplingError {}
+
+/// A failure while applying a burn to an orbit.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ManeuverApplicationError {
+    /// The state before the burn could not be propagated.
+    Propagation(PropagationError),
+    /// The burn itself was not usable.
+    Maneuver(ManeuverError),
+    /// The post burn state is not an elliptical orbit, which happens when
+    /// the burn is large enough to escape.
+    NotElliptical,
+}
+
+impl fmt::Display for ManeuverApplicationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Propagation(error) => write!(f, "the state could not be propagated: {error}"),
+            Self::Maneuver(error) => write!(f, "the burn is not usable: {error}"),
+            Self::NotElliptical => f.write_str("the post burn orbit is not elliptical"),
+        }
+    }
+}
+
+impl core::error::Error for ManeuverApplicationError {}
 
 /// Returns the gravitational parameter that matches a gravity model.
 ///

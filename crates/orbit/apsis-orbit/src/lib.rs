@@ -20,6 +20,16 @@
 //! different and wrong answer; the conversions here are explicit about which
 //! direction they go.
 //!
+//! Two further operations are built on the propagation and exposed here
+//! because they need the same gravity parameter to stay consistent:
+//!
+//! - [`Orbit::sample_ephemeris`] records the track on a time grid so that it
+//!   can be queried by interpolation instead of by propagation, which is
+//!   what a coverage or access search wants.
+//! - [`Orbit::apply_burn`] applies a finite maneuver to the osculating state
+//!   and returns the resulting elements, which is what a maneuver plan
+//!   produces.
+//!
 //! ```
 //! use apsis_orbit::{GravityModel, Orbit};
 //! use apsis_tle::TwoLineElement;
@@ -45,9 +55,14 @@
 
 mod orbit;
 
-pub use orbit::Orbit;
+pub use orbit::{EphemerisSamplingError, ManeuverApplicationError, Orbit};
 
+pub use apsis_ephemeris::{Ephemeris, EphemerisError, EphemerisErrorKind, Sample, Sampler};
 pub use apsis_kepler::{GravityParameter, KeplerianElements};
+pub use apsis_maneuver::{
+    BurnOutcome, FiniteBurn, HohmannTransfer, Impulse, ManeuverError, ManeuverErrorKind,
+    hohmann_transfer,
+};
 pub use apsis_sgp4::{
     Elements, GravityModel, PropagationError, PropagationErrorKind, Satellite, State,
 };

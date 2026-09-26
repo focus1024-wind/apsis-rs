@@ -17,3 +17,5 @@ apsis-time.workspace = true
 apsis-tle.workspace = true
 apsis-sgp4.workspace = true
 apsis-kepler.workspace = true
+apsis-ephemeris.workspace = true
+apsis-maneuver.workspace = true

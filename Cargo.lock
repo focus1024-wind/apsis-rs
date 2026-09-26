@@ -166,6 +166,11 @@ version = "0.1.0"
 [[package]]
 name = "apsis-maneuver"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-kepler",
+ "apsis-math",
+]
 
 [[package]]
 name = "apsis-math"
@@ -193,7 +198,9 @@ name = "apsis-orbit"
 version = "0.1.0"
 dependencies = [
  "apsis-core",
+ "apsis-ephemeris",
  "apsis-kepler",
+ "apsis-maneuver",
  "apsis-math",
  "apsis-sgp4",
  "apsis-time",
