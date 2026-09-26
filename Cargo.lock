@@ -17,6 +17,10 @@ dependencies = [
 [[package]]
 name = "apsis-atmosphere"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-rf",
+]
 
 [[package]]
 name = "apsis-conflict"
