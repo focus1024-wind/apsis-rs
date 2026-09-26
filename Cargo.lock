@@ -5,6 +5,12 @@ version = 4
 [[package]]
 name = "apsis-access"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-coverage",
+ "apsis-geodesy",
+ "apsis-math",
+]
 
 [[package]]
 name = "apsis-antenna"
