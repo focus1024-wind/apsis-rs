@@ -9,6 +9,10 @@ version = "0.1.0"
 [[package]]
 name = "apsis-antenna"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-rf",
+]
 
 [[package]]
 name = "apsis-atmosphere"
