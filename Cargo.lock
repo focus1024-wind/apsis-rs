@@ -121,6 +121,14 @@ version = "0.1.0"
 [[package]]
 name = "apsis-orbit"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-kepler",
+ "apsis-math",
+ "apsis-sgp4",
+ "apsis-time",
+ "apsis-tle",
+]
 
 [[package]]
 name = "apsis-output"
