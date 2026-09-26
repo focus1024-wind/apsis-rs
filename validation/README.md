@@ -82,6 +82,10 @@ cargo run -p apsis-rs --features rf --example dump_p839 \
 # ITU-R P.676-12 精确斜路径（分层积分 + 折射率射线追踪）
 cargo run -p apsis-rs --features rf --example dump_gas_exact \
     > validation/data/expected/rust_gas_exact.csv
+
+# IAU 2000/2006 地球定向（岁差、章动、框架偏移、GCRS→ITRF）
+cargo run -p apsis-rs --features physics --example dump_iau2000 \
+    > validation/data/expected/rust_iau2000.csv
 ```
 
 Python 侧读取同一批输入，用参考实现重算并输出误差表：
@@ -97,6 +101,7 @@ pixi run python validation/python/atmosphere/check_rain_path.py
 pixi run python validation/python/link/check_s465.py
 pixi run python validation/python/atmosphere/check_p839.py
 pixi run python validation/python/atmosphere/check_gas_exact.py
+pixi run python validation/python/time/check_iau2000.py
 ```
 
 两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。
@@ -128,12 +133,13 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 | `link/check_s465.py` | 参考天线方向图，3 种口径 × 8 个离轴角 | ITU-R S.465 方程（Python 转写） | 4.0e-10 dB |
 | `atmosphere/check_p839.py` | 零度等温线高度，15 个全球点 | `itur` 的 ITU-R P.839-4 实现 | 3.3e-13 km |
 | `atmosphere/check_gas_exact.py` | 精确斜路径，11 个场景（1–100 GHz，1°–90° 仰角） | `itur` 的 ITU-R P.676-12 exact 方法 | 9.6e-9（相对） |
+| `time/check_iau2000.py` | 岁差、章动、框架偏移、GAST、GCRS→ITRF，8 个历元 × 28 个量 | ERFA 2.0.1（IAU SOFA 派生） | 章动 6.6e-15 rad；BPN 矩阵 6.0e-15；GAST 1.1e-11 rad |
 
 ### 关于射频层对拍的说明
 
 射频层分两类：有权威参考实现的模型与纯闭式算式。
 
-- 有参考实现的，直接对拍：大气与雨衰用 `itur`，它是 ITU-R 研究组维护的建议书实现；
+- 有参考实现的，直接对拍：地球定向用 `erfa`（IAU SOFA 的派生实现），大气与雨衰用 `itur`；
   链路预算的每一步都是初等运算，`check_link.py` 用 Python 独立重写同一方程。
 - 其余以解析性质断言为主：各 crate 的单元测试验证模型必须满足的性质，例如 3 dB 点、
   平方律下降、Friis 级联行为、P.838-3 系数在表列频率处的取值。

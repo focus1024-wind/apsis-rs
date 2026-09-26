@@ -185,3 +185,7 @@ required-features = ["rf"]
 [[example]]
 name = "integrate_network"
 required-features = ["network"]
+
+[[example]]
+name = "dump_iau2000"
+required-features = ["physics"]

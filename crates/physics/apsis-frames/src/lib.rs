@@ -46,6 +46,7 @@
 #![deny(missing_docs)]
 
 mod earth_rotation;
+pub mod iau2000;
 
 pub use earth_rotation::{
     ERA_J2000_TURNS, ERA_RATE_TURNS_PER_DAY, EarthRotationAngle, rotation_ecef_to_eci,
