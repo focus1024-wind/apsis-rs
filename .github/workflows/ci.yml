@@ -18,11 +18,13 @@ jobs:
       - name: Format
         run: cargo fmt --all --check
       - name: Check
-        run: cargo check --workspace --all-targets
+        # --all-features matters: the facade crate enables nothing by default,
+        # so without it almost all of its code, and every example, is skipped.
+        run: cargo check --workspace --all-targets --all-features
       - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Test
-        run: cargo test --workspace
+        run: cargo test --workspace --all-features
       - name: Integration checks
         # The cross-layer checks are examples rather than tests, because they
         # are also meant to be read and run by hand. `cargo test` does not run
