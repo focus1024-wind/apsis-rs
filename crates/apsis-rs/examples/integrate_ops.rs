@@ -10,7 +10,8 @@
 //! 1. Define a satellite and a ground station as resources, taking the
 //!    station's availability from access windows.
 //! 2. Define observation tasks that each need the satellite and the station.
-//! 3. Plan the tasks with `apsis-scheduler`.
+//! 3. Plan the tasks with `apsis-scheduler`, using precedence constraints
+//!    to express a task that needs two resources in sequence.
 //! 4. Check the result with `apsis-conflict`.
 //! 5. Evaluate the schedule with `apsis-schedule`.
 //!
@@ -23,8 +24,8 @@
 use apsis_conflict::detect;
 use apsis_resource::{Resource, ResourceId, ResourceSet, Window};
 use apsis_schedule::Schedule;
-use apsis_scheduler::Planner;
-use apsis_task::{Task, TaskId};
+use apsis_scheduler::{ImprovementSettings, Planner};
+use apsis_task::{PrecedenceGraph, Task, TaskId};
 
 /// The satellite resource.
 const SATELLITE: ResourceId = ResourceId::new(0);
@@ -152,6 +153,70 @@ fn main() {
     let again = Planner::new().schedule(&tasks, &resources);
     assert_eq!(result.schedule, again.schedule);
     let _ = Schedule::new();
+    let _ = ImprovementSettings::disabled();
+
+    // Step 6: a task that needs two resources in sequence. An observation
+    // uses the payload, and the downlink that follows uses the transmitter.
+    // The two are separate tasks joined by a precedence constraint, which is
+    // how a sequential resource use is expressed.
+    let payload = ResourceId::new(2);
+    let transmitter = ResourceId::new(3);
+    let mut extra = resources.clone();
+    let mut payload_resource = Resource::new(payload, 1.0);
+    payload_resource
+        .set_windows(&[Window::new(0.0, 5_000.0)])
+        .expect("the window is usable");
+    let mut transmitter_resource = Resource::new(transmitter, 1.0);
+    transmitter_resource
+        .set_windows(&[Window::new(0.0, 5_000.0)])
+        .expect("the window is usable");
+    extra
+        .insert(payload_resource)
+        .expect("the identifier is new");
+    extra
+        .insert(transmitter_resource)
+        .expect("the identifier is new");
+
+    let chain = [
+        Task::new(TaskId::new(100), 120.0)
+            .with_priority(10.0)
+            .with_window(200.0, 1_500.0)
+            .try_require(payload, 1.0)
+            .expect("the payload is not yet required"),
+        Task::new(TaskId::new(101), 90.0)
+            .with_priority(10.0)
+            .with_window(0.0, 2_000.0)
+            .try_require(transmitter, 1.0)
+            .expect("the transmitter is not yet required"),
+    ];
+    let mut graph = PrecedenceGraph::new();
+    graph
+        .add(TaskId::new(100), TaskId::new(101))
+        .expect("the constraint does not close a cycle");
+
+    let chained = Planner::new().schedule_with_precedence(&chain, &extra, &graph);
+    assert!(chained.is_complete(), "{:?}", chained.outcomes);
+    assert!(chained.honours_precedence(&graph));
+    let collection = chained
+        .schedule
+        .placement_of(TaskId::new(100))
+        .expect("the collection is placed");
+    let transmission = chained
+        .schedule
+        .placement_of(TaskId::new(101))
+        .expect("the transmission is placed");
+    println!(
+        "sequence: collect {:.0}-{:.0} s, downlink {:.0}-{:.0} s",
+        collection.start,
+        collection.end(),
+        transmission.start,
+        transmission.end()
+    );
+    assert!(
+        transmission.start >= collection.end(),
+        "the downlink must follow the collection"
+    );
+    assert!(apsis_conflict::detect(&chained.schedule, &chain, &extra).is_clear());
 
     println!("integration check passed");
 }

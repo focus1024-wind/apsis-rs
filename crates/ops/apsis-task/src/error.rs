@@ -22,6 +22,8 @@ pub enum TaskErrorKind {
     NoSuchTask,
     /// A task with the identifier already exists.
     DuplicateTask,
+    /// A precedence constraint would close a cycle.
+    PrecedenceCycle,
 }
 
 impl fmt::Display for TaskErrorKind {
@@ -35,6 +37,7 @@ impl fmt::Display for TaskErrorKind {
             Self::InvalidWeight => "a priority or value is not finite",
             Self::NoSuchTask => "no such task",
             Self::DuplicateTask => "a task with that identifier exists",
+            Self::PrecedenceCycle => "the precedence constraints contain a cycle",
         };
         f.write_str(text)
     }

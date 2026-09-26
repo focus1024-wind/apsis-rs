@@ -148,16 +148,52 @@ fn a_mandatory_task_is_placed_before_a_more_valuable_optional_one() {
         .expect("the mandatory task is placed");
     assert_eq!(mandatory_placement.start, 0.0);
 
-    // With the rule turned off, the optional task goes first and the
+    // With the rule turned off, and the improvement pass disabled so that
+    // only the ordering is under test, the optional task goes first and the
     // mandatory one is placed after it, using the rest of its window.
     let without = Planner::new()
         .with_mandatory_first(false)
+        .with_improvement(apsis_scheduler::ImprovementSettings::disabled())
         .schedule(&tasks, &resources);
     let optional_placement = without
         .schedule
         .placement_of(TaskId::new(0))
         .expect("the optional task is placed");
     assert_eq!(optional_placement.start, 0.0);
+}
+
+#[test]
+fn the_improvement_pass_recovers_a_plan_that_the_greedy_order_missed() {
+    // The optional task is worth more, so it is placed first and occupies
+    // the resource from zero to sixty. The mandatory task has a window from
+    // zero to a hundred, so it cannot fit after the optional one and would
+    // be lost. The improvement pass moves the optional task aside and places
+    // both.
+    let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
+    let optional = task(0, 60.0, &[0])
+        .with_priority(100.0)
+        .with_window(0.0, 1_000.0);
+    let mandatory = task(1, 60.0, &[0])
+        .with_priority(1.0)
+        .with_window(0.0, 100.0)
+        .with_mandatory(true);
+    let tasks = [optional, mandatory];
+
+    let greedy = Planner::new()
+        .with_mandatory_first(false)
+        .with_improvement(apsis_scheduler::ImprovementSettings::disabled())
+        .schedule(&tasks, &resources);
+    // Without the pass the mandatory task is lost.
+    assert!(!greedy.honours_mandatory(&tasks));
+    assert_eq!(greedy.schedule.len(), 1);
+
+    let improved = Planner::new()
+        .with_mandatory_first(false)
+        .schedule(&tasks, &resources);
+    // With the pass both are placed.
+    assert!(improved.is_complete(), "{:?}", improved.outcomes);
+    assert!(improved.honours_mandatory(&tasks));
+    assert!(!improved.improved.is_empty());
 }
 
 #[test]

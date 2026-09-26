@@ -44,14 +44,16 @@
 #![deny(missing_docs)]
 
 mod greedy;
+mod improve;
 mod planner;
 
 pub use greedy::{
     demand_at, earliest_feasible_start, feasible_at, infeasible_tasks, resources_free_at,
     resources_have_capacity,
 };
+pub use improve::{ImprovementOutcome, ImprovementSettings, improve};
 pub use planner::{PlanOutcome, Planner, SchedulingResult};
 
 pub use apsis_resource::{ResourceId, ResourceSet};
 pub use apsis_schedule::Schedule;
-pub use apsis_task::{Task, TaskId};
+pub use apsis_task::{PrecedenceGraph, Task, TaskId};

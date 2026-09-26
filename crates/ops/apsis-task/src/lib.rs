@@ -8,8 +8,9 @@
 //! A task requires all of its resources at the same time, for its whole
 //! duration. That is the model an observation has: the satellite and the
 //! ground station must both be available while the data is taken. A task that
-//! needs resources in sequence is expressed as two tasks with a
-//! precedence constraint, which the scheduling layer provides.
+//! needs resources in sequence is expressed as two tasks joined by a
+//! precedence constraint in a [`PrecedenceGraph`], which says that one task
+//! must finish before the other starts.
 //!
 //! Tasks are immutable once built. The state a scheduler assigns to one is
 //! kept separately, in the schedule, so that the same task can be considered
@@ -37,9 +38,11 @@
 #![deny(missing_docs)]
 
 mod error;
+mod precedence;
 mod task;
 
 pub use error::{TaskError, TaskErrorKind};
+pub use precedence::PrecedenceGraph;
 pub use task::{Requirement, Task, TaskId, TaskSet, TaskState, task_order};
 
 pub use apsis_resource::ResourceId;

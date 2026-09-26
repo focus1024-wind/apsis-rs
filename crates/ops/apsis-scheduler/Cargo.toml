@@ -15,3 +15,6 @@ apsis-core.workspace = true
 apsis-resource.workspace = true
 apsis-task.workspace = true
 apsis-schedule.workspace = true
+
+[dev-dependencies]
+apsis-conflict.workspace = true
