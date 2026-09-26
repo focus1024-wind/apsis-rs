@@ -29,6 +29,12 @@ version = "0.1.0"
 [[package]]
 name = "apsis-constellation"
 version = "0.1.0"
+dependencies = [
+ "apsis-core",
+ "apsis-kepler",
+ "apsis-math",
+ "apsis-sgp4",
+]
 
 [[package]]
 name = "apsis-coord"
