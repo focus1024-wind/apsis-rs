@@ -11,7 +11,6 @@ publish = false
 workspace = true
 
 [dependencies]
-apsis-core.workspace = true
 apsis-math.workspace = true
 apsis-geodesy.workspace = true
 apsis-coverage.workspace = true

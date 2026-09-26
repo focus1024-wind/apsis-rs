@@ -6,7 +6,6 @@ version = 4
 name = "apsis-access"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-coverage",
  "apsis-geodesy",
  "apsis-math",
@@ -16,7 +15,6 @@ dependencies = [
 name = "apsis-antenna"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-rf",
 ]
 
@@ -24,7 +22,6 @@ dependencies = [
 name = "apsis-atmosphere"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-rf",
 ]
 
@@ -32,7 +29,6 @@ dependencies = [
 name = "apsis-conflict"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-resource",
  "apsis-schedule",
  "apsis-task",
@@ -42,9 +38,7 @@ dependencies = [
 name = "apsis-constellation"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-kepler",
- "apsis-math",
  "apsis-sgp4",
 ]
 
@@ -52,7 +46,6 @@ dependencies = [
 name = "apsis-coord"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-frames",
  "apsis-geodesy",
  "apsis-math",
@@ -66,7 +59,6 @@ version = "0.1.0"
 name = "apsis-coverage"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-geodesy",
  "apsis-math",
 ]
@@ -83,7 +75,6 @@ dependencies = [
 name = "apsis-ephemeris"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-kepler",
  "apsis-math",
 ]
@@ -91,15 +82,11 @@ dependencies = [
 [[package]]
 name = "apsis-event"
 version = "0.1.0"
-dependencies = [
- "apsis-core",
-]
 
 [[package]]
 name = "apsis-frames"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-math",
 ]
 
@@ -107,17 +94,12 @@ dependencies = [
 name = "apsis-geodesy"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-math",
 ]
 
 [[package]]
 name = "apsis-handover"
 version = "0.1.0"
-dependencies = [
- "apsis-core",
- "apsis-math",
-]
 
 [[package]]
 name = "apsis-interference"
@@ -131,7 +113,6 @@ dependencies = [
 name = "apsis-isl"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-math",
 ]
 
@@ -139,10 +120,7 @@ dependencies = [
 name = "apsis-kepler"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-math",
- "apsis-time",
- "apsis-tle",
 ]
 
 [[package]]
@@ -167,7 +145,6 @@ version = "0.1.0"
 name = "apsis-maneuver"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-kepler",
  "apsis-math",
 ]
@@ -180,8 +157,6 @@ version = "0.1.0"
 name = "apsis-mesh"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
- "apsis-math",
  "apsis-topology",
 ]
 
@@ -197,29 +172,21 @@ dependencies = [
 name = "apsis-orbit"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-ephemeris",
  "apsis-kepler",
  "apsis-maneuver",
  "apsis-math",
  "apsis-sgp4",
- "apsis-time",
  "apsis-tle",
 ]
 
 [[package]]
 name = "apsis-output"
 version = "0.1.0"
-dependencies = [
- "apsis-core",
-]
 
 [[package]]
 name = "apsis-resource"
 version = "0.1.0"
-dependencies = [
- "apsis-core",
-]
 
 [[package]]
 name = "apsis-rf"
@@ -232,8 +199,6 @@ dependencies = [
 name = "apsis-routing"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
- "apsis-math",
  "apsis-topology",
 ]
 
@@ -287,7 +252,6 @@ dependencies = [
 name = "apsis-scenario"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-resource",
  "apsis-task",
 ]
@@ -296,7 +260,6 @@ dependencies = [
 name = "apsis-schedule"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-resource",
  "apsis-task",
 ]
@@ -306,7 +269,6 @@ name = "apsis-scheduler"
 version = "0.1.0"
 dependencies = [
  "apsis-conflict",
- "apsis-core",
  "apsis-resource",
  "apsis-schedule",
  "apsis-task",
@@ -316,7 +278,6 @@ dependencies = [
 name = "apsis-sgp4"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-math",
  "apsis-time",
  "apsis-tle",
@@ -326,7 +287,6 @@ dependencies = [
 name = "apsis-sim"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-event",
  "apsis-output",
  "apsis-resource",
@@ -341,7 +301,6 @@ dependencies = [
 name = "apsis-sim-engine"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-event",
 ]
 
@@ -349,7 +308,6 @@ dependencies = [
 name = "apsis-task"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-resource",
 ]
 
@@ -357,7 +315,6 @@ dependencies = [
 name = "apsis-time"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-leap",
 ]
 
@@ -365,7 +322,6 @@ dependencies = [
 name = "apsis-tle"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-time",
 ]
 
@@ -373,7 +329,6 @@ dependencies = [
 name = "apsis-topology"
 version = "0.1.0"
 dependencies = [
- "apsis-core",
  "apsis-math",
 ]
 

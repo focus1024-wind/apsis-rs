@@ -11,4 +11,3 @@ publish = false
 workspace = true
 
 [dependencies]
-apsis-core.workspace = true
