@@ -1,6 +1,6 @@
-//! Tests for geodetic and Earth-centered, Earth-fixed conversions.
+//! Tests for geodetic and Cartesian conversions.
 
-use apsis_geodesy::{Ecef, Geodetic, WGS84};
+use apsis_geodesy::{Geodetic, WGS84, geodetic_from_cartesian};
 use apsis_math::Vec3;
 
 /// Tolerance for position comparisons, in meters.
@@ -14,35 +14,35 @@ const ANGLE_TOL: f64 = 1e-11;
 
 #[test]
 fn equatorial_point_lies_on_the_semi_major_axis() {
-    let point = Geodetic::new(0.0, 0.0, 0.0).to_ecef(WGS84);
-    assert!((point.position().x - WGS84.semi_major_axis()).abs() < POSITION_TOL);
-    assert!(point.position().y.abs() < POSITION_TOL);
-    assert!(point.position().z.abs() < POSITION_TOL);
+    let point = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84);
+    assert!((point.x - WGS84.semi_major_axis()).abs() < POSITION_TOL);
+    assert!(point.y.abs() < POSITION_TOL);
+    assert!(point.z.abs() < POSITION_TOL);
 }
 
 #[test]
 fn pole_lies_on_the_semi_minor_axis() {
-    let point = Geodetic::new(core::f64::consts::FRAC_PI_2, 0.0, 0.0).to_ecef(WGS84);
-    assert!(point.position().x.abs() < POSITION_TOL);
-    assert!(point.position().y.abs() < POSITION_TOL);
-    assert!((point.position().z - WGS84.semi_minor_axis()).abs() < POSITION_TOL);
+    let point = Geodetic::new(core::f64::consts::FRAC_PI_2, 0.0, 0.0).to_cartesian(WGS84);
+    assert!(point.x.abs() < POSITION_TOL);
+    assert!(point.y.abs() < POSITION_TOL);
+    assert!((point.z - WGS84.semi_minor_axis()).abs() < POSITION_TOL);
 }
 
 #[test]
 fn longitude_quarter_turn_places_the_point_on_the_second_axis() {
-    let point = Geodetic::new(0.0, core::f64::consts::FRAC_PI_2, 0.0).to_ecef(WGS84);
-    assert!(point.position().x.abs() < POSITION_TOL);
-    assert!((point.position().y - WGS84.semi_major_axis()).abs() < POSITION_TOL);
+    let point = Geodetic::new(0.0, core::f64::consts::FRAC_PI_2, 0.0).to_cartesian(WGS84);
+    assert!(point.x.abs() < POSITION_TOL);
+    assert!((point.y - WGS84.semi_major_axis()).abs() < POSITION_TOL);
 }
 
 #[test]
 fn height_moves_the_point_along_the_ellipsoid_normal() {
-    let surface = Geodetic::new(0.6, 0.3, 0.0).to_ecef(WGS84);
-    let elevated = Geodetic::new(0.6, 0.3, 500.0).to_ecef(WGS84);
-    assert!((surface.position().distance(elevated.position()) - 500.0).abs() < POSITION_TOL);
+    let surface = Geodetic::new(0.6, 0.3, 0.0).to_cartesian(WGS84);
+    let elevated = Geodetic::new(0.6, 0.3, 500.0).to_cartesian(WGS84);
+    assert!((surface.distance(elevated) - 500.0).abs() < POSITION_TOL);
     // The normal at a non-polar latitude is not vertical, so the height
     // changes the horizontal components as well as the third one.
-    assert!(elevated.position().x > surface.position().x);
+    assert!(elevated.x > surface.x);
 }
 
 #[test]
@@ -55,9 +55,8 @@ fn conversion_round_trips_over_a_global_grid() {
                     longitude_degrees.to_radians(),
                     height,
                 );
-                let ecef = original.to_ecef(WGS84);
-                let recovered = ecef
-                    .to_geodetic(WGS84)
+                let cartesian = original.to_cartesian(WGS84);
+                let recovered = geodetic_from_cartesian(cartesian, WGS84)
                     .expect("off-axis points have a longitude");
                 assert!(
                     (recovered.latitude - original.latitude).abs() < ANGLE_TOL,
@@ -80,28 +79,27 @@ fn conversion_round_trips_over_a_global_grid() {
 
 #[test]
 fn round_trip_preserves_the_cartesian_position() {
-    let original = Geodetic::new(0.921, -1.234, 12_345.0).to_ecef(WGS84);
-    let recovered = original
-        .to_geodetic(WGS84)
+    let original = Geodetic::new(0.921, -1.234, 12_345.0).to_cartesian(WGS84);
+    let recovered = geodetic_from_cartesian(original, WGS84)
         .expect("off-axis points have a longitude")
-        .to_ecef(WGS84);
-    assert!(original.position().distance(recovered.position()) < POSITION_TOL);
+        .to_cartesian(WGS84);
+    assert!(original.distance(recovered) < POSITION_TOL);
 }
 
 #[test]
 fn polar_axis_has_no_defined_longitude() {
-    let on_axis = Ecef::new(Vec3::new(0.0, 0.0, WGS84.semi_minor_axis()));
-    assert_eq!(on_axis.to_geodetic(WGS84), None);
+    let on_axis = Vec3::new(0.0, 0.0, WGS84.semi_minor_axis());
+    assert_eq!(geodetic_from_cartesian(on_axis, WGS84), None);
     // The origin is also on the axis.
-    assert_eq!(Ecef::new(Vec3::ZERO).to_geodetic(WGS84), None);
+    assert_eq!(geodetic_from_cartesian(Vec3::ZERO, WGS84), None);
 }
 
 #[test]
 fn non_finite_positions_are_rejected() {
-    let invalid = Ecef::new(Vec3::new(f64::NAN, 0.0, 6_000_000.0));
-    assert_eq!(invalid.to_geodetic(WGS84), None);
-    let infinite = Ecef::new(Vec3::new(f64::INFINITY, 0.0, 0.0));
-    assert_eq!(infinite.to_geodetic(WGS84), None);
+    let invalid = Vec3::new(f64::NAN, 0.0, 6_000_000.0);
+    assert_eq!(geodetic_from_cartesian(invalid, WGS84), None);
+    let infinite = Vec3::new(f64::INFINITY, 0.0, 0.0);
+    assert_eq!(geodetic_from_cartesian(infinite, WGS84), None);
 }
 
 #[test]
@@ -114,21 +112,21 @@ fn known_point_matches_an_independent_computation() {
         -121.333_333_333_333_33_f64.to_radians(),
         0.0,
     )
-    .to_ecef(WGS84);
+    .to_cartesian(WGS84);
     assert!(
-        (point.position().x + 2_634_612.181_141_605_6).abs() < 1e-6,
+        (point.x + 2_634_612.181_141_605_6).abs() < 1e-6,
         "x = {}",
-        point.position().x
+        point.x
     );
     assert!(
-        (point.position().y + 4_327_502.253_728_065).abs() < 1e-6,
+        (point.y + 4_327_502.253_728_065).abs() < 1e-6,
         "y = {}",
-        point.position().y
+        point.y
     );
     assert!(
-        (point.position().z - 3_861_564.098_809_606_4).abs() < 1e-6,
+        (point.z - 3_861_564.098_809_606_4).abs() < 1e-6,
         "z = {}",
-        point.position().z
+        point.z
     );
 }
 
@@ -139,12 +137,4 @@ fn validity_is_reported() {
     assert!(!Geodetic::new(2.0, 0.0, 0.0).is_valid());
     assert!(!Geodetic::new(0.0, 4.0, 0.0).is_valid());
     assert!(!Geodetic::new(0.0, 0.0, f64::NAN).is_valid());
-}
-
-#[test]
-fn ecef_wrapper_exposes_its_vector() {
-    let vector = Vec3::new(1.0, 2.0, 3.0);
-    let ecef = Ecef::new(vector);
-    assert_eq!(ecef.position(), vector);
-    assert_eq!(ecef, Ecef(vector));
 }

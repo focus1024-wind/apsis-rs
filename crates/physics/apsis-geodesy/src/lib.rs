@@ -20,8 +20,8 @@
 //!
 //! // The equator has zero height and a radius equal to the semi-major axis.
 //! let point = Geodetic::new(0.0, 0.0, 0.0);
-//! let cartesian = point.to_ecef(WGS84);
-//! assert!((cartesian.position().norm() - WGS84.semi_major_axis()).abs() < 1e-9);
+//! let cartesian = point.to_cartesian(WGS84);
+//! assert!((cartesian.norm() - WGS84.semi_major_axis()).abs() < 1e-9);
 //! ```
 
 #![forbid(unsafe_code)]
@@ -31,4 +31,4 @@ mod ellipsoid;
 mod geodetic;
 
 pub use ellipsoid::{Ellipsoid, WGS84, WGS84_GRAVITATIONAL_PARAMETER};
-pub use geodetic::{Ecef, Geodetic, ecef_from_geodetic, geodetic_from_ecef};
+pub use geodetic::{Geodetic, cartesian_from_geodetic, geodetic_from_cartesian};

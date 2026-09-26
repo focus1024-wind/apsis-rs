@@ -1,5 +1,11 @@
-//! Geodetic positions and their conversion to Earth-centered,
-//! Earth-fixed Cartesian coordinates.
+//! Geodetic positions and their conversion to Earth-fixed Cartesian
+//! coordinates.
+//!
+//! A Cartesian position here is a plain [`Vec3`] in meters. This crate
+//! deliberately does not name the frame: the same conversion applies to any
+//! frame whose third axis is the ellipsoid's minor axis, and the choice of
+//! frame is the responsibility of the caller. `apsis-coord` supplies
+//! position types that carry the frame.
 
 use crate::ellipsoid::Ellipsoid;
 use apsis_math::Vec3;
@@ -31,13 +37,13 @@ impl Geodetic {
         }
     }
 
-    /// Converts this geodetic position to Earth-centered, Earth-fixed
-    /// Cartesian coordinates on the given ellipsoid.
+    /// Converts this geodetic position to Earth-fixed Cartesian coordinates
+    /// on the given ellipsoid.
     ///
-    /// The frame has its third axis along the ellipsoid's minor axis
-    /// through the north pole, its first axis through the intersection of
-    /// the equator and the prime meridian, and its second axis completing
-    /// a right-handed set. The result is in meters.
+    /// The frame has its third axis along the ellipsoid's minor axis through
+    /// the north pole, its first axis through the intersection of the
+    /// equator and the prime meridian, and its second axis completing a
+    /// right-handed set. The result is in meters.
     ///
     /// The closed form is
     ///
@@ -51,8 +57,8 @@ impl Geodetic {
     /// where `N` is the prime vertical radius of curvature. This form is
     /// exact everywhere, including at the poles, where the cosine factors
     /// vanish.
-    pub fn to_ecef(self, ellipsoid: Ellipsoid) -> Ecef {
-        ecef_from_geodetic(self, ellipsoid)
+    pub fn to_cartesian(self, ellipsoid: Ellipsoid) -> Vec3 {
+        cartesian_from_geodetic(self, ellipsoid)
     }
 
     /// Returns `true` when every field is finite and the latitude and
@@ -69,40 +75,11 @@ impl Geodetic {
     }
 }
 
-/// An Earth-centered, Earth-fixed Cartesian position.
+/// Converts a geodetic position to Earth-fixed Cartesian coordinates.
 ///
-/// The frame is the one described by [`Geodetic::to_ecef`]. The wrapped
-/// [`Vec3`] holds the position in meters.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Ecef(pub Vec3);
-
-impl Ecef {
-    /// Creates an Earth-centered, Earth-fixed position from a vector in
-    /// meters.
-    pub const fn new(position: Vec3) -> Self {
-        Self(position)
-    }
-
-    /// Returns the position in meters.
-    pub const fn position(self) -> Vec3 {
-        self.0
-    }
-
-    /// Converts this position to a geodetic position on the given
-    /// ellipsoid.
-    ///
-    /// Returns `None` when the position is not finite, or when it lies on
-    /// the polar axis so that no longitude is defined.
-    pub fn to_geodetic(self, ellipsoid: Ellipsoid) -> Option<Geodetic> {
-        geodetic_from_ecef(self, ellipsoid)
-    }
-}
-
-/// Converts a geodetic position to Earth-centered, Earth-fixed Cartesian
-/// coordinates.
-///
-/// See [`Geodetic::to_ecef`] for the frame definition and the closed form.
-pub fn ecef_from_geodetic(geodetic: Geodetic, ellipsoid: Ellipsoid) -> Ecef {
+/// See [`Geodetic::to_cartesian`] for the frame definition and the closed
+/// form.
+pub fn cartesian_from_geodetic(geodetic: Geodetic, ellipsoid: Ellipsoid) -> Vec3 {
     let Geodetic {
         latitude,
         longitude,
@@ -117,11 +94,10 @@ pub fn ecef_from_geodetic(geodetic: Geodetic, ellipsoid: Ellipsoid) -> Ecef {
     let x = horizontal * cos_latitude * cos_longitude;
     let y = horizontal * cos_latitude * sin_longitude;
     let z = (prime_vertical * (1.0 - eccentricity_squared) + height) * sin_latitude;
-    Ecef(Vec3::new(x, y, z))
+    Vec3::new(x, y, z)
 }
 
-/// Converts Earth-centered, Earth-fixed Cartesian coordinates to a geodetic
-/// position.
+/// Converts Earth-fixed Cartesian coordinates to a geodetic position.
 ///
 /// The latitude and height are recovered by Bowring's method, which solves
 /// the meridian equation in closed form and then refines the result with a
@@ -131,9 +107,9 @@ pub fn ecef_from_geodetic(geodetic: Geodetic, ellipsoid: Ellipsoid) -> Ecef {
 ///
 /// Returns `None` when the position is not finite, or when it lies on the
 /// polar axis so that no longitude is defined.
-pub fn geodetic_from_ecef(ecef: Ecef, ellipsoid: Ellipsoid) -> Option<Geodetic> {
-    let Vec3 { x, y, z } = ecef.0;
-    if !ecef.0.is_finite() {
+pub fn geodetic_from_cartesian(cartesian: Vec3, ellipsoid: Ellipsoid) -> Option<Geodetic> {
+    let Vec3 { x, y, z } = cartesian;
+    if !cartesian.is_finite() {
         return None;
     }
 
