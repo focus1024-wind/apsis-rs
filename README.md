@@ -97,6 +97,12 @@ cargo run -p apsis-rs --features sim --example integrate_sim
 
 # 热点路径基准（release 下运行）
 cargo run --release -p apsis-rs --features full --example bench
+
+# 规模扫描：输入规模递增，观察每单位工作量的增长趋势
+cargo run --release -p apsis-rs --features full --example bench_scale
+
+# 并行扫描：同一批工作量在 1/2/4/8/16 线程下的加速比与效率
+cargo run --release -p apsis-rs --features full --example bench_parallel
 ```
 
 ## 许可

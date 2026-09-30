@@ -13,9 +13,11 @@
 //! satellite, building the inter-satellite topology and routing through it,
 //! and planning a task set with precedence.
 //!
-//! Everything is measured in release mode with a fixed iteration count, and
-//! the harness warms up before timing so that lazy initialisation is not
-//! charged to the first call.
+//! Everything is measured in release mode. There is deliberately no warm-up:
+//! the first call pays for whatever the path allocates or caches on first
+//! use, and a caller waits for that too, so the cold cost is reported on its
+//! own column beside the steady state rather than being hidden behind a
+//! discarded run.
 //!
 //! Usage:
 //!
