@@ -40,8 +40,18 @@ pub fn visibility_matrix(positions: &[Vec3], body_radius: f64) -> Vec<bool> {
 /// same order. The pairs are independent, so splitting the flat index space
 /// across threads needs no coordination and produces the same matrix however
 /// the work is divided.
+///
+/// The gain from threading is modest here and shrinks as the matrix shrinks.
+/// A single visibility test is a few nanoseconds, so the cost of starting the
+/// threads is only repaid by a large matrix: on a sixteen core machine a few
+/// hundred satellites already gain, while a few dozen lose. The sequential
+/// form is the better choice for a small shell, and this one exists for the
+/// large ones where the quadratic sweep dominates.
 pub fn visibility_matrix_parallel(positions: &[Vec3], body_radius: f64) -> Vec<bool> {
     let len = positions.len();
+    // The pairs are independent, so splitting the flat index space across
+    // threads needs no coordination. `map_index` owns the output buffer,
+    // which is what lets the threads write disjoint slots of one allocation.
     map_index(len * len, |index| {
         let row = index / len;
         let column = index - row * len;
