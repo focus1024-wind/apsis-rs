@@ -93,6 +93,14 @@ cargo run -p apsis-rs --features physics --example dump_teme \
 # 覆盖几何（仰角、星下点角、地心角、斜距、覆盖面积）
 cargo run -p apsis-rs --features network --example dump_coverage \
     > validation/data/expected/rust_coverage.csv
+
+# 二体模型（开普勒要素↔状态矢量，往返转换）
+cargo run -p apsis-rs --features orbit --example dump_kepler \
+    > validation/data/expected/rust_kepler.csv
+
+# 两线元素集解析（字段、历元展开、模十校验和）
+cargo run -p apsis-rs --features orbit --example dump_tle \
+    > validation/data/expected/rust_tle.csv
 ```
 
 Python 侧读取同一批输入，用参考实现重算并输出误差表：
@@ -111,6 +119,8 @@ pixi run python validation/python/atmosphere/check_gas_exact.py
 pixi run python validation/python/time/check_iau2000.py
 pixi run python validation/python/coord/check_teme.py
 pixi run python validation/python/constellation/check_coverage.py
+pixi run python validation/python/orbit/check_kepler.py
+pixi run python validation/python/orbit/check_tle.py
 ```
 
 两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。
@@ -152,6 +162,8 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 | `time/check_iau2000.py` | 岁差、章动、框架偏移、GAST、GCRS→ITRF，8 个历元 × 28 个量 | ERFA 2.0.1（IAU SOFA 派生） | 章动 6.6e-15 rad；BPN 矩阵 6.0e-15；GAST 1.1e-11 rad |
 | `coord/check_teme.py` | TEME → 地固系，4 个历元 | ERFA 的 `gmst82` 与 `pom00`（同为 0 极移） | 4.9e-10 km |
 | `constellation/check_coverage.py` | 覆盖几何，6 个场景（LEO/MEO/GEO × 低/常规/严格遮蔽角）；以及地心角与仰角的往返 | 球面三角关系（Python 从几何独立重写） | 角度 0，面积相对 2.2e-16 |
+| `orbit/check_kepler.py` | 二体转换，7 个轨道（圆/低偏心/中偏心/高偏心 e=0.97/逆行/近极/地球同步）；以及 36 个真近点角的状态反解 | 近日点公式 + 旋转矩阵 + 活力公式（Python 独立重写） | 位置、速度、周期 0；能量 3.0e-14 km²/s²；反解要素 ~1e-11 km |
+| `orbit/check_tle.py` | TLE 字段解析，8 个元素集 × 17 字段（含两数字年展开、隐含前导零偏心率、指数记法拖动项、模十校验和） | 按列索引的 NORAD 格式独立解析器 | 逐字段精确一致 |
 
 ### 关于射频层对拍的说明
 

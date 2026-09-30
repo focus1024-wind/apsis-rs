@@ -209,3 +209,11 @@ required-features = ["full"]
 [[example]]
 name = "dump_coverage"
 required-features = ["network"]
+
+[[example]]
+name = "dump_kepler"
+required-features = ["orbit"]
+
+[[example]]
+name = "dump_tle"
+required-features = ["orbit"]
