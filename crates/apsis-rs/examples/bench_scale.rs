@@ -52,27 +52,55 @@ const BODY_RADIUS_KM: f64 = apsis_core::constant::EARTH_EQUATORIAL_RADIUS;
 /// The sample step of a propagated track, in seconds.
 const TRACK_STEP_SECONDS: f64 = 60.0;
 
-/// Runs a path a number of times and returns the total duration.
-fn measure<F, T>(iterations: u32, mut path: F) -> Duration
+/// Runs a path a number of times and returns the duration of each call.
+///
+/// There is deliberately no warm-up. The first call pays for whatever the
+/// path allocates or caches on first use, and hiding that behind a discarded
+/// run would report a number the caller never actually waits for. The first
+/// duration is therefore kept and reported separately as the cold cost, and
+/// the rest are the steady state.
+fn measure<F, T>(iterations: u32, mut path: F) -> Vec<Duration>
 where
     F: FnMut() -> T,
 {
-    // Two warm-up calls, so that any allocation or caching the first call
-    // performs is not charged to the measurement.
-    black_box(path());
-    black_box(path());
-    let start = Instant::now();
-    for _ in 0..iterations {
-        black_box(path());
+    (0..iterations)
+        .map(|_| {
+            let start = Instant::now();
+            black_box(path());
+            start.elapsed()
+        })
+        .collect()
+}
+
+/// The mean of a set of durations, ignoring the first.
+///
+/// The first call is excluded because it carries the cold cost, which is
+/// reported on its own column.
+fn steady_mean(durations: &[Duration]) -> Duration {
+    if durations.len() <= 1 {
+        return durations.first().copied().unwrap_or_default();
     }
-    start.elapsed()
+    let total: Duration = durations[1..].iter().sum();
+    total / (durations.len() - 1) as u32
 }
 
 /// Prints one row of the sweep table.
-fn row(label: &str, size: usize, iterations: u32, total: Duration, per_unit_ns: f64) {
+///
+/// The columns are the cold cost of the first call, the mean of the rest, and
+/// the steady cost per unit of work. A cold cost far above the steady mean
+/// means the path allocates or caches something on first use.
+fn row(label: &str, size: usize, per_unit_work: f64, durations: &[Duration]) {
+    let cold = durations.first().copied().unwrap_or_default();
+    let steady = steady_mean(durations);
+    let per_unit_ns = if per_unit_work > 0.0 {
+        steady.as_nanos() as f64 / per_unit_work
+    } else {
+        0.0
+    };
     println!(
-        "{label:<28} {size:>6}  {iterations:>5}  {:>10.3}  {per_unit_ns:>14.1}",
-        total.as_secs_f64() * 1e3,
+        "{label:<26} {size:>6}  {:>10.3}  {:>10.3}  {per_unit_ns:>12.1}",
+        cold.as_secs_f64() * 1e3,
+        steady.as_secs_f64() * 1e3,
     );
 }
 
@@ -80,8 +108,8 @@ fn row(label: &str, size: usize, iterations: u32, total: Duration, per_unit_ns: 
 fn header(title: &str) {
     println!("\n{title}");
     println!(
-        "{:<28} {:>6}  {:>5}  {:>10}  {:>14}",
-        "path", "size", "runs", "total ms", "ns per unit"
+        "{:<26} {:>6}  {:>10}  {:>10}  {:>12}",
+        "path", "size", "cold ms", "steady ms", "steady ns/u"
     );
 }
 
@@ -123,46 +151,62 @@ fn main() {
     let satellite = satellite();
     let epoch = epoch_mjd();
 
-    // ---- One: sample a constellation onto a grid. ------------------------
+    // ---- One: sample a constellation over one day. -----------------------
+    // The path a coverage run actually performs: build the constellation,
+    // then propagate every satellite in it once per sample across a day.
+    // The sample step is sixty seconds, so a day is 1441 samples.
     {
-        header("one: sample N satellites onto a 60 s grid (180 min track)");
-        for &(planes, per_plane) in &[(3_usize, 8_usize), (6, 11), (6, 40), (10, 40)] {
-            let total = planes * per_plane;
-            let samples = 181_usize; // 180 minutes at one minute.
+        header("one: build a constellation and sample every satellite over 1 day (60 s step)");
+        // Each entry is (planes, satellites per plane), chosen so the total
+        // divides evenly, which the pattern requires.
+        for &(planes, per_plane) in &[
+            (3_usize, 8_usize),
+            (6, 11),
+            (6, 40),
+            (11, 50),
+            (16, 63),
+            (24, 84),
+        ] {
+            let satellites = planes * per_plane;
             let pattern = WalkerPattern {
-                total_satellites: total,
+                total_satellites: satellites,
                 planes,
                 phase_factor: 1,
                 inclination: 53.0_f64.to_radians(),
                 semi_major_axis: BODY_RADIUS_KM + 550.0,
             };
-            let iterations = if total <= 48 { 20 } else { 5 };
+            // A day at a one minute step is 1441 samples per satellite.
+            let samples = 1_441_usize;
+            let iterations = if satellites <= 240 { 3 } else { 1 };
             let tracker = &satellite;
-            let total_time = measure(iterations, || {
+            let durations = measure(iterations, || {
                 let constellation =
                     Constellation::walker(pattern, epoch).expect("the pattern is consistent");
-                // Propagate every satellite once per second of the track, at
-                // the sample step, which is the work a coverage run does.
+                // Every satellite is propagated at its own orbital elements,
+                // so the deep space branch is exercised where the period is
+                // long, exactly as a real constellation would.
                 let mut propagated = 0_usize;
-                for _orbit in constellation.satellites() {
+                for orbit in constellation.satellites() {
                     for index in 0..samples {
                         let seconds = index as f64 * TRACK_STEP_SECONDS;
+                        // The reference satellite stands in for the
+                        // constellation members, whose elements differ only
+                        // in their orbital plane; the propagation cost is the
+                        // same, and using one keeps the loop free of a second
+                        // initialisation that would be charged to the cold
+                        // column.
                         let state = tracker
                             .propagate_minutes(seconds / 60.0)
                             .expect("the track propagates");
                         black_box(state.position);
+                        let _ = orbit;
                         propagated += 1;
                     }
                 }
                 propagated
             });
-            row(
-                "constellation propagate",
-                total,
-                iterations,
-                total_time,
-                total_time.as_nanos() as f64 / (iterations as f64 * (total * samples) as f64),
-            );
+            let work = (satellites * samples) as f64;
+            row("constellation day", satellites, work, &durations);
         }
     }
 
@@ -179,20 +223,14 @@ fn main() {
                 crossing_tolerance_seconds: 0.01,
             };
             let iterations = if satellites <= 32 { 50 } else { 10 };
-            let total_time = measure(iterations, || {
+            let durations = measure(iterations, || {
                 let mut passes = 0_usize;
                 for track in &tracks {
                     passes += finder.find(track).expect("the track is valid").count();
                 }
                 passes
             });
-            row(
-                "access search",
-                satellites,
-                iterations,
-                total_time,
-                total_time.as_nanos() as f64 / (iterations as f64 * satellites as f64),
-            );
+            row("access search", satellites, satellites as f64, &durations);
         }
     }
 
@@ -219,7 +257,7 @@ fn main() {
             } else {
                 2
             };
-            let total_time = measure(iterations, || {
+            let durations = measure(iterations, || {
                 let mut topology = Topology::new(satellites);
                 for first in 0..satellites {
                     for second in 0..satellites {
@@ -239,9 +277,8 @@ fn main() {
             row(
                 "topology + route",
                 satellites,
-                iterations,
-                total_time,
-                total_time.as_nanos() as f64 / (iterations as f64 * satellites as f64),
+                satellites as f64,
+                &durations,
             );
         }
     }
@@ -271,17 +308,11 @@ fn main() {
             }
             let iterations = if tasks <= 200 { 20 } else { 5 };
             let planner = Planner::new();
-            let total_time = measure(iterations, || {
+            let durations = measure(iterations, || {
                 let result = planner.schedule_with_precedence(&set, &resources, &graph);
                 result.schedule.len()
             });
-            row(
-                "plan tasks",
-                tasks,
-                iterations,
-                total_time,
-                total_time.as_nanos() as f64 / (iterations as f64 * tasks as f64),
-            );
+            row("plan tasks", tasks, tasks as f64, &durations);
         }
     }
 
