@@ -53,6 +53,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod batch;
 mod deep_space;
 mod error;
 mod init;
@@ -61,6 +62,9 @@ mod propagate;
 mod satellite;
 mod state;
 
+pub use batch::{
+    propagate_at, propagate_at_parallel, propagate_minutes_at, propagate_minutes_at_parallel,
+};
 pub use error::{PropagationError, PropagationErrorKind};
 pub use init::Elements;
 pub use model::GravityModel;
