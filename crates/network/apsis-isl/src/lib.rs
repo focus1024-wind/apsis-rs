@@ -36,9 +36,11 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod batch;
 mod geometry;
 mod link;
 
+pub use batch::{visibility_matrix, visibility_matrix_parallel};
 pub use geometry::{closest_approach_to_centre, link_geometry, mutual_visibility, sun_blocks_link};
 pub use link::{LinkGeometry, LinkState};
 
