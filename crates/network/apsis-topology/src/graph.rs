@@ -48,14 +48,30 @@ impl Edge {
 pub struct Topology {
     node_count: usize,
     edges: Vec<Edge>,
+    /// The positions in `edges` of the edges leaving each node.
+    ///
+    /// The index is what makes membership a constant time test. Without it,
+    /// asking whether an edge already exists scans the whole edge list, and
+    /// building a graph of `E` edges costs `O(E^2)`, which turns the
+    /// visibility sweep of a constellation, quadratic in the number of
+    /// satellites, into cubic work. The index holds positions rather than
+    /// destinations so that `remove_edge`, which invalidates positions, can
+    /// repair it in one pass.
+    outgoing: Vec<Vec<usize>>,
 }
 
 impl Topology {
     /// Creates an empty topology with the given number of nodes.
-    pub const fn new(node_count: usize) -> Self {
+    ///
+    /// This is not a `const fn` because it sizes the adjacency index, which
+    /// allocates.
+    pub fn new(node_count: usize) -> Self {
+        let mut outgoing = Vec::new();
+        outgoing.resize_with(node_count, Vec::new);
         Self {
             node_count,
             edges: Vec::new(),
+            outgoing,
         }
     }
 
@@ -98,6 +114,7 @@ impl Topology {
             return Err(TopologyError::new(TopologyErrorKind::DuplicateEdge)
                 .with_detail(format!("edge {from} to {to}")));
         }
+        self.outgoing[from].push(self.edges.len());
         self.edges.push(Edge::new(from, to, cost));
         Ok(())
     }
@@ -116,8 +133,7 @@ impl Topology {
         self.add_edge(first, second, cost)?;
         if let Err(error) = self.add_edge(second, first, cost) {
             // Remove the first direction so the topology is unchanged.
-            self.edges
-                .retain(|edge| !(edge.from == first && edge.to == second));
+            self.remove_edge_unchecked(first, second);
             return Err(error);
         }
         Ok(())
@@ -125,33 +141,56 @@ impl Topology {
 
     /// Returns `true` when an edge exists from one node to another.
     pub fn has_edge(&self, from: usize, to: usize) -> bool {
-        self.edges
-            .iter()
-            .any(|edge| edge.from == from && edge.to == to)
+        self.outgoing.get(from).is_some_and(|positions| {
+            positions
+                .iter()
+                .any(|&position| self.edges[position].to == to)
+        })
     }
 
     /// Returns the cost of the edge between two nodes.
     ///
     /// Returns `None` when there is no such edge.
     pub fn cost(&self, from: usize, to: usize) -> Option<f64> {
-        self.edges
+        let positions = self.outgoing.get(from)?;
+        positions
             .iter()
-            .find(|edge| edge.from == from && edge.to == to)
-            .map(|edge| edge.cost)
+            .find(|&&position| self.edges[position].to == to)
+            .map(|&position| self.edges[position].cost)
     }
 
     /// Removes the edge between two nodes.
     ///
     /// Returns an error when there is no such edge.
     pub fn remove_edge(&mut self, from: usize, to: usize) -> Result<(), TopologyError> {
-        let before = self.edges.len();
-        self.edges
-            .retain(|edge| !(edge.from == from && edge.to == to));
-        if self.edges.len() == before {
+        if !self.has_edge(from, to) {
             return Err(TopologyError::new(TopologyErrorKind::NoSuchEdge)
                 .with_detail(format!("edge {from} to {to}")));
         }
+        self.remove_edge_unchecked(from, to);
         Ok(())
+    }
+
+    /// Removes an edge the caller has already established exists.
+    ///
+    /// Removing an edge renumbers every position after it, so the index is
+    /// rebuilt from the surviving edges in one pass. Removal is rarer than
+    /// insertion, so paying for a rebuild here is cheaper than keeping the
+    /// index correct incrementally.
+    fn remove_edge_unchecked(&mut self, from: usize, to: usize) {
+        self.edges
+            .retain(|edge| !(edge.from == from && edge.to == to));
+        self.rebuild_index();
+    }
+
+    /// Rebuilds the adjacency index from the current edge list.
+    fn rebuild_index(&mut self) {
+        for positions in &mut self.outgoing {
+            positions.clear();
+        }
+        for (position, edge) in self.edges.iter().enumerate() {
+            self.outgoing[edge.from].push(position);
+        }
     }
 
     /// Returns the indices of the nodes reachable from a node in one hop.
@@ -159,16 +198,15 @@ impl Topology {
     /// The result is in the order the edges were added, so it is
     /// deterministic for a given construction sequence.
     pub fn neighbours(&self, node: usize) -> Vec<usize> {
-        self.edges
-            .iter()
-            .filter(|edge| edge.from == node)
-            .map(|edge| edge.to)
-            .collect()
+        self.outgoing
+            .get(node)
+            .map(|positions| positions.iter().map(|&p| self.edges[p].to).collect())
+            .unwrap_or_default()
     }
 
     /// Returns the number of edges leaving a node.
     pub fn out_degree(&self, node: usize) -> usize {
-        self.edges.iter().filter(|edge| edge.from == node).count()
+        self.outgoing.get(node).map_or(0, Vec::len)
     }
 
     /// Returns the number of edges arriving at a node.
