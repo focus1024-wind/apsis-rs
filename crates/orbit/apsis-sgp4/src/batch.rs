@@ -34,6 +34,13 @@ pub fn propagate_minutes_at(satellite: &Satellite, minutes: &[f64]) -> Vec<Optio
 ///
 /// Propagation is deterministic and depends only on the minutes, so the
 /// result does not depend on how the work was split.
+///
+/// The gain depends on how much work the list holds, because starting the
+/// threads costs a fixed amount that a short list cannot repay. A day at a
+/// one minute step is fourteen hundred states and gains little; a month is
+/// forty three thousand and gains several fold. A caller with many short
+/// tracks is better served by the per satellite form below, which takes the
+/// whole list in one call.
 pub fn propagate_minutes_at_parallel(satellite: &Satellite, minutes: &[f64]) -> Vec<Option<State>> {
     map_index(minutes.len(), |index| {
         satellite.propagate_minutes(minutes[index]).ok()
@@ -56,6 +63,10 @@ pub fn propagate_at(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>
 ///
 /// The result matches [`propagate_at`] element for element and in the same
 /// order.
+///
+/// This is the form a coverage run wants: it holds the whole shell in one
+/// call, so the threads start once for every satellite rather than once per
+/// satellite, and even a shell of a few hundred gains.
 pub fn propagate_at_parallel(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>> {
     map_index(satellites.len(), |index| {
         satellites[index].propagate_at(tai_mjd).ok()

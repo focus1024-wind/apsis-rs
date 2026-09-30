@@ -10,6 +10,7 @@
 - [单位与坐标约定](units.md)
 - [错误与容差策略](errors.md)
 - [分层边界](layers.md)
+- [并行化](parallel.md)
 
 ## 各层设计
 
