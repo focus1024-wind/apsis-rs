@@ -115,6 +115,33 @@ impl core::error::Error for FooError {}
 （`wrap_to_pi`）在边界上用半开区间，不引入 epsilon。浮点比较仅在量本身
 是连续近似时使用。
 
+## 库代码中的 expect 断言
+
+工作区约定库代码不使用 `unwrap` / `expect` / `panic!`。这条规则的**意图**是
+不允许用它们处理外部输入的失败——那种失败必须走 `Result` 或 `Option`，让
+调用方能够处理。
+
+但完全不出现 `expect` 会迫使代码用 `unwrap`（更差）或写出冗长的手工分支。
+因此允许一种例外：**对已由前置检查守卫的内部不变量使用
+`expect("说明")`**。这类断言不把不可信数据转成 panic，而是把"若此处为空，
+则是本 crate 的编码错误"写成一条可读的失败信息。
+
+判据：能否在紧邻的前一行找到使该分支不可达的守卫，或该值是否由本函数
+刚刚构造。当前 12 处全部满足，逐处为：
+
+| 位置 | 不变量 | 守卫 |
+| --- | --- | --- |
+| `apsis-schedule/schedule.rs` | 刚 `push` 的 placement 存在 | 同函数上一行 |
+| `apsis-scheduler/improve.rs` | 刚检查 `is_none()` 的值非空 | 上一行 `is_none()` 分支 |
+| `apsis-scheduler/planner.rs` | order 中的 id 在 task 列表里 | order 由 task 列表构造 |
+| `apsis-topology/series.rs` | 时间有限 | 构造时已校验 |
+| `apsis-handover/decision.rs` | 候选列表非空 | 上一行 `validate` |
+| `apsis-constellation/walker.rs` | 平面数 / 每面星数为正 | 构造时已校验除数 |
+| `apsis-kepler/elements.rs` | node / 半径非零 | 紧邻的 `norm() == 0.0` 分支 |
+| `apsis-event/queue.rs` | 出堆项必有 payload | 队列构造时序保证 |
+
+若将某条守卫移除，相应的 `expect` 就必须改为 `Result`。修改时二者应同时进行。
+
 ## 检查
 
 - 各 crate 测试覆盖其错误的每个 `kind`，包括构造失败与恢复路径。

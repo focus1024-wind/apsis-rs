@@ -217,3 +217,7 @@ required-features = ["orbit"]
 [[example]]
 name = "dump_tle"
 required-features = ["orbit"]
+
+[[example]]
+name = "bench_scale"
+required-features = ["full"]

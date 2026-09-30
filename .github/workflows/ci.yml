@@ -34,11 +34,13 @@ jobs:
           cargo run -p apsis-rs --features network --example integrate_network
           cargo run -p apsis-rs --features ops --example integrate_ops
           cargo run -p apsis-rs --features sim --example integrate_sim
-      - name: Build the benchmark
-        # The benchmark is not run in CI, because its timings are only
-        # meaningful on a quiet machine, but it must still compile so that it
-        # does not rot.
-        run: cargo build -p apsis-rs --features full --example bench
+      - name: Build the benchmarks
+        # The benchmarks are not run in CI, because their timings are only
+        # meaningful on a quiet machine, but they must still compile so that
+        # they do not rot.
+        run: |
+          cargo build -p apsis-rs --features full --example bench
+          cargo build -p apsis-rs --features full --example bench_scale
       - name: Documentation
         # Catches a doc link that no longer resolves, which is how a doc
         # comment drifts away from the code it describes.
