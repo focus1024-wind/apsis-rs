@@ -1,0 +1,153 @@
+# 错误与容差策略
+
+[English](./errors.md) | 简体中文
+
+本文件记录跨 crate 的错误表达与数值容差约定。单个 crate 的错误枚举见其
+`error.rs` 的文档。
+
+## 错误表达
+
+### 领域错误
+
+每个有领域特定失败的 crate 定义**自己的**错误类型，命名与结构一致：
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+pub enum FooErrorKind {
+    /// 每个变体描述一个调用方可能想要区分的具体条件。
+    ReversedInterval,
+    DuplicateResource,
+    // ...
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FooError {
+    kind: FooErrorKind,
+    detail: Option<String>,
+}
+
+impl FooError {
+    pub fn new(kind: FooErrorKind) -> Self;
+    pub fn with_detail(self, detail: impl Into<String>) -> Self;
+    pub fn kind(&self) -> FooErrorKind;
+    pub fn detail(&self) -> Option<&str>;
+}
+
+impl fmt::Display for FooError { /* "kind" 或 "kind: detail" */ }
+impl core::error::Error for FooError {}
+```
+
+约定：
+
+- **`ErrorKind` 标注 `#[non_exhaustive]`**，这样新增一个失败类别不会破坏
+  下游的匹配。当前 15 个 `ErrorKind` 全部标注。
+- **错误枚举本身也标注 `#[non_exhaustive]`**，包括同时携带数据的错误枚举
+  （如 `apsis-orbit` 的 `EphemerisSamplingError`，其变体包裹下层错误）。
+- **非错误的状态枚举不标注。** 领域状态（`TaskState`、`LinkState`、
+  `TimeScale`、`HandoverDecision`、`Pattern` 的选择等）在单仓库
+  工作区内以**可穷尽匹配为优点**：新增一个变体时，编译器会指出每一处需要
+  更新的 `match`。这与错误的取舍相反——错误类别多一个，调用方应能继续
+  走默认分支；状态多一个，调用方通常必须显式处理。判断标准：该 enum 的
+  变体是否会被调用方 `match` 后对某些分支走默认？会，则标；不会，则不标。
+- **`kind` 可精确匹配，`detail` 供人阅读。** 调用方按 `kind` 写恢复逻辑，
+  把 `detail` 记入日志。`detail` 不参与匹配，因此其措辞可自由改动。
+- **`Display` 输出 `kind`，有 `detail` 时追加 `": detail"`。** 这样日志行
+  总是以类别开头。
+- **实现 `core::error::Error`**，以便错误可以嵌套为 `source`。当前 15 个
+  错误类型全部实现。
+- **不返回裸 `String` 或 `Box<dyn Error>` 作为公共错误。** 前者无法匹配，
+  后者丢失类别。私有辅助函数内部可以传 `String` 作为原因文本，但公开
+  边界必须是枚举。`apsis-scheduler` 的 `precedence_floor` 是这种内部用法
+  的实例：它私有的 `String` 最终填入公开的 `TaskState::Infeasible { reason }`。
+
+### 通用错误
+
+`apsis-core::Error` 与 `ErrorKind` 是通用兜底类型，携带粗粒度类别
+（`InvalidInput`、`NotFound` 等）。它**不是**各层的统一错误表面：没有任何
+层使用它，因为通用类别丢失了调用方需要的区分（`InvalidInput` 无法区分
+"区间反向"与"重复标识"）。
+
+它保留在这里有两个理由：给一个失败没有有趣结构的函数一个现成的返回类型；
+以及给工作区一个可扩展的兜底形状。新代码若失败有领域含义，应定义领域错误。
+
+### 失败与"无值"的区分
+
+- **`Option`** 表示"没有值"是正常结果，不是错误。例如某个时刻在覆盖区间
+  之外（`Ephemeris::state_at` 返回 `None`）、某个角度的正切无定义。
+- **`Result`** 表示操作因可诊断的原因失败。例如区间反向、资源重复、
+  超出模型定义域。
+
+判断标准：调用方是否需要知道**为什么**。若只需要知道"没有"，用 `Option`；
+若需要区分失败原因并据此恢复，用 `Result`。
+
+## 数值容差
+
+### 迭代收敛容差
+
+迭代求解（开普勒方程、章动级数、射线追踪）用 crate 内的私有常量控制收敛：
+
+| crate | 常量 | 值 | 含义 |
+| --- | --- | --- | --- |
+| `apsis-kepler` | `TOLERANCE` | `1e-14` | 偏近点角牛顿迭代的步长 |
+| `apsis-sgp4` | `KEPLER_TOLERANCE` | `1e-12` | 开普勒方程迭代残差 |
+
+这些值在浮点精度与迭代次数之间折中：取到接近 `f64` 的机器精度，同时
+保证迭代在有限步内收敛（各有对应的 `MAX_ITERATIONS`）。
+
+### 对拍容差
+
+对拍脚本的容差按**物理量**设定，而不是统一的数值：
+
+| 量 | 容差 |
+| --- | --- |
+| 位置 | < 1e-3 km |
+| 速度 | < 1e-6 km/s |
+| 时间 | < 1e-6 s |
+| 覆盖几何角度 | 1e-12 rad |
+| 覆盖面积、占比 | 相对 1e-12 |
+
+容差设在"远高于观测到的偏差（通常在浮点精度量级），远低于模型本身的
+精度"之间。这样既能捕获半径写错、单位漏换算这类错误，又不会因最后一位
+浮点差异而误报。详见 `validation/README.zh.md` 的容差表。
+
+### 精确比较
+
+不需要容差时应避免引入：整数索引、计数、布尔标志用精确相等；角度归约
+（`wrap_to_pi`）在边界上用半开区间，不引入 epsilon。浮点比较仅在量本身
+是连续近似时使用。
+
+## 库代码中的 expect 断言
+
+工作区约定库代码不使用 `unwrap` / `expect` / `panic!`。这条规则的**意图**是
+不允许用它们处理外部输入的失败——那种失败必须走 `Result` 或 `Option`，让
+调用方能够处理。
+
+但完全不出现 `expect` 会迫使代码用 `unwrap`（更差）或写出冗长的手工分支。
+因此允许一种例外：**对已由前置检查守卫的内部不变量使用
+`expect("说明")`**。这类断言不把不可信数据转成 panic，而是把"若此处为空，
+则是本 crate 的编码错误"写成一条可读的失败信息。
+
+判据：能否在紧邻的前一行找到使该分支不可达的守卫，或该值是否由本函数
+刚刚构造。当前 13 处全部满足，逐处为：
+
+| 位置 | 不变量 | 守卫 |
+| --- | --- | --- |
+| `apsis-math/src/parallel.rs` | 每个槽位都被唯一线程填过 | 循环为每个下标恰好赋值一次 |
+| `apsis-schedule/src/schedule.rs` | 刚 `push` 的 placement 存在 | 同函数上一行 |
+| `apsis-scheduler/src/improve.rs` | 刚检查 `is_none()` 的值非空 | 上一行 `is_none()` 分支 |
+| `apsis-scheduler/src/planner.rs` | order 中的 id 在 task 列表里 | order 由 task 列表构造 |
+| `apsis-topology/src/series.rs` | 时间有限 | 构造时已校验 |
+| `apsis-handover/src/decision.rs` | 候选列表非空 | 上一行 `validate` |
+| `apsis-constellation/src/walker.rs` | 平面数 / 每面星数为正 | 构造时已校验除数 |
+| `apsis-kepler/src/elements.rs` | node / 半径 / 角动量非零 | 紧邻的 `norm() == 0.0` 分支 |
+| `apsis-event/src/queue.rs` | 出堆项必有 payload | 队列构造时序保证 |
+
+若将某条守卫移除，相应的 `expect` 就必须改为 `Result`。修改时二者应同时进行。
+
+## 检查
+
+- 各 crate 测试覆盖其错误的每个 `kind`，包括构造失败与恢复路径。
+- 对拍脚本以退出码表达结果：0 通过、1 超差、2 缺输入。
+- `cargo clippy -- -D warnings` 保证没有 `unwrap`/`expect` 漏进库代码
+  （工作区约定库代码不使用它们）。

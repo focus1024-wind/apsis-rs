@@ -1,18 +1,21 @@
-# 仿真层设计
+# The simulation layer
 
-本文件记录仿真层（`sim`）的跨 crate 决策。各 crate 的内部设计见其模块文档。
+English | [简体中文](./sim.zh.md)
 
-## 组成与依赖
+This file records the cross-crate decisions of the simulation layer. The
+design inside each crate is in its module documentation.
+
+## Composition and dependencies
 
 ```text
-apsis-event     事件类型与事件队列
-apsis-sim-engine 离散事件引擎
-apsis-scenario  场景定义与文本加载
-apsis-output    仿真输出记录
-apsis-sim       仿真门面（整合上述四个）
+apsis-event      the event type and the event queue
+apsis-sim-engine the discrete event engine
+apsis-scenario   scenario definition and text loading
+apsis-output     simulation output recording
+apsis-sim        the facade, which joins the four above
 ```
 
-依赖方向：
+The dependency direction:
 
 ```text
 apsis-event -> apsis-sim-engine -> apsis-sim -> apsis-rs
@@ -20,66 +23,87 @@ apsis-scenario -----------------> apsis-sim
 apsis-output -------------------> apsis-sim
 ```
 
-`apsis-sim` 同时依赖 ops 层（`apsis-scheduler`、`apsis-schedule`、
-`apsis-task`、`apsis-resource`），因为它要规划场景并读取计划。其余 crate
-只依赖 foundation。
+`apsis-sim` also depends on the ops layer (`apsis-scheduler`,
+`apsis-schedule`, `apsis-task`, `apsis-resource`), because it plans a
+scenario and reads the plan. The remaining crates depend on foundation alone.
 
-## 事件顺序
+## The order of events
 
-同一时刻的多个事件必须按可复现的顺序投递，否则同一输入会产生不同输出，
-无法与参考实现对拍。约定：
+Several events at the same instant must be delivered in a reproducible
+order, or the same input would give a different output and there would be
+nothing to cross-check against a reference implementation. The convention:
 
-- 每个事件在入队时获得一个递增的序号。
-- 事件先按时间排序，时间相同则按序号排序，即入队顺序。
-- 处理函数在处理某事件时新调度的事件，排在该时刻已有事件之后。
+- Every event takes an increasing sequence number when it is scheduled.
+- Events are ordered by time, and events at the same time by that number,
+  which is the order they were scheduled in.
+- An event that a handler schedules while handling another goes behind the
+  events already queued for that instant.
 
-该顺序由 `apsis-event` 保证，`apsis-sim-engine` 与 `apsis-sim` 直接沿用。
-序列号由队列分配，调用方无法制造两个同号事件。
+`apsis-event` provides this order and the engine and the facade carry it
+through. The queue assigns the numbers, so a caller cannot create two events
+with the same one.
 
-## 时间原点
+## The origin of time
 
-事件时间是从仿真原点起算的秒数，与日历无关；需要日历的场景由上层换算。
+An event time is a number of seconds from the origin of the simulation and
+has nothing to do with a calendar; a scenario that needs one converts it
+above this layer.
 
-场景的 `epoch` 是时钟起点。时间线中的事件时间相对场景原点，`apsis-sim`
-在投递前加上 `epoch`。若不偏移，引擎会在投递首个事件时把时钟回拨。
+The `epoch` of a scenario is where the clock starts. The times in a timeline
+are relative to that origin and `apsis-sim` adds the `epoch` before
+delivering. Without the offset the engine would move the clock backwards when
+it delivered the first event.
 
-时间限制按同一绝对时间轴比较：时间晚于上限的事件留在队列中而不执行，因此
-调用方可以查看运行结束时还剩什么。时钟停在最后一个已执行事件上，而不是停在
-上限上。
+A time limit is compared on the same absolute axis: an event later than the
+limit stays in the queue instead of running, so a caller can see what
+remained when the run ended. The clock stops at the last event it executed
+rather than at the limit.
 
-## 事件限制是累计的
+## The event limit is cumulative
 
-`apsis-sim-engine` 的事件上限是引擎整个生命周期的总数，而非单次 `run`
-的数量。达到上限后再次 `run` 不执行任何事件。这样"上限"始终表示一个不会
-被绕过的界，调用方要运行剩余事件需显式提高上限。
+The event limit in `apsis-sim-engine` bounds the total for the life of the
+engine, not the count of a single `run`. Once the limit is reached a further
+`run` executes nothing. The limit is therefore a bound that cannot be
+circumvented, and a caller who wants the remaining events to run has to
+raise it explicitly.
 
-## 时间线语义
+## What a timeline means
 
-`apsis-sim` 把计划展开为时间线上的起止事件：每个已放置任务贡献一个开始
-事件和一个结束事件，二者是独立事件，因此引擎能按时间顺序把它们与其他事件
-正确排序，重叠任务的先后也由时钟决定。
+`apsis-sim` expands a plan into start and end events on a timeline: every
+placed task contributes one start and one end, as separate events, so the
+engine can order them in time with everything else and the order of
+overlapping tasks follows from the clock.
 
-时间线是计划本身，不是物理模型。开始/结束事件触发时调用什么物理计算由处理
-函数决定，门面只负责排序与记录。
+The timeline is the plan, not a physical model. What physical computation a
+handler runs when a start or end event fires is up to the handler; the
+facade only orders and records.
 
-## 场景文本格式
+## The scenario text format
 
-`apsis-scenario` 自带一套零依赖的行式文本格式，用于存储与重新加载。
-解析分三遍（资源、任务、优先级约束），因此 `require` 可以引用文件中稍后
-定义的资源，`precedence` 可以引用任意顺序定义的任务。每处失败都带行号。
+`apsis-scenario` carries its own line oriented text format with no
+dependency, for storing a scenario and loading it back. Parsing runs in three
+passes, over the resources, the tasks and the precedence constraints, so a
+`require` may name a resource defined later in the file and a `precedence`
+may name tasks in any order. Every failure carries the line it came from.
 
-`Scenario::to_text` 的输出必须能被 `Scenario::parse` 读回为相等场景，
-即文本形式是往返稳定的；这一点由测试保证。
+The output of `Scenario::to_text` must parse back with `Scenario::parse` to
+an equal scenario, so the text form is stable under a round trip, which a
+test asserts.
 
-任务的"无窗口"（两端为无穷）无法写入文本，故写为一个包含该任务的有限区间，
-读回后任务仍可用。
+A task with no window, whose two ends are infinite, cannot be written as
+text, so it is written as a finite interval that contains the task and is
+still usable once read back.
 
-## 确定性
+## Determinism
 
-仿真结果必须可复现，这是对拍的前提。确定性来自三点：
+A simulation result must be reproducible, because that is what makes a
+cross-check possible. Three things give it:
 
-- 事件队列表述的同刻顺序规则；
-- 规划器对同权任务的稳定排序（见 ops 层）；
-- 记录器保留插入顺序，`Trace::in_time_order` 为稳定排序。
+- the same-instant ordering rule of the event queue;
+- the stable ordering the planner applies to tasks of equal weight, described
+  in the ops layer;
+- the recorder, which keeps the order of insertion, where
+  `Trace::in_time_order` is a stable sort.
 
-`integrate_sim` 示例断言同一次准备出的仿真重复运行得到相同轨迹。
+The `integrate_sim` example asserts that running one prepared simulation
+twice produces the same trace.

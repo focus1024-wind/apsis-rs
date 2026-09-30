@@ -1,97 +1,119 @@
-# 单位与坐标约定
+# Units and coordinates
 
-本文件记录跨层的单位与坐标约定。单个 crate 的内部约定见其模块文档；这里只
-记录**跨层边界**必须一致的部分，因为边界处的单位不一致是本仓库最容易引入
-也最难发现的错误。
+English | [简体中文](./units.zh.md)
 
-## 长度的两种单位
+This file records the unit and coordinate conventions that cross layers. The
+conventions inside a single crate are in its module documentation; what
+belongs here is the part that must agree **across a layer boundary**, because
+a unit that disagrees at a boundary is the easiest mistake to introduce in
+this repository and the hardest to find.
 
-仓库同时使用千米与米，边界在 orbit 层与 physics 层之间：
+## Two units of length
 
-| 层 / crate | 长度单位 |
+The repository uses both kilometres and metres, with the boundary between the
+orbit layer and the physics layer:
+
+| Layer / crate | Unit of length |
 | --- | --- |
-| `apsis-kepler`、`apsis-sgp4`、`apsis-tle` | 千米 |
-| `apsis-ephemeris` | 千米 |
-| `apsis-maneuver` | 千米 |
-| `apsis-constellation`、`apsis-coverage`、`apsis-access`、`apsis-isl` | 千米 |
-| `apsis-topology`、`apsis-routing`、`apsis-mesh` | 长度仅在 `apsis-isl` 计算，边的 `cost` 是调用方定义的无量纲值 |
-| `apsis-handover` | 不涉及长度；`quality` 为调用方定义，时间用秒 |
-| `apsis-coord`（`Eci`、`Ecef`） | 米 |
-| `apsis-geodesy`（`Geodetic` 高度、椭球半轴、笛卡尔位置） | 米 |
-| `apsis-frames` | 无量纲（角度与旋转） |
-| `apsis-rf`、`apsis-antenna`、`apsis-atmosphere`、`apsis-noise`、`apsis-doppler`、`apsis-interference`、`apsis-link` | 米、赫兹 |
+| `apsis-kepler`, `apsis-sgp4`, `apsis-tle` | kilometres |
+| `apsis-ephemeris` | kilometres |
+| `apsis-maneuver` | kilometres |
+| `apsis-constellation`, `apsis-coverage`, `apsis-access`, `apsis-isl` | kilometres |
+| `apsis-topology`, `apsis-routing`, `apsis-mesh` | length is computed only in `apsis-isl`; an edge's `cost` is a dimensionless value the caller defines |
+| `apsis-handover` | no length; `quality` is defined by the caller and time is in seconds |
+| `apsis-coord` (`Eci`, `Ecef`) | metres |
+| `apsis-geodesy` (geodetic height, ellipsoid semi-axes, Cartesian position) | metres |
+| `apsis-frames` | dimensionless (angles and rotations) |
+| `apsis-rf`, `apsis-antenna`, `apsis-atmosphere`, `apsis-noise`, `apsis-doppler`, `apsis-interference`, `apsis-link` | metres, hertz |
 
-选择千米还是米并非任意：卫星轨道用千米表达更自然（`apsis-sgp4` 输出的量级
-是几千），射频链路用米表达更自然（波长与距离用米，与 ITU-R 建议书一致）。
-代价是边界处必须显式换算。
+The choice is not arbitrary. Satellite orbits read naturally in kilometres,
+which is the magnitude `apsis-sgp4` produces, and a radio link reads
+naturally in metres, which is what the ITU-R recommendations use. The cost is
+that the boundary needs an explicit conversion.
 
-### 边界处的换算
+### Converting at the boundary
 
-从 orbit 层进入 physics 层时乘以 `1000.0`，返回时除以 `1000.0`：
+Multiply by `1000.0` on the way from the orbit layer into the physics layer,
+and divide on the way back:
 
 ```rust
-// orbit 层的千米位置转 physics 层的米位置。
-let position_km = satellite.propagate_minutes(0.0)?.position;  // 千米
-let ecef = Ecef::new(position_km * 1_000.0);                    // 米
+// A position in kilometres from the orbit layer becomes metres in physics.
+let position_km = satellite.propagate_minutes(0.0)?.position;  // kilometres
+let ecef = Ecef::new(position_km * 1_000.0);                    // metres
 ```
 
-漏掉这一步会把卫星放到地球内部，而且数值仍然"看起来合理"，不会立刻报错。
-`integrate_network` 示例对这一边界做了断言：换算后的半径必须与传播器报告
-的半径一致，这是唯一能自动发现漏乘或漏除的检查。
+Omitting this step puts the satellite inside the Earth, and the numbers still
+look plausible rather than failing at once. The `integrate_network` example
+asserts on this boundary: the radius after the conversion must match the
+radius the propagator reports, which is the only check that finds a missing
+multiply or divide automatically.
 
-## 角度
+## Angles
 
-**所有计算用角度一律为弧度**。纬度、经度、倾角、升交点赤经、近地点幅角、
-真近点角、仰角、方位角、天线方向图角都是弧度。
+**Every angle used in a calculation is in radians.** Latitude, longitude,
+inclination, right ascension of the ascending node, argument of perigee, true
+anomaly, elevation, azimuth and antenna pattern angle are all radians.
 
-唯一的例外是两线元素集：`apsis-tle::TwoLineElement` 的原始字段按 TLE 格式
-用度与每日圈数，因为那是文件的编码。`apsis-sgp4` 在初始化时换算为弧度与
-弧度每分钟。
+The only exception is the two-line element set, whose raw fields are in
+degrees and revolutions per day because that is how the file encodes them.
+`apsis-sgp4` converts them to radians and radians per minute on
+initialisation.
 
-## 时间
+## Time
 
-时间统一用秒表示，原点由调用方选择：
+Time is in seconds throughout, with the origin chosen by the caller:
 
-- ops 与 sim 层：从场景原点（scenario epoch）起算的秒数。
-- orbit 层：`apsis-sgp4` 用"距元素历元的分钟数"，`apsis-ephemeris` 与
-  其余 crate 用秒。
-- 日历时间：`apsis-time` 的 `Epoch` 存 TAI 儒略日；UTC 换算经 `apsis-leap`
-  的闰秒表。
+- The ops and sim layers count seconds from the scenario epoch.
+- The orbit layer uses minutes from the element set epoch in `apsis-sgp4`;
+  `apsis-ephemeris` and the rest use seconds.
+- Calendar time: `apsis-time::Epoch` holds a TAI Julian date, and a
+  conversion to UTC goes through the leap second table in `apsis-leap`.
 
-`Orbit::sample_ephemeris` 是两种时间表示的边界：入参是距元素历元的分钟，
-返回的星历内部用秒，换算在方法内完成。
+`Orbit::sample_ephemeris` is the boundary between the two representations: it
+takes minutes from the element epoch and the ephemeris it returns is in
+seconds, with the conversion done inside the method.
 
-## 坐标框架
+## Coordinate frames
 
-| 框架 | 类型 | 说明 |
+| Frame | Type | Notes |
 | --- | --- | --- |
-| TEME | `apsis_sgp4::State` | SGP4 定义的真赤道平春分点框架 |
-| ECI | `apsis_coord::Eci` | 惯性笛卡尔坐标 |
-| ECEF | `apsis_coord::Ecef` | 地固笛卡尔坐标 |
-| 大地坐标 | `apsis_geodesy::Geodetic` | 纬度、经度、大地高 |
-| 地面点 | `apsis_coverage::GroundPoint` | 大地坐标加仰角遮蔽 |
+| TEME | `apsis_sgp4::State` | the true equator, mean equinox frame the SGP4 model defines |
+| ECI | `apsis_coord::Eci` | inertial Cartesian coordinates |
+| ECEF | `apsis_coord::Ecef` | Earth-fixed Cartesian coordinates |
+| Geodetic | `apsis_geodesy::Geodetic` | latitude, longitude, height above the ellipsoid |
+| Ground point | `apsis_coverage::GroundPoint` | a geodetic position plus an elevation mask |
 
-TEME 到 ECEF 需要地球自转角（`apsis-frames::EarthRotationAngle`）加上岁差
-章动；`apsis-coord` 提供变换，`apsis-frames` 提供角。TEME 与 ECI 的差别是
-分点方程，量级低于千分之一度；`integrate_network` 示例中直接把它当作惯性
-系处理，并注明这是该示例的近似。
+Going from TEME to ECEF needs the Earth rotation angle
+(`apsis-frames::EarthRotationAngle`) together with precession and nutation.
+`apsis-coord` provides the transformation and `apsis-frames` provides the
+angle. TEME differs from ECI by the equation of the equinoxes, which is below
+a thousandth of a degree; the `integrate_network` example treats it as the
+inertial frame and says so, because for that example it is an approximation.
 
-## 其它量
+## Other quantities
 
-- 引力参数：`apsis-kepler::GravityParameter`，单位 km³/s²。WGS 72 对应
-  SGP4，WGS 84 对应其余用途；选错会使密切半长轴偏约百万分之一。门面
-  `apsis-orbit::Orbit` 把引力参数与传播器绑定，避免这一错误。
-- 速度：与长度同层，km/s 或 m/s。
-- 功率用瓦、频率用赫兹、温度用开尔文；分贝为功率比，`dBi` 相对各向同性、
-  `dBd` 相对半波偶极子（相差 2.15 dB）。
-- 相对量一律无量纲：偏心率、填充率、利用率、信噪比的分贝值。
+- The gravitational parameter is `apsis-kepler::GravityParameter`, in
+  cubic kilometres per second squared. WGS 72 goes with SGP4 and WGS 84 with
+  everything else; choosing the wrong one shifts the osculating semi-major
+  axis by about one part in a million. The `apsis-orbit::Orbit` facade binds
+  the parameter to the propagator so that this cannot go wrong.
+- Velocity follows the unit of length in its own layer, so km/s or m/s.
+- Power is in watts, frequency in hertz and temperature in kelvin. A decibel
+  is a power ratio; `dBi` is relative to an isotropic radiator and `dBd` to a
+  half-wave dipole, which is 2.15 dB more directive.
+- Every relative quantity is dimensionless: eccentricity, fill rate,
+  utilisation and a signal to noise ratio in decibels.
 
-## 检查
+## Checks
 
-单位边界没有类型系统保护，靠测试与文档：
+Nothing in the type system protects a unit boundary, so the tests and this
+document carry it:
 
-- 各层测试覆盖层内换算。
-- `integrate_network` 断言千米与米的边界换算保持半径。
-- `integrate_ops`、`integrate_sim` 覆盖 ops 与 sim 层的时间轴约定。
-- `cargo run --release -p apsis-rs --features full --example bench` 覆盖
-  各层热点路径，任一层的接口变更导致编译失败都会在此暴露。
+- Each layer's tests cover the conversions inside that layer.
+- `integrate_network` asserts that the kilometre to metre boundary conversion
+  preserves the radius.
+- `integrate_ops` and `integrate_sim` cover the time axis conventions of the
+  ops and sim layers.
+- `cargo run --release -p apsis-rs --features full --example bench` touches
+  the hot path of every layer, so an interface change in any of them shows up
+  there as a build failure.

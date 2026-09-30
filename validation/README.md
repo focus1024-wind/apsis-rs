@@ -1,109 +1,118 @@
-# 对拍验证
+# Cross-check validation
 
-本目录用于 Rust 实现与公开参考实现的数值对拍。Python 侧仅作验证用途，
-不属于 Rust 依赖，也不参与 Rust 编译。
+English | [简体中文](./README.zh.md)
 
-## Python 环境
+This directory holds the numerical cross-checks of the Rust implementation
+against public reference implementations. The Python side is for validation
+only: it is not a Rust dependency and takes no part in the Rust build.
 
-使用 [pixi](https://pixi.sh/) 管理：
+## The Python environment
+
+It is managed with [pixi](https://pixi.sh/):
 
 ```bash
 cd validation
 pixi install
 ```
 
-已允许的库：
+The libraries that are allowed:
 
-- `sgp4`：SGP4 传播对拍
-- `astropy`：时间、坐标对拍
-- `numpy`：数值计算
-- `skyfield`：轨道、可见性对拍（可选）
-- `itur`：ITU-R 建议书参考实现（P.676、P.838、P.618），用于大气与雨衰对拍
+- `sgp4`: the SGP4 propagation cross-check
+- `astropy`: the time and coordinate cross-checks
+- `numpy`: numerical computation
+- `skyfield`: the orbit and visibility cross-checks, optional
+- `itur`: the ITU-R reference implementations of P.676, P.838 and P.618, for
+  the atmosphere and rain cross-checks
 
-引入新的 Python 库前需要评估并确认。
+Adding a new Python library needs to be assessed and agreed first.
 
-## 目录
+## Layout
 
 ```text
 validation/
 ├── pixi.toml
 ├── python/
-│   ├── orbit/           # SGP4、开普勒对拍
-│   ├── time/            # 时间尺度、儒略日对拍
-│   ├── coord/           # 坐标变换对拍
-│   ├── link/            # 链路预算对拍
-│   └── constellation/   # 覆盖几何对拍
+│   ├── orbit/           # SGP4 and two-body cross-checks
+│   ├── time/            # time scale and Julian date cross-checks
+│   ├── coord/           # coordinate transform cross-checks
+│   ├── link/            # link budget cross-checks
+│   └── constellation/   # coverage geometry cross-checks
 └── data/
-    └── expected/        # Rust 侧导出的待比对数据
+    └── expected/        # data dumped by the Rust side for comparison
 ```
 
-## 流程
+## The flow
 
-Rust 侧通过 `apsis-rs` 的 example 导出数据，输出为 CSV（手写格式化，不引 serde）：
+The Rust side writes the data through an example of `apsis-rs`, as CSV on
+standard output, formatted by hand without pulling in serde:
 
 ```bash
-# 大地坐标 -> ECEF
+# Geodetic -> ECEF
 cargo run -p apsis-rs --features physics --example dump_geodesy \
     > validation/data/expected/rust_geodetic.csv
 
-# 时间尺度换算
+# Time scale conversions
 cargo run -p apsis-rs --features physics --example dump_time \
     > validation/data/expected/rust_time.csv
 
-# SGP4/SDP4 传播
+# SGP4 and SDP4 propagation
 cargo run -p apsis-rs --features orbit --example dump_orbit \
     > validation/data/expected/rust_sgp4.csv
 
-# 链路预算
+# Link budget
 cargo run -p apsis-rs --features rf --example dump_link \
     > validation/data/expected/rust_link.csv
 
-# ITU-R P.676-12 气体吸收
+# ITU-R P.676-12 gaseous absorption
 cargo run -p apsis-rs --features rf --example dump_gas \
     > validation/data/expected/rust_gas.csv
 
-# ITU-R P.838-3 雨衰系数
+# ITU-R P.838-3 rain attenuation coefficients
 cargo run -p apsis-rs --features rf --example dump_rain \
     > validation/data/expected/rust_rain.csv
 
-# ITU-R P.618-13 雨衰斜路径
+# ITU-R P.618-13 rain on a slant path
 cargo run -p apsis-rs --features rf --example dump_rain_path \
     > validation/data/expected/rust_rain_path.csv
 
-# ITU-R S.465 参考天线方向图
+# ITU-R S.465 reference antenna pattern
 cargo run -p apsis-rs --features rf --example dump_s465 \
     > validation/data/expected/rust_s465.csv
 
-# ITU-R P.839-4 零度等温线高度
+# ITU-R P.839-4 zero degree isotherm height
 cargo run -p apsis-rs --features rf --example dump_p839 \
     > validation/data/expected/rust_p839.csv
 
-# ITU-R P.676-12 精确斜路径（分层积分 + 折射率射线追踪）
+# ITU-R P.676-12 exact slant path, layered integration with a refractive
+# index ray trace
 cargo run -p apsis-rs --features rf --example dump_gas_exact \
     > validation/data/expected/rust_gas_exact.csv
 
-# IAU 2000/2006 地球定向（岁差、章动、框架偏移、GCRS→ITRF）
+# IAU 2000/2006 Earth orientation: precession, nutation, frame offsets,
+# GCRS to ITRF
 cargo run -p apsis-rs --features physics --example dump_iau2000 \
     > validation/data/expected/rust_iau2000.csv
 
-# TEME → 地固系（SGP4 输出链路）
+# TEME to the Earth-fixed frame, the SGP4 output chain
 cargo run -p apsis-rs --features physics --example dump_teme \
     > validation/data/expected/rust_teme.csv
 
-# 覆盖几何（仰角、星下点角、地心角、斜距、覆盖面积）
+# Coverage geometry: elevation, nadir angle, central angle, slant range and
+# footprint area
 cargo run -p apsis-rs --features network --example dump_coverage \
     > validation/data/expected/rust_coverage.csv
 
-# 二体模型（开普勒要素↔状态矢量，往返转换）
+# The two-body model: elements to a state vector and back
 cargo run -p apsis-rs --features orbit --example dump_kepler \
     > validation/data/expected/rust_kepler.csv
 
-# 两线元素集解析（字段、历元展开、模十校验和）
+# Two-line element parsing: fields, epoch expansion, modulo ten checksum
 cargo run -p apsis-rs --features orbit --example dump_tle \
     > validation/data/expected/rust_tle.csv
 ```
 
-Python 侧读取同一批输入，用参考实现重算并输出误差表：
+The Python side reads the same inputs, recomputes them with a reference
+implementation, and reports the differences:
 
 ```bash
 pixi run python validation/python/coord/check_geodetic.py
@@ -123,77 +132,96 @@ pixi run python validation/python/orbit/check_kepler.py
 pixi run python validation/python/orbit/check_tle.py
 ```
 
-两个脚本都以退出码 0 表示通过、1 表示超差、2 表示缺少输入文件。
+Every script exits with zero to pass, one to exceed the tolerance, and two
+when the input file is missing.
 
-## 容差
+## Tolerances
 
-| 量 | 容差 |
+| Quantity | Tolerance |
 | --- | --- |
-| 位置、距离 | < 1e-3 km（SGP4 传播）或 1e-9 km（几何量） |
-| 速度 | < 1e-6 km/s |
-| 时间 | < 1e-6 s |
-| 角度（覆盖几何） | 1e-12 rad |
-| 面积、覆盖占比 | 相对 1e-12 |
-| 链路预算、衰减 | 1e-6 至 1e-9 dB，视模型而定 |
-| 地球定向矩阵 | 1e-9 |
+| Position and distance | < 1e-3 km for SGP4 propagation, 1e-9 km for a geometric quantity |
+| Velocity | < 1e-6 km/s |
+| Time | < 1e-6 s |
+| Coverage angle | 1e-12 rad |
+| Area and coverage fraction | 1e-12 relative |
+| Link budget and attenuation | 1e-6 to 1e-9 dB, depending on the model |
+| Earth orientation matrix | 1e-9 |
 
-各脚本把容差写成其源文件顶部的具名常量，值按所比较的物理量设定，见
-`docs/design/errors.md` 的"对拍容差"一节。
+Each script names its tolerance as a constant at the top of its source, set
+by the physical quantity it compares; see the "Tolerances of the
+cross-checks" section of `docs/design/errors.md`.
 
-超差时修正 Rust 侧算法，不放宽容差，除非经确认。
+When a check exceeds its tolerance the fix is in the Rust algorithm. The
+tolerance is not widened unless that has been agreed.
 
-脚本必须可独立离线运行，不访问网络。`check_time.py` 会关闭 astropy 的
-Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数据。
+Every script must run offline on its own and reach no network.
+`check_time.py` disables the astropy Earth orientation download, which none
+of the conversions in this crate needs.
 
-## 已实现的检查
+## The checks that exist
 
-| 脚本 | 对比内容 | 参考实现 | 当前最差误差 |
+| Script | What it compares | Reference | Worst difference |
 | --- | --- | --- | --- |
-| `coord/check_geodetic.py` | `Geodetic` → ECEF，280 个点，覆盖全球纬度、经度与高度 | `astropy.coordinates.EarthLocation` | 1.1e-8 m |
-| `time/check_time.py` | UTC → TAI，117 个时刻，覆盖全部闰秒边界 | `astropy.time.Time` | 5.3e-7 s |
-| `orbit/check_sgp4.py` | SGP4/SDP4 传播，4 组 TLE（近地、高偏心、深空、GTO）× 9 个时刻 | `sgp4` 参考库 | 位置 1.2e-8 km，速度 5.3e-12 km/s |
-| `link/check_link.py` | 链路预算，4 个场景（Ku 下行、S 波段、Ka 宽带、L 波段） | 链路方程闭式解（Python 手写） | 5.0e-13 dB |
-| `atmosphere/check_gas.py` | 气体吸收，18 个频率，涵盖 60 GHz 氧气复体、22/183 GHz 水汽线 | `itur` 的 ITU-R P.676-12 实现 | 干空气 6.1e-11，水汽 6.4e-9（相对） |
-| `atmosphere/check_rain.py` | 雨衰系数，17 个频率 × 4 组仰角/极化 | `itur` 的 ITU-R P.838-3 实现 | k 7.5e-9，alpha 6.5e-13（相对） |
-| `atmosphere/check_rain_path.py` | 雨衰斜路径，8 个场景 | ITU-R P.618-13 方程（Python 转写，系数来自 `itur`） | 3.4e-13 km / 4.3e-13 dB |
-| `link/check_s465.py` | 参考天线方向图，3 种口径 × 8 个离轴角 | ITU-R S.465 方程（Python 转写） | 4.0e-10 dB |
-| `atmosphere/check_p839.py` | 零度等温线高度，15 个全球点 | `itur` 的 ITU-R P.839-4 实现 | 3.3e-13 km |
-| `atmosphere/check_gas_exact.py` | 精确斜路径，11 个场景（1–100 GHz，1°–90° 仰角） | `itur` 的 ITU-R P.676-12 exact 方法 | 9.6e-9（相对） |
-| `time/check_iau2000.py` | 岁差、章动、框架偏移、GAST、GCRS→ITRF，8 个历元 × 28 个量 | ERFA 2.0.1（IAU SOFA 派生） | 章动 6.6e-15 rad；BPN 矩阵 6.0e-15；GAST 1.1e-11 rad |
-| `coord/check_teme.py` | TEME → 地固系，4 个历元 | ERFA 的 `gmst82` 与 `pom00`（同为 0 极移） | 4.9e-10 km |
-| `constellation/check_coverage.py` | 覆盖几何，6 个场景（LEO/MEO/GEO × 低/常规/严格遮蔽角）；以及地心角与仰角的往返 | 球面三角关系（Python 从几何独立重写） | 角度 0，面积相对 2.2e-16 |
-| `orbit/check_kepler.py` | 二体转换，7 个轨道（圆/低偏心/中偏心/高偏心 e=0.97/逆行/近极/地球同步）；以及 36 个真近点角的状态反解 | 近日点公式 + 旋转矩阵 + 活力公式（Python 独立重写） | 位置、速度、周期 0；能量 3.0e-14 km²/s²；反解要素 ~1e-11 km |
-| `orbit/check_tle.py` | TLE 字段解析，8 个元素集 × 17 字段（含两数字年展开、隐含前导零偏心率、指数记法拖动项、模十校验和） | 按列索引的 NORAD 格式独立解析器 | 逐字段精确一致 |
+| `coord/check_geodetic.py` | `Geodetic` to ECEF, 280 points across latitude, longitude and height | `astropy.coordinates.EarthLocation` | 1.1e-8 m |
+| `time/check_time.py` | UTC to TAI, 117 instants covering every leap second boundary | `astropy.time.Time` | 5.3e-7 s |
+| `orbit/check_sgp4.py` | SGP4 and SDP4 propagation, 4 element sets (near Earth, highly eccentric, deep space, GTO) at 9 instants | the `sgp4` reference library | position 1.2e-8 km, velocity 5.3e-12 km/s |
+| `link/check_link.py` | link budget, 4 scenarios (Ku downlink, S band, Ka wideband, L band) | the closed form link equation, rewritten in Python | 5.0e-13 dB |
+| `atmosphere/check_gas.py` | gaseous absorption, 18 frequencies covering the 60 GHz oxygen complex and the 22 and 183 GHz water lines | the ITU-R P.676-12 implementation in `itur` | dry air 6.1e-11, water 6.4e-9, relative |
+| `atmosphere/check_rain.py` | rain coefficients, 17 frequencies at 4 elevation and polarisation pairs | the ITU-R P.838-3 implementation in `itur` | k 7.5e-9, alpha 6.5e-13, relative |
+| `atmosphere/check_rain_path.py` | rain on a slant path, 8 scenarios | the ITU-R P.618-13 equations, transcribed to Python with coefficients from `itur` | 3.4e-13 km and 4.3e-13 dB |
+| `link/check_s465.py` | reference antenna pattern, 3 apertures at 8 off-axis angles | the ITU-R S.465 equations, transcribed to Python | 4.0e-10 dB |
+| `atmosphere/check_p839.py` | zero degree isotherm height, 15 points worldwide | the ITU-R P.839-4 implementation in `itur` | 3.3e-13 km |
+| `atmosphere/check_gas_exact.py` | exact slant path, 11 scenarios from 1 to 100 GHz at 1 to 90 degrees elevation | the exact method of ITU-R P.676-12 in `itur` | 9.6e-9, relative |
+| `time/check_iau2000.py` | precession, nutation, frame offsets, GAST and GCRS to ITRF, 8 epochs by 28 quantities | ERFA 2.0.1, derived from IAU SOFA | nutation 6.6e-15 rad, BPN matrix 6.0e-15, GAST 1.1e-11 rad |
+| `coord/check_teme.py` | TEME to the Earth-fixed frame, 4 epochs | `gmst82` and `pom00` from ERFA, both with zero polar motion | 4.9e-10 km |
+| `constellation/check_coverage.py` | coverage geometry, 6 scenarios of LEO, MEO and GEO at low, usual and strict masks, plus a round trip between the central angle and the elevation | the spherical triangle relations, rewritten in Python from the geometry | angle 0, area 2.2e-16 relative |
+| `orbit/check_kepler.py` | two-body conversion over 7 orbits (circular, low, moderate and high eccentricity, retrograde, near polar and geostationary), plus a state back to elements at 36 true anomalies | the perifocal formulae, the rotation matrix and the vis-viva equation, rewritten in Python | position, velocity and period 0; energy 3.0e-14 km^2/s^2; recovered elements about 1e-11 km |
+| `orbit/check_tle.py` | element parsing, 8 element sets by 17 fields, covering the two digit year expansion, the implied leading zero of the eccentricity, the exponential drag term and the modulo ten checksum | an independent column indexed reader of the NORAD format | exact, field by field |
 
-### 关于射频层对拍的说明
+### A note on the radio frequency cross-checks
 
-射频层分两类：有权威参考实现的模型与纯闭式算式。
+The radio frequency layer divides into two kinds of model: those with an
+authoritative reference implementation, and those that are purely a closed
+form expression.
 
-- 有参考实现的，直接对拍：地球定向用 `erfa`（IAU SOFA 的派生实现），大气与雨衰用 `itur`；
-  链路预算的每一步都是初等运算，`check_link.py` 用 Python 独立重写同一方程。
-- 其余以解析性质断言为主：各 crate 的单元测试验证模型必须满足的性质，例如 3 dB 点、
-  平方律下降、Friis 级联行为、P.838-3 系数在表列频率处的取值。
+- Where a reference implementation exists it is compared directly: Earth
+  orientation uses `erfa`, derived from IAU SOFA, and the atmosphere and rain
+  use `itur`. Every step of the link budget is elementary arithmetic, and
+  `check_link.py` rewrites the same equation independently in Python.
+- The rest are checked by asserting analytic properties: the unit tests of
+  each crate verify what the model must satisfy, such as the 3 dB point, the
+  square law falloff, the behaviour of a Friis cascade, and the value of the
+  P.838-3 coefficients at the tabulated frequencies.
 
-所有建议书均采用**现行版本**：P.676-12、P.838-3、P.618-13、P.839-4、S.465。
-P.838-3 的系数是闭式曲线拟合，不是已被取代的 P.838-1 数值表。
+Every recommendation is at its **current revision**: P.676-12, P.838-3,
+P.618-13, P.839-4 and S.465. The coefficients of P.838-3 are a closed form
+curve fit, not the superseded numerical table of P.838-1.
 
-### 关于 SGP4 对拍的约定
+### A note on the SGP4 cross-check convention
 
-TLE 的历元是 UTC 日历时刻，但 SGP4 把它当作均匀时间原点使用，这是理论拟合时
-采用的约定。若先把历元换算到 TAI 再送入传播器，会引入约 33 秒的闰秒偏移，该偏移
-会传播到深空分支的日月摄动级数中。对拍时两侧都直接使用 TLE 写明的 UTC MJD。
+The epoch of a TLE is a UTC calendar instant, but SGP4 treats it as a uniform
+time origin, which is the convention the theory was fitted with. Converting
+the epoch to TAI before handing it to the propagator would introduce a leap
+second offset of about 33 seconds, and that offset would propagate into the
+luni-solar series of the deep space branch. Both sides of the cross-check
+therefore use the UTC Modified Julian Date as the element set states it.
 
-### 关于时间对拍的约定差异
+### A note on the difference in the time cross-check conventions
 
-UTC 的浮点日表示存在两种约定：
+There are two conventions for a floating point day number of UTC:
 
-- 本仓库使用线性 MJD，`TAI - UTC` 是阶跃函数，闰秒日当天其余时刻偏移不变。
-- astropy / ERFA 使用准儒略日，闰秒日有 86401 秒，其 `tai - utc` 差值在
-  该日内线性变化。
+- This repository uses a linear Modified Julian Date, where `TAI - UTC` is a
+  step function and the offset is constant for the rest of a leap second
+  day.
+- astropy and ERFA use a quasi-Julian date, where a leap second day has
+  86401 seconds and their `tai - utc` difference varies through the day.
 
-因此直接比较两者的儒略日差会测量到“约定差异”而非数值误差。`check_time.py`
-改比较 **TAI 瞬时**：两侧给定同一 UTC 日历时刻，再比较得到的 TAI 修正儒略日。
-比较采用“整数日 + 日内小数”两段式，避免单个 `f64` 在 MJD ≈ 60000 处约
-40 µs 的分辨率损失。
+Comparing the two Julian dates directly would therefore measure a difference
+of convention rather than a numerical error. `check_time.py` compares the
+**TAI instant** instead: both sides take the same UTC calendar instant and
+the resulting TAI Modified Julian Date is compared. The comparison uses an
+integer day plus a fraction of a day in two parts, which avoids the roughly
+40 us of resolution a single `f64` loses near an MJD of 60000.
 
-`dump_time` 也因此以两段式输出 TAI 时刻，而不是单个浮点日。
+`dump_time` writes the TAI instant in the same two parts for the same
+reason.

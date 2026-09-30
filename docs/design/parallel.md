@@ -1,121 +1,159 @@
-# 并行化
+# Parallelism
 
-本文件记录并行化的判定标准、提供的接口，以及实测结果。跨层的单位与坐标约定见
-[单位与坐标约定](units.md)，分层边界见 [分层边界](layers.md)。
+English | [简体中文](./parallel.zh.md)
 
-## 为什么不引入线程池
+This file records how a loop is judged worth threading, which interfaces the
+workspace offers, and what the measurements were. The cross-layer unit and
+coordinate conventions are in [Units and coordinates](units.md), and the
+layering is in [Layer boundaries](layers.md).
 
-工作区禁止任何第三方 crate，因此没有 `rayon` 这样的线程池可用。也不需要：
-工作区中值得多核的运算，无一例外都是**逐元素独立**的循环，用标准库的
-`std::thread::scope` 就能直接表达。
+## Why there is no thread pool
 
-作用域线程按引用借用数据，调用方无需 `Arc` 即可共享一个切片或一个只读对象；
-作用域结束前会 join 全部线程，因此不会有结果在线程仍在写时被读走。
+The workspace forbids every third-party crate, so a pool such as `rayon` is
+not available. None is needed either: every computation here that is worth
+several cores is a loop over independent items, which the standard
+library's `std::thread::scope` expresses directly.
 
-## 接口
+Scoped threads borrow their data, so a caller shares a slice or a read-only
+value without an `Arc`, and the scope joins every thread before it returns,
+so no result is read while a thread is still writing it.
 
-### apsis-math：并行原语
+## The interfaces
 
-`apsis_math::parallel` 提供两个入口，是所有并行接口的基础：
+### apsis-math: the primitives
 
-| 函数 | 用途 |
+`apsis_math::parallel` provides the entry points every other interface builds
+on:
+
+| Function | Purpose |
 | --- | --- |
-| `thread_count()` | 机器的并行度 |
-| `threads_for(len)` | 该长度下值得启用的线程数 |
-| `for_each_index(len, f)` | 对每个下标调用 `f` |
-| `map_index(len, f)` | 每个下标产出一个值，按下标序返回 |
+| `thread_count()` | the parallelism of the machine |
+| `threads_for(len)` | the threads worth starting for a length |
+| `for_each_index(len, f)` | call `f` for every index |
+| `map_index(len, f)` | produce a value per index, returned in index order |
 
-两个入口都只要求闭包可**同步调用**（`Fn` + `Sync`），因为它们把输入当作共享
-的、把输出写进各自负责的槽位；调用方不需要自己同步。
+Both loop entries require only that the closure can be **called** from
+several threads (`Fn` plus `Sync`), because they treat the input as shared
+and the output as a slot each thread owns; the caller synchronises nothing.
 
-`threads_for` 在长度小于每线程一千项时返回 1：在这个量级上，启动线程的成本
-高于它能省下的工作。
+`threads_for` returns one below a thousand items per thread, because at that
+scale starting a thread costs more than the work it would save.
 
-### 各层的批处理接口
+### The batch interfaces of the layers
 
-| crate | 接口 | 适用规模 |
+| Crate | Interface | Scale it suits |
 | --- | --- | --- |
-| `apsis-sgp4` | `propagate_minutes_at_parallel` | 长轨道（≥ 数万样本） |
-| `apsis-sgp4` | `propagate_at_parallel` | 整壳一次性传播 |
-| `apsis-access` | `find_all_parallel` | 数百条轨道 |
-| `apsis-isl` | `visibility_matrix_parallel` | 数百颗以上（见下） |
+| `apsis-sgp4` | `propagate_minutes_at_parallel` | a long track, tens of thousands of samples or more |
+| `apsis-sgp4` | `propagate_at_parallel` | a whole shell in one call |
+| `apsis-access` | `find_all_parallel` | hundreds of tracks |
+| `apsis-isl` | `visibility_matrix_parallel` | a few hundred satellites or more, see below |
 
-每个接口都有一个同名的顺序版本，两者结果逐元素相同、顺序相同，调用方可自由
-切换。
+Each interface has a sequential counterpart of the same name. The two agree
+element for element and in the same order, so a caller may switch freely.
 
-## 判定标准
+## When a loop is worth threading
 
-并非所有批处理都值得并行化。判定依据是**单次工作成本**与**总量**：
+Not every batch is worth threading. The decision rests on the **cost of one
+item** and the **size of the batch**:
 
-- **值得并行**：单次工作昂贵（≥ 微秒），且逐元素独立，规模可达数百次以上。
-  典型是 SGP4 传播（约 230 ns/样本，百万样本量级）与可见性搜索（约 7 μs/轨）。
-- **不值得并行**：
-  - `Constellation::instantiate`：纯算术，几百颗星只需微秒，线程开销完全淹没。
-  - 调度器：贪心放置本质串行，每次放置改变后续任务的可行区间，不是独立
-    循环，因此没有并行接口；但其中的搜索已改为单次扫描（见下）。
-  - 事件引擎：单队列时序，无法分块。
-  - 大地与坐标变换：单点调用本身已是 O(1)，没有批量。
-  - `mutual_visibility` 单次：约 4 ns，**单次**不值得，但成矩阵（见下）。
+- **Worth threading**: the work per item is expensive, at a microsecond or
+  more, the items are independent, and the batch reaches hundreds. The
+  typical cases are SGP4 propagation at about 230 ns a sample over millions
+  of samples, and the access search at about 7 us a track.
+- **Not worth threading**:
+  - `Constellation::instantiate`: pure arithmetic, microseconds for a few
+    hundred satellites, which the thread overhead entirely drowns.
+  - The scheduler: a greedy placement is serial in substance, since each
+    placement changes the feasible interval of the tasks after it, so the
+    loop is not independent and there is no parallel interface. Its search
+    is nonetheless much faster than it was, as the last section describes.
+  - The event engine: one queue in time order, which cannot be split.
+  - The geodetic and coordinate transforms: a single call is already
+    constant time, so there is no batch.
+  - One `mutual_visibility` call: about 4 ns, which is not worth threading
+    on its own but is as a matrix, as below.
 
-## 实测（16 核，release）
+## Measurements (sixteen cores, release)
 
-### SGP4 单条轨道（`propagate_minutes_at_parallel`）
+### One satellite track (`propagate_minutes_at_parallel`)
 
-| 轨道长度 | 顺序 | 并行 | 加速 |
+| Track length | Sequential | Parallel | Speed-up |
 | --- | --- | --- | --- |
-| 1 天（1,440 样本） | 0.3 ms | 0.3 ms | 1.28× |
-| 7 天（10,080） | 2.3 ms | 0.9 ms | 2.46× |
-| 30 天（43,200） | 10.1 ms | 1.9 ms | 5.45× |
-| 365 天（525,600） | 144.1 ms | 26.0 ms | 5.54× |
+| 1 day (1,440 samples) | 0.3 ms | 0.3 ms | 1.28x |
+| 7 days (10,080) | 2.3 ms | 0.9 ms | 2.46x |
+| 30 days (43,200) | 10.1 ms | 1.9 ms | 5.45x |
+| 365 days (525,600) | 144.1 ms | 26.0 ms | 5.54x |
 
-**结论**：轨道越长加速越高，30 天以上稳定在 5.5×。一天以内收益很小——
-1,440 个样本分给多线程后每线程不足一千项，低于 `threads_for` 的阈值。
+**Conclusion**: the longer the track the larger the gain, settling near 5.5x
+past a month. A day or less gains little, because splitting 1,440 samples
+across the threads leaves each with fewer than the thousand items
+`threads_for` asks for.
 
-**实践要点**：有大量短轨道时，应使用 `propagate_at_parallel`（整壳一次调用），
-而不是对每颗星各调一次并行版——后者会让每颗星都付一次线程启动成本。
+**Practical point**: with many short tracks, call `propagate_at_parallel` for
+the whole shell rather than the parallel form once per satellite, because the
+latter pays the thread start-up once per satellite.
 
-### 可见性矩阵（`visibility_matrix_parallel`）
+### The visibility matrix (`visibility_matrix_parallel`)
 
-| 星数 | 对数 | 顺序 | 并行 | 加速 |
+| Satellites | Pairs | Sequential | Parallel | Speed-up |
 | --- | --- | --- | --- | --- |
-| 200 | 4 万 | 0.16 ms | 0.31 ms | 0.53× |
-| 600 | 36 万 | 1.50 ms | 1.37 ms | 1.09× |
-| 1,000 | 100 万 | 4.09 ms | 2.50 ms | 1.64× |
+| 200 | 40 thousand | 0.16 ms | 0.31 ms | 0.53x |
+| 600 | 360 thousand | 1.50 ms | 1.37 ms | 1.09x |
+| 1,000 | 1 million | 4.09 ms | 2.50 ms | 1.64x |
 
-**结论**：单次可见性判定只有几纳秒，**小规模下并行反而更慢**（线程开销占比高），
-数百颗星以上才开始获益，且远未饱和。这个接口是为大规模壳准备的；小壳应直接用
-顺序版。接口文档也如实说明了这一点。
+**Conclusion**: one visibility test costs a few nanoseconds, so **below a
+few hundred satellites the parallel form is slower**, because the thread
+overhead dominates. It only starts to gain past that and is nowhere near
+saturated. The interface exists for a large shell; a small one should use
+the sequential form, and the interface documentation says so.
 
-### 跨层组合
+### Across layers
 
-`bench_parallel` 的测量显示，整壳在多核上传播与构建拓扑的并行效果最好，因为
-它把整个工作量一次性摊给所有线程。相关数据见该示例的输出。
+The measurements in `bench_parallel` show that propagating a whole shell and
+building a topology benefit most, because they hand the entire amount of work
+to the threads at once. Run the example for the figures.
 
-## 确定性
+## Determinism
 
-并行不改变结果：所有批量接口都逐元素比对顺序版的结果（SGP4 的状态、可见性
-的布尔矩阵、access 的过站摘要），顺序也一致。传播本身是确定性的，只依赖时刻，
-与如何分块无关；可见性与过站搜索是逐元素独立的。因此同一输入在任意线程数下
-产生相同输出，测试也按此断言。
+Threading does not change the result. Every batch interface compares its
+output element by element against the sequential form, including the order:
+the states from SGP4, the boolean matrix from visibility, the pass summaries
+from access. Propagation is deterministic and depends only on the instant, not
+on how it was split, and visibility and the pass search are independent per
+item. The same input therefore gives the same output at any thread count, and
+the tests assert exactly that.
 
-## 调度器搜索的优化
+## The scheduler search
 
-调度器没有并行接口，但它的最坏情况曾达到每任务数百微秒。优化分两步，两者都
-保持结果逐位不变。
+The scheduler has no parallel interface, but its worst case once cost
+hundreds of microseconds a task. The fix came in two steps, neither of which
+changes a single bit of the result.
 
-**第一步：一次扫描代替逐候选测试。** 旧的做法列出所有"可行性可能变化"的时刻，
-逐个测试，每次都重新计算每个资源的负载曲线。负载曲线与候选时刻无关，因此改为
-扫一次：把"资源没有余量的区间"从可用窗口中减去，多资源求交，取第一个存活区间
-的起点。结果仍由 `feasible_at` 确认，枚举法保留为浮点边界不一致时的回退。
+**First, one sweep in place of a test per candidate.** The search used to
+list every instant at which feasibility could change and test them one by
+one, recomputing the load profile of every resource at each step. The profile
+does not depend on the candidate, so it is now swept once: the intervals
+where a resource has no room are cut from its availability windows, the
+per-resource results are intersected, and the first surviving start is read
+off the front. The answer is still confirmed by `feasible_at`, and the
+enumeration remains as the fallback for the rare case where rounding at a
+capacity boundary makes the two disagree.
 
-**第二步：确认调用复用索引。** 去掉确认调用后耗时降到八分之一，这定位了真正
-的开销：确认用的公开可行性测试在收集边界时扫描一次任务表，又在每个边界上对每
-个覆盖该边界的放置再扫描一次任务表。把第一步建好的索引传进去，两处扫描都变成
-按标识符直接读取。
+**Second, the confirmation reuses the index.** Removing the confirmation
+entirely cut the crowded case by eight, which located the real cost: the
+public feasibility test that does the confirming scans the task list once to
+collect the boundaries and then, for every boundary, once more to sum the
+demand of each placement covering it. Passing the index the sweep already
+built turns both scans into a read by identifier.
 
-任务标识符是小而稠密的整数，因此索引用向量而非哈希表：数组下标比哈希一个整数
-更便宜，这在本仓库已测到两次（拓扑的邻接表用索引、这里的任务表用向量）。
+A task identifier is a small dense integer, so the index is a vector rather
+than a map: an array index is cheaper than hashing a small integer, which
+this repository has now measured twice, once for the adjacency index in
+`apsis-topology` and once here.
 
-**结果**：全部任务争用单一资源、容量为瓶颈时，3200 个任务从 6.7 秒降到 0.48
-秒（14 倍），6400 个任务 2.2 秒。计划结果不变——测试在两种资源、窗口不相交的
-场景下逐个比对了每个放置的起止时刻。
+**Result**: with every task contending for one resource and the capacity the
+binding constraint, planning three thousand two hundred tasks falls from 6.7
+seconds to 0.48, a factor of fourteen, and six thousand four hundred takes
+2.2 seconds. The plan is unchanged: a test compares the start and end of
+every placement before and after, across two resources with disjoint
+availability windows.

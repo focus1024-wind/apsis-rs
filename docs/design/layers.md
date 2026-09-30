@@ -1,89 +1,107 @@
-# 分层边界
+# Layer boundaries
 
-本文件记录工作区的分层规则，以及为什么某些跨层依赖是允许的。README 的
-"分层"一节是规则本身，这里是它的判定标准与边界情况。
+English | [简体中文](./layers.zh.md)
 
-## 规则
+This file records the layering rule of the workspace and why certain
+cross-layer dependencies are allowed. The "Layers" section of the README is
+the rule itself; what belongs here is how it is decided and where it has edge
+cases.
 
-层自左向右排列：
+## The rule
+
+The layers run left to right:
 
 ```text
 foundation -> physics -> orbit -> rf -> network -> ops -> sim -> apsis-rs
 ```
 
-一条依赖边从 crate A 指向 crate B。把 A 所在的层与 B 所在的层分别映射为
-下标，规则是：
+A dependency edge runs from crate A to crate B. Map the layer of A and the
+layer of B to indices, and the rule is:
 
 ```text
-index(B) <= index(A)     允许
-index(B) >  index(A)     违规（反向依赖）
+index(B) <= index(A)     allowed
+index(B) >  index(A)     a violation, a reverse dependency
 ```
 
-即**只能向左依赖，不能向右依赖**。`scripts/check-layers.sh` 对工作区每个
-清单执行这条判定，CI 会运行它。
+In other words, **dependencies go to the left and never to the right.**
+`scripts/check-layers.sh` applies this to every manifest in the workspace,
+and CI runs it.
 
-## 允许跨层
+## Crossing layers is allowed
 
-规则只看方向，不看距离。从 `network` 直接依赖 `orbit` 是允许的，尽管中间
-隔着 `rf`：`orbit` 在 `network` 左边，方向正确。
+The rule constrains direction, not distance. `network` may depend on `orbit`
+even though `rf` sits between them, because `orbit` is to the left of
+`network` and the direction is correct.
 
-允许向左跨层是有意的。若强制只能依赖紧邻的左层，会产生两类问题：
+Allowing a leftward crossing is deliberate. Forbidding it would create two
+kinds of problem:
 
-- **中转类型不存在。** 把 `orbit` 层的位置传给 `network` 层时，`rf` 层并
-  非必然提供一个承载该位置的类型。强行要求经过 `rf` 只会制造只是转发的
-  空壳类型。
-- **无谓的耦合。** `network` 的星座计算需要 `apsis-kepler` 的开普勒要素，
-  它并不需要 `rf`。若禁止跨层，`network` 就得依赖 `rf` 只为拿到一个它不
-  使用的类型。
+- **There may be no type to carry the value.** When a position from the
+  `orbit` layer is handed to the `network` layer, the `rf` layer need not
+  offer a type that carries it. Requiring the trip through `rf` would only
+  produce a shell type that forwards.
+- **It would be coupling without need.** The constellation calculation in
+  `network` wants the Keplerian elements from `apsis-kepler` and has no use
+  for `rf`. Forbidding the crossing would make `network` depend on `rf` only
+  to reach a type it does not use.
 
-因此规则约束的是**方向**，因为方向才对应真正的分层语义：上层的概念可以
-引用下层的概念，反之则说明分层错了。
+The rule therefore constrains **direction**, because direction is what
+carries the meaning of layering: a concept of a higher layer may refer to a
+concept of a lower one, and the other way round would mean the layering is
+wrong.
 
-## 全局基准
+## The global baselines
 
-`apsis-core`（通用错误、常量、单位标记）与 `apsis-math`（`Vec3`、
-`Mat3`、`Quat`）被各层共用。它们本身在 `foundation` 中，所以"只向左依赖"
-已经允许任何层使用它们，无需特例。
+`apsis-core` (the general error, the constants, the unit marker) and
+`apsis-math` (`Vec3`, `Mat3`, `Quat`) are shared by every layer. They sit in
+`foundation` themselves, so "to the left only" already lets any layer use
+them and no special case is needed.
 
-这与"层内基准"不同：`apsis-core` 也是 `foundation` 内的基准，但它的可用
-范围是整个工作区，而不只是同层。
+This differs from a within-layer baseline. `apsis-core` is also the baseline
+inside `foundation`, but its reach is the whole workspace rather than one
+layer.
 
-**只有真正使用的依赖才声明。** `apsis-core` 与 `apsis-math` 可以被任何
-crate 使用，但一个不引用它们的 crate 不应把它们写进清单：未使用的依赖会
-拖慢编译、让 `cargo tree` 与分层检查产生噪声，并让"谁依赖什么"失真。
-需要时再加，是一条随时可走的单行改动。`scripts/check-layers.sh` 报告的
-边数因此是真实的使用关系，而不是一份预留清单。
+**Declare a dependency only where it is used.** Any crate may use
+`apsis-core` and `apsis-math`, but a crate that does not reference them
+should not list them: an unused dependency slows the build, adds noise to
+`cargo tree` and to the layer check, and misstates who depends on what.
+Adding one later is a single line whenever it is needed. The edge count that
+`scripts/check-layers.sh` reports is therefore a real usage relation rather
+than a list of intentions.
 
-## 层内门面
+## The facade within a layer
 
-每层以一个门面 crate 作为整合点：
+Each layer has one facade crate as its integration point:
 
-| 层 | 门面 |
+| Layer | Facade |
 | --- | --- |
 | orbit | `apsis-orbit` |
 | rf | `apsis-rf` |
 | sim | `apsis-sim` |
-| 对外 | `apsis-rs` |
+| outward | `apsis-rs` |
 
-门面把同层的能力组合成少量类型，并再导出同层的其余 crate。`foundation`、
-`physics`、`network`、`ops` 没有单独门面：它们的 crate 各自独立有用，且
-`apsis-rs` 会把它们一并再导出。
+A facade combines the capabilities of its layer into a few types and
+re-exports the remaining crates of the same layer. `foundation`, `physics`,
+`network` and `ops` have no separate facade: their crates are each useful on
+their own, and `apsis-rs` re-exports them together.
 
-## 边界情况
+## Edge cases
 
-- **facade `apsis-rs` 不在层序列中。** 它依赖全部层，因为它就是出口。
-  `scripts/check-layers.sh` 通过层目录名判定，`crates/apsis-rs` 不是
-  `crates/<layer>/<crate>` 形状，因此被跳过。
-- **`dev-dependencies` 也计入检查。** 一条测试里的反向依赖同样说明分层
-  错了，应当修正代码而不是放宽测试。
-- **门面再导出不构成新依赖。** `apsis-rs` 把 `apsis-orbit` 再导出，是
-  门面行为，不是某层对 `orbit` 的依赖。
+- **The `apsis-rs` facade is not in the layer sequence.** It depends on
+  every layer, because it is the exit. `scripts/check-layers.sh` decides by
+  the layer directory name, and `crates/apsis-rs` does not have the shape
+  `crates/<layer>/<crate>`, so it is skipped.
+- **Dev-dependencies count.** A reverse dependency in a test shows the
+  layering is just as wrong there, so the fix is to change the code rather
+  than relax the test.
+- **A facade re-export is not a new dependency.** `apsis-rs` re-exporting
+  `apsis-orbit` is what a facade does, not a layer reaching into `orbit`.
 
-## 检查
+## Checks
 
 ```bash
 bash scripts/check-layers.sh
 ```
 
-脚本输出检查过的依赖边数，并在发现反向依赖时逐条列出后以退出码 1 结束。
-对当前工作区，它检查 104 条边，全部方向正确。
+The script prints the number of dependency edges it checked, and lists each
+reverse dependency before exiting with status one if it found any.

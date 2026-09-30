@@ -1,110 +1,131 @@
-# ApsisRS / 拱点
+# ApsisRS
 
-商业航天与卫星互联网领域的 Rust 计算内核。
+Computational kernels for commercial spaceflight and satellite internet, in Rust.
 
-## 定位
+English | [简体中文](./README.zh.md)
 
-- 纯 Rust、`std`、零第三方 crate 依赖
-- 领域边界清晰，按层单向依赖
-- 对外门面 crate 名为 `apsis-rs`，库名为 `apsis`
-- 当前阶段所有 crate 均 `publish = false`，不执行发布
+## Scope
 
-## 分层
+- Pure Rust, standard library only, no third-party crate dependency
+- Clear domain boundaries with a one-way dependency order between layers
+- The public facade crate is `apsis-rs`; its library name is `apsis`
+- Every crate is `publish = false` at this stage, so none of them is released
+
+## Layers
 
 ```text
 foundation -> physics -> orbit -> rf -> network -> ops -> sim -> apsis-rs
 ```
 
-约束：
+The rules:
 
-- 依赖只能从左向右。下层可依赖其上任意层，上层不得依赖其下任意层。
-  例如 `network` 可以依赖 `orbit`（向左），但 `orbit` 不得依赖 `network`
-  （向右，即反向）。左向依赖不限层数，允许跨层，因为把 `orbit` 的值
-  传到 `network` 时中间层未必提供中转类型。
-- `foundation` 的 `apsis-core` 是全局基准，任何层任何 crate 均可依赖它。
-  `apsis-math` 同理，因为线性代数被各层共用。
-- 层内以该层的门面 crate（`apsis-orbit`、`apsis-rf`、`apsis-sim`）作为整合点。
+- Dependencies flow to the left only. A lower layer may use any layer to its
+  left; a higher layer may not use any layer to its right. So `network` may
+  use `orbit`, but `orbit` may not use `network`. A leftward dependency may
+  cross as many layers as it needs, because the layers in between need not
+  offer a type that carries the value forward.
+- `apsis-core` in `foundation` is the global baseline that any crate in any
+  layer may use. `apsis-math` is the same, because linear algebra is shared
+  across the layers.
+- Within a layer, that layer's facade crate (`apsis-orbit`, `apsis-rf`,
+  `apsis-sim`) is the integration point.
 
-这套规则由 `scripts/check-layers.sh` 强制，CI 会运行它。
+`scripts/check-layers.sh` enforces these rules and CI runs it.
 
-各层内容：
-
-| 层 | 职责 | crates |
+| Layer | Responsibility | Crates |
 | --- | --- | --- |
-| foundation | 基础类型、单位、数学、宏 | `apsis-core`、`apsis-units`、`apsis-math`、`apsis-macros` |
-| physics | 时间、闰秒、坐标、大地基准 | `apsis-time`、`apsis-leap`、`apsis-coord`、`apsis-geodesy`、`apsis-frames` |
-| orbit | TLE、SGP4、二体、星历、机动 | `apsis-tle`、`apsis-sgp4`、`apsis-kepler`、`apsis-ephemeris`、`apsis-maneuver`、`apsis-orbit` |
-| rf | 射频、天线、链路预算 | `apsis-rf`、`apsis-antenna`、`apsis-doppler`、`apsis-atmosphere`、`apsis-noise`、`apsis-interference`、`apsis-link` |
-| network | 星座、覆盖、接入、拓扑、路由 | `apsis-constellation`、`apsis-coverage`、`apsis-access`、`apsis-topology`、`apsis-isl`、`apsis-routing`、`apsis-handover`、`apsis-mesh` |
-| ops | 资源、任务、调度、冲突、计划 | `apsis-resource`、`apsis-task`、`apsis-scheduler`、`apsis-conflict`、`apsis-schedule` |
-| sim | 仿真引擎、场景、事件、输出 | `apsis-sim-engine`、`apsis-scenario`、`apsis-event`、`apsis-output`、`apsis-sim` |
-| facade | 对外门面 | `apsis-rs` |
+| foundation | Base types, units, mathematics, macros | `apsis-core`, `apsis-units`, `apsis-math`, `apsis-macros` |
+| physics | Time, leap seconds, coordinates, datum | `apsis-time`, `apsis-leap`, `apsis-coord`, `apsis-geodesy`, `apsis-frames` |
+| orbit | TLE, SGP4, two-body, ephemeris, maneuvers | `apsis-tle`, `apsis-sgp4`, `apsis-kepler`, `apsis-ephemeris`, `apsis-maneuver`, `apsis-orbit` |
+| rf | Radio frequency, antennas, link budget | `apsis-rf`, `apsis-antenna`, `apsis-doppler`, `apsis-atmosphere`, `apsis-noise`, `apsis-interference`, `apsis-link` |
+| network | Constellations, coverage, access, topology, routing | `apsis-constellation`, `apsis-coverage`, `apsis-access`, `apsis-topology`, `apsis-isl`, `apsis-routing`, `apsis-handover`, `apsis-mesh` |
+| ops | Resources, tasks, scheduling, conflicts, schedules | `apsis-resource`, `apsis-task`, `apsis-scheduler`, `apsis-conflict`, `apsis-schedule` |
+| sim | Simulation engine, scenarios, events, output | `apsis-sim-engine`, `apsis-scenario`, `apsis-event`, `apsis-output`, `apsis-sim` |
+| facade | Public facade | `apsis-rs` |
 
-## 构建
+## Building
 
-所有 Rust 命令在仓库根目录执行：
+Run every Rust command from the repository root:
 
 ```bash
 cargo check --workspace
 cargo test -p apsis-core -p apsis-units -p apsis-math
 ```
 
-`apsis-rs` 门面通过 feature 选择需要的层，例如：
+The `apsis-rs` facade selects the layers it needs by feature:
 
 ```toml
 [dependencies]
 apsis-rs = { path = "...", features = ["orbit"] }
 ```
 
-可选 feature：`foundation`、`physics`、`orbit`、`rf`、`network`、`ops`、`sim`、`full`。
-每个层 feature 自动启用其下层。`full` 启用全部层（含 `sim`）；`ops` 等价于除
-`sim` 以外的所有层，适合不运行仿真的项目。
+The features are `foundation`, `physics`, `orbit`, `rf`, `network`, `ops`,
+`sim` and `full`. A layer feature enables the layers below it. `full` enables
+everything including `sim`; `ops` is every layer except `sim`, for a project
+that does not run simulations.
 
-## 约定
+## Conventions
 
-- toolchain：`stable`，`edition 2024`，`rust-version 1.85`
-- 默认禁止任何第三方 crate，包括开发依赖与 `build.rs`
-- 库代码不使用 `unwrap()` / `expect()` / `panic!` / `unsafe`
-  - 外部输入的失败一律走 `Result` / `Option`，不用 `unwrap` / `expect` 转换
-  - 允许对**已守卫的内部不变量**用 `expect("…")` 断言不可能的分支（如刚 `push`
-    后的 `last()`、前置 `is_none()` 已检查后的取值）。这些断言不处理不可信
-    输入，而是把"若此处为空则是编码错误"写成可读的失败信息；全库共 12 处，
-    逐处均有前置守卫。
-- 公共 API 必须有文档注释，注释自包含
+- Toolchain `stable`, edition 2024, rust-version 1.85
+- No third-party crate by default, including dev-dependencies and build scripts
+- Library code uses no `unwrap`, `expect` or `panic`. A failure on external
+  input is always a `Result` or an `Option`. An `expect` is allowed on an
+  internal invariant that a check just above already guards, such as the
+  element just pushed onto a vector, or a value whose absence the line above
+  ruled out. There are twelve such sites and each is listed with its guard in
+  `docs/design/errors.md`.
+- Every public item carries a documentation comment, and the comment is
+  self-contained
+- Tests live in each crate's `tests/` directory, separate from `src/`. They are
+  integration tests and reach the crate only through its public API; no inline
+  `#[cfg(test)]` module is used
+- Documentation follows the `X.md` and `X.zh.md` convention, with English in
+  `X.md` and Simplified Chinese in `X.zh.md`
 
-## 目录
+## Layout
 
 ```text
 apsis-rs/
 ├── Cargo.toml
-├── crates/          # Rust 工作区成员
+├── crates/          # Rust workspace members
 │   └── apsis-rs/
-│       ├── examples/   # 对拍导出与跨层集成检查
+│       ├── examples/   # validation dumps and cross-layer checks
 │       └── ...
-├── scripts/         # 仓库检查脚本
-├── validation/      # Python 对拍验证
-└── docs/design/     # 设计文档
+├── scripts/         # repository check scripts
+├── validation/      # Python cross-checks
+└── docs/design/     # design notes
 ```
 
-测试在各 crate 的 `tests/` 目录，为集成测试，只通过公共 API 访问被测 crate。
-跨层集成检查与零依赖基准测试是 `apsis-rs` 的 example：
+Tests live in each crate's `tests/` directory. The cross-layer integration
+checks and the dependency-free benchmarks are examples of the facade:
 
 ```bash
-# 跨层集成检查（CI 会执行）
+# Cross-layer integration checks, which CI runs
 cargo run -p apsis-rs --features network --example integrate_network
 cargo run -p apsis-rs --features ops --example integrate_ops
 cargo run -p apsis-rs --features sim --example integrate_sim
 
-# 热点路径基准（release 下运行）
+# Hot path benchmark, run in release
 cargo run --release -p apsis-rs --features full --example bench
 
-# 规模扫描：输入规模递增，观察每单位工作量的增长趋势
+# Scale sweep: the input grows and the cost per unit of work shows the trend
 cargo run --release -p apsis-rs --features full --example bench_scale
 
-# 并行扫描：同一批工作量在 1/2/4/8/16 线程下的加速比与效率
+# Parallel sweep: the same work over 1, 2, 4, 8 and 16 threads
 cargo run --release -p apsis-rs --features full --example bench_parallel
 ```
 
-## 许可
+## Documentation
 
-MIT OR Apache-2.0，见 `LICENSE-MIT` 与 `LICENSE-APACHE`。
+The design notes record the cross-crate decisions that a reader of a single
+crate cannot infer:
+
+- [Units and coordinates](docs/design/units.md)
+- [Errors and tolerances](docs/design/errors.md)
+- [Layer boundaries](docs/design/layers.md)
+- [Parallelism](docs/design/parallel.md)
+- [The simulation layer](docs/design/sim.md)
+
+## Licence
+
+GPL-3.0-or-later, see `LICENSE`.

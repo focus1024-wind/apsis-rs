@@ -1,17 +1,22 @@
-# 设计文档
+# Design notes
 
-本目录记录 ApsisRS 的跨 crate 设计决策，例如坐标约定、单位约定、误差策略与
-分层边界。单个 crate 的内部设计写在对应 crate 的模块文档中。
+English | [简体中文](./README.zh.md)
 
-文档内容需自包含，仅引用本仓库内的代码或可公开访问的标准。
+This directory records the cross-crate design decisions of ApsisRS, such as
+the coordinate and unit conventions, the error and tolerance strategy, the
+layer boundaries and the parallelism. The design inside a single crate is
+documented in that crate's module documentation.
 
-## 跨层约定
+A note is self-contained and refers only to code in this repository or to a
+public standard.
 
-- [单位与坐标约定](units.md)
-- [错误与容差策略](errors.md)
-- [分层边界](layers.md)
-- [并行化](parallel.md)
+## Cross-layer conventions
 
-## 各层设计
+- [Units and coordinates](units.md)
+- [Errors and tolerances](errors.md)
+- [Layer boundaries](layers.md)
+- [Parallelism](parallel.md)
 
-- [仿真层](sim.md)
+## Per-layer design
+
+- [The simulation layer](sim.md)
