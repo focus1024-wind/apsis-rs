@@ -29,6 +29,7 @@
 #![deny(missing_docs)]
 
 mod mat3;
+pub mod parallel;
 mod quat;
 mod vec3;
 
