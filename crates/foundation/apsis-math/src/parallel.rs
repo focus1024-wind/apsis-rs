@@ -5,7 +5,7 @@
 //! from several cores are all embarrassingly parallel loops over independent
 //! items, and the standard library's scoped threads express those directly.
 //! `std::thread::scope` borrows its data, so a caller can share a slice or a
-//! reader without an [`Arc`], and joins every thread before returning, so no
+//! reader without an atomic reference count, and joins every thread before returning, so no
 //! result escapes the scope still being written.
 //!
 //! The entry point is [`for_each_index`], which splits a range into one chunk

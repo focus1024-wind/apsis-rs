@@ -34,13 +34,17 @@ fn track(satellite: &Satellite, samples: usize) -> Vec<OrbitSample> {
     (0..samples)
         .map(|index| {
             let seconds = index as f64 * 60.0;
-            let state = satellite
+            // The propagated radius sets the shell the synthetic longitude
+            // sweep runs on, so the track is at a realistic altitude.
+            let radius = satellite
                 .propagate_minutes(seconds / 60.0)
-                .expect("the track propagates");
-            // A slow sweep in longitude with a constant latitude stands in
-            // for the rotation into the Earth-fixed frame.
+                .expect("the track propagates")
+                .position
+                .norm();
+            // A slow sweep in longitude stands in for the rotation into the
+            // Earth-fixed frame; the exact geometry is not what this test is
+            // about, only that the batch search reproduces the sequential one.
             let angle = seconds / 4_000.0;
-            let radius = 6_900.0;
             let position = Vec3::new(radius * angle.cos(), radius * angle.sin(), radius * 0.3);
             OrbitSample::new(seconds, position)
         })
