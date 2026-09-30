@@ -83,68 +83,6 @@ pub fn resources_free_at(
         .collect()
 }
 
-/// Returns the earliest time at which a task can be placed.
-///
-/// The earliest feasible start is always one of a small set of candidate
-/// times: the start of the task's window, the start of an availability
-/// window of one of its resources, or the end of a placement already on one
-/// of those resources. Feasibility cannot change at any other instant,
-/// because the demand on every resource is constant between those events and
-/// the availability is constant between them too. Enumerating that set and
-/// taking the smallest feasible member therefore finds the true earliest
-/// start.
-///
-/// Returns `None` when the task cannot be placed anywhere in its window.
-pub fn earliest_feasible_start(
-    task: &Task,
-    tasks: &[Task],
-    schedule: &Schedule,
-    resources: &ResourceSet,
-) -> Option<f64> {
-    if !task.is_valid() || !resources_have_capacity(task, resources) {
-        return None;
-    }
-    if task.requirements.is_empty() {
-        // A task with no requirements can start as soon as its window opens.
-        return Some(task.earliest_start);
-    }
-
-    // The candidate times, collected from every event that can change
-    // feasibility.
-    let mut candidates: Vec<f64> = vec![task.earliest_start];
-    for requirement in &task.requirements {
-        let resource = resources.get(requirement.resource)?;
-        for window in resource.windows() {
-            candidates.push(window.start());
-        }
-        for placement in schedule.placements() {
-            let overlaps = tasks
-                .iter()
-                .find(|other| other.id == placement.task)
-                .is_some_and(|other| other.demand_for(resource.id).is_some());
-            if overlaps {
-                candidates.push(placement.end());
-            }
-        }
-    }
-
-    // Only times at or after the window opens, and no later than the last
-    // start that could still fit, are worth testing.
-    let latest_start = task.latest_end - task.duration;
-    candidates
-        .retain(|time| time.is_finite() && *time >= task.earliest_start && *time <= latest_start);
-    candidates.sort_by(|first, second| {
-        first
-            .partial_cmp(second)
-            .unwrap_or(core::cmp::Ordering::Equal)
-    });
-    candidates.dedup();
-
-    candidates
-        .into_iter()
-        .find(|start| feasible_at(task, tasks, schedule, resources, *start))
-}
-
 /// Returns `true` when a task placed at a time is feasible.
 ///
 /// The check is that every required resource is available for the whole

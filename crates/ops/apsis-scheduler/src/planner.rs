@@ -1,7 +1,8 @@
 //! The greedy planner.
 
-use crate::greedy::{earliest_feasible_start, infeasible_tasks};
+use crate::greedy::infeasible_tasks;
 use crate::improve::{ImprovementSettings, improve};
+use crate::sweep::earliest_feasible_start;
 use apsis_resource::ResourceSet;
 use apsis_schedule::Schedule;
 use apsis_task::{PrecedenceGraph, Task, TaskId, TaskState, task_order};

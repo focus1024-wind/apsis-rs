@@ -46,13 +46,14 @@
 mod greedy;
 mod improve;
 mod planner;
+mod sweep;
 
 pub use greedy::{
-    demand_at, earliest_feasible_start, feasible_at, infeasible_tasks, resources_free_at,
-    resources_have_capacity,
+    demand_at, feasible_at, infeasible_tasks, resources_free_at, resources_have_capacity,
 };
 pub use improve::{ImprovementOutcome, ImprovementSettings, improve};
 pub use planner::{PlanOutcome, Planner, SchedulingResult};
+pub use sweep::earliest_feasible_start;
 
 pub use apsis_resource::{ResourceId, ResourceSet};
 pub use apsis_schedule::Schedule;

@@ -26,7 +26,7 @@
 //! rather than removing it, and the caller continues to see what was left
 //! out.
 
-use crate::greedy::earliest_feasible_start;
+use crate::sweep::earliest_feasible_start;
 use apsis_resource::ResourceSet;
 use apsis_schedule::Schedule;
 use apsis_task::{Task, TaskId, TaskState};
