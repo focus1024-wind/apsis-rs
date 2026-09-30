@@ -13,4 +13,11 @@ workspace = true
 [dependencies]
 apsis-math.workspace = true
 apsis-geodesy.workspace = true
+apsis-tle.workspace = true
 apsis-coverage.workspace = true
+
+[dev-dependencies]
+apsis-sgp4.workspace = true
+apsis-coverage.workspace = true
+apsis-geodesy.workspace = true
+apsis-tle.workspace = true

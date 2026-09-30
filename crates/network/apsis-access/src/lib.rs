@@ -34,10 +34,12 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod batch;
 mod error;
 mod finder;
 mod pass;
 
+pub use batch::{find_all, find_all_parallel};
 pub use error::{AccessError, AccessErrorKind};
 pub use finder::{AccessFinder, OrbitSample};
 pub use pass::{Pass, PassSummary};

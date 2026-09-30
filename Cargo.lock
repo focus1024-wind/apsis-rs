@@ -9,6 +9,8 @@ dependencies = [
  "apsis-coverage",
  "apsis-geodesy",
  "apsis-math",
+ "apsis-sgp4",
+ "apsis-tle",
 ]
 
 [[package]]

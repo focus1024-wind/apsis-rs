@@ -1,0 +1,38 @@
+//! Searching access windows for many tracks, optionally across several
+//! threads.
+//!
+//! A ground station sees a whole constellation, so the access schedule is
+//! the search of one track per satellite. Each track is independent of the
+//! others, which makes the search the natural place to use several cores: the
+//! work is proportional to the number of satellites, and a shell of a few
+//! hundred gives enough of it to be worth the threads.
+//!
+//! The parallel entry point returns exactly what the sequential one does, in
+//! the same order, so a caller can switch between them without changing what
+//! it computes.
+
+use crate::{AccessError, AccessFinder, OrbitSample, PassSummary};
+use apsis_math::parallel::map_index;
+
+/// Searches access for many tracks, in order.
+///
+/// The sequential form, provided for comparison and for small sets where
+/// starting a thread would cost more than the search.
+pub fn find_all(
+    finder: &AccessFinder,
+    tracks: &[Vec<OrbitSample>],
+) -> Vec<Result<PassSummary, AccessError>> {
+    tracks.iter().map(|track| finder.find(track)).collect()
+}
+
+/// Searches access for many tracks, across several threads.
+///
+/// The result matches [`find_all`] element for element and in the same order.
+/// A track that cannot be searched yields its error in the same position the
+/// sequential form would put it, so one bad track does not hide the rest.
+pub fn find_all_parallel(
+    finder: &AccessFinder,
+    tracks: &[Vec<OrbitSample>],
+) -> Vec<Result<PassSummary, AccessError>> {
+    map_index(tracks.len(), |index| finder.find(&tracks[index]))
+}
