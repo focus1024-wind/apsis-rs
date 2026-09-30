@@ -221,3 +221,7 @@ required-features = ["orbit"]
 [[example]]
 name = "bench_scale"
 required-features = ["full"]
+
+[[example]]
+name = "bench_parallel"
+required-features = ["full"]

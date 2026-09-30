@@ -41,6 +41,7 @@ jobs:
         run: |
           cargo build -p apsis-rs --features full --example bench
           cargo build -p apsis-rs --features full --example bench_scale
+          cargo build -p apsis-rs --features full --example bench_parallel
       - name: Documentation
         # Catches a doc link that no longer resolves, which is how a doc
         # comment drifts away from the code it describes.
