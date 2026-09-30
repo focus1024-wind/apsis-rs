@@ -95,6 +95,24 @@ pub fn feasible_at(
     resources: &ResourceSet,
     start: f64,
 ) -> bool {
+    let index = crate::sweep::demand_index(tasks);
+    feasible_at_indexed(task, schedule, resources, start, &index)
+}
+
+/// Returns `true` when a task placed at a time is feasible, using a demand
+/// index the caller built once.
+///
+/// The index replaces two linear scans of the task list: the one that finds a
+/// placed task while collecting the boundaries, and the one inside that sums
+/// the demand over every placement covering a boundary. The boundary
+/// arithmetic is unchanged, so the answer is the same as the scans give.
+pub(crate) fn feasible_at_indexed(
+    task: &Task,
+    schedule: &Schedule,
+    resources: &ResourceSet,
+    start: f64,
+    index: &crate::sweep::DemandIndex,
+) -> bool {
     if !start.is_finite() {
         return false;
     }
@@ -112,10 +130,7 @@ pub fn feasible_at(
         // overlapping placements, where the total is greatest.
         let mut boundaries: Vec<f64> = vec![start];
         for placement in schedule.placements() {
-            let Some(other) = tasks.iter().find(|other| other.id == placement.task) else {
-                continue;
-            };
-            if other.demand_for(resource.id).is_none() {
+            if crate::sweep::demand_on(index, placement.task, resource.id).is_none() {
                 continue;
             }
             if placement.start < end && start < placement.end() {
@@ -127,12 +142,7 @@ pub fn feasible_at(
                 .placements()
                 .iter()
                 .filter(|placement| placement.covers(boundary))
-                .filter_map(|placement| {
-                    tasks
-                        .iter()
-                        .find(|other| other.id == placement.task)
-                        .and_then(|other| other.demand_for(resource.id))
-                })
+                .filter_map(|placement| crate::sweep::demand_on(index, placement.task, resource.id))
                 .sum();
             if placed + requirement.demand > resource.capacity() + 1e-9 {
                 return false;

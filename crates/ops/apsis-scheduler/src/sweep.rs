@@ -20,7 +20,7 @@
 //! capacity boundary. The fast path is therefore an accelerator, never a
 //! second definition of what is feasible.
 
-use crate::greedy::{feasible_at, resources_have_capacity};
+use crate::greedy::{feasible_at_indexed, resources_have_capacity};
 use apsis_resource::ResourceId;
 use apsis_resource::{Resource, ResourceSet};
 use apsis_schedule::Schedule;
@@ -68,7 +68,7 @@ pub fn earliest_feasible_start(
     // The sweep, confirmed by the direct test.
     if let Some(candidate) = swept_earliest_start(task, schedule, resources, latest_start, &demands)
     {
-        if feasible_at(task, tasks, schedule, resources, candidate) {
+        if feasible_at_indexed(task, schedule, resources, candidate, &demands) {
             return Some(candidate);
         }
     }
@@ -76,7 +76,7 @@ pub fn earliest_feasible_start(
     // The enumeration, which is exact. It runs when the sweep could not
     // produce a confirmed answer, which is when the task does not fit at all
     // or when rounding made the two disagree.
-    enumerate_earliest_start(task, tasks, schedule, resources, latest_start)
+    enumerate_earliest_start(task, schedule, resources, latest_start, &demands)
 }
 
 /// Returns the earliest start by testing every candidate in turn.
@@ -84,10 +84,10 @@ pub fn earliest_feasible_start(
 /// This is the original formulation, kept as the fallback for the sweep.
 fn enumerate_earliest_start(
     task: &Task,
-    tasks: &[Task],
     schedule: &Schedule,
     resources: &ResourceSet,
     latest_start: f64,
+    index: &DemandIndex,
 ) -> Option<f64> {
     let mut candidates: Vec<f64> = vec![task.earliest_start];
     for requirement in &task.requirements {
@@ -96,10 +96,7 @@ fn enumerate_earliest_start(
             candidates.push(window.start());
         }
         for placement in schedule.placements() {
-            let overlaps = tasks
-                .iter()
-                .find(|other| other.id == placement.task)
-                .is_some_and(|other| other.demand_for(resource.id).is_some());
+            let overlaps = demand_on(index, placement.task, resource.id).is_some();
             if overlaps {
                 candidates.push(placement.end());
             }
@@ -117,7 +114,7 @@ fn enumerate_earliest_start(
 
     candidates
         .into_iter()
-        .find(|start| feasible_at(task, tasks, schedule, resources, *start))
+        .find(|start| feasible_at_indexed(task, schedule, resources, *start, index))
 }
 
 /// Returns the earliest start derived from the swept profile.
@@ -264,10 +261,10 @@ fn blocked_intervals(
 /// vector indexed by it rather than in a map. Reading one is then an array
 /// index rather than a hash, and a hash of a small integer costs more than
 /// the scan it replaces.
-type DemandIndex = Vec<Option<std::collections::HashMap<ResourceId, f64>>>;
+pub(crate) type DemandIndex = Vec<Option<std::collections::HashMap<ResourceId, f64>>>;
 
 /// Builds a [`DemandIndex`] in one pass over the task list.
-fn demand_index(tasks: &[Task]) -> DemandIndex {
+pub(crate) fn demand_index(tasks: &[Task]) -> DemandIndex {
     let highest = tasks.iter().map(|task| task.id.index()).max().unwrap_or(0);
     let mut index: DemandIndex = (0..=highest).map(|_| None).collect();
     for task in tasks {
@@ -285,7 +282,7 @@ fn demand_index(tasks: &[Task]) -> DemandIndex {
 }
 
 /// Returns the demand a placed task puts on a resource, if any.
-fn demand_on(index: &DemandIndex, task: TaskId, resource: ResourceId) -> Option<f64> {
+pub(crate) fn demand_on(index: &DemandIndex, task: TaskId, resource: ResourceId) -> Option<f64> {
     index
         .get(task.index())
         .and_then(Option::as_ref)
