@@ -27,6 +27,31 @@ Usage:
 
 Exit status is zero when every quantity agrees within tolerance and one
 otherwise.
+
+用球面三角交叉核对 ApsisRS 的覆盖几何。
+
+读取由 ``cargo run -p apsis-rs --features network --example dump_coverage``
+写出的量，并只用标准库与 numpy 从球面三角形关系逐个重算。要点在于 Python
+侧是依据几何而非依据 Rust 代码写成的，故 Rust 公式中的错误会表现为不一致。
+
+由卫星、地面点与地心构成的三角形的三个角满足
+
+    elevation + nadir + central = 90 degrees
+
+正弦定理给出
+
+    sin(nadir) / body_radius = cos(elevation) / satellite_radius
+
+由此得出天底角、中心角与斜距。覆盖区是中心角从天体上截出的球冠，故其面积
+是带面积，其比例即该面积除以整个表面。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/constellation/check_coverage.py [path]
+
+每个量都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -39,6 +64,8 @@ from pathlib import Path
 # The agreement is at the floating point level because both sides evaluate
 # the same closed form expressions. The tolerances are set to catch a
 # transposed radius or a missing conversion, not to allow a loose match.
+# 相符程度在浮点水平，因为两侧求的是相同的闭式表达式。这些容差是为捕获
+# 半径写反或漏换算而设，并非为允许宽松匹配。
 ANGLE_TOLERANCE_RAD = 1e-12
 LENGTH_TOLERANCE_KM = 1e-9
 AREA_RELATIVE_TOLERANCE = 1e-12
@@ -48,18 +75,27 @@ DEFAULT_INPUT = Path("validation/data/expected/rust_coverage.csv")
 
 
 def reference_nadir(satellite_radius: float, body_radius: float, elevation: float) -> float:
-    """Returns the nadir angle from the law of sines."""
+    """Returns the nadir angle from the law of sines.
+
+    由正弦定理返回天底角。
+    """
     return math.asin(body_radius * math.cos(elevation) / satellite_radius)
 
 
 def reference_central(satellite_radius: float, body_radius: float, elevation: float) -> float:
-    """Returns the central angle from the angle sum."""
+    """Returns the central angle from the angle sum.
+
+    由角和返回中心角。
+    """
     nadir = reference_nadir(satellite_radius, body_radius, elevation)
     return max(0.0, math.pi / 2.0 - elevation - nadir)
 
 
 def reference_range(satellite_radius: float, body_radius: float, elevation: float) -> float:
-    """Returns the slant range from the law of cosines."""
+    """Returns the slant range from the law of cosines.
+
+    由余弦定理返回斜距。
+    """
     central = reference_central(satellite_radius, body_radius, elevation)
     squared = (
         satellite_radius**2
@@ -76,6 +112,11 @@ def reference_cap_area(central: float, body_radius: float) -> float:
     ``2 pi R^2 (1 - cos(central))``. The footprint is not centred on a pole in
     general, but a spherical cap is rotationally symmetric, so the same
     expression applies.
+
+    返回给定中心角的球冠面积。
+
+    球冠是极点与某余纬之间的带，故其面积为 ``2 pi R^2 (1 - cos(central))``。
+    覆盖区通常并不以极点为中心，但球冠具有旋转对称性，故同一表达式适用。
     """
     return 2.0 * math.pi * body_radius**2 * (1.0 - math.cos(central))
 
@@ -85,6 +126,11 @@ def read_blocks(path: Path):
 
     The first block is the case table with a header row; a blank line
     separates it from the inverse relation block, which has its own header.
+
+    读取该文件的两个块。
+
+    第一块是带表头的用例表；一个空行把它与反解关系块分开，后者有自己的
+    表头。
     """
     text = path.read_text().splitlines()
     blocks: list[list[str]] = [[]]
@@ -97,7 +143,10 @@ def read_blocks(path: Path):
 
 
 def check_cases(rows: list[dict[str, str]]) -> tuple[bool, list[str]]:
-    """Checks the case table and returns whether it passed and any failures."""
+    """Checks the case table and returns whether it passed and any failures.
+
+    检查用例表，返回是否通过以及任何失败项。
+    """
     failures: list[str] = []
     compared = 0
     worst = {
@@ -158,7 +207,10 @@ def check_cases(rows: list[dict[str, str]]) -> tuple[bool, list[str]]:
 
 
 def check_inverse(rows: list[dict[str, str]]) -> tuple[bool, list[str]]:
-    """Checks that the central angle and elevation relations invert."""
+    """Checks that the central angle and elevation relations invert.
+
+    检查中心角与仰角关系可互相反解。
+    """
     failures: list[str] = []
     compared = 0
     worst = 0.0
@@ -172,6 +224,7 @@ def check_inverse(rows: list[dict[str, str]]) -> tuple[bool, list[str]]:
 
         # Recompute the round trip independently: from the elevation, the
         # central angle follows from the angle sum.
+        # 独立重算往返：由仰角经角和得出中心角。
         satellite_radius = 6_378.137 + 550.0
         body_radius = 6_378.137
         nadir = reference_nadir(satellite_radius, body_radius, elevation)

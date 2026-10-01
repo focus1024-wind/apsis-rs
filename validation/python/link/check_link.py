@@ -17,6 +17,22 @@ Usage:
 
 Exit status is zero when every figure agrees within tolerance and one
 otherwise.
+
+用链路方程交叉核对 ApsisRS 的链路预算。
+
+读取由 ``cargo run -p apsis-rs --features rf --example dump_link`` 写出的
+场景，并用纯 Python 从链路方程逐个重算每个数字，然后报告每列的最大差异。
+
+此处的参考是链路方程本身而非某个库，因为该方程是闭式的且短到可以无歧义地
+抄录。各常量取自 2019 年 SI 定义，故与 Rust 侧所用的值一致。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/link/check_link.py [path]
+
+每个数字都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -27,25 +43,33 @@ import sys
 from pathlib import Path
 
 # Defining constants, exact in the SI.
+# 定义常量，在 SI 中精确。
 BOLTZMANN = 1.380649e-23
 SPEED_OF_LIGHT = 299792458.0
 
 # Tolerance in decibels. The two sides evaluate the same expressions with
 # double precision, so the only difference should be rounding.
+# 容差，单位为分贝。两侧以双精度求相同表达式，故唯一差异应是舍入。
 TOLERANCE_DB = 1e-9
 
 DEFAULT_INPUT = Path("validation/data/expected/rust_link.csv")
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
-    """Reads the CSV rows."""
+    """Reads the CSV rows.
+
+    读取 CSV 各行。
+    """
     with path.open(newline="") as handle:
         reader = csv.DictReader(handle)
         return [row for row in reader if row.get("transmit_dbw")]
 
 
 def reference(row: dict[str, str]) -> dict[str, float]:
-    """Recomputes a budget from the link equation."""
+    """Recomputes a budget from the link equation.
+
+    由链路方程重算一份预算。
+    """
     transmit_dbw = float(row["transmit_dbw"])
     transmit_dbi = float(row["transmit_dbi"])
     transmit_loss = float(row["transmit_loss_db"])
@@ -65,6 +89,7 @@ def reference(row: dict[str, str]) -> dict[str, float]:
     cn_db = cn0_db - 10.0 * math.log10(bandwidth)
     # The example reports the energy per bit ratio at a data rate equal to
     # the bandwidth.
+    # 示例在数据速率等于带宽时报告每比特能量比。
     ebn0_db = cn0_db - 10.0 * math.log10(bandwidth)
 
     return {
