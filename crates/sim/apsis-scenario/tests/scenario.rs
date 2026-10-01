@@ -1,4 +1,6 @@
 //! Tests for building and reading a scenario.
+//!
+//! 构建与读取场景的测试。
 
 use apsis_resource::{Resource, ResourceId, Window};
 use apsis_scenario::{Scenario, ScenarioErrorKind};
@@ -44,6 +46,8 @@ fn the_header_setters_take_effect() {
 fn a_limit_the_run_cannot_use_is_cleared() {
     // The setters match the engine, which ignores a limit it cannot use, so
     // a scenario never carries one that would surprise a run.
+    // 各设置器与引擎一致，后者忽略它无法使用的限制，故场景绝不携带会让一次运行意外
+    // 的限制。
     let scenario = Scenario::new("demo")
         .with_time_limit(-1.0)
         .with_event_limit(0);
@@ -63,6 +67,7 @@ fn the_checked_setters_report_a_bad_value() {
     assert!(scenario.set_time_limit(f64::INFINITY).is_err());
     assert!(scenario.set_time_limit(-5.0).is_err());
     // A good value is accepted and the scenario keeps its old one on failure.
+    // 好的值被接受，失败时场景保留其旧值。
     scenario.set_epoch(10.0).expect("the epoch is usable");
     assert_eq!(scenario.epoch(), 10.0);
     scenario.set_time_limit(60.0).expect("the limit is usable");
@@ -78,6 +83,7 @@ fn a_resource_is_added_and_checked() {
     assert_eq!(scenario.resources().len(), 1);
 
     // A second resource with the same identifier is refused.
+    // 标识符相同的第二个资源被拒绝。
     let error = scenario
         .add_resource(station(2.0, &[]))
         .expect_err("the identifier is taken");
@@ -102,6 +108,7 @@ fn a_task_is_added_only_when_its_resources_exist() {
         .expect("the resource is new");
 
     // The resource is not in the scenario yet.
+    // 该资源还不在场景中。
     let error = scenario
         .add_task(task.clone())
         .expect_err("unknown resource");
@@ -114,6 +121,7 @@ fn a_task_is_added_only_when_its_resources_exist() {
     assert_eq!(scenario.tasks().len(), 1);
 
     // A second task with the same identifier is refused.
+    // 标识符相同的第二个任务被拒绝。
     let error = scenario
         .add_task(Task::new(TaskId::new(0), 30.0))
         .expect_err("the identifier is taken");
@@ -124,6 +132,7 @@ fn a_task_is_added_only_when_its_resources_exist() {
 fn an_unusable_task_is_refused() {
     let mut scenario = Scenario::new("demo");
     // A task with a zero duration is not usable.
+    // 零时长的任务不可用。
     let error = scenario
         .add_task(Task::new(TaskId::new(0), 0.0))
         .expect_err("the task is not usable");
@@ -284,6 +293,7 @@ fn a_scenario_round_trips_through_text() {
     let reloaded = Scenario::parse(&text).expect("the rendered text parses");
     assert_eq!(reloaded, original);
     // A second round trip is stable, so the text form is a fixed point.
+    // 第二次往返是稳定的，故文本形式是固定点。
     assert_eq!(reloaded.to_text(), text);
 }
 
@@ -291,6 +301,7 @@ fn a_scenario_round_trips_through_text() {
 fn a_task_with_no_window_round_trips() {
     // A task with no window leaves both ends infinite, which the text form
     // cannot write; the round trip must still recover an equivalent task.
+    // 无窗口的任务使两端均为无限，文本形式写不出来；往返仍必须恢复一个等价任务。
     let mut original = Scenario::new("open");
     original
         .add_resource(station(1.0, &[(0.0, 600.0)]))
@@ -308,6 +319,8 @@ fn a_task_with_no_window_round_trips() {
     // The window is written as a finite interval that holds the task, which
     // is the best a text form with no infinity can do. The task is still
     // usable.
+    // 该窗口被写为容纳该任务的有限区间，这是没有无穷的文本形式所能做的最好。任务
+    // 仍可用。
     assert!(task.is_valid());
     assert!(task.fits_window());
 }
@@ -373,6 +386,7 @@ fn a_qualifier_before_any_task_is_reported() {
 #[test]
 fn precedence_may_name_tasks_in_either_order_in_the_file() {
     // The three passes let a constraint name a task defined later.
+    // 三遍解析使约束可以指名稍后才定义的任务。
     let text = "\
 scenario demo
 resource 0 capacity 1
@@ -430,6 +444,7 @@ precedence 1 0
     assert_eq!(error.kind(), ScenarioErrorKind::CyclicPrecedence);
     // The second constraint, on the fifth line, is the one that closes the
     // cycle.
+    // 第五行上的第二条约束正是闭合该环的那条。
     assert_eq!(error.line(), Some(5));
 }
 

@@ -1,10 +1,14 @@
 //! Tests for the simulation facade.
+//!
+//! 仿真门面的测试。
 
 use apsis_sim::{
     Activity, RecordKind, RunReport, Scenario, Simulation, SimulationErrorKind, StopReason,
 };
 
 /// Builds a scenario with one station and a set of tasks.
+///
+/// 构建一个含一座站与一组任务的场景。
 fn scenario_with(tasks: &[(usize, f64, f64)]) -> Scenario {
     let mut text = String::from("scenario test\nresource 0 capacity 1\nwindow 0 0 1000\n");
     for &(id, duration, priority) in tasks {
@@ -34,6 +38,7 @@ fn the_timeline_has_a_start_and_an_end_for_each_task() {
     let simulation = Simulation::prepare(scenario_with(&[(0, 60.0, 1.0)])).expect("usable");
     let timeline = simulation.timeline();
     // In time order: the start precedes the end.
+    // 按时间次序：开始在结束之前。
     assert_eq!(timeline.len(), 2);
     assert!(timeline[0].1.is_start());
     assert_eq!(timeline[0].1.task(), apsis_task::TaskId::new(0));
@@ -83,6 +88,7 @@ fn the_run_starts_at_the_scenario_epoch() {
     assert_eq!(session.now(), 1_000.0);
     let report = session.run(|_, _, _| {});
     // The timeline events are absolute, so the run reaches the end event.
+    // 时间线事件是绝对的，故运行到达结束事件。
     assert!(report.outcome.ended_at > 1_000.0);
 }
 
@@ -128,6 +134,7 @@ fn a_session_leaves_the_prepared_simulation_alone() {
     let mut first = simulation.start();
     first.run(|_, _, _| {});
     // A second session starts from the full timeline again.
+    // 第二个会话又从完整的时间线开始。
     let mut second = simulation.start();
     assert_eq!(second.run(|_, _, _| {}).executed(), 2);
 }
@@ -135,6 +142,7 @@ fn a_session_leaves_the_prepared_simulation_alone() {
 #[test]
 fn a_handler_may_schedule_further_activity() {
     // The engine interleaves events the handler schedules with the timeline.
+    // 引擎把处理器所调度的事件与时间线交织。
     let simulation = Simulation::prepare(scenario_with(&[(0, 60.0, 1.0)])).expect("usable");
     let mut session = simulation.start();
     let mut extra = 0_u32;
@@ -148,12 +156,14 @@ fn a_handler_may_schedule_further_activity() {
     });
     assert_eq!(extra, 1);
     // Two timeline events plus the one the handler scheduled.
+    // 两个时间线事件加上处理器所调度的那个。
     assert_eq!(report.executed(), 3);
 }
 
 #[test]
 fn deferred_tasks_are_reported() {
     // Two tasks of 60 s in a 100 s window: only one fits.
+    // 一百秒窗口中的两个六十秒任务：只有一个放得下。
     let scenario = Scenario::parse(
         "scenario tight\n\
          resource 0 capacity 1\n\
@@ -209,6 +219,7 @@ fn the_schedule_evaluates() {
 fn an_unusable_scenario_is_refused() {
     let mut scenario = Scenario::new("");
     // An empty name is refused by validation.
+    // 空名称被校验拒绝。
     scenario
         .add_resource(apsis_resource::Resource::new(
             apsis_resource::ResourceId::new(0),
@@ -223,6 +234,7 @@ fn an_unusable_scenario_is_refused() {
 fn a_plan_naming_a_task_outside_the_scenario_is_refused() {
     // A scheduling result that places a task the scenario does not hold is
     // inconsistent and must be rejected rather than run.
+    // 一个放置了场景所不持有任务的调度结果是不一致的，必须被拒绝而非运行。
     let mut scenario = Scenario::new("mismatch");
     scenario
         .add_resource(apsis_resource::Resource::new(
@@ -237,6 +249,7 @@ fn a_plan_naming_a_task_outside_the_scenario_is_refused() {
     let mut schedule = apsis_schedule::Schedule::new();
     // Task 99 is not in the scenario. A placement records the duration, so
     // it is placed directly rather than through a task.
+    // 任务 99 不在场景中。放置记录时长，故直接放置它而非经任务。
     schedule
         .place(
             &apsis_task::Task::new(apsis_task::TaskId::new(99), 60.0),
@@ -256,6 +269,7 @@ fn a_plan_naming_a_task_outside_the_scenario_is_refused() {
 fn an_empty_plan_is_accepted() {
     // A scenario whose tasks none can be placed still prepares; the
     // resulting simulation simply has an empty timeline.
+    // 没有一个任务放得下的场景仍可准备；所得仿真只是有一条空时间线。
     let scenario = Scenario::new("empty");
     let result =
         apsis_scheduler::Planner::new().schedule(&[], &scenario.resource_set().expect("ok"));
@@ -285,6 +299,7 @@ fn the_session_can_record_without_running() {
     assert!(session.record(2.0, RecordKind::Warning, "manual", 6.0));
     assert_eq!(session.recorder().len(), 2);
     // A run takes the trace, so the manual records come out with it.
+    // 一次运行取走轨迹，故手工记录随之而出。
     let report: RunReport = session.run(|_, _, _| {});
     assert_eq!(report.trace.len(), 2);
     assert_eq!(report.warning_count(), 1);

@@ -1,4 +1,6 @@
 //! Tests for the event queue.
+//!
+//! 事件队列的测试。
 
 use apsis_event::{Event, EventId, EventQueue};
 
@@ -37,6 +39,7 @@ fn events_are_delivered_in_time_order() {
 #[test]
 fn events_at_the_same_time_are_delivered_in_schedule_order() {
     // The tie-break is what makes a run reproducible.
+    // 并列打破规则正是使运行可复现的东西。
     let mut queue = EventQueue::new();
     queue.schedule(10.0, 'a');
     queue.schedule(10.0, 'b');
@@ -54,6 +57,7 @@ fn events_at_the_same_time_are_delivered_in_schedule_order() {
 fn the_tie_break_holds_across_a_heap_rebuild() {
     // Scheduling in a different order must still deliver in schedule order,
     // because the sequence number, not the insertion position, decides.
+    // 以不同次序调度仍必须按调度次序投递，因为决定的是序号而非插入位置。
     let mut queue = EventQueue::new();
     let mut ids = Vec::new();
     for index in 0..20 {
@@ -67,6 +71,7 @@ fn the_tie_break_holds_across_a_heap_rebuild() {
     assert_eq!(delivered, (0..20).collect::<Vec<u64>>());
 
     // The identifiers are also in schedule order.
+    // 标识符也按调度次序排列。
     for (position, id) in ids.iter().enumerate() {
         assert_eq!(id.sequence(), position as u64);
     }
@@ -92,6 +97,7 @@ fn scheduling_a_negative_or_non_finite_time_is_refused() {
         assert_eq!(queue.schedule(time, "x"), None, "time {time}");
     }
     // The queue is unchanged and the sequence number was not consumed.
+    // 队列不变，且序号未被消耗。
     assert!(queue.is_empty());
     let id = queue.schedule(0.0, "zero").expect("zero is usable");
     assert_eq!(id.sequence(), 0);
@@ -115,6 +121,7 @@ fn a_follow_up_with_a_bad_delay_is_refused() {
     assert_eq!(queue.schedule_after(0.0, f64::INFINITY, "x"), None);
     assert!(queue.is_empty());
     // A zero delay schedules at the current instant.
+    // 零延时在当前瞬时调度。
     let id = queue.schedule_after(5.0, 0.0, "now").expect("usable");
     assert_eq!(id.time(), 5.0);
 }
@@ -123,6 +130,7 @@ fn a_follow_up_with_a_bad_delay_is_refused() {
 fn events_can_be_scheduled_from_a_handler() {
     // A handler that schedules its successor, which is the pattern a
     // discrete-event simulation uses for a periodic process.
+    // 一个调度其后继的处理器，这是离散事件仿真用于周期过程的模式。
     let mut queue: EventQueue<u32> = EventQueue::new();
     queue.schedule(0.0, 0).expect("usable");
     let mut ticks = 0;
@@ -151,6 +159,7 @@ fn clearing_discards_the_pending_events() {
     assert_eq!(queue.clear(), 4);
     assert!(queue.is_empty());
     // The delivered count records history and is not reset.
+    // 已投递计数记录历史且不重置。
     assert_eq!(queue.delivered(), 1);
     assert_eq!(queue.pop(), None);
 }
@@ -191,6 +200,7 @@ fn the_queue_state_reports_what_is_pending() {
 fn a_payload_slot_is_reused_after_a_pop() {
     // The queue indexes payloads by sequence, so a popped slot must be
     // reusable without disturbing a later event.
+    // 队列按序号索引载荷，故被弹出的槽位必须可复用而不扰动更晚的事件。
     let mut queue = EventQueue::new();
     queue.schedule(1.0, "first").expect("usable");
     queue.schedule(2.0, "second").expect("usable");
@@ -205,6 +215,8 @@ fn a_payload_slot_is_reused_after_a_pop() {
 fn the_identifier_orders_by_time_then_sequence() {
     // The derived ordering on the identifier is the delivery order, which is
     // what lets a caller sort identifiers to reproduce a run.
+    // 标识符上派生的次序即投递次序，这正是使调用方可对标识符排序以复现一次运行的
+    // 原因。
     let earlier = EventId::new(1.0, 5).expect("usable");
     let later_time = EventId::new(2.0, 0).expect("usable");
     let later_sequence = EventId::new(1.0, 6).expect("usable");
@@ -246,6 +258,7 @@ fn an_event_can_be_rescheduled() {
     assert_eq!(moved.id.sequence(), 1);
     assert_eq!(moved.payload, "x");
     // The original is unchanged.
+    // 原件不变。
     assert_eq!(event.time, 5.0);
 
     assert!(event.reschedule(-1.0, 2).is_none());

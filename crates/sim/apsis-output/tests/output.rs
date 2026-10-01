@@ -1,4 +1,6 @@
 //! Tests for the output trace and recorder.
+//!
+//! 输出轨迹与记录器的测试。
 
 use apsis_output::{Record, RecordKind, Recorder, Trace};
 
@@ -20,6 +22,7 @@ fn an_empty_trace_has_nothing() {
 fn a_trace_keeps_insertion_order() {
     // The order a model recorded in is part of what it decided, so the trace
     // does not sort.
+    // 模型记录所用的次序是其决策的一部分，故轨迹不排序。
     let mut trace = Trace::new();
     trace.push(Record::observation(10.0, "b", 1.0));
     trace.push(Record::observation(5.0, "a", 2.0));
@@ -41,6 +44,7 @@ fn time_order_is_available_on_request() {
     let times: Vec<f64> = ordered.iter().map(|record| record.time).collect();
     assert_eq!(times, vec![5.0, 7.0, 10.0]);
     // The original is unchanged.
+    // 原件不变。
     assert_eq!(trace.records()[0].time, 10.0);
 }
 
@@ -165,6 +169,7 @@ fn a_non_finite_record_is_refused() {
     assert!(trace.is_empty());
 
     // A finite record is accepted.
+    // 有限的记录被接受。
     assert!(trace.push(Record::observation(1.0, "x", 1.0)));
     assert_eq!(trace.len(), 1);
     assert!(trace.is_stable());
@@ -214,6 +219,7 @@ fn taking_the_trace_leaves_the_recorder_empty() {
     assert_eq!(trace.len(), 2);
     assert!(recorder.is_empty());
     // The refused count belongs to the recorder and is not reset.
+    // 被拒绝计数属于记录器且不重置。
     recorder.observe(f64::NAN, "x", 1.0);
     assert_eq!(recorder.refused(), 1);
 }
