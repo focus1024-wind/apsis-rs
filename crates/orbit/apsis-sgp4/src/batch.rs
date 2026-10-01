@@ -8,6 +8,15 @@
 //!
 //! The parallel entry point produces the same values as the sequential one,
 //! in the same order. It differs only in how the work is distributed.
+//!
+//! 在许多瞬时上的批量传播，可选跨多个线程。
+//!
+//! 单颗卫星的轨迹是覆盖运行或可见性搜索的常见情形：调用方想要某一天每一
+//! 分钟、某一壳层每颗卫星的状态。每个状态与其他独立，故该循环是多核的
+//! 候选，且工作量大到启动线程本身就值回代价。
+//!
+//! 并行入口产生与顺序入口相同的值，次序也相同。它只在工作的分配方式上
+//! 不同。
 
 use crate::{Satellite, State};
 use apsis_math::parallel::map_index;

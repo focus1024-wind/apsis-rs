@@ -1,4 +1,6 @@
 //! The Earth gravitational parameter.
+//!
+//! 地球引力参数。
 
 /// The gravitational parameter of the central body, in cubic kilometers per
 /// second squared.

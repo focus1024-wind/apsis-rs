@@ -1,4 +1,6 @@
 //! The finite burn.
+//!
+//! 有限点火。
 
 use crate::error::{ManeuverError, ManeuverErrorKind};
 use apsis_kepler::{GravityParameter, KeplerianElements, State};

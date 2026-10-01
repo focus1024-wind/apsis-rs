@@ -1,4 +1,6 @@
 //! Errors reported while building or querying an ephemeris.
+//!
+//! 构建或查询星历时报告的错误。
 
 use core::fmt;
 

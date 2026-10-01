@@ -1,4 +1,6 @@
 //! The combined orbit type.
+//!
+//! 合并后的轨道类型。
 
 use apsis_ephemeris::EphemerisError;
 use apsis_kepler::{GravityParameter, KeplerianElements};

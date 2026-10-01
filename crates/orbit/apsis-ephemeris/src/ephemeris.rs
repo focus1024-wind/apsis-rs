@@ -1,4 +1,6 @@
 //! The ephemeris table and its Hermite interpolation.
+//!
+//! 星历表及其 Hermite 插值。
 
 use crate::error::{EphemerisError, EphemerisErrorKind};
 use apsis_math::Vec3;

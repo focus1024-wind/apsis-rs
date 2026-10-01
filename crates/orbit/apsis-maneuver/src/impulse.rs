@@ -1,4 +1,6 @@
 //! The impulsive maneuver.
+//!
+//! 脉冲机动。
 
 use crate::error::{ManeuverError, ManeuverErrorKind};
 use apsis_math::Vec3;

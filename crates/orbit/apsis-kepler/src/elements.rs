@@ -1,4 +1,6 @@
 //! Keplerian elements and their conversion to a Cartesian state.
+//!
+//! 开普勒根数及其到直角坐标状态的换算。
 
 use crate::anomaly::{eccentric_from_mean, mean_from_eccentric, true_from_eccentric, wrap_to_pi};
 use crate::parameter::GravityParameter;

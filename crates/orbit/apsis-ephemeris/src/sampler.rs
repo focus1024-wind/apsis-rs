@@ -1,4 +1,6 @@
 //! Filling an ephemeris by calling a state function on a grid.
+//!
+//! 通过在网格上调用状态函数来填充星历。
 
 use crate::ephemeris::{Ephemeris, Sample};
 use crate::error::{EphemerisError, EphemerisErrorKind};

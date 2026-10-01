@@ -1,4 +1,6 @@
 //! Errors reported while building or applying a maneuver.
+//!
+//! 构建或施加机动时报告的错误。
 
 use core::fmt;
 

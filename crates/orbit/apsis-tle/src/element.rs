@@ -1,4 +1,6 @@
 //! Structured fields of a two-line element set.
+//!
+//! 两行根数集的结构化字段。
 
 use crate::checksum::verify_line_checksum;
 use crate::field::{ElementError, ElementErrorKind, Result};

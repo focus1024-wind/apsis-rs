@@ -1,4 +1,6 @@
 //! The satellite record and its initialisation from mean elements.
+//!
+//! 卫星记录及其由平根数的初始化。
 
 use crate::error::{PropagationError, PropagationErrorKind};
 use crate::init::{self, Elements};

@@ -1,4 +1,6 @@
 //! The propagated state of a satellite.
+//!
+//! 卫星被传播后的状态。
 
 use apsis_math::Vec3;
 

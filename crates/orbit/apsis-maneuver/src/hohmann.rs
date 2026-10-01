@@ -1,4 +1,6 @@
 //! The two impulse Hohmann transfer between coplanar circular orbits.
+//!
+//! 共面圆轨道之间的双脉冲 Hohmann 转移。
 
 use crate::error::{ManeuverError, ManeuverErrorKind};
 use apsis_kepler::GravityParameter;

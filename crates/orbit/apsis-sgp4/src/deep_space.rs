@@ -20,6 +20,23 @@
 //! and `znl`, the tesseral coefficients such as `q22`, and the resonance
 //! coefficients are quoted to the precision the reference uses, because
 //! reproducing its output requires the same rounding.
+//!
+//! 传播器的深空分支。
+//!
+//! 轨道周期为 225 分钟及以上的卫星用 SDP4 理论传播，它以日月摄动及与地球
+//! 引力场的共振扩展 SGP4。
+//!
+//! 各摄动分为三组。长期项随时间线性增长，累积在各速率字段中。长周期项随
+//! 太阳与月球的位置变化，由 [`dpper`] 施加。当轨道周期与地球自转成简单
+//! 整数比（每天一圈或两圈）时出现共振项，由于没有闭式，由 [`dspace`] 数值
+//! 积分。
+//!
+//! 各系数在初始化时计算一次，因为它们只依赖于历元根数与历元时间。
+//!
+//! 出处：每个表达式都遵循 Vallado 等，*Revisiting Spacetrack Report #3*，
+//! AIAA 2006-6753，2006，以及随该论文分发的参考实现。诸如 `zes` 与 `znl`
+//! 的摄动幅度、诸如 `q22` 的田谐系数，以及共振系数都取参考实现所用的精度，
+//! 因为复现其输出需要相同的舍入。
 
 use crate::satellite::{Satellite, TWO_PI};
 use core::f64::consts::PI;

@@ -14,6 +14,18 @@
 //! Source: the sequence follows Vallado et al., *Revisiting Spacetrack
 //! Report #3*, AIAA 2006-6753, 2006, and the reference implementation
 //! distributed with that paper.
+//!
+//! 近地传播步。
+//!
+//! 给定一条卫星记录与一个距历元的时间，本模块求 SGP4 理论的长期项与周期
+//! 项，并返回真赤道平春分点坐标系中的状态。
+//!
+//! 平根数随时间以多项式推进：平近点角、近地点幅角与赤经是线性的，赤经另有
+//! 一个二次项，而对高于简化阈值的轨道，半长轴、偏心率与平近点角还会获得
+//! 更多阻力项。随后用牛顿法解轨道求偏近点角，并施加短周期项。
+//!
+//! 出处：该序列遵循 Vallado 等，*Revisiting Spacetrack Report #3*，
+//! AIAA 2006-6753，2006，以及随该论文分发的参考实现。
 
 use crate::error::{PropagationError, PropagationErrorKind};
 use crate::satellite::{Method, Satellite, TWO_PI};

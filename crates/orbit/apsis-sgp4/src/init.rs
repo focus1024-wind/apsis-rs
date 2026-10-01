@@ -13,6 +13,18 @@
 //!
 //! Source: the correction and the coefficient definitions follow Vallado et
 //! al., *Revisiting Spacetrack Report #3*, AIAA 2006-6753, 2006.
+//!
+//! 由两行根数集初始化传播器。
+//!
+//! 根数集给出以度、每天圈数计的平根数与一个阻力项。传播器以弧度、每分钟
+//! 弧度与地球半径工作，故初始化换算各输入并预计算只依赖于根数的每个系数。
+//!
+//! 量 `no_unkozai` 是去掉根数集所用 Kozai 平运动约定影响后的修正平运动。
+//! 该修正由二阶带谐项得出，并用不动点迭代求解，因为修正后的值出现在关系的
+//! 两侧。
+//!
+//! 出处：该修正与各系数定义遵循 Vallado 等，*Revisiting Spacetrack
+//! Report #3*，AIAA 2006-6753，2006。
 
 use crate::error::{PropagationError, PropagationErrorKind};
 use crate::model::GravityModel;

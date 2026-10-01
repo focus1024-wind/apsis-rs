@@ -1,4 +1,6 @@
 //! Errors reported by the propagator.
+//!
+//! 传播器报告的错误。
 
 use core::fmt;
 

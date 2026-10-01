@@ -20,6 +20,23 @@
 //!   Vallado et al., *Revisiting Spacetrack Report #3*, AIAA 2006-6753,
 //!   appendix. The values match the WGS 72 gravity field.
 //! - WGS 84 values: NIMA TR8350.2, third edition, 2000.
+//!
+//! 传播器所用的引力模型。
+//!
+//! 传播器需要描述地球的四个数：引力参数、赤道半径，以及二阶与三阶带谐项。
+//! SGP4 模型是 fitted 到 WGS 72 值的，而 Space-Track 分发的标准根数集意在
+//! 与它们一起使用，故 WGS 72 是缺省。
+//!
+//! 提供 WGS 84 是因为也有 fitted 到它的根数。把模型与 fitted 到另一模型的
+//! 根数集混用会使位置偏移数千米，故该选择应与根数的来源相匹配。
+//!
+//! 导出值 `xke`、`tumin` 与 `j3oj2` 由这四个定义数得出，在构造时计算一次。
+//!
+//! 出处：
+//!
+//! - WGS 72 值，即 Vallado 等，*Revisiting Spacetrack Report #3*，
+//!   AIAA 2006-6753 附录中 SGP4 参考实现所用者。各值与 WGS 72 引力场一致。
+//! - WGS 84 值：NIMA TR8350.2，第三版，2000。
 
 /// A gravity model: the Earth constants used by the propagator.
 ///

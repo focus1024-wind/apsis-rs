@@ -7,6 +7,13 @@
 //!
 //! The checksum digit itself is the last character of the line and is not
 //! part of the sum.
+//!
+//! 两行根数格式的行校验和。
+//!
+//! 每行以一个数字结尾，它是前面各列的校验和。该校验和是该行十进制数字之和
+//! 模十，其中负号贡献一，其余每个字符贡献零。
+//!
+//! 校验和数字本身是该行的最后一个字符，不属于该和。
 
 use crate::field::{ElementError, ElementErrorKind, Result};
 

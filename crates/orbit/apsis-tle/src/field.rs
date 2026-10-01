@@ -1,4 +1,6 @@
 //! The error type and result alias for element parsing.
+//!
+//! 根数解析的错误类型与结果别名。
 
 use core::fmt;
 
