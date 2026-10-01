@@ -1,10 +1,14 @@
 //! Tests for the schedule representation and its evaluation.
+//!
+//! 调度表示及其评估的测试。
 
 use apsis_resource::{Resource, ResourceId, ResourceSet, Window};
 use apsis_schedule::{Evaluation, Placement, Schedule, ScheduleErrorKind};
 use apsis_task::{Task, TaskId};
 
 /// A resource with the given identifier available from 0 to 1 000 seconds.
+///
+/// 具有给定标识符、自 0 到 1 000 秒可用的资源。
 fn resource(id: usize, capacity: f64) -> Resource {
     let mut resource = Resource::new(ResourceId::new(id), capacity);
     resource
@@ -14,6 +18,8 @@ fn resource(id: usize, capacity: f64) -> Resource {
 }
 
 /// A task requiring one unit of the given resources.
+///
+/// 一个需要各给定资源一单位的任务。
 fn task(id: usize, duration: f64, resources: &[usize]) -> Task {
     let mut task = Task::new(TaskId::new(id), duration);
     for resource in resources {
@@ -81,11 +87,13 @@ fn a_placement_after_the_window_is_rejected() {
     let mut schedule = Schedule::new();
     let task = task(0, 60.0, &[0]).with_window(0.0, 100.0);
     // Starting at fifty would end at one hundred and ten, past the window.
+    // 自五十开始会在百一十结束，越过窗口。
     let error = schedule
         .place(&task, 50.0)
         .expect_err("the placement is too late");
     assert_eq!(error.kind(), ScheduleErrorKind::AfterWindow);
     // Starting at forty ends exactly at the window close, which is allowed.
+    // 自四十开始恰在窗口关闭处结束，这是允许的。
     assert!(schedule.place(&task, 40.0).is_ok());
 }
 
@@ -120,6 +128,7 @@ fn a_task_can_be_unplaced() {
     assert_eq!(schedule.len(), 1);
     assert!(!schedule.is_placed(TaskId::new(0)));
     // The remaining placement is still found, so the index was rebuilt.
+    // 剩余的放置仍被找到，故索引被重建。
     assert!(schedule.is_placed(TaskId::new(1)));
     assert_eq!(
         schedule
@@ -145,6 +154,7 @@ fn the_index_survives_several_removals() {
             .expect("the task fits");
     }
     // Remove from the middle, which shifts every later placement.
+    // 从中间移除，这会移动其后每处放置。
     schedule.unplace(TaskId::new(2)).expect("placed");
     for index in [0_usize, 1, 3, 4] {
         let placement = schedule
@@ -167,6 +177,7 @@ fn placements_on_a_resource_are_found_in_time_order() {
 
     let mut schedule = Schedule::new();
     // Placed out of time order.
+    // 按非时间次序放置。
     schedule.place(&tasks[2], 200.0).expect("fits");
     schedule.place(&tasks[0], 0.0).expect("fits");
     schedule.place(&tasks[1], 100.0).expect("fits");
@@ -197,6 +208,7 @@ fn overlapping_placements_are_detected() {
     schedule.place(&second, 30.0).expect("fits");
     // The two overlap in time, although they use different resources, so the
     // schedule reports an overlap and the capacity check allows it.
+    // 二者在时间上重叠，尽管使用不同资源，故调度报告一次重叠而容量检查允许它。
     assert!(schedule.has_overlapping_placements());
 }
 
@@ -236,6 +248,7 @@ fn the_capacity_check_rejects_an_exclusive_resource_used_twice() {
 #[test]
 fn a_shared_resource_allows_two_tasks_within_the_capacity() {
     // A resource of capacity two holds two unit tasks at once.
+    // 容量为二的资源同时容纳两个单位任务。
     let resources = ResourceSet::from_resources(vec![resource(0, 2.0)]).expect("one");
     let tasks = vec![task(0, 60.0, &[0]), task(1, 60.0, &[0])];
     let mut schedule = Schedule::new();
@@ -244,6 +257,7 @@ fn a_shared_resource_allows_two_tasks_within_the_capacity() {
     assert!(schedule.validate_capacity(&tasks, &resources).is_ok());
 
     // A third would exceed it.
+    // 第三个会超过它。
     let third = task(2, 60.0, &[0]);
     schedule.place(&third, 45.0).expect("fits");
     let mut all = tasks.clone();
@@ -260,6 +274,7 @@ fn a_shared_resource_allows_two_tasks_within_the_capacity() {
 #[test]
 fn fractional_demands_share_a_resource() {
     // Four tasks of a quarter unit each fill a resource of capacity one.
+    // 四个各四分之一单位的任务填满容量为一的资源。
     let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
     let tasks: Vec<Task> = (0..4)
         .map(|index| {
@@ -296,6 +311,7 @@ fn the_capacity_check_rejects_a_placement_without_its_task() {
     let mut schedule = Schedule::new();
     schedule.place(&tasks[0], 0.0).expect("fits");
     // The task list does not contain the placed task.
+    // 任务列表不含所放置的任务。
     assert_eq!(
         schedule
             .validate_capacity(&[], &resources)
@@ -312,6 +328,7 @@ fn the_capacity_check_rejects_a_duration_mismatch() {
     let mut schedule = Schedule::new();
     schedule.place(&original, 0.0).expect("fits");
     // A task with the same identifier but a different duration.
+    // 一个标识符相同但时长不同的任务。
     let different = task(0, 90.0, &[0]);
     assert_eq!(
         schedule
@@ -352,6 +369,7 @@ fn the_evaluation_reports_resource_usage() {
     ];
     let mut schedule = Schedule::new();
     // The two on resource zero overlap, so the peak demand is two.
+    // 资源零上的二者重叠，故峰值需求为二。
     schedule.place(&tasks[0], 0.0).expect("fits");
     schedule.place(&tasks[1], 30.0).expect("fits");
     schedule.place(&tasks[2], 0.0).expect("fits");
@@ -362,6 +380,7 @@ fn the_evaluation_reports_resource_usage() {
         .expect("the resource is used");
     assert_eq!(zero.peak_demand, 2.0);
     // The two overlap for thirty seconds, so the busy time is ninety.
+    // 二者重叠三十秒，故繁忙时间为九十。
     assert_eq!(zero.busy_seconds, 90.0);
     assert_eq!(zero.placement_count, 2);
     assert_eq!(zero.utilisation(180.0), Some(0.5));
@@ -386,6 +405,7 @@ fn the_evaluation_of_an_empty_schedule_is_zero() {
     assert_eq!(evaluation.makespan(), 0.0);
     // With nothing offered and nothing placed, the schedule is vacuously
     // complete, but there is no fill rate to report.
+    // 没有提供、也没有放置任何东西时，调度空洞地完整，但没有可报告的填充率。
     assert_eq!(evaluation.fill_rate(), None);
     assert!(evaluation.is_complete());
     let zero = evaluation.usage_of(ResourceId::new(0)).expect("present");
@@ -416,12 +436,15 @@ fn the_time_order_differs_from_the_insertion_order() {
     schedule.place(&tasks[1], 0.0).expect("fits");
 
     // The insertion order is 0 then 1.
+    // 插入次序是 0 然后 1。
     assert_eq!(schedule.placements()[0].task, TaskId::new(0));
     // The time order is 1 then 0.
+    // 时间次序是 1 然后 0。
     let ordered = schedule.in_time_order();
     assert_eq!(ordered[0].task, TaskId::new(1));
     assert_eq!(ordered[1].task, TaskId::new(0));
     // The original is unchanged.
+    // 原件不变。
     assert_eq!(schedule.placements()[0].task, TaskId::new(0));
 }
 
@@ -437,11 +460,13 @@ fn the_resource_busy_until_reports_the_next_free_time() {
         Some(60.0)
     );
     // Resource zero is idle at a hundred seconds.
+    // 资源零在百秒处空闲。
     assert_eq!(
         schedule.resource_busy_until(ResourceId::new(0), &tasks, 100.0),
         None
     );
     // Resource one is busy at thirty seconds and free at ninety.
+    // 资源一在三十秒处繁忙、在九十秒处空闲。
     assert_eq!(
         schedule.resource_busy_until(ResourceId::new(1), &tasks, 50.0),
         Some(90.0)
@@ -455,6 +480,7 @@ fn a_placement_reports_what_it_covers() {
     assert!(placement.covers(100.0));
     assert!(placement.covers(159.999));
     // The end is not covered, so back to back placements do not overlap.
+    // 终点不被覆盖，故前后相接的放置不重叠。
     assert!(!placement.covers(160.0));
     assert!(!placement.covers(99.999));
     assert!(placement.is_valid());
@@ -475,6 +501,7 @@ fn an_invalid_placement_is_reported() {
     assert!(!Placement::new(TaskId::new(0), f64::NAN, 60.0).is_valid());
     assert!(!Placement::new(TaskId::new(0), 0.0, -1.0).is_valid());
     // A zero duration placement is valid, for an instantaneous task.
+    // 零时长放置有效，用于瞬时任务。
     assert!(Placement::new(TaskId::new(0), 0.0, 0.0).is_valid());
 }
 
@@ -482,6 +509,7 @@ fn an_invalid_placement_is_reported() {
 fn the_evaluation_type_is_nameable() {
     // The type must be usable by a caller that stores the results, and an
     // empty schedule against one resource must report itself as empty.
+    // 该类型必须能被存储结果的调用方使用，且针对一个资源的空调度必须报告自身为空。
     fn takes(_evaluation: &Evaluation) {}
     let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
     let schedule = Schedule::new();

@@ -1,4 +1,6 @@
 //! Tests for the greedy planner.
+//!
+//! 贪心规划器的测试。
 
 use apsis_resource::{Resource, ResourceId, ResourceSet, Window};
 use apsis_schedule::Schedule;
@@ -9,6 +11,8 @@ use apsis_scheduler::{
 use apsis_task::{Task, TaskId, TaskState};
 
 /// A resource available from 0 to 1 000 seconds.
+///
+/// 一个自 0 到 1 000 秒可用的资源。
 fn resource(id: usize, capacity: f64) -> Resource {
     let mut resource = Resource::new(ResourceId::new(id), capacity);
     resource
@@ -18,6 +22,8 @@ fn resource(id: usize, capacity: f64) -> Resource {
 }
 
 /// A task requiring one unit of each named resource.
+///
+/// 一个需要每个指名资源一单位的任务。
 fn task(id: usize, duration: f64, resources: &[usize]) -> Task {
     let mut task = Task::new(TaskId::new(id), duration);
     for resource in resources {
@@ -41,6 +47,7 @@ fn a_single_task_is_placed_at_the_opening_of_its_window() {
         .placement_of(TaskId::new(0))
         .expect("placed");
     // The resource is available from zero, so the task starts there.
+    // 资源自零起可用，故任务从那里开始。
     assert_eq!(placement.start, 0.0);
 }
 
@@ -49,6 +56,7 @@ fn tasks_on_one_exclusive_resource_are_placed_back_to_back() {
     let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
     // Equal value, so the order falls back to the earlier deadline and then
     // the identifier.
+    // 价值相等，故次序回退到更早的截止时间，然后回退到标识符。
     let tasks = [task(0, 60.0, &[0]), task(1, 30.0, &[0])];
 
     let result = Planner::new().schedule(&tasks, &resources);
@@ -63,6 +71,7 @@ fn tasks_on_one_exclusive_resource_are_placed_back_to_back() {
         .expect("placed");
     // The two must not overlap: the second starts at or after the end of the
     // first.
+    // 二者不得重叠：第二个在第一个结束处或之后开始。
     assert!(second.start >= first.end(), "{second:?} against {first:?}");
     assert!(!result.schedule.has_overlapping_placements());
 }
@@ -71,6 +80,7 @@ fn tasks_on_one_exclusive_resource_are_placed_back_to_back() {
 fn a_task_that_does_not_fit_is_deferred() {
     // The resource is available for only sixty seconds, so a task of ninety
     // cannot be placed.
+    // 资源只可用六十秒，故九十秒的任务无法放置。
     let mut limited = Resource::new(ResourceId::new(0), 1.0);
     limited
         .set_windows(&[Window::new(0.0, 60.0)])
@@ -131,6 +141,7 @@ fn a_mandatory_task_is_placed_before_a_more_valuable_optional_one() {
     let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
     // The optional task is worth far more, but it can use whatever time is
     // left, while the mandatory task has only one window.
+    // 可选任务价值高得多，但它可以使用剩余的任何时间，而强制任务只有一个窗口。
     let optional = task(0, 60.0, &[0])
         .with_priority(100.0)
         .with_window(0.0, 1_000.0);
@@ -151,6 +162,8 @@ fn a_mandatory_task_is_placed_before_a_more_valuable_optional_one() {
     // With the rule turned off, and the improvement pass disabled so that
     // only the ordering is under test, the optional task goes first and the
     // mandatory one is placed after it, using the rest of its window.
+    // 关掉该规则、并禁用改进遍（使只有排序受检），可选任务先走，强制任务紧随其后放置，
+    // 用它窗口的剩余部分。
     let without = Planner::new()
         .with_mandatory_first(false)
         .with_improvement(apsis_scheduler::ImprovementSettings::disabled())
@@ -169,6 +182,8 @@ fn the_improvement_pass_recovers_a_plan_that_the_greedy_order_missed() {
     // zero to a hundred, so it cannot fit after the optional one and would
     // be lost. The improvement pass moves the optional task aside and places
     // both.
+    // 可选任务价值更高，故先被放置并占用资源自 0 到 60。强制任务的窗口自 0 到 100，
+    // 故它放不进可选任务之后，会丢失。改进遍把可选任务挪开并放置二者。
     let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
     let optional = task(0, 60.0, &[0])
         .with_priority(100.0)
@@ -184,6 +199,7 @@ fn the_improvement_pass_recovers_a_plan_that_the_greedy_order_missed() {
         .with_improvement(apsis_scheduler::ImprovementSettings::disabled())
         .schedule(&tasks, &resources);
     // Without the pass the mandatory task is lost.
+    // 没有该遍时强制任务丢失。
     assert!(!greedy.honours_mandatory(&tasks));
     assert_eq!(greedy.schedule.len(), 1);
 
@@ -191,6 +207,7 @@ fn the_improvement_pass_recovers_a_plan_that_the_greedy_order_missed() {
         .with_mandatory_first(false)
         .schedule(&tasks, &resources);
     // With the pass both are placed.
+    // 有该遍时二者都被放置。
     assert!(improved.is_complete(), "{:?}", improved.outcomes);
     assert!(improved.honours_mandatory(&tasks));
     assert!(!improved.improved.is_empty());
@@ -208,6 +225,7 @@ fn the_value_ordering_places_the_most_valuable_task_first() {
     let result = Planner::new().schedule(&tasks, &resources);
     assert!(result.is_complete());
     // The weighted values are 10, 500, and 100, so task 1 goes first.
+    // 加权值为 10、500 与 100，故任务 1 先走。
     assert_eq!(
         result
             .schedule
@@ -234,6 +252,7 @@ fn two_tasks_on_a_shared_resource_can_overlap() {
         .placement_of(TaskId::new(1))
         .expect("placed");
     // Both start as early as possible, because the capacity holds them both.
+    // 二者都尽早开始，因为容量能容纳二者。
     assert_eq!(first.start, 0.0);
     assert_eq!(second.start, 0.0);
     assert!(result.schedule.has_overlapping_placements());
@@ -244,6 +263,7 @@ fn a_task_is_placed_after_the_other_frees_its_resource() {
     let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
     // The first task occupies the resource from 100 to 200, so the second,
     // which can start no earlier than 100, must wait.
+    // 第一个任务占用资源自 100 到 200，故不得早于 100 开始的第二个必须等待。
     let first = task(0, 100.0, &[0]).with_window(100.0, 1_000.0);
     let second = task(1, 50.0, &[0]).with_window(100.0, 1_000.0);
     let tasks = [first, second];
@@ -295,6 +315,7 @@ fn the_earliest_start_accounts_for_a_blocking_placement() {
     let start = earliest_feasible_start(&candidate, &tasks, &schedule, &resources)
         .expect("a placement exists");
     // The resource is held until a hundred, so the earliest start is there.
+    // 资源被占至百秒，故最早开始在那里。
     assert_eq!(start, 100.0);
 }
 
@@ -309,10 +330,12 @@ fn feasibility_reports_the_capacity_limit() {
     let tasks = [existing, candidate.clone()];
     // Starting at fifty would overlap the existing placement, which the
     // capacity of one does not allow.
+    // 自五十开始会与已有放置重叠，容量为一不允许。
     assert!(!feasible_at(
         &candidate, &tasks, &schedule, &resources, 50.0
     ));
     // Starting at a hundred is free.
+    // 自百秒开始是空闲的。
     assert!(feasible_at(
         &candidate, &tasks, &schedule, &resources, 100.0
     ));
@@ -331,6 +354,7 @@ fn feasibility_reports_the_availability_limit() {
     assert!(feasible_at(&tasks[0], &tasks, &schedule, &resources, 0.0));
     assert!(feasible_at(&tasks[0], &tasks, &schedule, &resources, 40.0));
     // Starting at fifty would end at one hundred and ten, past the window.
+    // 自五十开始会在百一十结束，越过窗口。
     assert!(!feasible_at(&tasks[0], &tasks, &schedule, &resources, 50.0));
 }
 
@@ -339,10 +363,12 @@ fn the_capacity_check_covers_a_multiple_resource_task() {
     let resources =
         ResourceSet::from_resources(vec![resource(0, 1.0), resource(1, 1.0)]).expect("distinct");
     // The task needs both resources at once.
+    // 该任务同时需要两种资源。
     let tasks = [task(0, 60.0, &[0, 1])];
     assert!(resources_have_capacity(&tasks[0], &resources));
 
     // The same task with one resource missing is infeasible.
+    // 同一任务缺少一个资源即不可行。
     let missing = [task(0, 60.0, &[0, 9])];
     assert!(!resources_have_capacity(&missing[0], &resources));
     assert_eq!(infeasible_tasks(&missing, &resources), vec![TaskId::new(0)]);
@@ -361,6 +387,7 @@ fn the_demand_at_an_instant_is_reported_per_resource() {
     assert_eq!(demand[0], (ResourceId::new(0), 1.0));
     assert_eq!(demand[1], (ResourceId::new(1), 1.0));
     // Before either placement the demand is zero.
+    // 在两处放置之前需求为零。
     let demand = demand_at(&schedule, &tasks, &resources, -1.0);
     assert_eq!(demand[0].1, 0.0);
 }
@@ -374,11 +401,13 @@ fn the_free_resources_at_an_instant_exclude_the_busy_ones() {
     schedule.place(&tasks[0], 0.0).expect("fits");
 
     // At fifty seconds resource zero is full and resource one is free.
+    // 五十秒处资源零已满而资源一空闲。
     assert_eq!(
         resources_free_at(&schedule, &tasks, &resources, 50.0),
         vec![ResourceId::new(1)]
     );
     // At a hundred and fifty both are free.
+    // 百五十秒处二者都空闲。
     assert_eq!(
         resources_free_at(&schedule, &tasks, &resources, 150.0),
         vec![ResourceId::new(0), ResourceId::new(1)]
@@ -415,6 +444,7 @@ fn the_result_reports_every_task() {
         assert!(result.outcome_of(task.id).is_some());
     }
     // Only the first can be placed.
+    // 只有第一个能被放置。
     assert_eq!(result.scheduled(), vec![TaskId::new(0)]);
     assert!(!result.is_complete());
     assert!(result.honours_mandatory(&tasks));
@@ -429,6 +459,7 @@ fn a_mandatory_task_that_cannot_be_placed_is_reported() {
     let result = Planner::new().schedule(&tasks, &resources);
     // The plan does not honour the mandatory task, which the caller can
     // detect.
+    // 该计划未兑现强制任务，调用方可检测到。
     assert!(!result.honours_mandatory(&tasks));
     assert!(!result.is_complete());
 }
@@ -454,12 +485,15 @@ fn the_infeasible_task_list_excludes_the_merely_deferred() {
     let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
     let tasks = [
         // Can be placed.
+        // 可以放置。
         task(0, 60.0, &[0]),
         // Demands too much.
+        // 需求过多。
         Task::new(TaskId::new(1), 60.0)
             .try_require(ResourceId::new(0), 5.0)
             .expect("the resource is new"),
         // Names a resource that does not exist.
+        // 指名了不存在的资源。
         task(2, 60.0, &[9]),
     ];
     let infeasible = infeasible_tasks(&tasks, &resources);

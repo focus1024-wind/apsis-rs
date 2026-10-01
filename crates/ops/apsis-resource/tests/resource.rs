@@ -1,8 +1,12 @@
 //! Tests for resources and the set that holds them.
+//!
+//! 资源及保存它们的集合的测试。
 
 use apsis_resource::{Interval, Resource, ResourceErrorKind, ResourceId, ResourceSet, Window};
 
 /// A resource with one window from 100 to 200 seconds.
+///
+/// 一个含 100 至 200 秒窗口的资源。
 fn station() -> Resource {
     let mut resource = Resource::new(ResourceId::new(0), 1.0);
     resource
@@ -39,6 +43,7 @@ fn availability_is_half_open_at_the_edges() {
     assert!(resource.is_available_at(199.999));
     // The end instant belongs to the next interval, so the resource stops
     // being available exactly there.
+    // 结束瞬时属于下一区间，故资源恰在那里停止可用。
     assert!(!resource.is_available_at(200.0));
 }
 
@@ -49,6 +54,7 @@ fn availability_over_a_duration_requires_the_whole_span() {
     assert!(resource.is_available_over(120.0, 80.0));
     assert!(resource.is_available_over(150.0, 50.0));
     // A request that reaches past the window fails, even by a little.
+    // 越过窗口的请求失败，即便只越过一点。
     assert!(!resource.is_available_over(150.0, 50.001));
     assert!(!resource.is_available_over(99.0, 2.0));
 }
@@ -59,6 +65,7 @@ fn a_zero_duration_request_is_an_instantaneous_query() {
     assert!(resource.is_available_over(150.0, 0.0));
     assert!(!resource.is_available_over(250.0, 0.0));
     // The half-open boundary applies here too.
+    // 半开边界在此也适用。
     assert!(!resource.is_available_over(200.0, 0.0));
 }
 
@@ -77,6 +84,7 @@ fn adding_overlapping_windows_merges_them() {
     resource.add_window(Window::new(0.0, 10.0)).expect("usable");
     resource.add_window(Window::new(5.0, 15.0)).expect("usable");
     // The two overlap, so the stored form is one window.
+    // 二者重叠，故存储形式是一个窗口。
     assert_eq!(resource.window_count(), 1);
     assert_eq!(resource.windows()[0], Window::new(0.0, 15.0));
     assert_eq!(resource.total_availability(), 15.0);
@@ -91,6 +99,7 @@ fn adding_disjoint_windows_keeps_them_separate() {
     resource.add_window(Window::new(0.0, 10.0)).expect("usable");
     assert_eq!(resource.window_count(), 2);
     // The stored order is time order, not insertion order.
+    // 存储次序是时间次序，而非插入次序。
     assert_eq!(resource.windows()[0].start(), 0.0);
     assert_eq!(resource.windows()[1].start(), 30.0);
 }
@@ -120,6 +129,7 @@ fn setting_the_windows_replaces_them() {
     assert!(resource.is_available_at(5.0));
 
     // Setting nothing removes all availability.
+    // 什么都不设置即移除所有可用性。
     resource.set_windows(&[]).expect("usable");
     assert!(resource.is_empty());
 }
@@ -145,12 +155,16 @@ fn the_earliest_fit_is_the_first_window_long_enough() {
         .expect("usable");
 
     // A request of five seconds fits in the first window.
+    // 五秒的请求放入第一个窗口。
     assert_eq!(resource.earliest_fit(5.0), Some(Window::new(0.0, 5.0)));
     // A request of twenty does not, so it takes the second.
+    // 二十秒的放不下，故取第二个。
     assert_eq!(resource.earliest_fit(20.0), Some(Window::new(30.0, 50.0)));
     // A request longer than any window has no answer.
+    // 比任何窗口都长的请求没有答案。
     assert_eq!(resource.earliest_fit(40.0), None);
     // An instantaneous request fits at the start of the first window.
+    // 瞬时请求放入第一个窗口的开头。
     assert_eq!(resource.earliest_fit(0.0), Some(Window::new(0.0, 0.0)));
     assert_eq!(resource.earliest_fit(-1.0), None);
     assert_eq!(resource.earliest_fit(f64::NAN), None);
@@ -164,17 +178,20 @@ fn the_earliest_fit_after_a_time_respects_the_lower_bound() {
         .expect("usable");
 
     // Starting no earlier than five, the first window can still hold it.
+    // 不早于五开始，第一个窗口仍能容纳它。
     assert_eq!(
         resource.earliest_fit_after(5.0, 4.0),
         Some(Window::new(5.0, 9.0))
     );
     // A request of eight seconds starting at five does not fit, because the
     // window ends at ten, so the second window is used.
+    // 自五开始、八秒的请求放不下，因为窗口在十结束，故使用第二个窗口。
     assert_eq!(
         resource.earliest_fit_after(5.0, 8.0),
         Some(Window::new(30.0, 38.0))
     );
     // Starting after the second window begins, the request starts there.
+    // 在第二个窗口开始之后起步，该请求从那里开始。
     assert_eq!(
         resource.earliest_fit_after(40.0, 10.0),
         Some(Window::new(40.0, 50.0))
@@ -204,6 +221,7 @@ fn the_capacity_is_validated() {
         assert_eq!(error.kind(), ResourceErrorKind::InvalidCapacity);
     }
     // The capacity is unchanged after a failed set.
+    // 失败的设置之后容量不变。
     assert_eq!(resource.capacity(), 2.5);
 
     let invalid = Resource::new(ResourceId::new(0), -1.0);
@@ -286,6 +304,7 @@ fn the_set_reports_availability() {
         .expect("new");
 
     // Only the first resource has any availability.
+    // 只有第一个资源有任何可用性。
     assert_eq!(set.available_at(150.0), vec![ResourceId::new(0)]);
     assert!(set.available_at(50.0).is_empty());
     assert_eq!(set.available_over(120.0, 50.0), vec![ResourceId::new(0)]);
@@ -303,6 +322,7 @@ fn the_identifier_displays_its_index() {
 #[test]
 fn identifiers_are_ordered() {
     // Ordering lets a caller sort a list of resources deterministically.
+    // 排序使调用方能确定地对资源列表排序。
     let mut ids = [ResourceId::new(3), ResourceId::new(1), ResourceId::new(2)];
     ids.sort();
     assert_eq!(

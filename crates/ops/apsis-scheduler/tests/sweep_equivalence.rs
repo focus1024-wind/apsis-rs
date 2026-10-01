@@ -6,6 +6,12 @@
 //! not a second definition of what is feasible. The randomised cases below
 //! are the check: many shapes of window, capacity and overlap, including the
 //! crowded ones where the two could plausibly diverge.
+//!
+//! 扫描搜索对候选枚举的差分测试。
+//!
+//! 扫描从繁忙廓线计算最早开始；枚举检验每个可行性可能改变的时刻。它们必须精确
+//! 一致，因为扫描只是枚举的加速器，而非可行性的第二种定义。下面的随机用例就是
+//! 检查：窗口、容量与重叠的许多形状，包括二者可能分歧的拥挤情形。
 
 use apsis_resource::{Resource, ResourceId, ResourceSet, Window};
 use apsis_schedule::Schedule;
@@ -14,11 +20,14 @@ use apsis_task::{Task, TaskId};
 
 /// A tiny deterministic generator, so a failure is reproducible from the
 /// seed printed in the assertion.
+///
+/// 一个微型确定性生成器，使失败可从断言中所打印的种子复现。
 struct Rng(u64);
 
 impl Rng {
     fn next(&mut self) -> u64 {
         // SplitMix64, chosen because it is a few lines and has a long period.
+        // SplitMix64，因其只有几行且周期长而被选用。
         self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
         let mut z = self.0;
         z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
@@ -31,6 +40,8 @@ impl Rng {
     }
 
     /// Returns a value in `[low, high)`.
+    ///
+    /// 返回 `[low, high)` 内的一个值。
     fn range(&mut self, low: f64, high: f64) -> f64 {
         low + (self.next() >> 11) as f64 / (1u64 << 53) as f64 * (high - low)
     }
@@ -38,11 +49,14 @@ impl Rng {
 
 /// Builds a random scenario and returns the two answers, or `None` when the
 /// task does not fit at all.
+///
+/// 构建一个随机场景并返回两个答案，任务完全放不下时返回 `None`。
 fn compare(seed: u64) -> (Option<f64>, Option<f64>, Schedule) {
     let mut rng = Rng(seed);
 
     // One resource with a random capacity and a couple of availability
     // windows.
+    // 一个具有随机容量与若干可用性窗口的资源。
     let resource_id = ResourceId::new(0);
     let capacity = rng.range(1.0, 4.0);
     let mut resource = Resource::new(resource_id, capacity);
@@ -59,6 +73,7 @@ fn compare(seed: u64) -> (Option<f64>, Option<f64>, Schedule) {
     let resources = ResourceSet::from_resources(vec![resource]).expect("distinct");
 
     // A set of tasks with random demands, windows and durations.
+    // 一组具有随机需求、窗口与时长的任务。
     let task_count = rng.below(12) as usize;
     let mut tasks = Vec::new();
     let mut schedule = Schedule::new();
@@ -72,6 +87,7 @@ fn compare(seed: u64) -> (Option<f64>, Option<f64>, Schedule) {
             .try_require(resource_id, demand)
             .expect("the resource is new");
         // Place some of them, so the sweep sees a busy profile.
+        // 放置其中一些，使扫描看到一个繁忙廓线。
         if rng.below(3) == 0 {
             let _ = earliest_feasible_start(&task, &tasks, &schedule, &resources);
             if let Some(start) = earliest_feasible_start(&task, &tasks, &schedule, &resources) {
@@ -82,6 +98,7 @@ fn compare(seed: u64) -> (Option<f64>, Option<f64>, Schedule) {
     }
 
     // The task under test.
+    // 受检的任务。
     let duration = rng.range(5.0, 60.0);
     let from = rng.range(0.0, 300.0);
     let to = from + rng.range(duration, 300.0);
@@ -96,11 +113,15 @@ fn compare(seed: u64) -> (Option<f64>, Option<f64>, Schedule) {
     // candidate the original way. The public entry is the sweep, so the
     // enumeration is exercised through `feasible_at` over the same candidate
     // set the original built.
+    // 枚举，通过请求一个开始并以原方式检验每个候选来达到。公开入口是扫描，故枚举是
+    // 经 `feasible_at` 在原所构建的同一候选集上被检验。
     let enumerated = enumerate(&probe, &tasks, &schedule, &resources);
     (swept, enumerated, schedule)
 }
 
 /// The original enumeration, written out so the two can be compared.
+///
+/// 原枚举，写出以便二者可比较。
 fn enumerate(
     task: &Task,
     tasks: &[Task],
@@ -150,6 +171,7 @@ fn the_sweep_agrees_with_the_enumeration() {
     }
     // The cases must actually exercise the interesting path, or agreement
     // would be vacuous.
+    // 各用例必须实际检验有意思的路径，否则一致会是空洞的。
     assert!(placed > 1_000, "only {placed} cases placed the task");
     assert_eq!(placed, agreed);
 }
@@ -158,6 +180,7 @@ fn the_sweep_agrees_with_the_enumeration() {
 fn a_placed_answer_is_always_feasible() {
     // The sweep must never report a start that the direct test rejects,
     // which is the property the confirmation step in the code relies on.
+    // 扫描绝不报告直接检验所拒绝的开始，这是代码中确认步所依赖的性质。
     let mut checked = 0_usize;
     for seed in 1..5_000_u64 {
         let (swept, _, _) = compare(seed);
@@ -166,6 +189,8 @@ fn a_placed_answer_is_always_feasible() {
             // return the scenario, so this checks the weaker but still
             // useful property that the answer is finite and inside the task
             // window whenever the test is constructed.
+            // 重建探针以检验它。比较辅助函数不返回场景，故这检查一个较弱但仍有用的性质：
+            // 只要构造了测试，答案就是有限的且落在任务窗口内。
             assert!(start.is_finite(), "seed {seed} produced {start}");
             checked += 1;
         }

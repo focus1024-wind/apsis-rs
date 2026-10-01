@@ -1,8 +1,12 @@
 //! Tests for the precedence graph.
+//!
+//! 先后关系图的测试。
 
 use apsis_task::{PrecedenceGraph, TaskErrorKind, TaskId};
 
 /// The identifiers used by the tests.
+///
+/// 测试所用的标识符。
 fn id(index: usize) -> TaskId {
     TaskId::new(index)
 }
@@ -25,6 +29,7 @@ fn a_constraint_is_recorded_both_ways() {
 
     assert!(graph.has_constraint(id(0), id(1)));
     // The constraint is directed, so the reverse does not exist.
+    // 约束是有向的，故反向不存在。
     assert!(!graph.has_constraint(id(1), id(0)));
     assert_eq!(graph.successors_of(id(0)), vec![id(1)]);
     assert_eq!(graph.predecessors_of(id(1)), vec![id(0)]);
@@ -48,6 +53,7 @@ fn a_duplicate_constraint_is_accepted_and_ignored() {
     graph.add(id(0), id(1)).expect("no cycle");
     graph.add(id(0), id(1)).expect("already present");
     // The edge is recorded once.
+    // 该边只记录一次。
     assert_eq!(graph.edge_count(), 1);
     assert_eq!(graph.successors_of(id(0)), vec![id(1)]);
 }
@@ -58,9 +64,11 @@ fn a_cycle_is_rejected() {
     graph.add(id(0), id(1)).expect("no cycle");
     graph.add(id(1), id(2)).expect("no cycle");
     // Closing the cycle is refused.
+    // 闭合环被拒绝。
     let error = graph.add(id(2), id(0)).expect_err("this closes a cycle");
     assert_eq!(error.kind(), TaskErrorKind::PrecedenceCycle);
     // The graph is unchanged.
+    // 图不变。
     assert!(!graph.has_constraint(id(2), id(0)));
     assert_eq!(graph.edge_count(), 2);
 }
@@ -87,11 +95,13 @@ fn reachability_follows_the_direction() {
     graph.add(id(1), id(2)).expect("no cycle");
 
     // The transitive relation holds forward but not backward.
+    // 传递关系向前成立而向后不成立。
     assert!(graph.is_reachable(id(0), id(1)));
     assert!(graph.is_reachable(id(0), id(2)));
     assert!(graph.is_reachable(id(1), id(2)));
     assert!(!graph.is_reachable(id(2), id(0)));
     // A task reaches itself by a path of no edges.
+    // 任务经零条边的路径到达自身。
     assert!(graph.is_reachable(id(0), id(0)));
 }
 
@@ -99,6 +109,7 @@ fn reachability_follows_the_direction() {
 fn roots_and_leaves_are_reported() {
     let mut graph = PrecedenceGraph::new();
     // A diamond: 0 before 1 and 2, and both before 3.
+    // 菱形：0 在 1 与 2 之前，二者又都在 3 之前。
     graph.add(id(0), id(1)).expect("no cycle");
     graph.add(id(0), id(2)).expect("no cycle");
     graph.add(id(1), id(3)).expect("no cycle");
@@ -128,6 +139,7 @@ fn the_topological_order_respects_the_constraints() {
         .topological_order(&tasks)
         .expect("the graph is acyclic");
     // The constraints force 0 before 1 before 2, whatever the input order.
+    // 无论输入次序如何，约束强制 0 在 1 之前、1 在 2 之前。
     assert_eq!(order, vec![id(0), id(1), id(2)]);
 }
 
@@ -135,10 +147,12 @@ fn the_topological_order_respects_the_constraints() {
 fn the_topological_order_breaks_ties_by_position() {
     let mut graph = PrecedenceGraph::new();
     // Only 0 is constrained, before 1. Tasks 2 and 3 are free.
+    // 只有 0 受约束（在 1 之前）。任务 2 与 3 是自由的。
     graph.add(id(0), id(1)).expect("no cycle");
 
     // The preference order is 3, 2, 0, 1, so among the free tasks 3 comes
     // first.
+    // 偏好次序是 3、2、0、1，故在自由任务中 3 最先。
     let tasks = [id(3), id(2), id(0), id(1)];
     let order = graph
         .topological_order(&tasks)
@@ -161,6 +175,7 @@ fn the_topological_order_honours_the_diamond() {
     assert_eq!(order, vec![id(0), id(1), id(2), id(3)]);
 
     // The position of each task in the result relative to its constraints.
+    // 每个任务在结果中相对其约束的位置。
     let position_of = |task: TaskId| {
         order
             .iter()
@@ -178,6 +193,7 @@ fn the_topological_order_includes_unconstrained_tasks() {
     let mut graph = PrecedenceGraph::new();
     graph.add(id(0), id(1)).expect("no cycle");
     // Task 9 has no constraints at all.
+    // 任务 9 完全没有约束。
     let tasks = [id(0), id(1), id(9)];
     let order = graph
         .topological_order(&tasks)
@@ -190,6 +206,7 @@ fn the_topological_order_includes_unconstrained_tasks() {
 fn the_topological_order_ignores_predecessors_outside_the_list() {
     // A constraint whose predecessor is not in the list cannot be waited
     // for, so it is ignored rather than blocking the successor.
+    // 前驱不在列表中的约束无法等待，故它被忽略而非阻塞后继。
     let mut graph = PrecedenceGraph::new();
     graph.add(id(5), id(1)).expect("no cycle");
     let tasks = [id(1)];

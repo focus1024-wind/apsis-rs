@@ -1,15 +1,21 @@
 //! Tests for tasks and the set that holds them.
+//!
+//! 任务及保存它们的集合的测试。
 
 use apsis_resource::ResourceId;
 use apsis_task::{Requirement, Task, TaskErrorKind, TaskId, TaskSet, TaskState, task_order};
 
 /// A sixty second task with no window and no requirements.
+///
+/// 一个六十秒、无窗口也无需求的任务。
 fn simple() -> Task {
     Task::new(TaskId::new(0), 60.0)
 }
 
 /// A task requiring two resources for sixty seconds, in a window from 100 to
 /// 1 000 seconds.
+///
+/// 一个在 100 至 1 000 秒窗口内、需要两个资源六十秒的任务。
 fn observation() -> Task {
     simple()
         .with_window(100.0, 1_000.0)
@@ -29,6 +35,7 @@ fn a_new_task_has_the_given_duration_and_nothing_else() {
     assert!(task.requirements.is_empty());
     assert_eq!(task.requirement_count(), 0);
     // A task with no window is unbounded at both ends.
+    // 无窗口的任务在两端都无界。
     assert!(task.earliest_start.is_infinite() && task.earliest_start < 0.0);
     assert!(task.latest_end.is_infinite() && task.latest_end > 0.0);
     assert!(!task.window_is_too_short());
@@ -60,6 +67,7 @@ fn a_window_shorter_than_the_task_is_detected() {
 fn a_window_exactly_the_length_of_the_task_is_accepted() {
     // The task must fit entirely inside the window, and a window of exactly
     // the duration holds it.
+    // 任务必须完全落在窗口内，而恰好等于时长的窗口能容纳它。
     let task = simple().with_window(0.0, 60.0);
     assert!(!task.window_is_too_short());
     assert!(task.is_valid());
@@ -95,6 +103,7 @@ fn a_duplicate_requirement_is_reported_immediately() {
 fn a_duplicate_requirement_built_by_chaining_is_rejected_on_validation() {
     // The plain builder cannot report an error, so the duplicate survives
     // until validation.
+    // 普通构建器无法报告错误，故重复项存留到校验时。
     let task = simple()
         .require(ResourceId::new(0), 1.0)
         .require(ResourceId::new(0), 1.0);
@@ -174,6 +183,7 @@ fn the_weighted_value_combines_priority_and_duration() {
     let task = simple().with_priority(5.0);
     assert_eq!(task.weighted_value(), 300.0);
     // A task with no priority is worth nothing.
+    // 无优先级的任务不值任何东西。
     assert_eq!(simple().weighted_value(), 0.0);
 }
 
@@ -186,6 +196,7 @@ fn the_mandatory_flag_is_recorded() {
 #[test]
 fn the_builder_does_not_modify_the_original() {
     // A builder chain returns a new value, so a base task can be shared.
+    // 构建器链返回新值，故基础任务可被共享。
     let base = simple();
     let first = base.clone().with_priority(1.0);
     let second = base.clone().with_priority(2.0);
@@ -310,6 +321,7 @@ fn the_set_reports_queries() {
     );
     assert_eq!(set.mandatory(), vec![TaskId::new(1)]);
     // The weighted value is the priority times the duration.
+    // 加权值是优先级乘以时长。
     assert_eq!(set.total_weighted_value(), 300.0 + 0.0 + 20.0);
 }
 
@@ -324,6 +336,7 @@ fn the_task_order_places_the_most_valuable_first() {
 
     let order = task_order(set.tasks());
     // The weighted values are 10, 500, and 100, so the order is 1, 2, 0.
+    // 加权值为 10、500 与 100，故次序是 1、2、0。
     assert_eq!(order, vec![TaskId::new(1), TaskId::new(2), TaskId::new(0)]);
 }
 
@@ -331,9 +344,11 @@ fn the_task_order_places_the_most_valuable_first() {
 fn the_task_order_breaks_ties_by_deadline_then_identifier() {
     let set = TaskSet::from_tasks(vec![
         // The same value and no deadline.
+        // 价值相同且无截止时间。
         Task::new(TaskId::new(0), 10.0).with_priority(1.0),
         Task::new(TaskId::new(1), 10.0).with_priority(1.0),
         // The same value but an earlier deadline.
+        // 价值相同但截止时间更早。
         Task::new(TaskId::new(2), 10.0)
             .with_priority(1.0)
             .with_window(0.0, 100.0),
@@ -343,6 +358,7 @@ fn the_task_order_breaks_ties_by_deadline_then_identifier() {
 
     let order = task_order(set.tasks());
     // The task with the deadline comes first, then the others by identifier.
+    // 有截止时间的任务最先，其余按标识符。
     assert_eq!(
         order,
         vec![
