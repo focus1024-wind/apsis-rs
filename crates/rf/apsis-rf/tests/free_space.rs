@@ -44,8 +44,7 @@ fn path_loss_matches_the_engineering_form() {
     // 链路预算中所用的形式，距离以千米、频率以兆赫兹计，
     //
     //   L = 32.44 + 20 log10(d_km) + 20 log10(f_MHz)
-    //    L = 32.44 + 20 log10(d_km) + 20 log10(f_MHz)
-    //    L = 32.44 + 20 log10(d_km) + 20 log10(f_MHz)
+    //   即以千米计的距离与以兆赫兹计的频率表示的工程形式。
     //
     // has a constant that follows from the speed of light rounded to
     // 299 792 458 m/s, and agrees with the expression used here to the

@@ -41,8 +41,7 @@ fn downlink() -> LinkBudget {
 fn eirp_sums_the_power_gain_and_loss() {
     let budget = downlink();
     // 10 dBW + 30 dBi - 1 dB = 39 dBW.
-    // 10 dBW + 30 dBi - 1 dB = 39 dBW。
-    // 10 dBW + 30 dBi - 1 dB = 39 dBW。
+    // 即发射功率加发射增益再减发射损耗，得出等效全向辐射功率。
     let eirp = budget.eirp().expect("valid budget");
     assert!((eirp.dbw().expect("positive") - 39.0).abs() < TOLERANCE);
 }
@@ -66,8 +65,7 @@ fn the_carrier_power_matches_the_hand_computation() {
     let budget = downlink();
     let carrier = budget.received_power().expect("valid budget");
     // 39 dBW - 205.627 dB + 35 dBi - 0.5 dB = -132.127 dBW.
-    // 39 dBW - 205.627 dB + 35 dBi - 0.5 dB = -132.127 dBW。
-    // 39 dBW - 205.627 dB + 35 dBi - 0.5 dB = -132.127 dBW。
+    // 即从等效全向辐射功率减去路径损耗、加上接收增益、再减接收损耗。
     assert!(
         (carrier.dbw().expect("positive") + 132.127_080_075_172_1).abs() < 1e-9,
         "{}",
