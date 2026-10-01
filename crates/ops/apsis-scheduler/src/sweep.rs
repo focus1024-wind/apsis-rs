@@ -31,6 +31,11 @@ use apsis_task::TaskId;
 ///
 /// It matches the tolerance in [`feasible_at`], so the sweep and the direct
 /// test draw the same line at a boundary.
+///
+/// 比较负载与容量时允许的余量。
+///
+/// 它与 [`feasible_at`] 中的容差一致，故扫掠与直接测试在边界处划同一条
+/// 线。
 const CAPACITY_SLACK: f64 = 1e-9;
 
 /// Returns the earliest time at which a task can be placed.
@@ -43,6 +48,14 @@ const CAPACITY_SLACK: f64 = 1e-9;
 /// the availability is constant between them too.
 ///
 /// Returns `None` when the task cannot be placed anywhere in its window.
+///
+/// 返回某任务可被放置的最早时刻。
+///
+/// 最早可行起点总是某个小候选集合之一：任务窗口的起点、其某资源可用窗口
+/// 的起点，或其某资源上已有放置的结束时刻。可行性在其他任何瞬时都不会
+/// 改变，因为各资源的需求在这些事件之间恒定，可用性亦然。
+///
+/// 该任务在其窗口内无处可放时返回 `None`。
 pub fn earliest_feasible_start(
     task: &Task,
     tasks: &[Task],
@@ -54,6 +67,7 @@ pub fn earliest_feasible_start(
     }
     if task.requirements.is_empty() {
         // A task with no requirements can start as soon as its window opens.
+        // 无需求的任务可在其窗口开启时即开始。
         return Some(task.earliest_start);
     }
     let latest_start = task.latest_end - task.duration;
@@ -63,9 +77,14 @@ pub fn earliest_feasible_start(
     // demand by scanning the task list at each of those visits would make
     // deciding one task quadratic in the plan. The map is built once per
     // task, which is linear, and shared by every visit.
+    // 各任务的需求，按标识符一次性建好索引。扫掠会访问每个所需资源上
+    // 的每处放置，若每次访问都扫描任务列表来读需求，判定一个任务就会
+    // 对整个计划呈二次。该索引每个任务构建一次，是线性的，并由所有
+    // 访问共享。
     let demands = demand_index(tasks);
 
     // The sweep, confirmed by the direct test.
+    // 扫掠，其结果由直接测试确认。
     if let Some(candidate) = swept_earliest_start(task, schedule, resources, latest_start, &demands)
     {
         if feasible_at_indexed(task, schedule, resources, candidate, &demands) {
@@ -76,12 +95,18 @@ pub fn earliest_feasible_start(
     // The enumeration, which is exact. It runs when the sweep could not
     // produce a confirmed answer, which is when the task does not fit at all
     // or when rounding made the two disagree.
+    // 枚举，它是精确的。当扫掠无法给出经确认的答案时运行，即该任务
+    // 完全放不下，或舍入使二者不一致时。
     enumerate_earliest_start(task, schedule, resources, latest_start, &demands)
 }
 
 /// Returns the earliest start by testing every candidate in turn.
 ///
 /// This is the original formulation, kept as the fallback for the sweep.
+///
+/// 依次测试每个候选，返回最早起点。
+///
+/// 这是最初的表述，保留为扫掠的回退。
 fn enumerate_earliest_start(
     task: &Task,
     schedule: &Schedule,
@@ -122,6 +147,11 @@ fn enumerate_earliest_start(
 /// The intervals returned by [`starts_fitting_on`] for each resource are
 /// intersected, and the first interval that lies inside the task's window
 /// gives the answer.
+///
+/// 由扫掠所得的负载曲线导出最早起点。
+///
+/// [`starts_fitting_on`] 为各资源返回的区间被求交，落在该任务窗口内的
+/// 第一个区间即给出答案。
 fn swept_earliest_start(
     task: &Task,
     schedule: &Schedule,
@@ -158,6 +188,11 @@ fn swept_earliest_start(
 /// availability window and the demand already placed on the resource never
 /// exceeds the capacity less the new demand. The result is sorted and the
 /// intervals are disjoint.
+///
+/// 返回可使给定时长与需求的放置落在某资源上的起点区间。
+///
+/// 当整个放置位于某个可用窗口内、且资源上已放置的需求始终不超过容量减去
+/// 新需求时，该起点被计入结果。结果有序且各区间互不相交。
 fn starts_fitting_on(
     duration: f64,
     demand: f64,
@@ -172,6 +207,7 @@ fn starts_fitting_on(
         for (from, to) in subtract(&blocked, window.start(), window.end()) {
             // The placement has to fit inside, so the last start is the end
             // of the free interval less the duration.
+            // 放置须容纳于其中，故最晚起点为该空闲区间的终点减去时长。
             let last_start = to - duration;
             if last_start >= from {
                 result.push((from, last_start));
@@ -186,6 +222,11 @@ fn starts_fitting_on(
 /// The intervals are where the demand already placed on the resource exceeds
 /// the capacity less `demand`. They are computed with a single sweep over the
 /// placement boundaries, and are sorted and disjoint.
+///
+/// 返回某资源无余量容纳某需求的区间。
+///
+/// 这些区间即资源上已放置的需求超过容量减去 `demand` 的时段。它们由
+/// 对各放置边界的一次扫掠算出，有序且互不相交。
 fn blocked_intervals(
     demand: f64,
     resource_id: ResourceId,
@@ -197,6 +238,8 @@ fn blocked_intervals(
 
     // The load profile changes only where a placement starts or ends, so the
     // sweep needs only those two instants per placement.
+    // 负载曲线只在某处放置开始或结束时改变，故扫掠每个放置只需那两个
+    // 瞬时。
     let mut events: Vec<(f64, f64)> = Vec::new();
     for placement in schedule.placements() {
         let Some(placed) = demand_on(demands, placement.task, resource_id) else {
@@ -229,12 +272,15 @@ fn blocked_intervals(
     while index < events.len() {
         let time = events[index].0;
         // The load is constant on the interval that ends at this instant.
+        // 负载在以该瞬时结束的区间上恒定。
         if load > limit {
             opened.get_or_insert(time);
         }
         // Apply every change at this instant at once, so the load compared
         // above belongs to the interval before it and the one after belongs
         // to the next comparison.
+        // 一次性施加该瞬时的全部变化，故上面比较的负载属于其前的区间，
+        // 其后的负载则用于下一次比较。
         let mut next = index;
         while next < events.len() && events[next].0 == time {
             load += events[next].1;
@@ -249,6 +295,8 @@ fn blocked_intervals(
     }
     // A run that never closes extends past every placement, so it is
     // recorded as open ended and swallows the rest of the horizon.
+    // 始终不闭合的区段延伸越过所有放置，故记为开区间，吞没时域的
+    // 其余部分。
     if let Some(start) = opened {
         blocked.push((start, f64::INFINITY));
     }
@@ -261,9 +309,16 @@ fn blocked_intervals(
 /// vector indexed by it rather than in a map. Reading one is then an array
 /// index rather than a hash, and a hash of a small integer costs more than
 /// the scan it replaces.
+///
+/// 各任务在各资源上的需求，按任务标识符索引。
+///
+/// 任务标识符是小的稠密整数，故需求存于以其为下标的向量而非映射中。读取
+/// 时即数组下标而非哈希，而哈希一个小整数的代价高于它所取代的扫描。
 pub(crate) type DemandIndex = Vec<Option<std::collections::HashMap<ResourceId, f64>>>;
 
 /// Builds a [`DemandIndex`] in one pass over the task list.
+///
+/// 由任务列表一趟构建 [`DemandIndex`]。
 pub(crate) fn demand_index(tasks: &[Task]) -> DemandIndex {
     let highest = tasks.iter().map(|task| task.id.index()).max().unwrap_or(0);
     let mut index: DemandIndex = (0..=highest).map(|_| None).collect();
@@ -282,6 +337,8 @@ pub(crate) fn demand_index(tasks: &[Task]) -> DemandIndex {
 }
 
 /// Returns the demand a placed task puts on a resource, if any.
+///
+/// 返回某已放置任务在某资源上的需求，若有。
 pub(crate) fn demand_on(index: &DemandIndex, task: TaskId, resource: ResourceId) -> Option<f64> {
     index
         .get(task.index())
@@ -293,6 +350,10 @@ pub(crate) fn demand_on(index: &DemandIndex, task: TaskId, resource: ResourceId)
 /// Returns the pieces of an interval that no blocked interval covers.
 ///
 /// Both inputs are sorted and disjoint. The result is sorted and disjoint.
+///
+/// 返回某区间中未被任何阻塞区间覆盖的部分。
+///
+/// 两个输入均有序且互不相交，结果亦然。
 fn subtract(blocked: &[(f64, f64)], from: f64, to: f64) -> Vec<(f64, f64)> {
     let mut pieces = Vec::new();
     let mut cursor = from;
@@ -320,6 +381,10 @@ fn subtract(blocked: &[(f64, f64)], from: f64, to: f64) -> Vec<(f64, f64)> {
 /// Returns the intersection of two sorted, disjoint lists of intervals.
 ///
 /// The result is sorted and disjoint.
+///
+/// 返回两份有序且互不相交的区间列表之交。
+///
+/// 结果有序且互不相交。
 fn intersect(left: &[(f64, f64)], right: &[(f64, f64)]) -> Vec<(f64, f64)> {
     let mut result = Vec::new();
     let mut i = 0;

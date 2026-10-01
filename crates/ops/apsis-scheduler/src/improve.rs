@@ -32,20 +32,31 @@ use apsis_schedule::Schedule;
 use apsis_task::{Task, TaskId, TaskState};
 
 /// The settings of the improvement pass.
+///
+/// 改进轮的设置。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ImprovementSettings {
     /// Whether the pass runs.
+    ///
+    /// 该轮是否运行。
     pub enabled: bool,
     /// The greatest number of blocking placements to try per task.
     ///
     /// Each attempt costs two feasibility searches. A small bound keeps the
     /// pass predictable; a larger one finds more placements on a crowded
     /// schedule at proportional cost.
+    ///
+    /// 每个任务最多尝试的阻塞放置数。
+    ///
+    /// 每次尝试耗费两次可行性搜索。较小的界使该轮表现可预期；较大的界
+    /// 能在拥挤的计划上找到更多放置，代价相应增加。
     pub max_attempts_per_task: usize,
 }
 
 impl Default for ImprovementSettings {
     /// Returns settings that run the pass with four attempts per task.
+    ///
+    /// 返回每任务尝试四次的设置。
     fn default() -> Self {
         Self {
             enabled: true,
@@ -56,6 +67,8 @@ impl Default for ImprovementSettings {
 
 impl ImprovementSettings {
     /// Creates settings with the given bound.
+    ///
+    /// 以给定界创建设置。
     pub const fn new(max_attempts_per_task: usize) -> Self {
         Self {
             enabled: true,
@@ -64,6 +77,8 @@ impl ImprovementSettings {
     }
 
     /// Returns settings that do not run the pass.
+    ///
+    /// 返回不运行该轮的设置。
     pub const fn disabled() -> Self {
         Self {
             enabled: false,
@@ -73,21 +88,31 @@ impl ImprovementSettings {
 }
 
 /// What the improvement pass changed.
+///
+/// 改进轮所作的改变。
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct ImprovementOutcome {
     /// The identifiers of the tasks the pass placed.
+    ///
+    /// 该轮所放置的任务标识符。
     pub placed: Vec<TaskId>,
     /// The identifiers of the tasks the pass moved to make room.
+    ///
+    /// 该轮为腾出空隙而移动的任务标识符。
     pub moved: Vec<TaskId>,
 }
 
 impl ImprovementOutcome {
     /// Returns the number of tasks the pass placed.
+    ///
+    /// 返回该轮所放置的任务数。
     pub fn placed_count(&self) -> usize {
         self.placed.len()
     }
 
     /// Returns `true` when the pass changed nothing.
+    ///
+    /// 当该轮未作任何改变时返回 `true`。
     pub fn is_empty(&self) -> bool {
         self.placed.is_empty() && self.moved.is_empty()
     }
@@ -101,6 +126,14 @@ impl ImprovementOutcome {
 /// assignment. The schedule is modified in place.
 ///
 /// Returns a record of what the pass placed and moved.
+///
+/// 通过搬迁阻塞它们的放置，尝试安排被推迟的任务。
+///
+/// `deferred` 是贪心轮无法放置的任务，按考虑顺序排列。`states` 按标识符
+/// 索引保存每个任务的状态并就地更新，故调用方看到的是最终指派。该计划
+/// 亦被就地修改。
+///
+/// 返回记录该轮所放置与所移动内容的报告。
 pub fn improve(
     tasks: &[Task],
     resources: &ResourceSet,
@@ -119,6 +152,7 @@ pub fn improve(
             continue;
         };
         // A task that is not deferred has been placed by an earlier step.
+        // 非被推迟的任务已由先前步骤放置。
         if schedule.is_placed(*id) {
             continue;
         }
@@ -164,6 +198,11 @@ pub fn improve(
 ///
 /// Only these can block it: a placement on a resource the task does not need
 /// consumes capacity that the task was never going to use.
+///
+/// 返回与某等待任务共用资源的已放置任务，按时间排序。
+///
+/// 只有这些能阻塞它：某个该任务并不需要的资源上的放置，消耗的是它本就
+/// 不会用到的容量。
 fn blocking_tasks(waiting: &Task, tasks: &[Task], schedule: &Schedule) -> Vec<TaskId> {
     let mut blockers: Vec<(f64, TaskId)> = schedule
         .placements()
@@ -196,6 +235,11 @@ fn blocking_tasks(waiting: &Task, tasks: &[Task], schedule: &Schedule) -> Vec<Ta
 ///
 /// Returns `true` when the pair was rearranged and both tasks are placed. On
 /// a `false` return the schedule is exactly as it was.
+///
+/// 尝试通过移动某个阻塞者来放置等待任务，仅当二者都能容纳时保留二者。
+///
+/// 当该对被重排且两个任务均已放置时返回 `true`。返回 `false` 时计划与
+/// 原状完全一致。
 fn relocate_pair(
     waiting: &Task,
     blocker: &Task,
@@ -207,12 +251,14 @@ fn relocate_pair(
         return false;
     };
     // Remove the blocker and look for a home for the waiting task.
+    // 移除阻塞者，为等待任务寻找安身之处。
     if schedule.unplace(blocker.id).is_err() {
         return false;
     }
     let waiting_start = earliest_feasible_start(waiting, tasks, schedule, resources);
     if waiting_start.is_none() {
         // Nothing changed, so restore the blocker.
+        // 没有任何改变，故恢复阻塞者。
         let _ = schedule.place(blocker, blocker_start);
         return false;
     }
@@ -223,6 +269,7 @@ fn relocate_pair(
     }
 
     // With the waiting task placed, look for a new home for the blocker.
+    // 等待任务已放置后，为阻塞者寻找新的去处。
     match earliest_feasible_start(blocker, tasks, schedule, resources) {
         Some(blocker_new_start) => {
             if schedule.place(blocker, blocker_new_start).is_ok() {
@@ -232,6 +279,9 @@ fn relocate_pair(
             // can only come from the blocker being placed already, which it
             // is not. Restore the original arrangement and report failure
             // rather than leaving a half applied move.
+            // 搜索已判定该放置可行，故此处的失败只可能源于阻塞者已被
+            // 放置，而它并未被放置。恢复原安排并报告失败，以免留下
+            // 半完成的移动。
             let _ = schedule.unplace(waiting.id);
             let _ = schedule.place(blocker, blocker_start);
             false
@@ -239,6 +289,7 @@ fn relocate_pair(
         None => {
             // The blocker has nowhere to go, so the move is abandoned and
             // the original arrangement restored.
+            // 阻塞者无处可去，故放弃该次移动并恢复原安排。
             let _ = schedule.unplace(waiting.id);
             let _ = schedule.place(blocker, blocker_start);
             false
@@ -248,6 +299,8 @@ fn relocate_pair(
 
 /// Updates the recorded state of a task, ignoring an identifier outside the
 /// state list.
+///
+/// 更新某任务所记录的状态；标识符不在状态列表之内时忽略。
 fn set_state(states: &mut [TaskState], id: TaskId, state: TaskState) {
     if let Some(slot) = states.get_mut(id.index()) {
         *slot = state;
