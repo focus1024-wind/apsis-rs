@@ -1,7 +1,5 @@
 //! Task modeling for satellite operations.
 //!
-//! 卫星运行的任务建模。
-//!
 //! A task is a unit of work that a scheduler places on a set of resources. It
 //! carries everything a scheduler needs to decide whether and where to run
 //! it: how long it takes, when it may run, which resources it needs and in
@@ -35,6 +33,19 @@
 //! assert_eq!(task.requirements.len(), 2);
 //! assert!(task.is_valid());
 //! ```
+//!
+//! 卫星运行的任务建模。
+//!
+//! 任务是调度器放置到一组资源上的工作单元。它携带调度器决定是否运行它、在哪里
+//! 运行它所需的一切：耗时多久、何时可以运行、需要哪些资源及多少量，以及它值多少。
+//!
+//! 一个任务在其整个时长内同时需要它的全部资源。这是观测所具有的模型：取数期间
+//! 卫星与地面站必须都可用。需要按序使用资源的任务，表达为两个由
+//! [`PrecedenceGraph`] 中先后约束连接的任务，该约束说一个任务必须在另一个开始
+//! 之前完成。
+//!
+//! 任务一旦构建便不可变。调度器赋给它的状态分开保存在调度中，使同一个任务可以
+//! 被考虑用于多处放置而不被修改。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

@@ -1,7 +1,5 @@
 //! Simulation facade that integrates the simulation layer.
 //!
-//! 整合仿真层的仿真门面。
-//!
 //! This crate is the single entry point to the simulation layer. It ties the
 //! four pieces together: a [`Scenario`] describes the initial conditions, the
 //! ops layer plans it, the engine runs the resulting timeline, and a
@@ -51,6 +49,26 @@
 //! assert_eq!(starts, 1);
 //! assert_eq!(report.outcome.executed, 2);
 //! ```
+//!
+//! 整合仿真层的仿真门面。
+//!
+//! 本 crate 是仿真层的单一入口。它把四部分联系起来：[`Scenario`] 描述初始条件，
+//! ops 层为其作计划，引擎运行所得时间线，[`Recorder`] 收集该运行所产生的。
+//!
+//! 调用方所遵循的序列很短：
+//!
+//! 1. [`Simulation::prepare`] 检查场景并为其作计划，产生一个调度。
+//! 2. [`Simulation::start`] 把该调度转为由开始与结束事件构成的时间线，并交回一个
+//!    [`Session`]。
+//! 3. [`Session::run`] 驱动引擎，在每个事件处调用一个处理器，并返回一个
+//!    [`RunReport`]，其中含有引擎结果与轨迹。
+//!
+//! 该计划是贪心启发式，在 `apsis-scheduler` 中有述，故一次运行可能留下未放置的任务。
+//! 门面报告这一点而非隐藏它：[`Simulation::plan`] 公开完整规划结果，而
+//! [`Simulation::has_full_plan`] 直接回答那个常见的问题。
+//!
+//! 时间线是调度而非物理模型。任务开始时触发一个开始事件，结束时触发一个结束事件，
+//! 这正是调用方随时间记录状态所需的；处理器提供该运行所需的任何物理或簿记。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

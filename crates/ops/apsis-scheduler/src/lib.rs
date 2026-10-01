@@ -1,7 +1,5 @@
 //! Scheduling algorithms for satellite task planning.
 //!
-//! 卫星任务规划的调度算法。
-//!
 //! A scheduler takes a list of tasks and a set of resources and produces a
 //! schedule. This crate provides a greedy scheduler and the pieces needed to
 //! build others.
@@ -41,6 +39,23 @@
 //! assert_eq!(result.schedule.len(), 1);
 //! assert!(result.is_complete());
 //! ```
+//!
+//! 卫星任务规划的调度算法。
+//!
+//! 调度器接收任务列表与资源集合，产生一个调度。本 crate 提供一个贪心调度器以及
+//! 构建其他调度器所需的构件。
+//!
+//! 带资源约束的调度一般是难解的：判定是否每个任务都放得下是一个装箱问题，它是
+//! NP 难的。卫星规划问题规模小，有数百个任务而非数百万个，但对例行的规划周期而言，
+//! 精确搜索仍不切实际。故此处的调度器是贪心启发式。
+//!
+//! 该算法把任务排序，并把每个放到其全部资源同时空闲的最早时间。任务按加权价值递减
+//! 的次序考虑，这是一个好的启发式：最有价值的工作先被放置，最不有价值的填充剩余
+//! 空隙。强制任务不论其价值都先放置，因为一个必须运行的任务比任何可以运行的任务
+//! 都值更多。
+//!
+//! 结果不保证最优，且本 crate 报告它无法放置的内容而非无声丢弃，使操作员能看到该
+//! 计划的代价。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
