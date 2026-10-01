@@ -10,30 +10,50 @@ use apsis_rf::{Decibel, Power};
 /// receive antenna gain in the direction of the interferer, and any
 /// propagation loss. This crate combines the powers; it does not compute the
 /// geometry.
+///
+/// 在接收机输入端看到的一个干扰载波。
+///
+/// 功率是到达接收机的干扰功率，其中已含发射功率、发射增益、路径损耗、
+/// 干扰源方向上的接收天线增益，以及任何传播损耗。本 crate 只合并功率；
+/// 它不计算几何。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interferer {
     /// The interfering power at the receiver input, in watts.
+    ///
+    /// 接收机输入端的干扰功率，单位为瓦特。
     pub power: Power,
 }
 
 impl Interferer {
     /// Creates an interferer from a power at the receiver input.
+    ///
+    /// 由接收机输入端的功率创建干扰源。
     pub const fn new(power: Power) -> Self {
         Self { power }
     }
 }
 
 /// The combined result of a wanted carrier and its interference.
+///
+/// 有用载波与其干扰合并所得的结果。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct InterferenceSummary {
     /// The wanted carrier power, in watts.
+    ///
+    /// 有用载波功率，单位为瓦特。
     pub carrier: Power,
     /// The total interfering power, in watts.
+    ///
+    /// 总干扰功率，单位为瓦特。
     pub interference: Power,
     /// The carrier to interference ratio.
+    ///
+    /// 载干比。
     pub carrier_to_interference: Decibel,
     /// The carrier to noise plus interference ratio, when a noise power was
     /// given.
+    ///
+    /// 载波与噪声加干扰之比，当给出了噪声功率时。
     pub carrier_to_noise_plus_interference: Option<Decibel>,
 }
 
@@ -42,6 +62,10 @@ impl InterferenceSummary {
     ///
     /// This is the reciprocal of the carrier to interference ratio and is
     /// the form some specifications use.
+    ///
+    /// 返回干扰与载波之比。
+    ///
+    /// 它是载干比的倒数，是某些规范所用的形式。
     pub fn interference_to_carrier(self) -> Decibel {
         self.carrier_to_interference.negated()
     }
@@ -55,6 +79,13 @@ impl InterferenceSummary {
 /// six.
 ///
 /// Returns `None` when any interferer has an invalid power.
+///
+/// 返回一组干扰源的总干扰功率。
+///
+/// 各干扰功率相加，因为它们是独立信号，要紧的是其功率而非幅度。故两个
+/// 相等的干扰源给出单个的两倍功率，即三分贝而非六分贝。
+///
+/// 任一干扰源的功率无效时返回 `None`。
 pub fn total_interference(interferers: &[Interferer]) -> Option<Power> {
     let mut total = 0.0;
     for interferer in interferers {
@@ -75,6 +106,13 @@ pub fn total_interference(interferers: &[Interferer]) -> Option<Power> {
 /// Returns `None` when the carrier is not positive, when any interferer is
 /// invalid, or when the total interference is zero, which would give an
 /// infinite ratio.
+///
+/// 返回某载波与一组干扰源的载干比。
+///
+/// 该比是有用载波功率除以各干扰功率之和。比大意味着干扰源弱。
+///
+/// 载波非正、任一干扰源无效，或总干扰为零（会给出无穷的比）时返回
+/// `None`。
 pub fn carrier_to_interference(carrier: Power, interferers: &[Interferer]) -> Option<Decibel> {
     if !carrier.is_valid() || carrier.watts() <= 0.0 {
         return None;
@@ -112,12 +150,26 @@ pub fn carrier_to_interference_single(carrier: Power, interferer: Interferer) ->
 /// carrier to noise plus interference ratio.
 ///
 /// Returns `None` when either value is not finite.
+///
+/// 把一个比与另一个同类之比合并。
+///
+/// 当两种独立损伤共同作用时，它们的效果按倒数之比相加，以分贝表示即
+///
+/// ```text
+/// 1 / R = 1 / R_1 + 1 / R_2
+/// ```
+///
+/// 结果总低于两者中较小者，故加入第二种损伤只会降低合并之比。载噪比与
+/// 载干比正是这样合并为载波与噪声加干扰之比的。
+///
+/// 任一值非有限时返回 `None`。
 pub fn combine(first: Decibel, second: Decibel) -> Option<Decibel> {
     if !first.is_finite() || !second.is_finite() {
         return None;
     }
     // A ratio of zero in decibels means an infinite impairment, so the
     // combination is also infinite.
+    // 分贝表示的比为零意味着无穷的损伤，故合并也是无穷的。
     let first_ratio = first.ratio();
     let second_ratio = second.ratio();
     if !first_ratio.is_finite() || !second_ratio.is_finite() {
@@ -134,6 +186,13 @@ pub fn combine(first: Decibel, second: Decibel) -> Option<Decibel> {
 /// carrier.
 ///
 /// Returns `None` when either ratio is not finite.
+///
+/// 返回载波与噪声加干扰之比。
+///
+/// 它通过 [`combine`] 把载噪比与载干比合并。这是接收机实际经历的比，因为
+/// 它无法把热噪声与竞争载波分开。
+///
+/// 任一比非有限时返回 `None`。
 pub fn carrier_to_noise_plus_interference(
     carrier_to_noise: Decibel,
     carrier_to_interference: Decibel,
@@ -178,6 +237,20 @@ pub fn interference_to_noise_ratio(interference: Power, noise: Power) -> Option<
 ///
 /// Returns `None` when the power is not positive or the bandwidth is not
 /// positive and finite.
+///
+/// 返回与某干扰功率等效的噪声温度。
+///
+/// 接收机当作噪声处理的干扰源可以折算为系统噪声温度的增量计入链路
+/// 预算。在温度上关系为
+///
+/// ```text
+/// T = P / (k B)
+/// ```
+///
+/// 其中 `P` 是干扰功率，`k` 是玻尔兹曼常量，`B` 是接收机噪声带宽。该
+/// 温度即加到系统温度上会使噪声上升与干扰源相同量的值。
+///
+/// 功率非正，或带宽非正且非有限时返回 `None`。
 pub fn equivalent_noise_temperature(interference: Power, bandwidth: f64) -> Option<f64> {
     if !interference.is_valid() || interference.watts() <= 0.0 {
         return None;
@@ -196,6 +269,13 @@ pub fn equivalent_noise_temperature(interference: Power, bandwidth: f64) -> Opti
 ///
 /// Returns `None` when the carrier is not positive, when any interferer is
 /// invalid, or when the total interference is zero.
+///
+/// 返回某载波及其干扰的摘要。
+///
+/// 当给出噪声功率时，载波与噪声加干扰之比也一并算出。当只关注干扰时，
+/// 噪声功率传 `None`。
+///
+/// 载波非正、任一干扰源无效，或总干扰为零时返回 `None`。
 pub fn summarise(
     carrier: Power,
     interferers: &[Interferer],

@@ -17,6 +17,16 @@ use core::fmt;
 ///
 /// Returns `None` when the separation is zero, because no line of sight is
 /// defined there, or when either argument is not finite.
+///
+/// 返回两终端之间的距离变化率，单位为米每秒。
+///
+/// 距离变化率是相对速度沿两终端连线的分量。正值表示间距在增大。
+///
+/// 第一个参数是远端终端相对本地终端的位置，故其模即间距。第二个是远端
+/// 终端相对本地终端的速度。两者均为 SI 单位。
+///
+/// 间距为零时返回 `None`，因为那里没有定义视线；或任一参数非有限时
+/// 返回 `None`。
 pub fn range_rate_from_velocity(relative_position: Vec3, relative_velocity: Vec3) -> Option<f64> {
     if !relative_position.is_finite() || !relative_velocity.is_finite() {
         return None;
@@ -49,6 +59,23 @@ pub fn range_rate_from_velocity(relative_position: Vec3, relative_velocity: Vec3
 ///
 /// Returns `None` when the frequency is not positive and finite, or when the
 /// range rate is not finite.
+///
+/// 返回某频率对应某距离变化率的经典多普勒频移，单位为赫兹。
+///
+/// 关系为
+///
+/// ```text
+/// delta f = -f_0 (v_r / c)
+/// ```
+///
+/// 其中 `v_r` 是距离变化率，远离时为正。远离的终端其频移为负，故接收
+/// 频率低于发射频率。
+///
+/// 该频移的幅度相对载波很小：12 GHz 下 7 km/s 的距离变化率约给出
+/// 280 kHz，即十万分之二。故调用方必须把频率当作双精度处理，且移位后的
+/// 频率是单独返回，而非把一个小频移加到一个大数上。
+///
+/// 频率非正且非有限，或距离变化率非有限时返回 `None`。
 pub fn classical_shift(carrier_frequency: f64, range_rate: f64) -> Option<f64> {
     if !carrier_frequency.is_finite() || carrier_frequency <= 0.0 {
         return None;
@@ -75,6 +102,19 @@ pub fn classical_shift(carrier_frequency: f64, range_rate: f64) -> Option<f64> {
 ///
 /// Returns `None` when the range rate is not finite, or when its magnitude
 /// reaches the speed of light, where the expression has no real value.
+///
+/// 返回某距离变化率的相对论多普勒因子。
+///
+/// 该因子为 `sqrt((1 - beta) / (1 + beta))`，其中 `beta = v_r / c`。把
+/// 发射频率乘以它便给出对 `beta` 各阶都正确的接收频率，故它不是对经典
+/// 频移的小修正，而是经典频移所近似的量。
+///
+/// 其展开为 `1 - beta + beta^2 / 2 - ...`。前两项是经典结果，它在本身为
+/// 二阶的因子之内即 `1 - beta`；其余项是两种处理之差。对轨道速度的
+/// 卫星，`beta` 约为 `2.3e-5`，二阶项约为载波的 `2.7e-10`，故两者相符
+/// 到十的十次方分之几。
+///
+/// 距离变化率非有限，或其幅度达到光速（此时该式无实值）时返回 `None`。
 pub fn relativistic_doppler_factor(range_rate: f64) -> Option<f64> {
     if !range_rate.is_finite() {
         return None;
@@ -91,11 +131,20 @@ pub fn relativistic_doppler_factor(range_rate: f64) -> Option<f64> {
 /// The type carries the carrier frequency and the range rate, so the
 /// transmitted and received frequencies and the shift itself are all
 /// available without ambiguity about which sign convention was used.
+///
+/// 施加于载波的多普勒频移。
+///
+/// 该类型带有载波频率与距离变化率，故发射频率、接收频率以及频移本身都
+/// 可得，而不必对所用符号约定存疑。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct DopplerShift {
     /// The transmitted frequency, in hertz.
+    ///
+    /// 发射频率，单位为赫兹。
     carrier: f64,
     /// The range rate, in meters per second, positive when receding.
+    ///
+    /// 距离变化率，单位为米每秒，远离时为正。
     range_rate: f64,
 }
 
@@ -104,6 +153,10 @@ impl DopplerShift {
     ///
     /// Returns `None` when the frequency is not positive and finite, or when
     /// the range rate is not finite.
+    ///
+    /// 由载波频率与距离变化率创建频移。
+    ///
+    /// 频率非正且非有限，或距离变化率非有限时返回 `None`。
     pub fn from_range_rate(carrier_frequency: f64, range_rate: f64) -> Option<Self> {
         classical_shift(carrier_frequency, range_rate)?;
         Some(Self {
@@ -113,11 +166,15 @@ impl DopplerShift {
     }
 
     /// Returns the transmitted frequency, in hertz.
+    ///
+    /// 返回发射频率，单位为赫兹。
     pub const fn carrier_frequency(self) -> f64 {
         self.carrier
     }
 
     /// Returns the range rate, in meters per second, positive when receding.
+    ///
+    /// 返回距离变化率，单位为米每秒，远离时为正。
     pub const fn range_rate(self) -> f64 {
         self.range_rate
     }
@@ -125,11 +182,17 @@ impl DopplerShift {
     /// Returns the shift, in hertz.
     ///
     /// The value is negative when the terminals are receding.
+    ///
+    /// 返回频移，单位为赫兹。
+    ///
+    /// 两终端远离时该值为负。
     pub fn shift(self) -> f64 {
         classical_shift(self.carrier, self.range_rate).unwrap_or(0.0)
     }
 
     /// Returns the received frequency, in hertz.
+    ///
+    /// 返回接收频率，单位为赫兹。
     pub fn shifted_frequency(self) -> f64 {
         self.carrier + self.shift()
     }
@@ -153,6 +216,20 @@ impl DopplerShift {
     /// the shift were added to the carrier before the correction.
     ///
     /// Returns `None` when the range rate reaches the speed of light.
+    ///
+    /// 返回含相对论钟改正的频移，单位为赫兹。
+    ///
+    /// 接收频率是载波乘以相对论因子，故频移为 `f_0 (factor - 1)`。
+    ///
+    /// 这不是经典频移加一个小修正：该因子已含一阶项，其展开为
+    /// `1 - beta + beta^2 / 2 - ...`，其首项恰是经典频移。经典值是对它的
+    /// 一阶近似，两者只差二阶及更高阶项，量级为 `beta^2`，对卫星而言是
+    /// 载波的十的十次方分之几。
+    ///
+    /// 先求因子、后乘载波，因为它与一之差极小，若在改正之前把频移加到
+    /// 载波上会损失精度。
+    ///
+    /// 距离变化率达到光速时返回 `None`。
     pub fn shift_including_relativity(self) -> Option<f64> {
         let factor = relativistic_doppler_factor(self.range_rate)?;
         Some(self.carrier * (factor - 1.0))
@@ -162,6 +239,10 @@ impl DopplerShift {
     ///
     /// This is a convenient way to compare the shift of links on different
     /// carriers.
+    ///
+    /// 返回频移，以载波的百万分率计。
+    ///
+    /// 这是比较位于不同载波上的链路频移的便利方式。
     pub fn shift_in_ppm(self) -> f64 {
         self.shift() / self.carrier * 1.0e6
     }
@@ -172,6 +253,12 @@ impl DopplerShift {
     /// range acceleration.
     ///
     /// Returns `None` when the acceleration is not finite.
+    ///
+    /// 返回频移的变化率，单位为赫兹每秒。
+    ///
+    /// 这是多普勒跟踪器必须跟随的量，它由距离加速度得出。
+    ///
+    /// 加速度非有限时返回 `None`。
     pub fn shift_rate(self, range_acceleration: f64) -> Option<f64> {
         if !range_acceleration.is_finite() {
             return None;
@@ -181,6 +268,8 @@ impl DopplerShift {
 
     /// Returns `true` when the shift is a redshift, meaning the terminals
     /// are receding and the received frequency is lower.
+    ///
+    /// 当该频移是红移（即两终端远离、接收频率更低）时返回 `true`。
     pub fn is_receding(self) -> bool {
         self.range_rate > 0.0
     }
@@ -209,6 +298,15 @@ impl fmt::Display for DopplerShift {
 ///
 /// Returns `None` when the velocity has zero length or either argument is
 /// not finite.
+///
+/// 返回视线与速度之间的夹角，单位为弧度。
+///
+/// 它是二者所在平面内通常仰角的余角，当已知距离变化率且已知来自轨道的
+/// 速度时有用：该角由二者之比得出。
+///
+/// 结果落在 `[0, pi]` 内。
+///
+/// 速度为零长或任一参数非有限时返回 `None`。
 pub fn angle_from_range_rate(velocity: Vec3, range_rate: f64) -> Option<f64> {
     if !velocity.is_finite() || !range_rate.is_finite() {
         return None;
@@ -229,6 +327,13 @@ pub fn angle_from_range_rate(velocity: Vec3, range_rate: f64) -> Option<f64> {
 ///
 /// The result is returned as a positive magnitude. Returns `None` when the
 /// carrier or speed is not positive and finite.
+///
+/// 返回某载波与某速度下可能的最大频移幅度，单位为赫兹。
+///
+/// 这是运动完全沿视线时的频移，即接收机必须覆盖的捕获范围宽度。它是在
+/// 接近与远离两个极端之间的总跨度的一半。
+///
+/// 结果以正幅度返回。载波或速度非正且非有限时返回 `None`。
 pub fn maximum_shift(carrier_frequency: f64, speed: f64) -> Option<f64> {
     if !carrier_frequency.is_finite() || carrier_frequency <= 0.0 {
         return None;
@@ -246,6 +351,12 @@ pub fn maximum_shift(carrier_frequency: f64, speed: f64) -> Option<f64> {
 /// the maximum shift.
 ///
 /// Returns `None` when the carrier or speed is not usable.
+///
+/// 返回接收机为覆盖直到给定速度的每个距离变化率所必须接受的总频率跨度。
+///
+/// 接近与远离给出符号相反的频移，故该跨度是最大频移的两倍。
+///
+/// 载波或速度不可用时返回 `None`。
 pub fn acquisition_span(carrier_frequency: f64, speed: f64) -> Option<f64> {
     maximum_shift(carrier_frequency, speed).map(|shift| 2.0 * shift)
 }

@@ -261,8 +261,12 @@ impl Pattern {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ElementPattern {
     /// The peak gain on boresight.
+    ///
+    /// 视轴上的峰值增益。
     pub peak: Gain,
     /// The half power beam width, in radians.
+    ///
+    /// 半功率波束宽度，单位为弧度。
     pub beam_width: f64,
     /// The sidelobe floor, in decibels below the peak.
     ///

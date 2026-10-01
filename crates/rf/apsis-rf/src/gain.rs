@@ -162,6 +162,13 @@ impl Gain {
     /// as it radiates.
     ///
     /// Returns `None` when the wavelength is not positive and finite.
+    ///
+    /// 返回具有该增益的天线在给定波长处的有效孔径，单位为平方米。
+    ///
+    /// 关系为 `A = G lambda^2 / (4 pi)`。它由热浴中的天线接收功率须等于
+    /// 其辐射功率这一要求得出。
+    ///
+    /// 波长非正且非有限时返回 `None`。
     pub fn effective_aperture(self, wavelength: f64) -> Option<f64> {
         if wavelength > 0.0 && wavelength.is_finite() && self.0.is_finite() {
             Some(self.0 * wavelength * wavelength / (4.0 * PI))
@@ -177,6 +184,12 @@ impl Gain {
     ///
     /// Returns `None` when the wavelength is not positive and finite, or
     /// when the aperture is negative.
+    ///
+    /// 返回具有该有效孔径的天线在给定波长处的增益。
+    ///
+    /// 它是 [`Gain::effective_aperture`] 的逆。
+    ///
+    /// 波长非正且非有限，或孔径为负时返回 `None`。
     pub fn from_effective_aperture(aperture: f64, wavelength: f64) -> Option<Self> {
         if wavelength > 0.0 && wavelength.is_finite() && aperture >= 0.0 && aperture.is_finite() {
             Some(Self(4.0 * PI * aperture / (wavelength * wavelength)))
