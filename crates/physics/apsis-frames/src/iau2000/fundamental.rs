@@ -298,12 +298,20 @@ impl DelaunayArguments {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PlanetaryArguments {
     /// The mean anomaly of the Moon.
+    ///
+    /// 月球的平近点角。
     pub l: f64,
     /// The mean argument of latitude of the Moon.
+    ///
+    /// 月球的平纬度参数。
     pub f: f64,
     /// The mean elongation of the Moon from the Sun.
+    ///
+    /// 月球相对太阳的平距角。
     pub d: f64,
     /// The mean longitude of the Moon's ascending node.
+    ///
+    /// 月球升交点的平黄经。
     pub omega: f64,
     /// The mean longitude of Mercury.
     ///
@@ -366,6 +374,8 @@ impl PlanetaryArguments {
     }
 
     /// Returns the arguments as an array in series order.
+    ///
+    /// 按级数次序把各参数作为数组返回。
     pub const fn as_array(self) -> [f64; 13] {
         [
             self.l,

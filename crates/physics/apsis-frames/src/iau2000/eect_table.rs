@@ -14,6 +14,11 @@ use super::ComplementaryTerm;
 /// The eight multipliers apply to the arguments `l`, `l'`, `F`, `D`, `Om`,
 /// the mean longitude of Venus, the mean longitude of the Earth, and the
 /// general accumulated precession, in that order.
+///
+/// 不依赖时间的各项。
+///
+/// 八个乘数按 `l`、`l'`、`F`、`D`、`Om`、金星的平黄经、地球的平黄经，以及
+/// 一般累积岁差的次序施加于这些参数。
 pub static CONSTANT_TERMS: [ComplementaryTerm; 33] = [
     ComplementaryTerm {
         argument: [0, 0, 0, 0, 1, 0, 0, 0],
@@ -152,6 +157,10 @@ pub static CONSTANT_TERMS: [ComplementaryTerm; 33] = [
 /// The terms whose amplitude grows linearly with time.
 ///
 /// The arguments are the same as for the constant terms.
+///
+/// 幅度随时间线性增长的各项。
+///
+/// 参数与常数项相同。
 pub static LINEAR_TERMS: [ComplementaryTerm; 1] = [ComplementaryTerm {
     argument: [0, 0, 0, 0, 1, 0, 0, 0],
     coefficients: [-0.87e-6, 0.00e-6],

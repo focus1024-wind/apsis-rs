@@ -30,6 +30,11 @@ const ARCSECOND_TO_RADIAN: f64 = PI / (180.0 * 3_600.0);
 /// The offset between the origin of the International Celestial Reference
 /// System and the dynamical equinox of J2000.0. The value is
 /// minus 0.0146 arcseconds.
+///
+/// 赤经方向的坐标架偏差，单位为弧度。
+///
+/// 国际天球参考系原点与 J2000.0 动力学春分点之间的偏移。该值为负
+/// 0.0146 角秒。
 pub const FRAME_BIAS_RIGHT_ASCENSION: f64 = -0.014_6 * ARCSECOND_TO_RADIAN;
 
 /// The frame bias in declination, in radians.
@@ -37,12 +42,21 @@ pub const FRAME_BIAS_RIGHT_ASCENSION: f64 = -0.014_6 * ARCSECOND_TO_RADIAN;
 /// The offset between the pole of the International Celestial Reference
 /// System and the mean pole of J2000.0. The value is minus 0.0068192
 /// arcseconds.
+///
+/// 赤纬方向的坐标架偏差，单位为弧度。
+///
+/// 国际天球参考系极与 J2000.0 平极之间的偏移。该值为负 0.0068192
+/// 角秒。
 pub const FRAME_BIAS_DECLINATION: f64 = -0.006_819_2 * ARCSECOND_TO_RADIAN;
 
 /// The frame bias in longitude, in radians.
 ///
 /// The offset between the two origins measured along the equator. The value
 /// is minus 0.041775 arcseconds.
+///
+/// 黄经方向的坐标架偏差，单位为弧度。
+///
+/// 沿赤道量得的两个原点之间的偏移。该值为负 0.041775 角秒。
 pub const FRAME_BIAS_LONGITUDE: f64 = -0.041_775 * ARCSECOND_TO_RADIAN;
 
 /// The four angles that describe the precession from J2000.0 to a date.
@@ -51,15 +65,29 @@ pub const FRAME_BIAS_LONGITUDE: f64 = -0.041_775 * ARCSECOND_TO_RADIAN;
 /// `gamma_bar` about the third axis, then by `phi_bar` about the first, then
 /// by minus `psi_bar` about the third, then by minus `epsilon_a` about the
 /// first.
+///
+/// 描述从 J2000.0 到某日岁差的四个角。
+///
+/// 它们按参考实现所用的次序施加：绕第三轴转 `gamma_bar`，再绕第一轴转
+/// `phi_bar`，再绕第三轴转负的 `psi_bar`，再绕第一轴转负的
+/// `epsilon_a`。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct PrecessionAngles {
     /// The precession of the equator along the ecliptic, in radians.
+    ///
+    /// 赤道沿黄道的岁差，单位为弧度。
     pub gamma_bar: f64,
     /// The inclination of the moving equator to the ecliptic, in radians.
+    ///
+    /// 运动赤道相对黄道的倾角，单位为弧度。
     pub phi_bar: f64,
     /// The accumulated precession in longitude, in radians.
+    ///
+    /// 黄经上的累积岁差，单位为弧度。
     pub psi_bar: f64,
     /// The mean obliquity at the date, in radians.
+    ///
+    /// 该日的平黄赤交角，单位为弧度。
     pub epsilon: f64,
 }
 
@@ -70,6 +98,13 @@ pub struct PrecessionAngles {
 /// is 84381.406 arcseconds, which is the obliquity at J2000.0.
 ///
 /// Source: the IAU 2006 precession, as implemented by `eraObl06`.
+///
+/// 返回黄道的平黄赤交角，单位为弧度。
+///
+/// 该多项式是 IAU 2006 表达式，按地球时标、自 J2000.0 起的儒略世纪求值。
+/// 常数项为 84381.406 角秒，即 J2000.0 处的黄赤交角。
+///
+/// 出处：IAU 2006 岁差，按 `eraObl06` 所实现。
 pub fn mean_obliquity(t: f64) -> f64 {
     let arcseconds = 84_381.406
         + t * (-46.836_769
@@ -118,9 +153,18 @@ pub fn precession_angles(t: f64) -> PrecessionAngles {
 ///
 /// Source: as implemented by `eraBi00`, which gives the bias as three small
 /// rotations rather than as a matrix.
+///
+/// 返回坐标架偏差旋转矩阵。
+///
+/// 该偏差是从国际天球参考系到 J2000.0 动力学平赤道与平春分点的常值
+/// 转动。其三个角远小于十分之一角秒，但略去它会留下大于章动级数精度
+/// 的系统误差。
+///
+/// 出处：按 `eraBi00` 所实现，它把偏差给出为三个小转动而非一个矩阵。
 pub fn frame_bias_matrix() -> Mat3 {
     // The reference builds the bias from three elementary rotations, and
     // the result is reproduced here in the same order.
+    // 参考实现由三个基本转动构建该偏差，此处按同一次序再现结果。
     rotation_z(FRAME_BIAS_LONGITUDE)
         * rotation_x(FRAME_BIAS_DECLINATION)
         * rotation_y(FRAME_BIAS_RIGHT_ASCENSION)
@@ -150,6 +194,13 @@ pub fn bias_precession_matrix(t: f64) -> Mat3 {
 /// rotations in sequence. The reference helper composes each new rotation
 /// on the left of the accumulator, so the product here is written with the
 /// last rotation applied first, in the same order.
+///
+/// 在给定预先算出的岁差角时，返回从天球参考系到该日平赤道与平春分点的
+/// 转动。
+///
+/// 出处：按 `eraFw2m` 所实现，它依次施加四个基本转动。参考辅助函数把
+/// 每个新转动合成到累加器的左侧，故此处的乘积按最后施加的转动写在最前，
+/// 次序一致。
 pub fn frame_to_mean_of_date(angles: &PrecessionAngles) -> Mat3 {
     rotation_x(-angles.epsilon)
         * rotation_z(-angles.psi_bar)
@@ -164,6 +215,12 @@ pub fn frame_to_mean_of_date(angles: &PrecessionAngles) -> Mat3 {
 /// is the transpose of the one that would rotate a vector by the same angle.
 /// Composing `a * b` therefore applies `b` first, and the products in this
 /// module read in the order the rotations are physically applied.
+///
+/// 返回绕第一轴转 `angle` 的旋转，单位为弧度。
+///
+/// 该约定与参考辅助函数 `eraRx` 与 `eraRz` 一致：转动施加于坐标系而非
+/// 矢量，故该矩阵是把矢量转同一角度的矩阵的转置。因此合成 `a * b` 时先
+/// 施加 `b`，本模块中的各乘积按各转动实际施加的次序阅读。
 pub(crate) fn rotation_x(angle: f64) -> Mat3 {
     let (sine, cosine) = angle.sin_cos();
     Mat3::from_rows([1.0, 0.0, 0.0], [0.0, cosine, sine], [0.0, -sine, cosine])
@@ -172,6 +229,10 @@ pub(crate) fn rotation_x(angle: f64) -> Mat3 {
 /// Returns a rotation of `angle` about the second axis, in radians.
 ///
 /// The sign convention matches the other axis rotations in this module.
+///
+/// 返回绕第二轴转 `angle` 的旋转，单位为弧度。
+///
+/// 符号约定与本模块中其余各轴转动一致。
 fn rotation_y(angle: f64) -> Mat3 {
     let (sine, cosine) = angle.sin_cos();
     Mat3::from_rows([cosine, 0.0, -sine], [0.0, 1.0, 0.0], [sine, 0.0, cosine])
@@ -180,6 +241,10 @@ fn rotation_y(angle: f64) -> Mat3 {
 /// Returns a rotation of `angle` about the third axis, in radians.
 ///
 /// The sign convention matches the other axis rotations in this module.
+///
+/// 返回绕第三轴转 `angle` 的旋转，单位为弧度。
+///
+/// 符号约定与本模块中其余各轴转动一致。
 pub fn rotation_z(angle: f64) -> Mat3 {
     let (sine, cosine) = angle.sin_cos();
     Mat3::from_rows([cosine, sine, 0.0], [-sine, cosine, 0.0], [0.0, 0.0, 1.0])

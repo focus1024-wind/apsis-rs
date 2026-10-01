@@ -27,6 +27,8 @@ use apsis_math::Mat3;
 use core::f64::consts::PI;
 
 /// The number of seconds in a day.
+///
+/// 一日的秒数。
 const SECONDS_PER_DAY: f64 = 86_400.0;
 
 /// Converts seconds of time to radians.
@@ -34,6 +36,11 @@ const SECONDS_PER_DAY: f64 = 86_400.0;
 /// A full turn is 86 400 seconds of time, so one second of time is
 /// `2 pi / 86400` radians. Sidereal time is quoted in seconds of time, not in
 /// arcseconds, and the two differ by a factor of fifteen.
+///
+/// 把时间秒换算为弧度。
+///
+/// 一整圈是 86 400 时间秒，故一时间秒是 `2 pi / 86400` 弧度。恒星时以时间
+/// 秒而非角秒给出，二者相差十五倍。
 const SECONDS_OF_TIME_TO_RADIAN: f64 = 2.0 * PI / SECONDS_PER_DAY;
 
 /// Returns Greenwich mean sidereal time from the 1982 expression, in
@@ -54,9 +61,22 @@ const SECONDS_OF_TIME_TO_RADIAN: f64 = 2.0 * PI / SECONDS_PER_DAY;
 /// part preserves more of the fraction.
 ///
 /// Source: as implemented by `eraGmst82`.
+///
+/// 返回 1982 表达式给出的格林尼治平恒星时，单位为弧度。
+///
+/// 该表达式是自 J2000.0 起儒略世纪数加上当日以时间秒计的零头所构成的多项
+/// 式。它是 SGP4 理论所拟合的恒星时，故此处用它而非现代表达式：根数集与
+/// 它一致。
+///
+/// 儒略日按两部分取，一为整数天数、一为零头，因为接近 2 461 000 的单个
+/// `f64` 分辨率约为 40 微秒，而所要求的恒星时优于该值。只有一个值的调用
+/// 方可以分别传入整数部分与零头，或把同一个值传两次：`(jd, 0.0)`、
+/// `(2400000.5, mjd)` 与 `(jd - 0.5, 0.5)` 都可接受，但整数部分更小的
+/// 拆分能保留更多零头。
 pub fn greenwich_mean_sidereal_time_1982(day: f64, fraction: f64) -> f64 {
     // The constant absorbs the half day between the start of the Julian
     // date and the start of the day.
+    // 该常数吸收了儒略日起点与当日起点之间的半日。
     let a = 24_110.548_41 - SECONDS_PER_DAY / 2.0;
     let b = 8_640_184.812_866;
     let c = 0.093_104;
@@ -64,6 +84,7 @@ pub fn greenwich_mean_sidereal_time_1982(day: f64, fraction: f64) -> f64 {
 
     // The reference orders the two parts so that the smaller is the first,
     // which is the arrangement that preserves the most precision.
+    // 参考实现把两部分排序使较小者在前，这是最能保留精度的安排。
     let (first, second) = if day < fraction {
         (day, fraction)
     } else {
@@ -85,6 +106,13 @@ pub fn greenwich_mean_sidereal_time_1982(day: f64, fraction: f64) -> f64 {
 ///
 /// This is the transformation to apply to the position and velocity that
 /// `apsis-sgp4` produces.
+///
+/// 返回从真赤道平春分点坐标系到地固系的转动。
+///
+/// 参数是 UT1 儒略日，因为该转动即地球自转；极移由调用方提供，因为它是
+/// 实测而非建模的。
+///
+/// 这是施加于 `apsis-sgp4` 所产生的位置与速度的变换。
 pub fn teme_to_terrestrial_matrix(
     ut1_day: f64,
     ut1_fraction: f64,
@@ -93,6 +121,7 @@ pub fn teme_to_terrestrial_matrix(
     let sidereal = greenwich_mean_sidereal_time_1982(ut1_day, ut1_fraction);
     // The composition applies the Earth rotation first and the polar motion
     // last, with each new rotation on the left of the accumulator.
+    // 该合成先施加地球自转、最后施加极移，每个新转动都在累加器的左侧。
     polar_motion.matrix() * rotation_z(sidereal)
 }
 
@@ -100,6 +129,11 @@ pub fn teme_to_terrestrial_matrix(
 ///
 /// The convention is the one the reference helpers use: the rotation is
 /// applied to the frame, so composing `a * b` applies `b` first.
+///
+/// 返回绕第三轴转 `angle` 的旋转，单位为弧度。
+///
+/// 约定即各参考辅助函数所用者：转动施加于坐标系，故合成 `a * b` 时先施加
+/// `b`。
 fn rotation_z(angle: f64) -> Mat3 {
     super::precession::rotation_z(angle)
 }

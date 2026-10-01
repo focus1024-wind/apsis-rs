@@ -19,6 +19,12 @@ use super::{PlanetaryTerm, SeriesTerm};
 /// in that order. The coefficients are the longitude sine, its time
 /// derivative, the longitude cosine, the obliquity cosine, its time
 /// derivative, and the obliquity sine, in units of 0.1 microarcsecond.
+///
+/// 级数中的日月各项。
+///
+/// 各乘数按 `l`、`l'`、`F`、`D`、`Om` 的次序施加于这些参数。各系数依次是
+/// 黄经正弦、其时间导数、黄经余弦、黄赤交角余弦、其时间导数，以及黄赤交角
+/// 正弦，单位为 0.1 微角秒。
 pub static LUNI_SOLAR: [SeriesTerm; 678] = [
     SeriesTerm {
         argument: [0, 0, 0, 0, 1],
@@ -2749,6 +2755,12 @@ pub static LUNI_SOLAR: [SeriesTerm; 678] = [
 /// coefficients are the longitude sine, the longitude cosine, the
 /// obliquity sine, and the obliquity cosine, in units of 0.1
 /// microarcsecond.
+///
+/// 级数中的行星各项。
+///
+/// 各乘数按 `l`、`F`、`D`、`Om`、水星到天王星的平黄经、海王星的平黄经，
+/// 以及一般累积岁差的次序施加于这些参数。各系数依次是黄经正弦、黄经余弦、
+/// 黄赤交角正弦与黄赤交角余弦，单位为 0.1 微角秒。
 pub static PLANETARY: [PlanetaryTerm; 687] = [
     PlanetaryTerm {
         argument: [0, 0, 0, 0, 0, 0, 8, -16, 4, 5, 0, 0, 0],

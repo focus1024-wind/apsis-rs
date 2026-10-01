@@ -25,6 +25,8 @@ use super::{PlanetaryTerm, SeriesTerm};
 use core::f64::consts::PI;
 
 /// Converts a coefficient in units of 0.1 microarcsecond to radians.
+///
+/// 把以 0.1 微角秒为单位的系数换算为弧度。
 const UNIT_TO_RADIAN: f64 = 1.0e-7 * PI / (180.0 * 3_600.0);
 
 /// Converts arcseconds to radians.
@@ -33,16 +35,24 @@ const UNIT_TO_RADIAN: f64 = 1.0e-7 * PI / (180.0 * 3_600.0);
 const ARCSECOND_TO_RADIAN: f64 = PI / (180.0 * 3_600.0);
 
 /// The nutation in longitude and obliquity, in radians.
+///
+/// 黄经与黄赤交角方向的章动，单位为弧度。
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Nutation {
     /// The nutation in longitude, in radians.
+    ///
+    /// 黄经方向的章动，单位为弧度。
     pub longitude: f64,
     /// The nutation in obliquity, in radians.
+    ///
+    /// 黄赤交角方向的章动，单位为弧度。
     pub obliquity: f64,
 }
 
 impl Nutation {
     /// Creates a nutation from its two angles.
+    ///
+    /// 由其两个角创建章动。
     pub const fn new(longitude: f64, obliquity: f64) -> Self {
         Self {
             longitude,
@@ -51,16 +61,22 @@ impl Nutation {
     }
 
     /// Returns the nutation in longitude, in arcseconds.
+    ///
+    /// 返回黄经方向的章动，单位为角秒。
     pub fn longitude_arcseconds(self) -> f64 {
         self.longitude / ARCSECOND_TO_RADIAN
     }
 
     /// Returns the nutation in obliquity, in arcseconds.
+    ///
+    /// 返回黄赤交角方向的章动，单位为角秒。
     pub fn obliquity_arcseconds(self) -> f64 {
         self.obliquity / ARCSECOND_TO_RADIAN
     }
 
     /// Returns the sum of two nutations.
+    ///
+    /// 返回两个章动之和。
     pub const fn plus(self, other: Self) -> Self {
         Self::new(
             self.longitude + other.longitude,
@@ -75,6 +91,12 @@ impl Nutation {
 /// is the sum of a time dependent sine, a constant sine, and a cosine. The
 /// obliquity is the sum of a time dependent cosine, a constant cosine, and a
 /// sine.
+///
+/// 求日月级数的一项。
+///
+/// 五个乘数施加于 Delaunay 参数。黄经是一个随时间变化的正弦、一个常数
+/// 正弦与一个余弦之和。黄赤交角是一个随时间变化的余弦、一个常数余弦与
+/// 一个正弦之和。
 fn lunisolar_term(term: &SeriesTerm, arguments: &DelaunayArguments, t: f64) -> Nutation {
     let multipliers = &term.argument;
     let c = &term.coefficients;
@@ -86,6 +108,7 @@ fn lunisolar_term(term: &SeriesTerm, arguments: &DelaunayArguments, t: f64) -> N
     let (sine, cosine) = argument.sin_cos();
 
     // The order is the one the reference uses: sp, spt, cp, ce, cet, se.
+    // 次序即参考实现所用者：sp、spt、cp、ce、cet、se。
     Nutation::new(
         (c[0] + c[1] * t) * sine + c[2] * cosine,
         (c[3] + c[4] * t) * cosine + c[5] * sine,
@@ -97,6 +120,11 @@ fn lunisolar_term(term: &SeriesTerm, arguments: &DelaunayArguments, t: f64) -> N
 /// The thirteen multipliers are applied to the planetary arguments. The
 /// longitude is a sine plus a cosine, and the obliquity is a sine plus a
 /// cosine, with no time dependence in either.
+///
+/// 求行星级数的一项。
+///
+/// 十三个乘数施加于行星参数。黄经是一个正弦加一个余弦，黄赤交角也是一个
+/// 正弦加一个余弦，二者都不含时间依赖。
 fn planetary_term(term: &PlanetaryTerm, arguments: &PlanetaryArguments) -> Nutation {
     let multipliers = &term.argument;
     let c = &term.coefficients;
@@ -108,6 +136,7 @@ fn planetary_term(term: &PlanetaryTerm, arguments: &PlanetaryArguments) -> Nutat
     let (sine, cosine) = argument.sin_cos();
 
     // The order is the one the reference uses: sp, cp, se, ce.
+    // 次序即参考实现所用者：sp、cp、se、ce。
     Nutation::new(c[0] * sine + c[1] * cosine, c[2] * sine + c[3] * cosine)
 }
 
@@ -146,10 +175,20 @@ pub fn nutation_2000a(t: f64) -> Nutation {
 ///
 /// Source: IAU 2006, as implemented by `eraNut06a`, which applies the
 /// expressions of Wallace and Capitaine (2006), equations 5.
+///
+/// 返回施加 IAU 2006 岁差调整后的章动。
+///
+/// IAU 2000A 模型建立在 IAU 1976 岁差之上，而 IAU 2006 岁差改变了岁差
+/// 速率。该调整使章动与较新的岁差一致，这一组合正是现代天球到地球转换
+/// 所用的。
+///
+/// 出处：IAU 2006，按 `eraNut06a` 所实现，它施加 Wallace 与
+/// Capitaine（2006）式 5 的表达式。
 pub fn nutation_2000a_with_2006_adjustment(t: f64) -> Nutation {
     let nutation = nutation_2000a(t);
     // The adjustment scales the nutation itself rather than adding an
     // independent term, which is why it is written as a factor.
+    // 该调整是对章动本身缩放，而非加上一个独立项，故它被写成一个因子。
     let fj2 = -2.777_4e-6 * t;
     Nutation::new(
         nutation.longitude * (1.0 + 0.469_7e-6 + fj2),
