@@ -1,4 +1,6 @@
 //! The mesh type and the summary of its redundancy.
+//!
+//! 网格类型及其冗余度摘要。
 
 use crate::connectivity::{edge_connectivity, reachable_from, strongly_connected_components};
 use apsis_topology::Topology;

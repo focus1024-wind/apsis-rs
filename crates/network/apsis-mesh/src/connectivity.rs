@@ -1,4 +1,6 @@
 //! Connectivity measures over a topology.
+//!
+//! 某拓扑上的连通性度量。
 
 use apsis_topology::Topology;
 

@@ -1,5 +1,7 @@
 //! Mesh connectivity abstractions.
 //!
+//! 网格连通性抽象。
+//!
 //! A satellite mesh is a set of terminals that reach each other through
 //! links, some of which are satellite links and some of which are ground
 //! links. This crate provides the abstractions that a mesh application needs

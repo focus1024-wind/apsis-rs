@@ -1,5 +1,7 @@
 //! Shortest path computation over a topology.
 //!
+//! 某拓扑上的最短路径计算。
+//!
 //! The algorithm is Dijkstra's, using a binary heap keyed by the tentative
 //! distance. Costs are positive, so a node's distance is final when it is
 //! first removed from the heap, which makes the algorithm exact.

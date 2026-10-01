@@ -1,5 +1,7 @@
 //! Ground coverage analysis.
 //!
+//! 地面覆盖分析。
+//!
 //! A satellite covers the part of the Earth's surface from which it can be
 //! seen above a minimum elevation angle. That part is a circle, called the
 //! footprint, whose size depends on the satellite altitude and on the

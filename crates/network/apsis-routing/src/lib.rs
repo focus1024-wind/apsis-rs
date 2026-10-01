@@ -1,5 +1,7 @@
 //! Routing over time-varying satellite topologies.
 //!
+//! 时变卫星拓扑上的路由。
+//!
 //! The topology of a satellite network changes as the satellites move, so a
 //! route is only valid over an interval. This crate computes least cost
 //! routes through a [`Topology`] and reports the

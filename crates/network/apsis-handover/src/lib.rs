@@ -1,5 +1,7 @@
 //! Handover decision logic for mobile terminals.
 //!
+//! 移动终端的切换决策逻辑。
+//!
 //! A terminal that can be served by more than one satellite must choose one,
 //! and it must change its choice when the current server becomes unsuitable.
 //! This crate makes that decision. It does not compute access windows, which

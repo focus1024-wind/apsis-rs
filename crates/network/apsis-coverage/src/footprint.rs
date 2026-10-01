@@ -1,4 +1,6 @@
 //! Footprint geometry and coverage fractions.
+//!
+//! 覆盖区几何与覆盖比例。
 
 use crate::geometry::{earth_central_angle, elevation_from_central_angle};
 use apsis_math::Vec3;

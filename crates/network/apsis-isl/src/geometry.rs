@@ -1,4 +1,6 @@
 //! Link geometry and the Earth blocking test.
+//!
+//! 链路几何与地球遮挡判据。
 
 use crate::link::LinkGeometry;
 use apsis_math::Vec3;

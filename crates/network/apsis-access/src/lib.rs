@@ -1,5 +1,7 @@
 //! Ground station access windows.
 //!
+//! 地面站可见性窗口。
+//!
 //! A satellite is accessible from a ground station during the intervals when
 //! it rises above the station's elevation mask. Each such interval is a
 //! pass, or access window, and the sequence of windows over a period is the

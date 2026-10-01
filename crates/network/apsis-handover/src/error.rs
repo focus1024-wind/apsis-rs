@@ -1,4 +1,6 @@
 //! Errors reported while making a handover decision.
+//!
+//! 作出切换决策时报告的错误。
 
 use core::fmt;
 

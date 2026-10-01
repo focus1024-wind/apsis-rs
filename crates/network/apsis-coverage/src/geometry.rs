@@ -1,6 +1,8 @@
 //! The spherical geometry of a satellite, a ground point, and the Earth's
 //! centre.
 //!
+//! 卫星、地面点与地心的球面几何。
+//!
 //! The three points form a triangle. The angles of that triangle are the
 //! elevation at the ground point, the nadir angle at the satellite, and the
 //! central angle at the centre of the Earth. Because the ground point is

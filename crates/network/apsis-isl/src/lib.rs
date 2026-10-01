@@ -1,5 +1,7 @@
 //! Inter-satellite link geometry and visibility.
 //!
+//! 星间链路几何与可见性。
+//!
 //! Two satellites can form a link when the straight line between them does
 //! not pass through the Earth. This crate decides that condition, gives the
 //! geometry a link budget needs, and reports the range and the angles at

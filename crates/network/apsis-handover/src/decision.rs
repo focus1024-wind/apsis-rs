@@ -1,4 +1,6 @@
 //! The handover decision and the rules that produce it.
+//!
+//! 切换决策以及产生它的各条规则。
 
 use crate::error::{HandoverError, HandoverErrorKind};
 use crate::policy::HandoverPolicy;

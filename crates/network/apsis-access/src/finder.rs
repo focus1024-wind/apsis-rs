@@ -1,4 +1,6 @@
 //! The access window finder.
+//!
+//! 可见性窗口查找器。
 
 use crate::error::{AccessError, AccessErrorKind};
 use crate::pass::{Pass, PassSummary};

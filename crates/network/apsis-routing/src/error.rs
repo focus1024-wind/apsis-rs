@@ -1,4 +1,6 @@
 //! Errors reported while routing.
+//!
+//! 路由时报告的错误。
 
 use core::fmt;
 

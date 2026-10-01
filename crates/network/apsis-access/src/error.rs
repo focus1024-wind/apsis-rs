@@ -1,4 +1,6 @@
 //! Errors reported while finding access windows.
+//!
+//! 查找可见性窗口时报告的错误。
 
 use core::fmt;
 

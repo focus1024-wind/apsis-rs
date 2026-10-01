@@ -1,4 +1,6 @@
 //! The link geometry type and the state of a link.
+//!
+//! 链路几何类型以及链路的状态。
 
 use apsis_math::Vec3;
 

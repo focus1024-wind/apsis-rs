@@ -1,5 +1,7 @@
 //! Deciding many links at once, optionally across several threads.
 //!
+//! 一次判定许多链路，可选跨多个线程。
+//!
 //! Building a constellation's topology asks the same question for every pair
 //! of satellites, which is a quadratic number of independent geometry tests.
 //! Each one is small, but there are so many that the loop is the dominant

@@ -1,5 +1,7 @@
 //! Time-varying network topology.
 //!
+//! 时变网络拓扑。
+//!
 //! A satellite network is not a single graph. The set of usable links
 //! changes as the satellites move, so the network is a sequence of graphs
 //! indexed by time, and this crate provides the data structures for that

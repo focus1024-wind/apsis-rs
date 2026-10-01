@@ -1,4 +1,6 @@
 //! The access window type and its summary.
+//!
+//! 可见性窗口类型及其汇总。
 
 use apsis_math::Vec3;
 

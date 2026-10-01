@@ -1,4 +1,6 @@
 //! The route types.
+//!
+//! 路由各类型。
 
 /// One hop of a route.
 ///

@@ -1,4 +1,6 @@
 //! Errors reported while building or querying a topology.
+//!
+//! 构建或查询拓扑时报告的错误。
 
 use core::fmt;
 

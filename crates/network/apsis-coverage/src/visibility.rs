@@ -1,4 +1,6 @@
 //! Line of sight and visibility from a ground point.
+//!
+//! 自地面点的视线与可见性。
 
 use crate::geometry::earth_central_angle;
 use apsis_geodesy::{Ellipsoid, Geodetic, WGS84};

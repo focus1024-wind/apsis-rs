@@ -1,6 +1,8 @@
 //! Searching access windows for many tracks, optionally across several
 //! threads.
 //!
+//! 为许多轨迹搜索可见性窗口，可选跨多个线程。
+//!
 //! A ground station sees a whole constellation, so the access schedule is
 //! the search of one track per satellite. Each track is independent of the
 //! others, which makes the search the natural place to use several cores: the

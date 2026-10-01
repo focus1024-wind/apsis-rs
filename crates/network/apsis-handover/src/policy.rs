@@ -1,4 +1,6 @@
 //! The handover policy, its record of past decisions, and the tracker.
+//!
+//! 切换策略、其过往决策记录，以及跟踪器。
 
 use crate::decision::Candidate;
 use crate::error::{HandoverError, HandoverErrorKind};

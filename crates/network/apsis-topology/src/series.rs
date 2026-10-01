@@ -1,4 +1,6 @@
 //! The time series of topologies.
+//!
+//! 拓扑的时间序列。
 
 use crate::error::{TopologyError, TopologyErrorKind};
 use crate::graph::Topology;

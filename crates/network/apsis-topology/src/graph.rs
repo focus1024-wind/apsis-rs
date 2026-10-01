@@ -1,4 +1,6 @@
 //! The topology graph.
+//!
+//! 拓扑图。
 
 use crate::error::{TopologyError, TopologyErrorKind};
 
