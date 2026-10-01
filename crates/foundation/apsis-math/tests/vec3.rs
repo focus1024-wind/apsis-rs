@@ -1,4 +1,6 @@
 //! Tests for three component vectors.
+//!
+//! 三分量矢量的测试。
 
 use apsis_math::Vec3;
 
@@ -45,6 +47,7 @@ fn cross_product_follows_the_right_hand_rule() {
     assert_eq!(Vec3::Y.cross(Vec3::Z), Vec3::X);
     assert_eq!(Vec3::Z.cross(Vec3::X), Vec3::Y);
     // The cross product of parallel vectors vanishes.
+    // 平行矢量的叉积为零。
     assert_eq!(Vec3::X.cross(Vec3::X), Vec3::ZERO);
 }
 

@@ -1,4 +1,6 @@
 //! Tests for length quantities.
+//!
+//! 长度量的测试。
 
 use apsis_core::{Quantity, Unit};
 use apsis_units::dimension::Length;
@@ -38,6 +40,7 @@ fn units_report_their_metadata() {
     assert_eq!(Kilometers::factor_to_base(), 1_000.0);
     // Both units measure the same dimension, which is what makes the
     // generic conversion above type check.
+    // 两种单位测量同一量纲，这正是使上面的泛型换算通过类型检查的原因。
     fn assert_length<U: Unit<Dimension = Length>>() {}
     assert_length::<Meters>();
     assert_length::<Kilometers>();

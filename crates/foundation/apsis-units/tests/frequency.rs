@@ -1,4 +1,6 @@
 //! Tests for frequency quantities.
+//!
+//! 频率量的测试。
 
 use apsis_core::Unit;
 use apsis_units::Hertz;

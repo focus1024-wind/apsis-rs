@@ -1,4 +1,6 @@
 //! Tests for the calendar conversions.
+//!
+//! 日历换算的测试。
 
 use apsis_time::{Calendar, days_in_month, is_leap_year, mjd_from_ymd, ymd_from_mjd};
 
@@ -19,6 +21,7 @@ fn known_dates_map_to_known_modified_julian_dates() {
 #[test]
 fn calendar_conversion_round_trips_over_a_long_span() {
     // Walk day by day over a span that crosses every leap year rule.
+    // 逐日走过一个跨越每条闰年规则的跨度。
     let mut mjd = mjd_from_ymd(1899, 12, 20);
     let end = mjd_from_ymd(2101, 1, 10);
     while mjd < end {
@@ -38,6 +41,7 @@ fn fractional_modified_julian_dates_map_to_the_containing_day() {
     assert_eq!(ymd_from_mjd(day + 0.25), (2024, 6, 15));
     assert_eq!(ymd_from_mjd(day + 0.75), (2024, 6, 15));
     // One day later, but still the same instant of the following day.
+    // 晚一天，但仍是次日的同一瞬时。
     assert_eq!(ymd_from_mjd(day + 1.25), (2024, 6, 16));
 }
 
@@ -49,6 +53,7 @@ fn leap_years_follow_the_gregorian_rule() {
     assert!(!is_leap_year(2100));
     assert!(!is_leap_year(2023));
     // Year zero is a leap year in the proleptic calendar.
+    // 在外推日历中零年是闰年。
     assert!(is_leap_year(0));
 }
 
@@ -91,6 +96,7 @@ fn validation_rejects_impossible_dates_and_the_leap_second_label() {
     assert!(!Calendar::new(2024, 1, 1, 0, 60, 0.0).is_valid());
     // Second 60 is the leap second label, which is not a representable
     // instant on the continuous Modified Julian Date scale.
+    // 第 60 秒是闰秒标签，它在连续的约化儒略日尺度上不是可表示的瞬时。
     assert!(!Calendar::new(2016, 12, 31, 23, 59, 60.0).is_valid());
     assert!(!Calendar::new(2024, 1, 1, 0, 0, 61.0).is_valid());
 }

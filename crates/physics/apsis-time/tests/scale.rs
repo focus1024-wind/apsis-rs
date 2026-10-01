@@ -1,4 +1,6 @@
 //! Tests for the time scale definitions.
+//!
+//! 时标定义的测试。
 
 use apsis_time::{TAI_MINUS_GPS, TT_MINUS_TAI, TimeScale};
 
@@ -22,7 +24,9 @@ fn scales_report_their_names() {
 #[test]
 fn offsets_match_their_definitions() {
     // Terrestrial Time is ahead of TAI by the defining constant.
+    // 地球时比 TAI 领先一个定义常量。
     assert_eq!(TT_MINUS_TAI, 32.184);
     // GPS time lags TAI by the defining integer number of seconds.
+    // GPS 时比 TAI 落后一个定义整数秒数。
     assert_eq!(TAI_MINUS_GPS, 19.0);
 }

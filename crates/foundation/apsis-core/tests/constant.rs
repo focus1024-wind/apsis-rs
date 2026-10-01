@@ -1,4 +1,6 @@
 //! Tests for the physical and astronomical constants.
+//!
+//! 物理与天文常量的测试。
 
 use apsis_core::constant::*;
 
@@ -23,6 +25,7 @@ fn time_constants_are_consistent() {
 #[test]
 fn j2000_minus_unix_epoch_is_the_expected_span() {
     // The two epochs are 10 957 days apart.
+    // 这两个历元相隔 10 957 天。
     assert_eq!(JULIAN_DATE_J2000 - JULIAN_DATE_UNIX_EPOCH, 10_957.5);
     assert_eq!(SECONDS_J2000_TO_UNIX, 10_957.5 * DAY);
     assert_eq!(SECONDS_J2000_TO_UNIX, 946_728_000.0);

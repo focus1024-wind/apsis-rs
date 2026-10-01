@@ -1,4 +1,6 @@
 //! Tests for plane angle quantities.
+//!
+//! 平面角量的测试。
 
 use apsis_core::{Quantity, Unit};
 use apsis_units::dimension::Angle;
@@ -35,6 +37,7 @@ fn wrap_places_angles_in_the_canonical_range() {
         assert!(wrapped.value() < PI);
         // Wrapping shifts by whole turns, so the angle is preserved
         // modulo two pi.
+        // 环绕按整周平移，故该角在模 2 pi 的意义下保持。
         let difference = angle.value() - wrapped.value();
         assert!((difference / (2.0 * PI)).fract().abs() < 1e-12);
     }

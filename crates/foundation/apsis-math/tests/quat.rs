@@ -1,4 +1,6 @@
 //! Tests for unit quaternion rotations.
+//!
+//! 单位四元数转动的测试。
 
 use apsis_math::{Mat3, Quat, Vec3};
 use core::f64::consts::{FRAC_PI_2, PI};
@@ -95,6 +97,7 @@ fn multiplication_composes_right_to_left() {
     let second = Quat::from_rotation_x(FRAC_PI_2);
     let v = Vec3::new(1.0, 0.0, 0.0);
     // `second * first` applies `first` first, then `second`.
+    // `second * first` 先施加 `first`，再施加 `second`。
     assert_close((second * first).rotate(v), second.rotate(first.rotate(v)));
 }
 
@@ -134,6 +137,7 @@ fn from_mat3_recovers_the_original_rotation() {
     let q = Quat::from_axis_angle(Vec3::new(0.3, -0.4, 0.5), 1.1).expect("non-zero axis");
     let recovered = Quat::from_mat3(Mat3::from_quat(q)).expect("rotation matrix is accepted");
     // `q` and `-q` are the same rotation, so compare through their effect.
+    // `q` 与 `-q` 是同一转动，故通过其效果比较。
     let v = Vec3::new(1.0, -2.0, 3.0);
     assert_close(recovered.rotate(v), q.rotate(v));
 }
@@ -142,6 +146,7 @@ fn from_mat3_recovers_the_original_rotation() {
 fn from_mat3_covers_every_branch() {
     // These angles exercise the trace branch and each of the three
     // largest-diagonal branches.
+    // 这些角检验迹分支以及三个最大对角分支中的每一个。
     for (axis, angle) in [
         (Vec3::new(1.0, 0.0, 0.0), 0.2),
         (Vec3::new(1.0, 0.0, 0.0), PI - 0.1),
@@ -177,6 +182,7 @@ fn slerp_selects_the_short_arc_when_endpoints_are_negated() {
     let end = Quat::new(-1.0, 0.0, 0.0, 0.0);
     // The two quaternions describe the same rotation, so any
     // interpolation between them must stay at the identity.
+    // 这两个四元数描述同一转动，故它们之间的任何插值都必须保持为恒等。
     let middle = start.slerp(end, 0.5);
     assert_close(middle.rotate(Vec3::X), Vec3::X);
 }

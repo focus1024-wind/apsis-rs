@@ -1,4 +1,6 @@
 //! Tests for the workspace error type and result alias.
+//!
+//! 工作区错误类型与结果别名的测试。
 
 use apsis_core::{Error, ErrorKind, Result};
 use core::fmt;

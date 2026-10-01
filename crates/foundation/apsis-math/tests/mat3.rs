@@ -1,4 +1,6 @@
 //! Tests for three by three matrices.
+//!
+//! 三阶矩阵的测试。
 
 use apsis_math::{Mat3, Quat, Vec3};
 use core::f64::consts::FRAC_PI_2;
@@ -133,6 +135,7 @@ fn is_rotation_rejects_non_rotations() {
     assert!(!Mat3::ZERO.is_rotation(1e-9));
     assert!(!Mat3::from_diagonal(Vec3::splat(2.0)).is_rotation(1e-9));
     // A reflection has determinant minus one.
+    // 反射的行列式为负一。
     assert!(!Mat3::from_diagonal(Vec3::new(1.0, 1.0, -1.0)).is_rotation(1e-9));
 }
 

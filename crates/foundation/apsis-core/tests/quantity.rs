@@ -1,4 +1,6 @@
 //! Tests for the unit and quantity marker traits.
+//!
+//! 单位与量标记 trait 的测试。
 
 use apsis_core::{Quantity, Unit};
 use core::fmt;

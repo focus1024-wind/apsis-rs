@@ -1,4 +1,6 @@
 //! Tests for the frame carrying position types.
+//!
+//! 携带坐标架的位置类型的测试。
 
 use apsis_coord::{EarthRotationAngle, Ecef, Eci, Geodetic, WGS84};
 use apsis_math::Vec3;
@@ -67,6 +69,7 @@ fn frame_conversion_preserves_length() {
 fn a_ground_point_rotates_with_the_earth() {
     // A point on the equator at zero longitude in the Earth-fixed frame is
     // rotated by the Earth Rotation Angle in the inertial frame.
+    // 地固系中赤道上零经度的一个点，在惯性系中按地球自转角被转动。
     let angle = EarthRotationAngle::from_ut1_days(1.5);
     let ground = Ecef::new(Vec3::new(6_378_137.0, 0.0, 0.0));
     let inertial = ground.to_eci(angle);
@@ -83,6 +86,7 @@ fn a_ground_point_rotates_with_the_earth() {
 fn a_geodetic_station_round_trips_through_both_frames() {
     // A station is fixed to the ground, so converting it to the inertial
     // frame and back at the same angle returns the original position.
+    // 地面站固定于地面，故把它转入惯性系再以相同角度转回，得到原位置。
     let station = Geodetic::new(0.662, 0.175, 80.0);
     let angle = EarthRotationAngle::from_ut1_julian_date(2_460_000.5);
     let inertial = station.to_ecef().to_eci(angle);

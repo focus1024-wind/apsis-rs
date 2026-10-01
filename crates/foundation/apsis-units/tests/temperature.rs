@@ -1,4 +1,6 @@
 //! Tests for thermodynamic temperature quantities.
+//!
+//! 热力学温度量的测试。
 
 use apsis_core::Unit;
 use apsis_core::constant::ZERO_CELSIUS_IN_KELVIN;

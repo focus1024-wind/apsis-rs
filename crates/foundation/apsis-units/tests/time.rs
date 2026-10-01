@@ -1,4 +1,6 @@
 //! Tests for the duration quantity.
+//!
+//! 时长量的测试。
 
 use apsis_core::Unit;
 use apsis_units::Seconds;
