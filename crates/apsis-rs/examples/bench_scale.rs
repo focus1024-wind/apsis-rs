@@ -19,6 +19,19 @@
 //! own column beside the steady state rather than being hidden behind a
 //! discarded run.
 //!
+//! 针对真实工作负载所重压路径的规模基准。
+//!
+//! 配套的 `bench` 示例测量单次调用的代价，回答某操作是否快。本示例测量该代价如何
+//! 随问题规模增长，这是决定一次星座规模的运行是否可行的问题。它在二的幂上扫过输入
+//! 规模并报告每单位工作的用时，故即便绝对数字随机器变化，增长率的变化也会显现。
+//!
+//! 各路径正是规划周期实际运行的：传播一个 Walker 星座、为一座站在每颗卫星上搜索
+//! 可见性窗口、构建星间拓扑并在其中路由，以及规划一个带先后约束的任务集。
+//!
+//! 一切都在 release 模式下测量。有意不预热：第一次调用支付该路径在首次使用时分配
+//! 或缓存的任何东西，而调用方也要为它等待，故冷代价与稳态并排报告在自己的列中，
+//! 而非隐藏在某个被丢弃的运行之后。
+//!
 //! Usage:
 //!
 //! ```text
@@ -43,15 +56,21 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 
 /// The element set used as the source of every propagated track.
+///
+/// 用作每条所传播轨迹来源的根数集。
 const ISS: &str = concat!(
     "1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927\r\n",
     "2 25544  51.6416 247.4627 0006703 130.5360 325.0288 15.72125391563537\r\n",
 );
 
 /// The body radius, in kilometers, taken from the shared constants.
+///
+/// 天体半径，单位为千米，取自共享常量。
 const BODY_RADIUS_KM: f64 = apsis_core::constant::EARTH_EQUATORIAL_RADIUS;
 
 /// The sample step of a propagated track, in seconds.
+///
+/// 所传播轨迹的采样步长，单位为秒。
 const TRACK_STEP_SECONDS: f64 = 60.0;
 
 /// Runs a path a number of times and returns the duration of each call.
@@ -61,6 +80,12 @@ const TRACK_STEP_SECONDS: f64 = 60.0;
 /// run would report a number the caller never actually waits for. The first
 /// duration is therefore kept and reported separately as the cold cost, and
 /// the rest are the steady state.
+///
+/// 把一条路径运行若干次并返回每次调用的时长。
+///
+/// 有意不预热。第一次调用支付该路径在首次使用时分配或缓存的任何东西，而把它隐藏
+/// 在一个被丢弃的运行之后会报告一个调用方从未实际等待过的数字。故第一个时长被保留
+/// 并作为冷代价单独报告，其余的是稳态。
 fn measure<F, T>(iterations: u32, mut path: F) -> Vec<Duration>
 where
     F: FnMut() -> T,
@@ -78,6 +103,10 @@ where
 ///
 /// The first call is excluded because it carries the cold cost, which is
 /// reported on its own column.
+///
+/// 一组时长的均值，忽略第一个。
+///
+/// 第一次调用被排除，因为它携带冷代价，后者在自己的列中报告。
 fn steady_mean(durations: &[Duration]) -> Duration {
     if durations.len() <= 1 {
         return durations.first().copied().unwrap_or_default();
@@ -91,6 +120,11 @@ fn steady_mean(durations: &[Duration]) -> Duration {
 /// The columns are the cold cost of the first call, the mean of the rest, and
 /// the steady cost per unit of work. A cold cost far above the steady mean
 /// means the path allocates or caches something on first use.
+///
+/// 打印扫描表中的一行。
+///
+/// 各列是第一次调用的冷代价、其余者的均值，以及每单位工作的稳态代价。冷代价远高于
+/// 稳态均值意味着该路径在首次使用时分配或缓存了某些东西。
 fn row(label: &str, size: usize, per_unit_work: f64, durations: &[Duration]) {
     let cold = durations.first().copied().unwrap_or_default();
     let steady = steady_mean(durations);
@@ -107,6 +141,8 @@ fn row(label: &str, size: usize, per_unit_work: f64, durations: &[Duration]) {
 }
 
 /// The header of the sweep table.
+///
+/// 扫描表的表头。
 fn header(title: &str) {
     println!("\n{title}");
     println!(
@@ -116,12 +152,16 @@ fn header(title: &str) {
 }
 
 /// Returns a prepared satellite.
+///
+/// 返回一颗准备好的卫星。
 fn satellite() -> Satellite {
     let element = TwoLineElement::parse(ISS).expect("the sample parses");
     Satellite::from_element(&element, GravityModel::WGS72).expect("the orbit propagates")
 }
 
 /// The epoch of the sample element set, as a Modified Julian Date.
+///
+/// 样本根数集的历元，以约化儒略日表示。
 fn epoch_mjd() -> f64 {
     let element = TwoLineElement::parse(ISS).expect("the sample parses");
     element
@@ -131,6 +171,8 @@ fn epoch_mjd() -> f64 {
 }
 
 /// Returns a track of Earth-fixed samples for one satellite.
+///
+/// 返回一颗卫星的地固样本轨迹。
 fn track(satellite: &Satellite, samples: usize, epoch_mjd: f64) -> Vec<OrbitSample> {
     (0..samples)
         .map(|index| {
@@ -157,10 +199,14 @@ fn main() {
     // The path a coverage run actually performs: build the constellation,
     // then propagate every satellite in it once per sample across a day.
     // The sample step is sixty seconds, so a day is 1441 samples.
+    // ---- 一：在一天上采样一个星座。--------------------------------
+    // 覆盖运行实际执行的路径：构建星座，然后在一整天上对其中每颗卫星每个样本传播
+    // 一次。采样步长为六十秒，故一天是 1441 个样本。
     {
         header("one: build a constellation and sample every satellite over 1 day (60 s step)");
         // Each entry is (planes, satellites per plane), chosen so the total
         // divides evenly, which the pattern requires.
+        // 每项是（轨道面数，每面卫星数），其选取使总数整除，这是该模式所要求的。
         for &(planes, per_plane) in &[
             (3_usize, 8_usize),
             (6, 11),
@@ -178,6 +224,7 @@ fn main() {
                 semi_major_axis: BODY_RADIUS_KM + 550.0,
             };
             // A day at a one minute step is 1441 samples per satellite.
+            // 一分钟步长的一天是每颗卫星 1441 个样本。
             let samples = 1_441_usize;
             let iterations = if satellites <= 240 { 3 } else { 1 };
             let tracker = &satellite;
@@ -187,6 +234,8 @@ fn main() {
                 // Every satellite is propagated at its own orbital elements,
                 // so the deep space branch is exercised where the period is
                 // long, exactly as a real constellation would.
+                // 每颗卫星都按其自身轨道根数传播，故在周期长的地方深层空间分支被检验，正如真实
+                // 星座那样。
                 let mut propagated = 0_usize;
                 for orbit in constellation.satellites() {
                     for index in 0..samples {
@@ -197,6 +246,8 @@ fn main() {
                         // same, and using one keeps the loop free of a second
                         // initialisation that would be charged to the cold
                         // column.
+                        // 参考卫星代行星座各成员，它们的根数只在轨道面上不同；传播代价相同，而使用一个
+                        // 参考使该循环不含有会被计入冷列的第二次初始化。
                         let state = tracker
                             .propagate_minutes(seconds / 60.0)
                             .expect("the track propagates");
@@ -213,6 +264,7 @@ fn main() {
     }
 
     // ---- Two: access search over N tracks. ------------------------------
+    // ---- 二：在 N 条轨迹上的可见性搜索。--------------------------
     {
         header("two: access search for one station over N tracks (2 h each)");
         for &satellites in &[8_usize, 32, 64, 128] {
@@ -237,11 +289,13 @@ fn main() {
     }
 
     // ---- Three: topology and routing over N satellites. ------------------
+    // ---- 三：N 颗卫星上的拓扑与路由。-----------------------------
     {
         header("three: build topology over N satellites and route once");
         for &satellites in &[8_usize, 24, 64, 120, 300, 600] {
             // Positions spread on a ring so a fixed link range keeps a
             // bounded number of neighbours, as a real shell does.
+            // 位置分布在一个环上，使固定的链路距离保持邻居数有界，正如真实壳层那样。
             let positions: Vec<Vec3> = (0..satellites)
                 .map(|index| {
                     let angle = index as f64 * 0.4;
@@ -286,6 +340,7 @@ fn main() {
     }
 
     // ---- Four: plan N tasks on one resource. -----------------------------
+    // ---- 四：在一个资源上规划 N 个任务。--------------------------
     {
         header("four: plan N tasks on one resource, with a 50 long chain");
         for &tasks in &[60_usize, 200, 500, 1_000, 2_000] {
