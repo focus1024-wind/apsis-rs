@@ -1,4 +1,6 @@
 //! Off-axis gain patterns.
+//!
+//! 偏轴增益方向图。
 
 use crate::parabolic::ParabolicAperture;
 use apsis_rf::{Decibel, Gain};

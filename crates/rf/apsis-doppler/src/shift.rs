@@ -1,4 +1,6 @@
 //! The Doppler shift and the range rate that causes it.
+//!
+//! 多普勒频移以及造成它的距离变化率。
 
 use apsis_core::constant::SPEED_OF_LIGHT;
 use apsis_math::Vec3;

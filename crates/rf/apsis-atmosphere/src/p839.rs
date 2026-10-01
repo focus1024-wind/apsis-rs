@@ -1,5 +1,7 @@
 //! The rain height model of ITU-R Recommendation P.839.
 //!
+//! ITU-R 建议书 P.839 的雨顶高度模型。
+//!
 //! The height of the rain layer is taken as the height of the zero degree
 //! isotherm above sea level. The recommendation tabulates that height on a
 //! global grid, and the value at a given location is found by bilinear

@@ -1,4 +1,6 @@
 //! The parabolic aperture model.
+//!
+//! 抛物面孔径模型。
 
 use apsis_rf::Gain;
 use core::f64::consts::PI;

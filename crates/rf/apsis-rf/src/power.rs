@@ -1,4 +1,6 @@
 //! Radio frequency power.
+//!
+//! 射频功率。
 
 use crate::decibel::Decibel;
 use core::fmt;

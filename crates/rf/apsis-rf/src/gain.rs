@@ -1,4 +1,6 @@
 //! Antenna gain.
+//!
+//! 天线增益。
 
 use crate::decibel::Decibel;
 use core::f64::consts::PI;

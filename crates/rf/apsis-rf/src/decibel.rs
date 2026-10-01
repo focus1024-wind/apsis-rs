@@ -1,4 +1,6 @@
 //! The decibel scale.
+//!
+//! 分贝尺度。
 
 use core::fmt;
 

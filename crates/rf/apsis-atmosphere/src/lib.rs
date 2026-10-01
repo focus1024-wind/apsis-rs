@@ -43,6 +43,31 @@
 //! let low = slant_path_attenuation(12.0, 0.2, Atmosphere::REFERENCE).expect("valid");
 //! assert!(low > zenith);
 //! ```
+//!
+//! 大气衰减与折射模型。
+//!
+//! 穿过大气的卫星信号被两种机制削弱，它们被分开处理，因为其行为随频率、
+//! 仰角与天气而异。
+//!
+//! 气体吸收来自氧与水汽的吸收谱线。氧在 50 与 70 GHz 之间有一组密集谱线，
+//! 并在 118.75 GHz 处有一条孤立线；水汽在 22.235 GHz 处有一条强线，在
+//! 183.31 GHz 处有一条强得多的线。衰减即对上述各线的逐线求和，这使它在
+//! 约 10 GHz 以下可忽略，而在各吸收带中很严重。
+//!
+//! 降雨衰减由降水中的散射与吸收造成。它在约 4 GHz 以下可忽略，随降雨率的
+//! 幂次增大，并强烈依赖仰角与极化。
+//!
+//! 二者都经相同的路径几何依赖仰角：低仰角的信号穿过更多大气。
+//!
+//! 出处：
+//!
+//! - 气体比衰减与等效高度：ITU-R 建议书 P.676-12，*Attenuation by
+//!   atmospheric gases*。
+//! - 降雨比衰减系数：ITU-R 建议书 P.838-3，*Specific attenuation model for
+//!   rain for use in prediction methods*。
+//! - 降雨路径与仰角依赖：ITU-R 建议书 P.618-13，*Propagation data and
+//!   prediction methods required for the design of Earth-space
+//!   telecommunication systems*。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

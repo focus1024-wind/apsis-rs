@@ -1,5 +1,7 @@
 //! Specific attenuation of atmospheric gases.
 //!
+//! 大气气体的比衰减。
+//!
 //! The attenuation caused by oxygen and water vapour is computed by the
 //! line-by-line summation of ITU-R Recommendation P.676. Each absorption
 //! line contributes a resonance whose strength depends on the temperature

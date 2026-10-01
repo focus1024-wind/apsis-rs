@@ -19,6 +19,23 @@
 //! Source: ITU-R Recommendation S.465-6, *Reference earth-station radiation
 //! pattern for use in coordination and interference assessment in the
 //! frequency range from 2 to about 30 GHz*.
+//!
+//! ITU-R S.465 参考天线方向图。
+//!
+//! 建议书 S.465 为地球站天线定义了一个参考方向图，用于评估卫星网络之间的
+//! 干扰。该方向图有三个区：随偏轴角平方下降的主瓣、随角度对数下降的旁瓣
+//! 区，以及一个底限。
+//!
+//! 该方向图仅由天线口径与波长之比选择。该建议书为 `D / lambda` 至少为 100
+//! 的天线给出一个方向图，为更小的天线给出另一个，后者主瓣更宽，故其旁瓣区
+//! 开始得更晚。
+//!
+//! 主瓣表达式正是本方向图与《无线电规则》附录 8 通用参考方向图相区别之处，
+//! 后者只建模旁瓣区并把主瓣宽度作为输入。二者共享旁瓣区的形状。
+//!
+//! 出处：ITU-R 建议书 S.465-6，*Reference earth-station radiation pattern
+//! for use in coordination and interference assessment in the frequency range
+//! from 2 to about 30 GHz*。
 
 use apsis_rf::Decibel;
 use core::f64::consts::PI;

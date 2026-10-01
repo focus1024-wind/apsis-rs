@@ -1,5 +1,7 @@
 //! The reference standard atmosphere of ITU-R Recommendation P.835.
 //!
+//! ITU-R 建议书 P.835 的参考标准大气。
+//!
 //! The exact slant path method of Recommendation P.676 integrates the
 //! specific attenuation through a stack of layers, so it needs the
 //! temperature, pressure, and water vapour density at each layer height.

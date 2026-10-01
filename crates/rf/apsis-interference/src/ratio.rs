@@ -1,4 +1,6 @@
 //! Carrier to interference ratios and their combination with noise.
+//!
+//! 载干比及其与噪声的合成。
 
 use apsis_core::constant::BOLTZMANN;
 use apsis_rf::{Decibel, Power};

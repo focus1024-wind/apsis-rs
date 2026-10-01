@@ -1,5 +1,7 @@
 //! Slant path attenuation through the atmosphere.
 //!
+//! 穿过大气的斜路径衰减。
+//!
 //! The attenuation along a slant path is not simply the specific attenuation
 //! divided by the sine of the elevation, because the atmosphere thins with
 //! height and the path is curved. ITU-R Recommendation P.676 reduces the

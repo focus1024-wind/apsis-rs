@@ -1,4 +1,6 @@
 //! The link budget and the figures derived from it.
+//!
+//! 链路预算以及由它导出的各数字。
 
 use apsis_core::constant::BOLTZMANN;
 use apsis_noise::NoiseTemperature;

@@ -1,4 +1,6 @@
 //! Free space propagation.
+//!
+//! 自由空间传播。
 
 use crate::decibel::Decibel;
 use crate::gain::Gain;

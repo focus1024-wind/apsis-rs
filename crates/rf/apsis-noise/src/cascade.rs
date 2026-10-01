@@ -1,4 +1,6 @@
 //! Noise in a cascade of stages, by the Friis formula.
+//!
+//! 按 Friis 公式计算的级联各级噪声。
 
 use crate::temperature::{NoiseTemperature, REFERENCE_TEMPERATURE_K};
 use apsis_rf::Gain;

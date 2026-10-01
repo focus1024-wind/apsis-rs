@@ -1,4 +1,6 @@
 //! Noise temperature.
+//!
+//! 噪声温度。
 
 use apsis_core::constant::BOLTZMANN;
 use apsis_rf::Power;

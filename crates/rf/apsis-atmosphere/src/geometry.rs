@@ -1,4 +1,6 @@
 //! The geometry of a slant path through the atmosphere.
+//!
+//! 穿过大气的斜路径的几何。
 
 use core::f64::consts::PI;
 

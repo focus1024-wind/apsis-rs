@@ -1,5 +1,7 @@
 //! Rain attenuation.
 //!
+//! 降雨衰减。
+//!
 //! The specific attenuation of rain is modelled as a power law in the rain
 //! rate, `gamma = k R^alpha`, where `k` and `alpha` depend on the frequency,
 //! on the polarisation, and on the elevation. The coefficients are given by
