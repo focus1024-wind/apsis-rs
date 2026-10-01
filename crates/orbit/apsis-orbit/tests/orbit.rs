@@ -1,4 +1,6 @@
 //! Tests for the combined orbit type.
+//!
+//! 合并后的轨道类型的测试。
 
 use apsis_orbit::{GravityModel, Orbit};
 use apsis_tle::TwoLineElement;
@@ -64,6 +66,7 @@ fn propagate_at_uses_the_element_epoch() {
     assert!((at_epoch.position - at_zero.position).norm() < 1e-6);
 
     // One day later is 1440 minutes.
+    // 一天后是 1440 分钟。
     let next_day = orbit.propagate_at(epoch + 1.0).expect("state exists");
     let one_day = orbit.propagate_minutes(1440.0).expect("state exists");
     assert!((next_day.position - one_day.position).norm() < 1e-3);
@@ -80,6 +83,9 @@ fn osculating_elements_describe_a_low_earth_orbit() {
     // is expected: the element set stores mean elements and the osculating
     // eccentricity includes the short period variation the two-body model
     // does not reproduce.
+    // 这些值是针对同一天量矢量的一份独立计算核对的。倾角与编目值接近，因为扁率对它
+    // 影响很小，而偏心率不同于编目的 0.0006703。该差异是预期的：根数集保存的是平
+    // 根数，而密切偏心率包含二体模型不复现的短周期变化。
     assert!(
         (elements.semi_major_axis - 6_725.542).abs() < 0.01,
         "semi-major axis {}",
@@ -114,6 +120,7 @@ fn osculating_elements_change_along_the_orbit() {
     // The osculating elements are not the mean elements, so they vary
     // because the perturbations SGP4 models are absent from the two-body
     // reconstruction.
+    // 密切根数不是平根数，故它们变化，因为 SGP4 所建模的摄动在二体重构中缺席。
     let orbit = orbit(ISS);
     let start = orbit.osculating_elements(0.0).expect("state exists");
     let later = orbit.osculating_elements(720.0).expect("state exists");
@@ -127,6 +134,8 @@ fn osculating_elements_work_for_a_deep_space_orbit() {
     // The catalogued mean values are an eccentricity of 0.6546925 and an
     // inclination of 64.1526 degrees. The osculating values are close but
     // not identical for the reason given in the low Earth orbit test.
+    // 编目的平值为偏心率 0.6546925、倾角 64.1526 度。密切值接近但不相同，理由同低轨
+    // 测试中所述。
     assert!(
         (elements.eccentricity - 0.655_871_3).abs() < 1e-6,
         "eccentricity {}",
@@ -164,6 +173,7 @@ fn the_gravity_parameter_matches_the_model() {
 fn the_facade_reexports_the_layer() {
     // The facade must make the element parser and the propagator types
     // reachable without a separate dependency.
+    // 门面必须使根数解析器与传播器类型无需单独依赖即可达到。
     let element = apsis_orbit::TwoLineElement::parse(ISS).expect("parses");
     assert_eq!(element.satellite_number, 25544);
     let satellite =

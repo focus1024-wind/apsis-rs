@@ -1,4 +1,6 @@
 //! Tests for line checksums.
+//!
+//! 行校验和的测试。
 
 use apsis_tle::{line_checksum, verify_line_checksum};
 
@@ -20,6 +22,7 @@ fn verification_accepts_a_well_formed_line() {
 #[test]
 fn verification_rejects_a_corrupted_digit() {
     // Changing a digit in the body changes the sum.
+    // 改变正文中的一位数字会改变该和。
     let corrupted = "1 35544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927";
     let error = verify_line_checksum(corrupted, 1).expect_err("checksum should fail");
     assert_eq!(error.kind(), apsis_tle::ElementErrorKind::Checksum);
@@ -36,6 +39,7 @@ fn verification_rejects_a_corrupted_checksum_digit() {
 fn minus_signs_contribute_one_each() {
     // A line of only minus signs, padded to 68 columns, sums to eight
     // modulo ten.
+    // 一行只有负号、补到 68 列，其对十取模的和为八。
     let line = format!("{}{}", "-".repeat(68), "8");
     assert_eq!(line_checksum(&line), 8);
 }
@@ -51,6 +55,7 @@ fn only_the_first_68_columns_contribute() {
     let mut line = format!("{}0", "1".repeat(68));
     assert_eq!(line_checksum(&line), 8);
     // Appending digits beyond column 68 must not change the sum.
+    // 在第 68 列之后追加数字不得改变该和。
     line.push('9');
     assert_eq!(line_checksum(&line), 8);
 }

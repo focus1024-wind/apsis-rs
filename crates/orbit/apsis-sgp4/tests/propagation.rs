@@ -7,11 +7,19 @@
 //! treated as correct, because both implementations evaluate the same
 //! closed form expressions and should differ only by floating point
 //! rounding.
+//!
+//! 传播器对照参考实现的测试。
+//!
+//! 本文件中的期望状态由 `sgp4` 参考库产生，它实现 Vallado 对该理论的修订。各根数
+//! 集是随该库分发的历史测试用例。与参考相符到远低于一微米的传播被视为正确，因为
+//! 两种实现求相同的闭式表达式，应只差浮点舍入。
 
 use apsis_sgp4::{GravityModel, PropagationErrorKind, Satellite, State};
 use apsis_tle::TwoLineElement;
 
 /// A near circular low Earth orbit, the International Space Station.
+///
+/// 近圆形低轨，国际空间站。
 const ISS: &str = concat!(
     "1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927\r\n",
     "2 25544  51.6416 247.4627 0006703 130.5360 325.0288 15.72125391563537\r\n",
@@ -19,18 +27,24 @@ const ISS: &str = concat!(
 
 /// A highly eccentric orbit, which exercises the eccentric anomaly
 /// iteration away from circular motion.
+///
+/// 一个高度偏心的轨道，它检验远离圆运动时的偏近点角迭代。
 const VANGUARD: &str = concat!(
     "1 00005U 58002B   00179.78495062  .00000023  00000-0  28098-4 0  4753\r\n",
     "2 00005  34.2682 348.7242 1859667 331.7664  19.3264 10.82419157413667\r\n",
 );
 
 /// A deep space orbit with a half-day resonance.
+///
+/// 一个具有半日共振的深空轨道。
 const DEEP_SPACE: &str = concat!(
     "1 09880U 77021A   06174.85710247  .00000090  00000-0  10000-3 0  7322\r\n",
     "2 09880  64.1526 313.1296 6546925 103.4683 305.3980  2.00754276 13047\r\n",
 );
 
 /// A geostationary transfer orbit, also deep space.
+///
+/// 一个地球静止转移轨道，也是深空。
 const TRANSFER: &str = concat!(
     "1 27651U 03004A   06185.99374200  .00000109  00000-0  19909-4 0   445\r\n",
     "2 27651   7.1743 182.9443 7867251 269.0386  18.6601  1.03461646  9884\r\n",
@@ -38,9 +52,13 @@ const TRANSFER: &str = concat!(
 
 /// The position tolerance, in kilometers. The observed agreement is at the
 /// nanometer level, so this leaves a wide margin.
+///
+/// 位置容差，单位为千米。所观测的相符在纳米水平，故这留下很宽的余量。
 const POSITION_TOLERANCE: f64 = 1e-3;
 
 /// The velocity tolerance, in kilometers per second.
+///
+/// 速度容差，单位为千米每秒。
 const VELOCITY_TOLERANCE: f64 = 1e-9;
 
 fn satellite(text: &str) -> Satellite {
@@ -156,6 +174,7 @@ fn deep_space_satellite_uses_the_deep_space_branch() {
 #[test]
 fn deep_space_at_epoch_matches_the_reference() {
     // MJD 53_962.36, about 12 hours after the element epoch.
+    // MJD 53_962.36，约在根数历元之后 12 小时。
     let state = satellite(DEEP_SPACE)
         .propagate_minutes(0.0)
         .expect("epoch state");
@@ -207,6 +226,7 @@ fn propagation_is_deterministic() {
     // Repeated evaluation must give the same result, which also verifies
     // that the resonance integrator does not carry hidden state between
     // calls.
+    // 重复求值必须给出相同结果，这也验证共振积分器在调用之间不携带隐藏状态。
     let satellite = satellite(DEEP_SPACE);
     let first = satellite.propagate_minutes(5_000.0).expect("state exists");
     let second = satellite.propagate_minutes(5_000.0).expect("state exists");
@@ -217,6 +237,7 @@ fn propagation_is_deterministic() {
 fn out_of_order_evaluation_gives_the_same_result() {
     // Evaluating a later time first must not change a later evaluation of an
     // earlier time.
+    // 先求较晚的时间不得改变其后对较早时间的求值。
     let satellite = satellite(DEEP_SPACE);
     let late = satellite.propagate_minutes(10_000.0).expect("state exists");
     let early = satellite.propagate_minutes(1_000.0).expect("state exists");
@@ -264,12 +285,15 @@ fn invalid_elements_are_rejected() {
     // assumed decimal point, so it is 0.9999999, a valid but extremely
     // elongated orbit. An eccentricity field that cannot be read at all is
     // rejected by the parser instead, which is checked in the TLE tests.
+    // 首位数字为九的偏心率是用隐含小数点写成的，故它是 0.9999999，一个有效但极其
+    // 细长的轨道。完全无法读取的偏心率字段改由解析器拒绝，这在 TLE 测试中检查。
     let text = concat!(
         "1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927\r\n",
         "2 25544  51.6416 247.4627 0000000 130.5360 325.0288 15.72125391563531\r\n",
     );
     let element = TwoLineElement::parse(text).expect("parses");
     // A circular orbit is perfectly valid, so this must succeed.
+    // 圆轨道完全有效，故这必须成功。
     assert!(Satellite::from_element(&element, GravityModel::WGS72).is_some());
 }
 
@@ -279,6 +303,8 @@ fn a_zero_mean_motion_is_rejected() {
     // describes no orbit. The element set must still carry a valid
     // checksum, so the test builds one from a parsed set rather than
     // editing text.
+    // 平运动字段以每天圈数计，故那里的零描述不出轨道。根数集仍须携带有效校验和，故
+    // 测试从已解析的集合构建一个，而非编辑文本。
     let element = TwoLineElement::parse(ISS).expect("parses");
     let mut elements = apsis_sgp4::Elements::from_tle(&element).expect("epoch is covered");
     elements.mean_motion = 0.0;
@@ -313,5 +339,6 @@ fn state_accessors_report_radius_and_speed() {
     assert!((state.altitude_radius() - state.position.norm()).abs() < 1e-12);
     assert!((state.speed() - state.velocity.norm()).abs() < 1e-12);
     // A low Earth satellite moves at about 7.7 km/s.
+    // 低轨卫星约以 7.7 km/s 运动。
     assert!(state.speed() > 7.0 && state.speed() < 8.0);
 }

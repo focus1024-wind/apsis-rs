@@ -4,6 +4,11 @@
 //! values the sequential forms do, in the same order. Every test compares
 //! against the sequential answer rather than against a constant, so a
 //! mismatch in either the propagation or the ordering is caught.
+//!
+//! 批量传播入口的测试。
+//!
+//! 要紧的性质是并行形式产生与顺序形式完全相同的值，且次序相同。每个测试都与顺序
+//! 答案而非常量比较，故传播或排序中的任何不一致都会被捕获。
 
 use apsis_sgp4::{
     GravityModel, Satellite, TwoLineElement, propagate_at, propagate_at_parallel,
@@ -33,6 +38,7 @@ fn a_short_track_matches_the_sequential_form() {
 fn a_long_track_matches_the_sequential_form() {
     // A day at a one minute step, which is long enough that the parallel path
     // takes the multi thread branch.
+    // 一分钟步长的一天，长到足以使并行路径走多线程分支。
     let satellite = satellite();
     let minutes: Vec<f64> = (0..1_441).map(|index| index as f64).collect();
     let sequential = propagate_minutes_at(&satellite, &minutes);
@@ -45,6 +51,7 @@ fn a_long_track_matches_the_sequential_form() {
 fn a_backwards_track_matches() {
     // Negative minutes propagate backwards and must behave the same way in
     // both forms.
+    // 负分钟数向后传播，且在两种形式中必须表现相同。
     let satellite = satellite();
     let minutes: Vec<f64> = (0..2_000).map(|index| -(index as f64) * 0.5).collect();
     assert_eq!(
@@ -64,6 +71,8 @@ fn a_decayed_instant_is_reported_in_both_forms() {
     // Far enough ahead that the drag term brings the satellite down, both
     // forms must agree that the instant is unusable rather than one of them
     // stopping early.
+    // 足够远，使阻力项把卫星带下来，两种形式必须一致认为该瞬时不可用，而非其中之
+    // 一提前停止。
     let satellite = satellite();
     let minutes = vec![0.0, 1.0, 60.0 * 24.0 * 365.0 * 20.0];
     let sequential = propagate_minutes_at(&satellite, &minutes);
@@ -86,6 +95,7 @@ fn a_shell_at_one_instant_matches() {
 fn a_shell_result_is_in_input_order() {
     // The states of a repeated satellite are identical, so ordering is checked
     // through the minutes form, where each value differs.
+    // 重复卫星的状态相同，故通过分钟形式检查次序，那里每个值都不同。
     let satellite = satellite();
     let minutes: Vec<f64> = (0..3_000).map(|index| index as f64 * 0.25).collect();
     let parallel = propagate_minutes_at_parallel(&satellite, &minutes);

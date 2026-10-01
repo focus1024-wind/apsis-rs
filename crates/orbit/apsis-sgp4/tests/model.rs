@@ -1,4 +1,6 @@
 //! Tests for the gravity models.
+//!
+//! 引力模型的测试。
 
 use apsis_sgp4::GravityModel;
 
@@ -22,6 +24,8 @@ fn wgs84_defining_values_match_the_standard() {
 fn kepler_constant_matches_the_reference_value() {
     // The reference implementation uses xke = 0.07436691613317342 for WGS
     // 72, derived as 60 / sqrt(radius^3 / mu).
+    // 参考实现对 WGS 72 使用 xke = 0.07436691613317342，由 60 / sqrt(radius^3 / mu)
+    // 导出。
     let xke = GravityModel::WGS72.xke();
     assert!((xke - 0.074_366_916_133_173_42).abs() < 1e-15, "got {xke}");
 }
@@ -31,6 +35,7 @@ fn time_unit_is_the_reciprocal_of_the_kepler_constant() {
     let model = GravityModel::WGS72;
     assert!((model.tumin() * model.xke() - 1.0).abs() < 1e-15);
     // The value is close to 13.44684 minutes for WGS 72.
+    // 对 WGS 72，该值接近 13.44684 分钟。
     assert!((model.tumin() - 13.446_839_696_959_309).abs() < 1e-12);
 }
 
@@ -40,6 +45,7 @@ fn j3_over_j2_matches_the_quotient() {
     let expected = model.j3 / model.j2;
     assert!((model.j3_over_j2() - expected).abs() < 1e-18);
     // The value is about -0.002345069720011528.
+    // 该值约为 -0.002345069720011528。
     assert!((model.j3_over_j2() + 0.002_345_069_720_011_528).abs() < 1e-15);
 }
 

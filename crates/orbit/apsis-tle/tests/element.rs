@@ -1,10 +1,14 @@
 //! Tests for parsing a complete two-line element set.
+//!
+//! 解析完整两行根数集的测试。
 
 use apsis_time::TimeScale;
 use apsis_tle::{Classification, ElementErrorKind, TwoLineElement};
 
 /// The sample element set for the International Space Station used by the
 /// `sgp4` reference implementation.
+///
+/// `sgp4` 参考实现所用的国际空间站样本根数集。
 const ISS: &str = concat!(
     "1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927\r\n",
     "2 25544  51.6416 247.4627 0006703 130.5360 325.0288 15.72125391563537\r\n",
@@ -31,11 +35,14 @@ fn sample_fields_match_the_reference_parser() {
 fn exponent_fields_use_an_assumed_decimal_point() {
     let element = TwoLineElement::parse(ISS).expect("sample is well formed");
     // `-11606-4` is -0.11606e-4.
+    // `-11606-4` 即 -0.11606e-4。
     assert!((element.bstar - -1.1606e-5).abs() < 1e-18);
     // `00000-0` is zero.
+    // `00000-0` 是零。
     assert_eq!(element.mean_motion_double_dot, 0.0);
     // `-.00002182` is written with an explicit decimal point and no leading
     // zero.
+    // `-.00002182` 用显式小数点且无前导零写出。
     assert!((element.mean_motion_dot - -2.182e-5).abs() < 1e-18);
 }
 
@@ -45,6 +52,8 @@ fn epoch_resolves_to_the_expected_day() {
     // The reference parser reports Julian Date 2454730.01782528 for the
     // epoch, which is Modified Julian Date 54729.51782528 on the UTC scale.
     // Day 264 of 2008 is 2008-09-20, and the fraction is 12:25:40.
+    // 参考解析器报告该历元为儒略日 2454730.01782528，即 UTC 时标上的约化儒略日
+    // 54729.51782528。2008 年的第 264 天是 2008-09-20，零头为 12:25:40。
     let mjd = element
         .epoch
         .mjd(TimeScale::Utc)
@@ -97,6 +106,8 @@ fn classification_is_read_from_the_sample() {
 
 /// Replaces the character at the given zero based column of the given zero
 /// based line and recomputes that line's checksum.
+///
+/// 替换给定零基行中给定零基列处的字符，并重算该行的校验和。
 fn mutate(text: &str, line_index: usize, column: usize, replacement: char) -> String {
     let mut lines: Vec<String> = text.lines().map(str::to_string).collect();
     let mut characters: Vec<char> = lines[line_index].chars().collect();
@@ -112,6 +123,8 @@ fn mismatched_satellite_numbers_are_rejected() {
     // Change a digit of the second line's satellite number and repair the
     // checksum, so that only the mismatch remains. The satellite number
     // occupies one based columns 3 to 7, which are zero based 2 to 6.
+    // 改变第二行卫星编号的一位数字并修复校验和，使只剩下不匹配。卫星编号占据以 1
+    // 为基的第 3 至 7 列，即以 0 为基的第 2 至 6 列。
     let text = mutate(ISS, 1, 2, '3');
     let error = TwoLineElement::parse(&text).expect_err("numbers differ");
     assert_eq!(error.kind(), ElementErrorKind::MismatchedElementSet);
@@ -150,6 +163,7 @@ fn an_empty_input_is_rejected() {
 fn a_non_numeric_field_is_reported_with_its_columns() {
     // Replace the first inclination digit with a letter, so that the
     // checksum still matches but the field cannot be read.
+    // 把第一个倾角数字换成字母，使校验和仍匹配但该字段无法读取。
     let text = mutate(ISS, 1, 8, 'X');
 
     let error = TwoLineElement::parse(&text).expect_err("inclination is not numeric");
