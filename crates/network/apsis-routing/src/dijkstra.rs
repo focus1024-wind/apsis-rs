@@ -9,13 +9,6 @@
 //! maximum heap. The key is the tentative distance, and ties are broken by
 //! the node index so that the result is deterministic for a given topology.
 //!
-//! 该算法是 Dijkstra 的，使用以暂定距离为键的二叉堆。代价为正，故某节点首次从
-//! 堆中取出时其距离即为最终，这使该算法精确。
-//!
-//! 该堆是反转排序键上的最小堆，因为标准库的
-//! [`BinaryHeap`](std::collections::BinaryHeap) 是最大堆。键是暂定距离，并列时按
-//! 节点下标打破，使结果对给定拓扑是确定的。
-//!
 //! 某拓扑上的最短路径计算。
 //!
 //! 该算法是 Dijkstra 的，使用以暂定距离为键的二叉堆。代价为正，故某节点首次从
