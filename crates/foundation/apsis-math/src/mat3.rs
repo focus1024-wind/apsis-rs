@@ -1,4 +1,6 @@
 //! Three by three matrices over `f64`.
+//!
+//! 基于 `f64` 的三阶矩阵。
 
 use crate::quat::Quat;
 use crate::vec3::Vec3;

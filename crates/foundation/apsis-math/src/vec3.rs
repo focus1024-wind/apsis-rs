@@ -1,4 +1,6 @@
 //! Three component vectors over `f64`.
+//!
+//! 基于 `f64` 的三分量矢量。
 
 use core::fmt;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};

@@ -20,6 +20,24 @@
 //!   SI units.
 //! - [`Quantity`] marks newtypes that carry a physical unit, so generic
 //!   code can accept any quantity and still recover its unit type.
+//!
+//! ApsisRS 工作区共享的基础类型：一个通用错误类型、结果别名、物理常量，以及
+//! 单位标记 trait。
+//!
+//! 本 crate 位于依赖图的底部。它不依赖任何其他 ApsisRS crate，故其余每个
+//! crate 都可以使用它。
+//!
+//! 这里有三件事：
+//!
+//! - [`Error`] 与 [`Result`] 是携带粗糙 [`ErrorKind`] 的通用错误。它们存在，
+//!   是为了让失败没有有趣结构的函数无需发明一个类型即可报告它，也是为了让
+//!   工作区有一个可退守的形状。它们有意地*不是*各层的错误类型：具有领域
+//!   特定失败的一层会定义自己的 `Error` 与 `ErrorKind`，其变体指名调用方
+//!   想要匹配的具体情形。原因以及各领域错误遵循的约定见
+//!   `docs/design/errors.md`。
+//! - [`constant`] 保存以 SI 单位表达的物理与天文常量。
+//! - [`Quantity`] 标记携带有物理单位的 newtype，使泛型代码可以接受任何量
+//!   并仍能恢复其单位类型。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

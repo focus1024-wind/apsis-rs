@@ -1,4 +1,6 @@
 //! Unit quaternions used for rotations.
+//!
+//! 用于转动的单位四元数。
 
 use crate::vec3::Vec3;
 use core::fmt;

@@ -9,6 +9,15 @@
 //! of its kind are in the corresponding base unit, which allows conversion
 //! between units of the same dimension. The base unit of a dimension always
 //! has a factor of one.
+//!
+//! 携带有物理单位的量所用的标记 trait。
+//!
+//! 量的 newtype 把数值与其单位一同存在类型中。[`Quantity`] trait 通过关联
+//! 类型公开该单位，故可对任何量编写泛型代码并仍能恢复所给的是哪个单位。
+//!
+//! 单位本身是任何实现 [`Unit`] 的类型。单位知道其同类在相应基本单位中有
+//! 多少个，这允许同一量纲的各单位之间换算。一个量纲的基本单位其因子总是
+//! 一。
 //
 //! 单位本身是任意实现 [`Unit`] 的类型。单位知道自己相当于多少个对应的基本单位，
 //! 从而可以在同一量纲的单位之间换算。某量纲的基本单位其因子恒为一。
