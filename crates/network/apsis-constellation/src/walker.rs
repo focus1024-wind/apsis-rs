@@ -120,12 +120,15 @@ impl WalkerPattern {
 
     /// Returns the Walker notation for this pattern, such as `53: 24/3/1`.
     ///
-    /// The inclination is rounded to one decimal place, which is the
-    /// precision the notation is normally quoted to.
+    /// The inclination is printed at full precision, so a value such as
+    /// 53.25 degrees survives the round trip. The notation is an identifier
+    /// rather than a rounded quotation, so truncating it would lose
+    /// information for no gain.
     ///
     /// 返回该构型的 Walker 记法，例如 `53: 24/3/1`。
     ///
-    /// 倾角保留一位小数，即该记法通常引用的精度。
+    /// 倾角按全精度打印，因此 53.25 度这样的值可以原样往返。该记法用作标识而
+    /// 非取整后的引用值，截断它只会丢失信息而没有收益。
     pub fn notation(self) -> String {
         format!(
             "{}: {}/{}/{}",
