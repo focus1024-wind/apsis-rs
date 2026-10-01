@@ -24,26 +24,26 @@
 use crate::satellite::{Satellite, TWO_PI};
 use core::f64::consts::PI;
 
-/// Solar eccentricity.
+/// 太阳偏心率。
 const ZES: f64 = 0.016_75;
-/// Lunar eccentricity.
+/// 月球偏心率。
 const ZEL: f64 = 0.054_90;
-/// Solar mean motion coefficient, in radians per minute.
+/// 太阳平运动系数，单位为弧度每分钟。
 const ZNS: f64 = 1.194_59e-5;
-/// Lunar mean motion coefficient, in radians per minute.
+/// 月球平运动系数，单位为弧度每分钟。
 const ZNL: f64 = 1.583_521_8e-4;
 
 /// The rate of rotation of the Earth used by the resonance integral, in
 /// radians per minute.
 ///
-/// This is `7.292 115 146 688 55e-5` radians per second.
+/// 该值为 `7.292 115 146 688 55e-5` 弧度每秒。
 const RPTIM: f64 = 4.375_269_088_011_3e-3;
 
-/// The integration step of the resonance, in minutes.
+/// 共振积分的积分步长，单位为分钟。
 const STEP_POSITIVE: f64 = 720.0;
-/// The integration step of the resonance for backward propagation.
+/// 向后传播时共振积分的积分步长。
 const STEP_NEGATIVE: f64 = -720.0;
-/// The square of the integration step, in minutes squared.
+/// 积分步长的平方，单位为分钟每二次方。
 const STEP_SQUARED: f64 = 259_200.0;
 
 /// The values returned by the first stage of the deep space
@@ -54,93 +54,105 @@ const STEP_SQUARED: f64 = 259_200.0;
 /// with a doubled letter, and the values from the second pass, for the Sun,
 /// keep the single letter. The final coefficients combine one from each
 /// group, so both are carried here.
+///
+/// 深空初始化第一阶段返回的值，该阶段计算日月级数。
+///
+/// 参考实现以首字母 `s` 命名对该级数的两次求值：第一遍（月球）的值用双写
+/// 字母存放，第二遍（太阳）的值保留单字母。最终系数各取其一组合，故两者
+/// 都在此保留。
 #[derive(Debug, Clone, Copy)]
 struct Lunisolar {
-    /// Moon series, second order.
+    /// 月球级数，二阶项。
     ss1: f64,
-    /// Moon series, second order.
+    /// 月球级数，二阶项。
     ss2: f64,
-    /// Moon series, second order.
+    /// 月球级数，二阶项。
     ss3: f64,
-    /// Moon series, second order.
+    /// 月球级数，二阶项。
     ss4: f64,
-    /// Moon series, second order.
+    /// 月球级数，二阶项。
     ss5: f64,
-    /// Moon series, second order.
+    /// 月球级数，二阶项。
     ss6: f64,
-    /// Moon series, second order.
+    /// 月球级数，二阶项。
     ss7: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz1: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz2: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz3: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz11: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz12: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz13: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz21: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz22: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz23: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz31: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz32: f64,
-    /// Moon series, radial terms.
+    /// 月球级数，径向项。
     sz33: f64,
-    /// Sun series, second order.
+    /// 太阳级数，二阶项。
     s1: f64,
-    /// Sun series, second order.
+    /// 太阳级数，二阶项。
     s2: f64,
-    /// Sun series, second order.
+    /// 太阳级数，二阶项。
     s3: f64,
-    /// Sun series, second order.
+    /// 太阳级数，二阶项。
     s4: f64,
-    /// Sun series, second order.
+    /// 太阳级数，二阶项。
     s5: f64,
-    /// Sun series, second order.
+    /// 太阳级数，二阶项。
     s6: f64,
-    /// Sun series, second order.
+    /// 太阳级数，二阶项。
     s7: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z1: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z2: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z3: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z11: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z12: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z13: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z21: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z22: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z23: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z31: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z32: f64,
-    /// Sun series, radial terms.
+    /// 太阳级数，径向项。
     z33: f64,
-    /// Mean anomaly of the Moon at the epoch, in radians.
+    /// 历元处月球平近点角，单位为弧度。
     zmol: f64,
-    /// Mean anomaly of the Sun at the epoch, in radians.
+    /// 历元处太阳平近点角，单位为弧度。
     zmos: f64,
     /// Eccentricity squared at the epoch.
+    ///
+    /// 历元处的偏心率平方。
     emsq: f64,
     /// Sine of the inclination at the epoch.
+    ///
+    /// 历元处倾角的正弦。
     sinim: f64,
     /// Cosine of the inclination at the epoch.
+    ///
+    /// 历元处倾角的余弦。
     cosim: f64,
 }
 
@@ -149,118 +161,141 @@ struct Lunisolar {
 /// Every field is zero for a near-Earth orbit, so the structure can be
 /// stored unconditionally and the near-Earth propagation step pays only the
 /// cost of carrying the storage.
+///
+/// 卫星的深空系数。
+///
+/// 对近地轨道每个字段都为零，故该结构可无条件存储，而近地传播步骤只承担
+/// 携带该存储的代价。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct DeepSpace {
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) e3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) ee2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) se2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) se3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) si2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) si3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) sl2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) sl3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) sl4: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) sgh2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) sgh3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) sgh4: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) sh2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) sh3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xgh2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xgh3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xgh4: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xh2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xh3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xi2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xi3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xl2: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xl3: f64,
-    /// Solar and lunar long period periodic coefficients.
+    /// 日月长周期项系数。
     pub(crate) xl4: f64,
-    /// Mean anomaly of the Moon at the epoch, in radians.
+    /// 历元处月球平近点角，单位为弧度。
     pub(crate) zmol: f64,
-    /// Mean anomaly of the Sun at the epoch, in radians.
+    /// 历元处太阳平近点角，单位为弧度。
     pub(crate) zmos: f64,
-    /// The long period periodic terms carried forward from the epoch.
+    /// 自历元沿用的长周期项。
     pub(crate) peo: f64,
-    /// The long period periodic terms carried forward from the epoch.
+    /// 自历元沿用的长周期项。
     pub(crate) pinco: f64,
-    /// The long period periodic terms carried forward from the epoch.
+    /// 自历元沿用的长周期项。
     pub(crate) plo: f64,
-    /// The long period periodic terms carried forward from the epoch.
+    /// 自历元沿用的长周期项。
     pub(crate) pgho: f64,
-    /// The long period periodic terms carried forward from the epoch.
+    /// 自历元沿用的长周期项。
     pub(crate) pho: f64,
 
     /// Resonance flag: zero for none, one for the synchronous resonance, two
     /// for the half-day resonance.
+    ///
+    /// 共振标志：零表示无共振，一表示同步共振，二表示半日共振。
     pub(crate) irez: i32,
     /// Secular rate of the eccentricity, per minute.
+    ///
+    /// 偏心率的长期变化率，每分钟。
     pub(crate) dedt: f64,
     /// Secular rate of the inclination, per minute.
+    ///
+    /// 倾角的长期变化率，每分钟。
     pub(crate) didt: f64,
     /// Secular rate of the mean anomaly, per minute.
+    ///
+    /// 平近点角的长期变化率，每分钟。
     pub(crate) dmdt: f64,
     /// Secular rate of the right ascension, per minute.
+    ///
+    /// 赤经的长期变化率，每分钟。
     pub(crate) dnodt: f64,
     /// Secular rate of the argument of perigee, per minute.
+    ///
+    /// 近地点幅角的长期变化率，每分钟。
     pub(crate) domdt: f64,
-    /// Synchronous resonance coefficient.
+    /// 同步共振系数。
     pub(crate) del1: f64,
-    /// Synchronous resonance coefficient.
+    /// 同步共振系数。
     pub(crate) del2: f64,
-    /// Synchronous resonance coefficient.
+    /// 同步共振系数。
     pub(crate) del3: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d2201: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d2211: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d3210: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d3222: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d4410: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d4422: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d5220: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d5232: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d5421: f64,
-    /// Half-day resonance coefficients.
+    /// 半日共振系数。
     pub(crate) d5433: f64,
     /// Resonance angle rate.
+    ///
+    /// 共振角变化率。
     pub(crate) xfact: f64,
     /// Resonance angle at the epoch, in radians.
+    ///
+    /// 历元处的共振角，单位为弧度。
     pub(crate) xlamo: f64,
 }
 
 impl DeepSpace {
     /// The all zero value used by near-Earth orbits.
+    ///
+    /// 近地轨道所用的全零取值。
     pub(crate) const ZERO: Self = Self {
         e3: 0.0,
         ee2: 0.0,
@@ -318,44 +353,58 @@ impl DeepSpace {
 }
 
 /// The result of applying the long period periodic perturbations.
+///
+/// 施加长周期项后的结果。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct PerturbedElements {
-    /// Eccentricity, dimensionless.
+    /// 偏心率，无量纲。
     pub(crate) eccentricity: f64,
-    /// Inclination, in radians.
+    /// 倾角，单位为弧度。
     pub(crate) inclination: f64,
-    /// Right ascension of the ascending node, in radians.
+    /// 升交点赤经，单位为弧度。
     pub(crate) node: f64,
-    /// Argument of perigee, in radians.
+    /// 近地点幅角，单位为弧度。
     pub(crate) argument: f64,
-    /// Mean anomaly, in radians.
+    /// 平近点角，单位为弧度。
     pub(crate) mean_anomaly: f64,
 }
 
 /// The mean elements after the deep space secular and resonance terms.
+///
+/// 施加深空长期项与共振项之后的平均根数。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct DeepSpaceState {
-    /// Eccentricity, dimensionless.
+    /// 偏心率，无量纲。
     pub(crate) eccentricity: f64,
-    /// Argument of perigee, in radians.
+    /// 近地点幅角，单位为弧度。
     pub(crate) argument: f64,
-    /// Inclination, in radians.
+    /// 倾角，单位为弧度。
     pub(crate) inclination: f64,
-    /// Mean anomaly, in radians.
+    /// 平近点角，单位为弧度。
     pub(crate) mean_anomaly: f64,
-    /// Right ascension of the ascending node, in radians.
+    /// 升交点赤经，单位为弧度。
     pub(crate) node: f64,
     /// Mean motion, in radians per minute.
+    ///
+    /// 平运动，单位为弧度每分钟。
     pub(crate) mean_motion: f64,
     /// The angle of the resonance integrator at the propagated time.
+    ///
+    /// 传播时刻共振积分器的角度。
     pub(crate) atime: f64,
     /// The resonance angle at the propagated time, in radians.
+    ///
+    /// 传播时刻的共振角，单位为弧度。
     pub(crate) xli: f64,
     /// The resonance mean motion at the propagated time.
+    ///
+    /// 传播时刻的共振平运动。
     pub(crate) xni: f64,
 }
 
 /// Reduces a value into `[0, 2 pi)` by taking the positive remainder.
+///
+/// 取正余数把某个值归约到 `[0, 2 pi)`。
 fn remainder_positive(value: f64) -> f64 {
     value.rem_euclid(TWO_PI)
 }
@@ -365,6 +414,11 @@ fn remainder_positive(value: f64) -> f64 {
 /// The reference uses this convention for the right ascension, where a
 /// negative result is meaningful, and it differs from a positive remainder
 /// for negative inputs.
+///
+/// 归约某个值并保留被除数的符号。
+///
+/// 参考实现对赤经采用此约定，因为负结果在此有意义；对负输入，它与取正余数
+/// 的结果不同。
 fn remainder_signed(value: f64) -> f64 {
     if value >= 0.0 {
         value % TWO_PI
@@ -374,6 +428,8 @@ fn remainder_signed(value: f64) -> f64 {
 }
 
 /// Computes the deep space coefficients for a satellite.
+///
+/// 计算某卫星的深空系数。
 pub(crate) fn initialise(satellite: &Satellite) -> DeepSpace {
     let lunisolar = lunisolar_coefficients(satellite);
     let mut deep = DeepSpace::ZERO;
@@ -416,6 +472,11 @@ pub(crate) fn initialise(satellite: &Satellite) -> DeepSpace {
 /// The series is evaluated twice with different orientations, once aligned
 /// with the Moon and once with the Sun. Both sets of results are needed
 /// because the final coefficients pair the two.
+///
+/// 在历元处求值日月级数。
+///
+/// 该级数以两种不同的取向各求值一次，一次与月球对齐，一次与太阳对齐。
+/// 两组结果都需要，因为最终系数把二者配对使用。
 fn lunisolar_coefficients(satellite: &Satellite) -> Lunisolar {
     const C1SS: f64 = 2.986_479_7e-6;
     const C1L: f64 = 4.796_806_5e-7;
@@ -428,6 +489,8 @@ fn lunisolar_coefficients(satellite: &Satellite) -> Lunisolar {
 
     // Days counted from the start of 1900. The reference adds 18 261.5 to a
     // day count from 1950, which is the same origin.
+    // 自 1900 年初起计的天数。参考实现在自 1950 年的日计数上加 18 261.5，
+    // 二者原点相同。
     let day = satellite.epoch_mjd - 15_019.5;
 
     let emsq = ep * ep;
@@ -464,6 +527,7 @@ fn lunisolar_coefficients(satellite: &Satellite) -> Lunisolar {
     let xnoi = 1.0 / np;
 
     // Values from the first pass, for the Moon.
+    // 第一遍的值，对应月球。
     let (mut ss1, mut ss2, mut ss3, mut ss4, mut ss5, mut ss6, mut ss7) =
         (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     let (
@@ -482,6 +546,7 @@ fn lunisolar_coefficients(satellite: &Satellite) -> Lunisolar {
     ) = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
     // Values from the second pass, for the Sun.
+    // 第二遍的值，对应太阳。
     let (mut s1, mut s2, mut s3, mut s4, mut s5, mut s6, mut s7) =
         (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     let (
@@ -536,6 +601,7 @@ fn lunisolar_coefficients(satellite: &Satellite) -> Lunisolar {
         let z23p = 6.0 * a4 * a6 + emsq * (24.0 * x2 * x6 - 6.0 * x4 * x8);
         // The reference doubles each of these and adds the sub-expression
         // multiplied by `1 - e^2`.
+        // 参考实现把各项乘以二，再加上该子表达式与 `1 - e^2` 的乘积。
         z1p = z1p + z1p + betasq * z31p;
         z2p = z2p + z2p + betasq * z32p;
         z3p = z3p + z3p + betasq * z33p;
@@ -647,10 +713,14 @@ fn lunisolar_coefficients(satellite: &Satellite) -> Lunisolar {
 }
 
 /// Computes the secular rates of the mean elements.
+///
+/// 计算平均根数的长期变化率。
 fn initialise_rates(satellite: &Satellite, ls: &Lunisolar, deep: &mut DeepSpace) {
     // The reference sets `shs` and `shll` to zero for inclinations within
     // about 3 degrees of the equator or the pole, where the division by the
     // sine of the inclination is ill conditioned.
+    // 倾角在赤道或极点附近约 3 度以内时，参考实现把 `shs` 与 `shll` 置零，
+    // 因为那里除以倾角正弦是病态的。
     let inclined = (5.235_987_7e-2..=PI - 5.235_987_7e-2).contains(&satellite.inclo);
 
     let ses = ls.ss1 * ZNS * ls.ss5;
@@ -686,6 +756,8 @@ fn initialise_rates(satellite: &Satellite, ls: &Lunisolar, deep: &mut DeepSpace)
 }
 
 /// Computes the resonance coefficients.
+///
+/// 计算共振系数。
 fn initialise_resonance(satellite: &Satellite, ls: &Lunisolar, deep: &mut DeepSpace) {
     const Q22: f64 = 1.789_167_9e-6;
     const Q31: f64 = 2.146_074_8e-6;
@@ -709,6 +781,8 @@ fn initialise_resonance(satellite: &Satellite, ls: &Lunisolar, deep: &mut DeepSp
     // The synchronous resonance applies near one revolution per sidereal
     // day and the half-day resonance near two, with a further restriction on
     // the eccentricity.
+    // 同步共振适用于每恒星日约一圈处，半日共振适用于约两圈处，并对偏心率
+    // 另有约束。
     let mut irez = 0;
     if 0.003_490_658_5 < nm && nm < 0.005_235_987_7 {
         irez = 1;
@@ -728,6 +802,7 @@ fn initialise_resonance(satellite: &Satellite, ls: &Lunisolar, deep: &mut DeepSp
         // Half-day resonance. The eccentricity series is evaluated at the
         // eccentricity from the element set, not the value carried through
         // the secular rates.
+        // 半日共振。偏心率级数取
         let cosisq = cosim * cosim;
         let emo = em;
         let em = satellite.ecco;
@@ -824,6 +899,7 @@ fn initialise_resonance(satellite: &Satellite, ls: &Lunisolar, deep: &mut DeepSp
         let _ = (emo, emsqo);
     } else {
         // Synchronous resonance.
+        // 同步共振。
         let g200 = 1.0 + emsq * (-2.5 + 0.8125 * emsq);
         let g310 = 1.0 + 2.0 * emsq;
         let g300 = 1.0 + emsq * (-6.0 + 6.609_37 * emsq);
@@ -849,6 +925,8 @@ fn initialise_resonance(satellite: &Satellite, ls: &Lunisolar, deep: &mut DeepSp
 }
 
 /// Applies the deep space secular and resonance terms to the mean elements.
+///
+/// 把深空长期项与共振项施加到平均根数上。
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn dspace(
     satellite: &Satellite,
@@ -877,6 +955,9 @@ pub(crate) fn dspace(
     // the state between calls keeps propagation free of hidden state, and
     // the result is the same because the step boundaries do not depend on
     // the requested time.
+    // 共振以自历元起算的固定 720 分钟步长积分。每次调用都从历元重新开始而
+    // 不在调用之间传递状态，使传播不含隐藏状态；结果相同，因为步长边界与
+    // 所请求的时刻无关。
     let mut atime = 0.0;
     let mut xli = deep.xlamo;
     let mut xni = no;
@@ -943,6 +1024,11 @@ pub(crate) fn dspace(
 /// The two resonance cases use different series. The synchronous case,
 /// `irez == 1`, uses three terms that depend only on the angle, while the
 /// half-day case uses ten terms that also depend on the argument of perigee.
+///
+/// 返回共振角的一阶与二阶导数。
+///
+/// 两种共振情形使用不同的级数。同步情形（`irez == 1`）使用只依赖该角的
+/// 三项，而半日情形使用同时依赖近地点幅角的十项。
 fn resonance_derivatives(
     deep: &DeepSpace,
     argpo: f64,
@@ -1004,6 +1090,11 @@ fn resonance_derivatives(
 /// requested time, except during initialisation, where they are evaluated at
 /// the epoch and stored as the reference values that later evaluations
 /// subtract.
+///
+/// 施加深空长周期项。
+///
+/// 各项在所请求时刻的太阳与月球平近点角上求值；初始化阶段除外，那是在历元
+/// 处求值并存为参考基准，供此后的求值相减。
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn dpper(
     satellite: &Satellite,
@@ -1072,6 +1163,8 @@ pub(crate) fn dpper(
         // node and the argument of perigee are individually ill conditioned.
         // The threshold of 0.2 radians is about 11.5 degrees. The reference
         // applies it against the perturbed inclination.
+        // Lyddane 修正在低倾角处使用，那里交点与近地点幅角各自病态。阈值
+        // 0.2 弧度约为 11.5 度。参考实现以受扰动后的倾角作判据。
         if inclp >= 0.2 {
             ph /= sinip;
             pgh -= cosip * ph;

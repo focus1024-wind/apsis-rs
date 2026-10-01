@@ -21,27 +21,38 @@ use crate::state::State;
 use apsis_math::Vec3;
 
 /// The number of iterations allowed when solving for the eccentric anomaly.
+///
+/// 求解偏近点角时允许的迭代次数。
 const KEPLER_MAX_ITERATIONS: usize = 10;
 
 /// The convergence threshold on the eccentric anomaly correction.
+///
+/// 偏近点角修正的收敛阈值。
 const KEPLER_TOLERANCE: f64 = 1.0e-12;
 
 /// The largest correction applied in one Kepler step.
 ///
 /// Clamping keeps the iteration stable for the eccentric orbits that the
 /// near circular approximation of the theory handles poorly.
+///
+/// 设上限使迭代在理论中近圆近似处理不佳的高偏心轨道上保持稳定。
 const KEPLER_MAX_STEP: f64 = 0.95;
 
 /// The smallest eccentricity used after the drag terms are applied.
 ///
 /// A value that would round to zero makes several divisions in the short
 /// period terms singular, so it is clamped to this floor.
+///
+/// 会舍入为零的取值会使短周期项中的若干除法奇异，故钳位到此下限。
 const MINIMUM_ECCENTRICITY: f64 = 1.0e-6;
 
 /// The divisor used when the inclination is close to pi.
+///
+/// 倾角接近 pi 时所用的除数。
 const INCLINATION_GUARD: f64 = 1.5e-12;
 
 /// Propagates a satellite by a number of minutes from its element epoch.
+/// 把某卫星自其根数历元起传播若干分钟。
 pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, PropagationError> {
     let mean_anomaly = satellite.mo + satellite.mdot * minutes;
     let secular_argument = satellite.argpo + satellite.argpdot * minutes;
@@ -80,6 +91,7 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
     let mut mean_motion = satellite.no_unkozai;
 
     // The deep space branch replaces the mean elements here.
+    // 深空分支在此替换平均根数。
     if satellite.method == Method::DeepSpace {
         let deep = crate::deep_space::dspace(
             satellite,
@@ -105,6 +117,7 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
 
     // Recover the semi-major axis including the drag scaling, then recompute
     // the mean motion from it so the two stay consistent.
+    // 含阻力缩放地还原半长轴，再由它重算平运动，使二者保持一致。
     let semi_major = (satellite.xke() / mean_motion).powf(2.0 / 3.0) * tempa * tempa;
     mean_motion = satellite.xke() / semi_major.powf(1.5);
 
@@ -122,6 +135,8 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
     // a remainder that keeps the sign of the dividend for the right
     // ascension and a positive remainder elsewhere; both are reproduced here
     // because the eccentric anomaly iteration is sensitive to the branch.
+    // 把各角归约到一周之内。参考实现对赤经采用保留被除数符号的余数，其余
+    // 处用正余数；此处两者都予以复现，因为偏近点角迭代对分支敏感。
     node = if node >= 0.0 {
         node % TWO_PI
     } else {
@@ -176,6 +191,7 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
     // The `aycof` and `xlcof` used below come from the perturbed
     // inclination in the deep space branch and from the epoch inclination
     // otherwise.
+    // 下文所用的 `aycof` 与 `xlcof` 来自受扰动的
     let (aycof, xlcof) = if satellite.method == Method::DeepSpace {
         let aycof = -0.5 * satellite.model.j3_over_j2() * sin_perturbed;
         let xlcof = if (cos_perturbed + 1.0).abs() > INCLINATION_GUARD {
@@ -198,6 +214,7 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
     let u = (xl - perturbed_node) % TWO_PI;
 
     // Solve Kepler's equation by Newton's method.
+    // 用 Newton 法求解开普勒方程。
     let mut eo1 = u;
     let (mut sineo1, mut coseo1);
     let mut iterations = 0;

@@ -41,6 +41,32 @@ MOJIBAKE = "�"
 # `SGP4` in English, so a lowercase word between CJK is a mistake.
 MIXED = re.compile(r"[\u4e00-\u9fff][a-z]{3,}[\u4e00-\u9fff]")
 
+# A comment that is only a formula or a bare symbol carries no prose to
+# translate, so demanding a second language on it would be noise. Such a
+# comment is left as it stands, which is the whole of it.
+FORMULA = re.compile("^`?[A-Za-z0-9_^*+\\-/() =,;.\u3002\uff0c]*`?[\.\u3002]?$")
+
+# Three letters in a row is a word, not a symbol, so a line carrying one is
+# prose and needs translating even if it is mostly numbers.
+PROSE = re.compile(r"[A-Za-z]{3}")
+
+
+def is_formula_only(block: list[str]) -> bool:
+    """True when every line of the block is code, a formula, or blank."""
+    saw_content = False
+    for line in block:
+        body = re.sub(r"^\s*(///|//[^/!])\s?", "", line).strip()
+        if not body:
+            continue
+        saw_content = True
+        if not FORMULA.match(body):
+            return False
+        # A single backticked token is a symbol, whatever it spells. Prose
+        # needs a verb, and `cos` or `eta` has none.
+        if len(re.findall(r"[A-Za-z]{2,}", body)) > 1:
+            return False
+    return saw_content
+
 
 def blocks(path: Path) -> list[tuple[int, list[str]]]:
     """Returns the comment blocks of a file with the line each starts on."""
@@ -92,6 +118,9 @@ def main(argv: list[str]) -> int:
                 mixed.append(
                     f"{path.relative_to(ROOT)}:{line}  {found.group(0)!r}"
                 )
+            if is_formula_only(block):
+                # Nothing to translate; the symbol is the whole comment.
+                continue
             total += 1
             if CJK.search(text):
                 translated += 1

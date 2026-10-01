@@ -18,6 +18,13 @@ use crate::field::{ElementError, ElementErrorKind, Result};
 ///
 /// A minus sign contributes one, a decimal digit contributes its value, and
 /// every other character contributes nothing.
+///
+/// 返回某行前 68 列的校验和。
+///
+/// 输入可以包含末尾的校验和数字，该位被忽略，因为只有前 68 列参与求和。短于
+/// 68 字符的行只贡献其实际具有的列。
+///
+/// 负号贡献 1，十进制数字贡献其数值，其余字符不贡献。
 pub fn line_checksum(line: &str) -> u32 {
     line.chars()
         .take(68)
@@ -39,12 +46,23 @@ pub fn line_checksum(line: &str) -> u32 {
 /// `line_number` is the one based number used in any error that is
 /// returned, so that a caller parsing a multi-line input can report which
 /// line failed.
+///
+/// 校验某行末位字符是否为其校验和。
+///
+/// 该行至少须有 69 个字符，因为校验和位于第 69 列。期望值与同一行的
+/// [`line_checksum`] 比较。
+///
+/// `line_number` 是返回错误时使用的从一开始的行号，使解析多行输入的调用方
+/// 能指出是哪一行失败。
 pub fn verify_line_checksum(line: &str, line_number: usize) -> Result<()> {
     let checksum_columns = (69, 69);
     // The line must contain at least 69 characters. Counting characters
     // rather than bytes is deliberate: the format is ASCII, but a caller
     // may hand in text with a non-ASCII character by mistake, and counting
     // characters gives a clearer failure than slicing through one.
+    // 该行至少须含 69 个字符。刻意按字符而非字节计数：格式虽为 ASCII，但
+    // 调用方可能误传含非 ASCII 字符的文本，按字符计数给出的失败信息比
+    // 从多字节字符中间切片更清晰。
     let characters: Vec<char> = line.chars().collect();
     if characters.len() < 69 {
         return Err(ElementError::new(

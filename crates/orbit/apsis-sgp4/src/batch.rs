@@ -16,6 +16,10 @@ use apsis_math::parallel::map_index;
 ///
 /// The sequential form, provided for comparison and for small lists where
 /// starting a thread would cost more than the work.
+///
+/// 按顺序在历元后若干分钟列表处传播该卫星。
+///
+/// 顺序形式，供比较以及线程开销高于工作时的小列表使用。
 pub fn propagate_minutes_at(satellite: &Satellite, minutes: &[f64]) -> Vec<Option<State>> {
     minutes
         .iter()
@@ -41,6 +45,19 @@ pub fn propagate_minutes_at(satellite: &Satellite, minutes: &[f64]) -> Vec<Optio
 /// forty three thousand and gains several fold. A caller with many short
 /// tracks is better served by the per satellite form below, which takes the
 /// whole list in one call.
+///
+/// 跨多个线程在历元后若干分钟列表处传播该卫星。
+///
+/// 结果与 [`propagate_minutes_at`] 逐元素相同且顺序一致。模型报告衰减的
+/// 分钟给出 `None`，与顺序形式相同；线程不会在首个这样的分钟处停下，因为
+/// 调用方通常需要整条轨迹，自行判断衰减的含义。
+///
+/// 传播是确定性的且只依赖分钟，故结果与工作如何划分无关。
+///
+/// 收益取决于列表所含的工作量，因为启动线程有固定开销，短列表无法收回。一
+/// 天按一分钟步长是一千四百个状态，收益很小；一个月是四万三千个，可获数倍
+/// 提升。拥有许多短轨迹的调用方更适合用下方的按卫星形式，它一次调用处理
+/// 整个列表。
 pub fn propagate_minutes_at_parallel(satellite: &Satellite, minutes: &[f64]) -> Vec<Option<State>> {
     map_index(minutes.len(), |index| {
         satellite.propagate_minutes(minutes[index]).ok()
@@ -52,6 +69,11 @@ pub fn propagate_minutes_at_parallel(satellite: &Satellite, minutes: &[f64]) -> 
 /// The per satellite work is independent, so a shell's state at a single
 /// instant is a natural batch. The satellites are read only, so they are
 /// shared across the threads by reference.
+///
+/// 按顺序在同一瞬时传播多颗卫星。
+///
+/// 各卫星的工作彼此独立，故整壳在同一瞬时的状态是天然的批处理单元。卫星
+/// 只读，因此在各线程间按引用共享。
 pub fn propagate_at(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>> {
     satellites
         .iter()
@@ -67,6 +89,13 @@ pub fn propagate_at(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>
 /// This is the form a coverage run wants: it holds the whole shell in one
 /// call, so the threads start once for every satellite rather than once per
 /// satellite, and even a shell of a few hundred gains.
+///
+/// 跨多个线程在同一瞬时传播多颗卫星。
+///
+/// 结果与 [`propagate_at`] 逐元素相同且顺序一致。
+///
+/// 覆盖计算需要的形式：它一次调用持有整壳，故线程为所有卫星启动一次而非
+/// 每颗一次，即便几百颗的壳也能获益。
 pub fn propagate_at_parallel(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>> {
     map_index(satellites.len(), |index| {
         satellites[index].propagate_at(tai_mjd).ok()

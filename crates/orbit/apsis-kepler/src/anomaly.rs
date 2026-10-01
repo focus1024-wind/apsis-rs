@@ -24,16 +24,23 @@
 use core::f64::consts::PI;
 
 /// The maximum number of Newton iterations used to solve Kepler's equation.
+///
+/// 求解开普勒方程所用的 Newton 迭代最大步数。
 const MAX_ITERATIONS: usize = 30;
 
 /// The convergence tolerance of the Newton iteration, in radians.
+///
+/// Newton 迭代的收敛容差，单位为弧度。
 const TOLERANCE: f64 = 1e-14;
 
 /// Reduces an angle into `[-pi, pi)`.
+///
+/// 把角度归约到 `[-pi, pi)`。
 pub fn wrap_to_pi(angle: f64) -> f64 {
     let wrapped = (angle + PI).rem_euclid(2.0 * PI) - PI;
     // `rem_euclid` can return exactly pi for an input just below pi, which
     // the half-open interval excludes.
+    // 对略小于 pi 的输入，`rem_euclid` 可能恰好返回 pi，而半开区间不含该端点。
     if wrapped >= PI {
         wrapped - 2.0 * PI
     } else {
@@ -52,6 +59,16 @@ pub fn wrap_to_pi(angle: f64) -> f64 {
 /// The half angle form is used rather than the direct cosine relation so
 /// that the result is correct in all four quadrants without a quadrant
 /// check.
+///
+/// 由偏近点角与偏心率返回真近点角。
+///
+/// 该关系来自辅助圆的几何性质：
+///
+/// ```text
+/// tan(nu / 2) = sqrt((1 + e) / (1 - e)) tan(E / 2)
+/// ```
+///
+/// 采用半角形式而非直接的余弦关系，使结果在四个象限中都正确，无需判别象限。
 pub fn true_from_eccentric(eccentric_anomaly: f64, eccentricity: f64) -> f64 {
     let half = eccentric_anomaly / 2.0;
     let factor = ((1.0 + eccentricity) / (1.0 - eccentricity)).sqrt();
@@ -61,6 +78,10 @@ pub fn true_from_eccentric(eccentric_anomaly: f64, eccentricity: f64) -> f64 {
 /// Returns the eccentric anomaly for a true anomaly and eccentricity.
 ///
 /// This is the inverse of [`true_from_eccentric`].
+///
+/// 由真近点角与偏心率返回偏近点角。
+///
+/// 这是 [`true_from_eccentric`] 的逆运算。
 pub fn eccentric_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
     let half = true_anomaly / 2.0;
     let factor = ((1.0 - eccentricity) / (1.0 + eccentricity)).sqrt();
@@ -79,9 +100,21 @@ pub fn eccentric_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
 /// proportional to the eccentricity, which keeps the iteration stable for
 /// eccentricities approaching one. The iteration always terminates, and the
 /// result is the value reached after at most a fixed number of steps.
+///
+/// 由平近点角与偏心率返回偏近点角。
+///
+/// 用 Newton 法求解开普勒方程
+///
+/// ```text
+/// M = E - e sin E
+/// ```
+///
+/// 初值取平近点角加上一个正比于偏心率的项，使迭代在偏心率趋近一时保持稳定。
+/// 迭代总会终止，结果是至多固定步数后达到的值。
 pub fn eccentric_from_mean(mean_anomaly: f64, eccentricity: f64) -> f64 {
     let mean = wrap_to_pi(mean_anomaly);
     // A first order correction to the circular guess.
+    // 对圆轨道猜测的一阶修正。
     let mut eccentric = mean + eccentricity * mean.sin() * (1.0 + eccentricity * mean.cos());
     for _ in 0..MAX_ITERATIONS {
         let residual = eccentric - eccentricity * eccentric.sin() - mean;
@@ -101,6 +134,10 @@ pub fn eccentric_from_mean(mean_anomaly: f64, eccentricity: f64) -> f64 {
 /// Returns the mean anomaly for an eccentric anomaly and eccentricity.
 ///
 /// This is Kepler's equation evaluated directly, `M = E - e sin E`.
+///
+/// 由偏近点角与偏心率返回平近点角。
+///
+/// 这是直接求值的开普勒方程，`M = E - e sin E`。
 pub fn mean_from_eccentric(eccentric_anomaly: f64, eccentricity: f64) -> f64 {
     wrap_to_pi(eccentric_anomaly - eccentricity * eccentric_anomaly.sin())
 }
@@ -111,12 +148,19 @@ pub fn mean_from_eccentric(eccentric_anomaly: f64, eccentricity: f64) -> f64 {
 /// mean anomaly then follows from Kepler's equation. Going through the
 /// eccentric anomaly avoids the separate closed form for the swept area and
 /// keeps a single expression responsible for the relation.
+///
+/// 由真近点角与偏心率返回平近点角。
+///
+/// 先把真近点角转为偏近点角，再由开普勒方程得平近点角。绕经偏近点角避免了
+/// 另立扫过面积的闭式解，使该关系只由一个表达式负责。
 pub fn mean_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
     let eccentric_anomaly = eccentric_from_true(true_anomaly, eccentricity);
     mean_from_eccentric(eccentric_anomaly, eccentricity)
 }
 
 /// Returns the true anomaly for a mean anomaly and eccentricity.
+///
+/// 由平近点角与偏心率返回真近点角。
 pub fn true_from_mean(mean_anomaly: f64, eccentricity: f64) -> f64 {
     true_from_eccentric(
         eccentric_from_mean(mean_anomaly, eccentricity),

@@ -20,39 +20,68 @@ use apsis_tle::TwoLineElement;
 use core::f64::consts::PI;
 
 /// The number of minutes in a day.
+///
+/// 一天中的分钟数。
 const MINUTES_PER_DAY: f64 = 1_440.0;
 
 /// The number of radians in a revolution.
+///
+/// 一周中的弧度数。
 const TWO_PI: f64 = 2.0 * PI;
 
 /// The period, in minutes, at or above which the deep space branch is used.
 ///
 /// The theory states 225 minutes. Satellites below that period are handled
 /// by the near-Earth branch, which is the case for all low Earth orbits.
+///
+/// 使用深空分支的周期阈值，单位为分钟。
+///
+/// 理论给出 225 分钟。周期短于该值的卫星由近地分支处理，所有低地球轨道皆属此类。
 const DEEP_SPACE_PERIOD_MINUTES: f64 = 225.0;
 
 /// The elements of a satellite in the units the propagator uses.
 ///
 /// Angles are in radians and mean motion is in radians per minute. Helpers
 /// convert a [`TwoLineElement`] into this form.
+///
+/// 卫星根数在传播器所用单位下的形式。
+///
+/// 角度用弧度，平运动用弧度每分钟。辅助函数把 [`TwoLineElement`] 转为该形式。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Elements {
     /// Epoch of the elements, expressed as a Modified Julian Date on the
     /// scale the element set was written in.
+    ///
+    /// 根数历元，以根数集书写所用标度上的修正儒略日（Modified Julian Date）
+    /// 表示。
     pub epoch_mjd: f64,
     /// `BSTAR` drag term, in inverse Earth radii.
+    ///
+    /// `BSTAR` 阻力项，单位为地球半径的倒数。
     pub bstar: f64,
     /// Mean motion, in radians per minute.
+    ///
+    /// 平运动，单位为弧度每分钟。
     pub mean_motion: f64,
     /// Eccentricity, dimensionless.
+    ///
+    /// 偏心率，无量纲。
     pub eccentricity: f64,
     /// Inclination, in radians.
+    ///
+    /// 倾角，单位为弧度。
     pub inclination: f64,
     /// Right ascension of the ascending node, in radians.
+    ///
+    /// 升交点赤经，单位为弧度。
     pub right_ascension: f64,
     /// Argument of perigee, in radians.
+    ///
+    /// 近地点幅角，单位为弧度。
     pub argument_of_perigee: f64,
     /// Mean anomaly, in radians.
+    ///
+    /// 平近点角，单位为弧度。
     pub mean_anomaly: f64,
 }
 
@@ -66,6 +95,13 @@ impl Elements {
     /// scale first would shift the epoch by the leap second offset, about
     /// 33 seconds, and that shift propagates into the solar and lunar series
     /// of the deep space branch.
+    ///
+    /// 把已解析的根数集转换为传播器所用单位。
+    ///
+    /// 历元直接取根数集中原样写下的 UTC 修正儒略日（Modified Julian Date）。
+    /// 根数集历元是 UTC 日历瞬时，但传播器把它当作均匀时间原点，这正是理论
+    /// 拟合所依据的约定。若先换算到均匀标度，历元会偏移一个闰秒量（约 33
+    /// 秒），而该偏移会传播进深空分支的日月级数。
     pub fn from_tle(element: &TwoLineElement) -> Option<Self> {
         let epoch_mjd = element.epoch.mjd(apsis_time::TimeScale::Utc)?;
         Some(Self {
@@ -116,6 +152,26 @@ impl Elements {
 ///
 /// Source: Vallado et al., *Revisiting Spacetrack Report #3*, AIAA
 /// 2006-6753, 2006.
+///
+/// 施加从 Kozai 平运动到 Brouwer 平运动的修正。
+///
+/// 根数集中的平运动是 Kozai 平运动，理论须先把它换算为 Brouwer 平运动方能
+/// 使用。以 `no` 表示根数集给出的值、`xke` 表示开普勒常数，参考实现按下式
+/// 求值：
+///
+/// ```text
+/// ak   = (xke / no)^(2/3)
+/// d1   = 0.75 j2 (3 cos^2 i - 1) / (sqrt(1 - e^2) (1 - e^2))
+/// del  = d1 / ak^2
+/// adel = ak (1 - del^2 - del (1/3 + 134 del^2 / 81))
+/// del  = d1 / adel^2
+/// n0   = no / (1 + del)
+/// ```
+///
+/// 第二次求 `del` 用的是 `adel` 而非 `ak`，这正是该修正与修正后平运动所隐含
+/// 的半长轴相一致的原因。
+///
+/// 出处：Vallado 等，*Revisiting Spacetrack Report #3*，AIAA 2006-6753，2006。
 pub fn unkozai_mean_motion(
     mean_motion: f64,
     eccentricity: f64,
@@ -142,6 +198,10 @@ pub fn unkozai_mean_motion(
 /// Returns an error when the orbit cannot be propagated, for example when
 /// the eccentricity does not describe a closed orbit or the mean motion is
 /// not positive.
+///
+/// 在初始化前校验平均根数。
+///
+/// 当轨道不可传播时返回错误，例如偏心率不描述闭合轨道，或平运动不为正。
 pub fn validate(elements: &Elements) -> Result<(), PropagationError> {
     if !elements.mean_motion.is_finite() || elements.mean_motion <= 0.0 {
         return Err(PropagationError::new(PropagationErrorKind::InvalidElements)
@@ -175,6 +235,10 @@ pub fn validate(elements: &Elements) -> Result<(), PropagationError> {
 /// Returns `true` when the elements describe a deep space orbit.
 ///
 /// The test is on the orbital period, which follows from the mean motion.
+///
+/// 当这些根数描述一条深空轨道时返回 `true`。
+///
+/// 判据是轨道周期，它由平运动推出。
 pub fn is_deep_space(mean_motion: f64) -> bool {
     TWO_PI / mean_motion >= DEEP_SPACE_PERIOD_MINUTES
 }
