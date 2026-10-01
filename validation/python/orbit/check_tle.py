@@ -31,6 +31,34 @@ Usage:
     pixi run python validation/python/orbit/check_tle.py [path]
 
 Exit status is zero when every field agrees and one otherwise.
+
+用一份独立的读取器交叉核对 ApsisRS 的两行根数解析器。
+
+读取由 ``cargo run -p apsis-rs --features orbit --example dump_tle`` 写出的
+根数字段，并用一个依据 NORAD 格式写成的按列索引读取器重新解析同一批根数
+集，然后比较每个字段。每一行的校验和都从其定义重算，故字段放错列或符号
+约定被丢弃会表现为不一致。
+
+该格式是按位置的，行的第一个字符在零列：
+
+* 第 1 行：卫星编号在第 2 至 6 列，密级在第 7 列，国际编号在第 9 至 16
+  列，历元年与一天中的小数部分在第 18 至 32 列，平运动的一阶导数除以二
+  在第 33 至 43 列，二阶导数除以六在第 44 至 52 列，阻力项在第 53 至 61
+  列，根数集编号在第 62 至 67 列，校验和在第 68 列；
+* 第 2 行：倾角在第 8 至 16 列，赤经在第 17 至 25 列，偏心率在第 26 至 33
+  列以隐含的前导小数点表示，近地点幅角在第 34 至 42 列，平近点角在第 43
+  至 51 列，平运动在第 52 至 63 列，圈数在第 63 至 68 列，校验和在第 68
+  列。
+
+连字符计为一，每个数字计为其自身值，在前六十八列上求和并对十取模。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/orbit/check_tle.py [path]
+
+每个字段都一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -43,6 +71,9 @@ from pathlib import Path
 # agree to the last digit. The tolerance is therefore exact, not
 # approximate, and only guards the exponent fields against a difference in
 # how the two languages round a very small value.
+# 该读取器处理的是解析器所见的相同字符，故二者必须精确到最后一位数字。
+# 因此该容差是精确的而非近似的，只是为防护指数字段在两种语言对极小值舍入
+# 方式上的差异。
 ABSOLUTE_TOLERANCE = 1e-12
 EXPONENT_TOLERANCE = 1e-18
 
@@ -50,6 +81,7 @@ DEFAULT_INPUT = Path("validation/data/expected/rust_tle.csv")
 
 # The element sets, in the order the example writes them. The lines are the
 # same ones the example parses.
+# 各根数集，按示例写出它们的次序。这些行就是示例所解析的那些。
 ELEMENT_SETS = {
     "vanguard_1": (
         "1 00005U 58002B   00179.78495062  .00000023  00000-0  28098-4 0  4753",
@@ -87,7 +119,10 @@ ELEMENT_SETS = {
 
 
 def checksum(line: str) -> int:
-    """Returns the modulo ten checksum of a line from its definition."""
+    """Returns the modulo ten checksum of a line from its definition.
+
+    由其定义返回某行对十取模的校验和。
+    """
     total = 0
     for character in line[:68]:
         if character == "-":
@@ -98,7 +133,10 @@ def checksum(line: str) -> int:
 
 
 def field(line: str, start: int, end: int) -> str:
-    """Returns a slice of a line."""
+    """Returns a slice of a line.
+
+    返回某行的一个切片。
+    """
     return line[start:end]
 
 
@@ -110,12 +148,19 @@ def parse_exponential(text: str) -> float:
     written without an ``E``: ``-11606-4`` is ``-0.11606e-4``. A leading
     ``+`` or ``-`` before the mantissa is the sign of the value, and the sign
     before the exponent is the sign of the exponent.
+
+    读取 NORAD 的隐含小数点指数表示。
+
+    平运动的二阶导数与阻力项在存储时，小数点隐含在第一位数字之前，指数不写
+    ``E``：``-11606-4`` 即 ``-0.11606e-4``。尾数之前的 ``+`` 或 ``-`` 是值
+    的符号，指数之前的符号是指数的符号。
     """
     text = text.strip()
     if not text:
         return 0.0
     # The exponent is introduced by the last sign, once a mantissa digit is
     # in hand, so scan from the end.
+    # 指数由最后一个符号引入（此时已有尾数数字在手），故从末尾扫描。
     index = len(text) - 1
     while index > 0 and text[index] not in "+-":
         index -= 1
@@ -137,12 +182,16 @@ def parse_exponential(text: str) -> float:
 
 
 def parse_line_one(line: str) -> dict:
-    """Parses the first line by column index."""
+    """Parses the first line by column index.
+
+    按列索引解析第一行。
+    """
     epoch = field(line, 18, 32).strip()
     year = int(epoch[:2])
     fraction = float(epoch[2:])
     # The two digit year expands with the catalogue convention: 57 to 99 is
     # the twentieth century and 00 to 56 the twenty first.
+    # 两位年份按目录约定展开：57 至 99 是二十世纪，00 至 56 是二十一世纪。
     century = 1900 if year >= 57 else 2000
     return {
         "satellite_number": int(field(line, 2, 7)),
@@ -159,9 +208,13 @@ def parse_line_one(line: str) -> dict:
 
 
 def parse_line_two(line: str) -> dict:
-    """Parses the second line by column index."""
+    """Parses the second line by column index.
+
+    按列索引解析第二行。
+    """
     # The eccentricity is stored as a leading decimal: the column holds the
     # fractional digits and the decimal point is implied before the first.
+    # 偏心率以隐含的前导小数点存储：该列保存小数位，小数点隐含在第一位之前。
     eccentricity = float("0." + field(line, 26, 33).strip())
     return {
         "inclination_deg": float(field(line, 8, 16)),

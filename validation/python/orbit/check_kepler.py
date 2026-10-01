@@ -33,6 +33,39 @@ Usage:
 
 Exit status is zero when every quantity agrees within tolerance and one
 otherwise.
+
+用一份独立计算交叉核对 ApsisRS 的二体模型。
+
+读取由 ``cargo run -p apsis-rs --features orbit --example dump_kepler``
+写出的量，并只用标准库与 numpy 从轨道力学的闭式表达式重算。要点在于
+Python 侧是依据几何而非依据 Rust 代码写成的，故 Rust 公式中的错误会表现
+为不一致。
+
+所用的关系都是标准的：
+
+* 真近点角 ``nu`` 处的近焦点坐标位置与速度，
+
+      p = a (1 - e^2),  r = p / (1 + e cos nu)
+      x = r cos nu,  y = r sin nu
+      vx = -sqrt(mu / p) sin nu
+      vy =  sqrt(mu / p) (e + cos nu)
+
+  由 ``R3(O) R1(i) R3(w)`` 转入惯性系；
+* 活力公式 ``v^2 = mu (2/r - 1/a)``，用于独立于方向核对速率；
+* 比轨道能量 ``E = v^2/2 - mu/r``；
+* 开普勒第三定律给出的周期 ``T = 2 pi sqrt(a^3/mu)``；
+* 圆锥曲线半径 ``r = p / (1 + e cos nu)``。
+
+第二张表按相反方向核对：把状态转回根数，所恢复的根数必须等于产生它的
+那些。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/orbit/check_kepler.py [path]
+
+每个量都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -45,6 +78,8 @@ from pathlib import Path
 # The agreement is at the floating point level because both sides evaluate
 # the same closed forms. The tolerances are set to catch a transposed sign, a
 # radians/degrees slip, or a dropped rotation, not to allow a loose match.
+# 相符程度在浮点水平，因为两侧求的是相同闭式。这些容差是为捕获符号写反、
+# 弧度与度混淆，或漏掉的转动而设，并非为允许宽松匹配。
 LENGTH_TOLERANCE_KM = 1e-9
 VELOCITY_TOLERANCE_KMS = 1e-11
 ANGLE_TOLERANCE_RAD = 1e-12
@@ -53,11 +88,15 @@ RELATIVE_TOLERANCE = 1e-12
 DEFAULT_INPUT = Path("validation/data/expected/rust_kepler.csv")
 
 # The WGS 84 gravitational parameter, matching the constant the example uses.
+# WGS 84 引力参数，与示例所用的常量一致。
 MU = 398_600.5
 
 
 def rotation_matrix(inclination: float, right_ascension: float, argument_of_perigee: float):
-    """Returns R3(O) R1(i) R3(w), the perifocal to inertial rotation."""
+    """Returns R3(O) R1(i) R3(w), the perifocal to inertial rotation.
+
+    返回 R3(O) R1(i) R3(w)，即近焦点系到惯性系的转动。
+    """
     sw, cw = math.sin(argument_of_perigee), math.cos(argument_of_perigee)
     si, ci = math.sin(inclination), math.cos(inclination)
     so, co = math.sin(right_ascension), math.cos(right_ascension)
@@ -69,12 +108,18 @@ def rotation_matrix(inclination: float, right_ascension: float, argument_of_peri
 
 
 def apply(matrix, vector):
-    """Applies a 3x3 matrix to a vector."""
+    """Applies a 3x3 matrix to a vector.
+
+    把 3x3 矩阵施加于一个矢量。
+    """
     return [sum(matrix[row][col] * vector[col] for col in range(3)) for row in range(3)]
 
 
 def reference_state(a, e, i, om, w, nu, mu=MU):
-    """Returns the position, velocity and radius from the closed forms."""
+    """Returns the position, velocity and radius from the closed forms.
+
+    由闭式返回位置、速度与半径。
+    """
     p = a * (1.0 - e * e)
     radius = p / (1.0 + e * math.cos(nu))
     x = radius * math.cos(nu)
@@ -91,12 +136,18 @@ def reference_state(a, e, i, om, w, nu, mu=MU):
 
 
 def reference_period(a, mu=MU):
-    """Returns the orbital period from Kepler's third law."""
+    """Returns the orbital period from Kepler's third law.
+
+    由开普勒第三定律返回轨道周期。
+    """
     return 2.0 * math.pi * math.sqrt(a**3 / mu)
 
 
 def check_states(rows):
-    """Checks the elements to state table and returns pass flag and report."""
+    """Checks the elements to state table and returns pass flag and report.
+
+    检查「根数到状态」表，并返回通过标志与报告。
+    """
     worst = {
         "position": 0.0,
         "velocity": 0.0,
@@ -123,6 +174,7 @@ def check_states(rows):
         # The speed is checked through the vis-viva equation, which is
         # independent of the direction, and the energy through its own
         # closed form.
+        # 速率经活力公式核对，后者与方向无关；能量经其自身闭式核对。
         speed = math.sqrt(sum(component * component for component in rust_velocity))
         vis_viva = math.sqrt(mu := MU * (2.0 / math.hypot(*rust_position) - 1.0 / a))
         energy_reference = vis_viva * vis_viva / 2.0 - MU / math.hypot(*rust_position)
@@ -136,12 +188,16 @@ def check_states(rows):
         worst["energy"] = max(worst["energy"], energy_error)
 
         _ = speed  # the magnitude check is folded into the vis-viva step
+        # 速率大小核对已并入活力公式那一步。
 
     return worst
 
 
 def check_recovery(rows):
-    """Checks the state to elements table and returns the worst deviations."""
+    """Checks the state to elements table and returns the worst deviations.
+
+    检查「状态到根数」表，并返回最差偏差。
+    """
     worst = {
         "semi_major_axis": 0.0,
         "eccentricity": 0.0,
@@ -152,6 +208,7 @@ def check_recovery(rows):
     }
     for row in rows:
         # The input orbit for the second table is fixed by the example.
+        # 第二张表的输入轨道由示例固定。
         expected_a = 7_000.0
         expected_e = 0.3
         expected_i = 0.7
@@ -160,6 +217,7 @@ def check_recovery(rows):
         nu = float(row["true_anomaly_deg"])
 
         # The recovered semi-major axis and eccentricity must be unchanged.
+        # 所恢复的半长轴与偏心率必须不变。
         worst["semi_major_axis"] = max(
             worst["semi_major_axis"], abs(float(row["recovered_semi_major_axis_km"]) - expected_a)
         )
@@ -169,6 +227,8 @@ def check_recovery(rows):
         # The angles must be reproduced, modulo a full revolution. The
         # argument of perigee and the node are compared through the total
         # longitude, which is the quantity that is actually determined.
+        # 各角必须在相差整数圈的意义下被复现。近地点幅角与升交点经度经总
+        # 黄经比较，后者才是实际确定的量。
         recovered_lon = float(row["recovered_argument_of_perigee_rad"]) + float(
             row["recovered_right_ascension_rad"]
         )
@@ -185,7 +245,10 @@ def check_recovery(rows):
 
 
 def read_blocks(path: Path):
-    """Returns the two CSV blocks separated by a blank line."""
+    """Returns the two CSV blocks separated by a blank line.
+
+    返回以空行分隔的两个 CSV 块。
+    """
     text = path.read_text().splitlines()
     blocks: list[list[str]] = [[]]
     for line in text:

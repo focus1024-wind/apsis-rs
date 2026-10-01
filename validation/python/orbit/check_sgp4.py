@@ -13,6 +13,20 @@ Usage:
 
 Exit status is zero when every state agrees within tolerance and one
 otherwise.
+
+用参考库交叉核对 ApsisRS 的 SGP4 传播器。
+
+读取由 ``cargo run -p apsis-rs --features orbit --example dump_orbit`` 写出的
+状态，用 ``sgp4`` 参考实现传播同一批根数集，并报告每个根数集的最大位置与
+速度差异。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/orbit/check_sgp4.py [path]
+
+每个状态都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -30,6 +44,11 @@ from sgp4.model import Satrec, WGS72
 # velocity. They are far above the observed agreement, which is at the
 # floating point level, and far below the accuracy of the SGP4 theory
 # itself, which is on the order of a kilometer per day of propagation.
+#
+# 交叉核对的容差。
+#
+# 这些是本工作区对所传播位置与速度承诺的限值。它们远高于所观测到的相符
+# 程度（浮点水平），也远低于 SGP4 理论自身的精度（约为每传播一天一千米）。
 POSITION_TOLERANCE_KM = 1e-3
 VELOCITY_TOLERANCE_KMS = 1e-6
 
@@ -37,6 +56,7 @@ DEFAULT_INPUT = Path("validation/data/expected/rust_sgp4.csv")
 
 # The element sets, in the same order as the Rust example. They are the
 # historical test cases distributed with the reference implementation.
+# 各根数集，与 Rust 示例相同的次序。它们是随参考实现分发的历史测试用例。
 ELEMENT_SETS = [
     (
         "1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927",
@@ -58,14 +78,20 @@ ELEMENT_SETS = [
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
-    """Reads the Rust output rows."""
+    """Reads the Rust output rows.
+
+    读取 Rust 输出各行。
+    """
     with path.open(newline="") as handle:
         reader = csv.DictReader(handle)
         return [row for row in reader if row.get("set")]
 
 
 def reference_state(satellite: Satrec, minutes: float):
-    """Returns the reference position and velocity, or None on error."""
+    """Returns the reference position and velocity, or None on error.
+
+    返回参考位置与速度，出错时返回 None。
+    """
     error, position, velocity = satellite.sgp4_tsince(minutes)
     if error != 0:
         return None
@@ -109,6 +135,7 @@ def main(argv: list[str]) -> int:
 
         if rust_error and reference is None:
             # Both sides reject the instant, which is agreement.
+            # 两侧都拒绝该瞬时，这就是一致。
             continue
         if rust_error or reference is None:
             mismatched_errors += 1
