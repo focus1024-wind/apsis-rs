@@ -21,3 +21,4 @@ public standard.
 
 - [The simulation layer](sim.md)
 - [Glossary and formula conventions](glossary.md)
+- [Benchmark method and results](bench.md)

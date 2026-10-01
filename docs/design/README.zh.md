@@ -18,3 +18,4 @@
 
 - [仿真层](sim.md)
 - [术语与公式约定](glossary.zh.md)
+- [压测方法与报告](bench.zh.md)
