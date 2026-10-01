@@ -17,6 +17,15 @@
 ///
 /// Source: ITU-R Recommendation P.839-4, *Rain height model for prediction
 /// methods*, which tabulates the isotherm height on this grid.
+///
+/// 零度等温线的高度，单位为米。
+///
+/// 网格在行方向上自北纬 90 度到南纬 90 度，在列方向上自东经 0 度到
+/// 360 度，步长均为 1.5 度，故有 121 行 241 列。分数纬度或经度处的值
+/// 由周围四点之间的双线性插值求得。
+///
+/// 出处：ITU-R 建议书 P.839-4，*Rain height model for prediction methods*，
+/// 它在该网格上列出等温线高度。
 pub static ZERO_ISOTHERM_HEIGHT_METRES: [[u16; 241]; 121] = [
     [
         2096, 2096, 2096, 2096, 2096, 2096, 2096, 2096, 2096, 2096, 2096, 2096, 2096, 2096, 2096,

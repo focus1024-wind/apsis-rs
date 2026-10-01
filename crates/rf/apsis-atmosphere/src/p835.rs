@@ -21,6 +21,11 @@
 /// slightly different from the polar radius used elsewhere. It is the value
 /// that makes the geopotential height consistent with the tabulated
 /// profiles.
+///
+/// 用于势高转换的地球半径，单位为千米。
+///
+/// 建议书为标准大气固定了该值，它与别处所用的极半径略有不同。正是该值
+/// 使势高与所列廓线一致。
 const GEOPOTENTIAL_EARTH_RADIUS_KM: f64 = 6_356.766;
 
 /// Returns the geopotential height for a geometric height, in kilometers.
@@ -34,6 +39,17 @@ const GEOPOTENTIAL_EARTH_RADIUS_KM: f64 = 6_356.766;
 /// with `R` the fixed Earth radius of the standard atmosphere and `H` the
 /// geometric height. The geopotential height is always the smaller of the
 /// two.
+///
+/// 返回某几何高度对应的势高，单位为千米。
+///
+/// 关系为
+///
+/// ```text
+/// h_p = R H / (R + H)
+/// ```
+///
+/// 其中 `R` 是标准大气固定的地球半径，`H` 是几何高度。势高总是两者中较
+/// 小者。
 pub fn geopotential_height(geometric_height_km: f64) -> f64 {
     GEOPOTENTIAL_EARTH_RADIUS_KM * geometric_height_km
         / (GEOPOTENTIAL_EARTH_RADIUS_KM + geometric_height_km)
@@ -139,6 +155,21 @@ pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: 
 ///
 /// Source: ITU-R Recommendation P.453, which gives this expression for the
 /// refractive index of moist air.
+///
+/// 返回湿空气的无线电折射率，无量纲。
+///
+/// 关系为
+///
+/// ```text
+/// N = 77.6 P_d / T + 72 e / T + 3.75e5 e / T^2
+/// n = 1 + N 1e-6
+/// ```
+///
+/// 其中 `P_d` 是干空气气压，`e` 是水汽分压，两者均以百帕计；`T` 是
+/// 温度，以开尔文计。前两项是非色散折射率，第三项是使水汽产生强烈效应
+/// 的偶极项。
+///
+/// 出处：ITU-R 建议书 P.453，它给出湿空气折射率的这一表达式。
 pub fn radio_refractive_index(
     dry_pressure_hpa: f64,
     vapour_pressure_hpa: f64,

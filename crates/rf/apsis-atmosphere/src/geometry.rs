@@ -6,11 +6,17 @@ use core::f64::consts::PI;
 ///
 /// The elevation is measured from the horizon and the zenith angle from the
 /// vertical, so the two add to a right angle.
+///
+/// 返回某天顶角对应的仰角。
+///
+/// 仰角自地平量起，天顶角自垂线量起，故两者相加为直角。
 pub fn elevation_from_zenith(zenith_angle: f64) -> f64 {
     PI / 2.0 - zenith_angle
 }
 
 /// Returns the zenith angle for an elevation angle.
+///
+/// 返回某仰角对应的天顶角。
 pub fn zenith_to_elevation(elevation: f64) -> f64 {
     PI / 2.0 - elevation
 }
@@ -35,6 +41,23 @@ pub fn zenith_to_elevation(elevation: f64) -> f64 {
 /// parallel geometry it models.
 ///
 /// Returns infinity at or below the horizon, where no direct path exists.
+///
+/// 返回给定仰角下沿斜路径的大气质量。
+///
+/// 大气质量是穿过平坦大气的路径长度与垂直路径长度之比。对平面平行
+/// 大气它是仰角的余割，
+///
+/// ```text
+/// m = 1 / sin(elevation)
+/// ```
+///
+/// 故在天顶处为一，在地平处无界增长。平面平行假定在约十度仰角以下
+/// 失效，那里地球曲率使路径比该式更短，真实大气质量更小。
+///
+/// 该值在低仰角处不被截断。需要在地平附近取有限上界的调用方应自行
+/// 施加；本函数报告它所建模的平面平行几何。
+///
+/// 在地平及其以下不存在直接路径，返回无穷。
 pub fn air_mass(elevation: f64) -> f64 {
     let sine = elevation.sin();
     if sine <= 0.0 {

@@ -29,6 +29,10 @@ use apsis_rf::Decibel;
 ///
 /// The value accounts for the refraction of the ray in the lower atmosphere,
 /// which makes the Earth appear larger than it is.
+///
+/// 路径几何所用的地球有效半径，单位为千米。
+///
+/// 该值考虑了射线在低层大气中的折射，折射使地球显得比实际更大。
 const EFFECTIVE_EARTH_RADIUS_KM: f64 = 8_500.0;
 
 /// A mid latitude rain height, in kilometers above sea level.
@@ -37,20 +41,36 @@ const EFFECTIVE_EARTH_RADIUS_KM: f64 = 8_500.0;
 /// height of Recommendation P.839, which is tabulated as a function of
 /// latitude and longitude. Prefer [`rain_attenuation_at`], which looks the
 /// value up, over [`rain_attenuation`] with this constant.
+///
+/// 中纬度雨顶高度，以海拔千米计。
+///
+/// 建议书 P.618 从建议书 P.839 的零度等温线高度取雨顶高度，后者按纬度
+/// 与经度列表给出。相较用本常量调用 [`rain_attenuation`]，更宜用会查表
+/// 的 [`rain_attenuation_at`]。
 pub const DEFAULT_RAIN_HEIGHT_KM: f64 = 3.0;
 
 /// One term of a P.838-3 curve fit.
+///
+/// P.838-3 曲线拟合的一项。
 #[derive(Debug, Clone, Copy)]
 struct CurveTerm {
     /// The amplitude coefficient.
+    ///
+    /// 幅度系数。
     amplitude: f64,
     /// The centre of the term, on a base ten logarithmic frequency axis.
+    ///
+    /// 该项的中心，在十进对数频率轴上。
     centre: f64,
     /// The width of the term, on a base ten logarithmic frequency axis.
+    ///
+    /// 该项的宽度，在十进对数频率轴上。
     width: f64,
 }
 
 /// The coefficients of the `k` curve fit for horizontal polarisation.
+///
+/// 水平极化 `k` 曲线拟合的系数。
 const K_HORIZONTAL_TERMS: &[CurveTerm] = &[
     CurveTerm {
         amplitude: -5.339_80,
@@ -75,6 +95,8 @@ const K_HORIZONTAL_TERMS: &[CurveTerm] = &[
 ];
 
 /// The coefficients of the `k` curve fit for vertical polarisation.
+///
+/// 垂直极化 `k` 曲线拟合的系数。
 const K_VERTICAL_TERMS: &[CurveTerm] = &[
     CurveTerm {
         amplitude: -3.805_95,
@@ -99,6 +121,8 @@ const K_VERTICAL_TERMS: &[CurveTerm] = &[
 ];
 
 /// The coefficients of the `alpha` curve fit for horizontal polarisation.
+///
+/// 水平极化 `alpha` 曲线拟合的系数。
 const ALPHA_HORIZONTAL_TERMS: &[CurveTerm] = &[
     CurveTerm {
         amplitude: -0.143_18,
@@ -128,6 +152,8 @@ const ALPHA_HORIZONTAL_TERMS: &[CurveTerm] = &[
 ];
 
 /// The coefficients of the `alpha` curve fit for vertical polarisation.
+///
+/// 垂直极化 `alpha` 曲线拟合的系数。
 const ALPHA_VERTICAL_TERMS: &[CurveTerm] = &[
     CurveTerm {
         amplitude: -0.077_71,
@@ -157,32 +183,58 @@ const ALPHA_VERTICAL_TERMS: &[CurveTerm] = &[
 ];
 
 /// The linear coefficients of the `k` curve fits.
+///
+/// `k` 曲线拟合的线性系数。
 const K_SLOPE_HORIZONTAL: f64 = -0.189_61;
 /// The constant of the horizontal `k` curve fit.
+///
+/// 水平 `k` 曲线拟合的常数。
 const K_OFFSET_HORIZONTAL: f64 = 0.711_47;
 /// The linear coefficient of the vertical `k` curve fit.
+///
+/// 垂直 `k` 曲线拟合的线性系数。
 const K_SLOPE_VERTICAL: f64 = -0.163_98;
 /// The constant of the vertical `k` curve fit.
+///
+/// 垂直 `k` 曲线拟合的常数。
 const K_OFFSET_VERTICAL: f64 = 0.632_97;
 /// The linear coefficient of the horizontal `alpha` curve fit.
+///
+/// 水平 `alpha` 曲线拟合的线性系数。
 const ALPHA_SLOPE_HORIZONTAL: f64 = 0.678_49;
 /// The constant of the horizontal `alpha` curve fit.
+///
+/// 水平 `alpha` 曲线拟合的常数。
 const ALPHA_OFFSET_HORIZONTAL: f64 = -1.955_37;
 /// The linear coefficient of the vertical `alpha` curve fit.
+///
+/// 垂直 `alpha` 曲线拟合的线性系数。
 const ALPHA_SLOPE_VERTICAL: f64 = -0.053_739;
 /// The constant of the vertical `alpha` curve fit.
+///
+/// 垂直 `alpha` 曲线拟合的常数。
 const ALPHA_OFFSET_VERTICAL: f64 = 0.834_33;
 
 /// A rain attenuation result at a given elevation.
+///
+/// 给定仰角下的降雨衰减结果。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RainAttenuation {
     /// The specific attenuation, in decibels per kilometer.
+    ///
+    /// 比衰减，单位为分贝每千米。
     pub specific_db_per_km: f64,
     /// The effective path length through the rain, in kilometers.
+    ///
+    /// 穿过降雨的有效路径长度，单位为千米。
     pub path_length_km: f64,
     /// The total attenuation along the path, in decibels.
+    ///
+    /// 沿路径的总衰减，单位为分贝。
     pub attenuation_db: f64,
     /// The horizontal reduction factor, dimensionless and at most one.
+    ///
+    /// 水平缩减因子，无量纲且至多为一。
     pub horizontal_reduction: f64,
     /// The vertical adjustment factor, dimensionless.
     ///
@@ -190,16 +242,26 @@ pub struct RainAttenuation {
     /// of the two geometric path estimates. It is at most one when the path
     /// meets the rain layer at a steep angle and can exceed one at a shallow
     /// angle, which is the behaviour Recommendation P.618 gives.
+    ///
+    /// 垂直调整因子，无量纲。
+    ///
+    /// 该因子是有效路径长度与两个几何路径估计中较长者之比。当路径以陡
+    /// 角与雨层相交时至多为一，以浅角相交时可超过一，这正是建议书
+    /// P.618 所给出的行为。
     pub vertical_adjustment: f64,
 }
 
 impl RainAttenuation {
     /// Returns the total attenuation.
+    ///
+    /// 返回总衰减。
     pub fn attenuation(self) -> Decibel {
         Decibel::from_db(self.attenuation_db)
     }
 
     /// Returns `true` when every value is finite and not negative.
+    ///
+    /// 当每个值有限且非负时返回 `true`。
     pub fn is_valid(self) -> bool {
         self.specific_db_per_km.is_finite()
             && self.specific_db_per_km >= 0.0
@@ -214,12 +276,18 @@ impl RainAttenuation {
 ///
 /// The term is a Gaussian on a base ten logarithmic frequency axis, so the
 /// frequency must be in gigahertz and positive.
+///
+/// 求一个 P.838-3 曲线项。
+///
+/// 该项是十进对数频率轴上的高斯，故频率必须以吉赫兹计且为正。
 fn curve_term(term: CurveTerm, frequency_ghz: f64) -> f64 {
     let logarithm = frequency_ghz.log10();
     term.amplitude * (-((logarithm - term.centre) / term.width).powi(2)).exp()
 }
 
 /// Returns the `k` for a polarisation, before the elevation correction.
+///
+/// 返回某极化的 `k`，在仰角修正之前。
 fn base_k(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) -> f64 {
     let gaussian: f64 = terms
         .iter()
@@ -229,6 +297,8 @@ fn base_k(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) -> f
 }
 
 /// Returns the `alpha` for a polarisation, before the elevation correction.
+///
+/// 返回某极化的 `alpha`，在仰角修正之前。
 fn base_alpha(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) -> f64 {
     let gaussian: f64 = terms
         .iter()
@@ -252,6 +322,19 @@ fn base_alpha(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) 
 /// 1000 GHz.
 ///
 /// Source: ITU-R Recommendation P.838-3, equations 2 and 3.
+///
+/// 返回比衰减幂律的 P.838-3 系数。
+///
+/// 极化是电场与水平方向之间以弧度计的角度，故零为水平、直角为垂直。
+/// 仰角以弧度计。
+///
+/// 结果是关系 `gamma = k R^alpha` 中系数 `k` 与指数 `alpha` 的一对值，
+/// 其中降雨率以毫米每小时计，结果以分贝每千米计。
+///
+/// 频率、极化或仰角不可用时返回 `None`。该建议书针对 1 GHz 至 1000 GHz
+/// 的频率陈述。
+///
+/// 出处：ITU-R 建议书 P.838-3，式 2 与式 3。
 pub fn rain_coefficients(frequency: f64, polarisation: f64, elevation: f64) -> Option<(f64, f64)> {
     let frequency_ghz = frequency / 1.0e9;
     if !frequency_ghz.is_finite() || !(1.0..=1_000.0).contains(&frequency_ghz) {
@@ -290,6 +373,8 @@ pub fn rain_coefficients(frequency: f64, polarisation: f64, elevation: f64) -> O
     // of the elevation angle and the cosine of twice the polarisation tilt.
     // The elevation term vanishes at the zenith, where the distinction
     // between horizontal and vertical polarisation disappears.
+    // 仰角与极化通过仰角余弦的平方以及二倍极化倾角的余弦进入。仰角项在
+    // 天顶处消失，那里水平与垂直极化之别不复存在。
     let geometry_factor = elevation.cos().powi(2) * (2.0 * polarisation).cos();
     let k = 0.5 * (k_horizontal + k_vertical + (k_horizontal - k_vertical) * geometry_factor);
     let alpha = (k_horizontal * alpha_horizontal
@@ -305,6 +390,12 @@ pub fn rain_coefficients(frequency: f64, polarisation: f64, elevation: f64) -> O
 ///
 /// Returns `None` when the rain rate is negative, or when the coefficients
 /// are not available.
+///
+/// 返回雨中的比衰减，单位为分贝每千米。
+///
+/// 降雨率以毫米每小时计。
+///
+/// 降雨率为负，或系数不可用时返回 `None`。
 pub fn specific_rain_attenuation(
     rain_rate: f64,
     frequency: f64,
@@ -338,6 +429,22 @@ pub fn specific_rain_attenuation(
 /// below the horizon.
 ///
 /// Source: ITU-R Recommendation P.618-13, equations 1 through 10.
+///
+/// 返回沿斜路径的总降雨衰减。
+///
+/// 降雨率是在所关注时间百分比上被超过的值，以毫米每小时计。站的海拔
+/// 高度与雨层高度以千米计；没有本地值时，后者传
+/// [`DEFAULT_RAIN_HEIGHT_KM`]。
+///
+/// 方法即建议书 P.618 所述。斜路径长度由雨顶高度、站高与仰角得出，
+/// 并作地球曲率修正。随后两个缩减因子计入降雨的不均匀性：一个水平
+/// 因子，取决于比衰减、频率以及路径的水平投影；一个垂直因子，通过
+/// 路径穿越雨层的角度取决于纬度。
+///
+/// 降雨率、频率或仰角不可用，站高于雨层，或仰角在地平及其以下时返回
+/// `None`。
+///
+/// 出处：ITU-R 建议书 P.618-13，式 1 至式 10。
 pub fn rain_attenuation(
     rain_rate: f64,
     frequency: f64,
@@ -362,9 +469,11 @@ pub fn rain_attenuation(
     let specific = specific_rain_attenuation(rain_rate, frequency, polarisation, elevation)?;
 
     // Equation 2: the slant path length, with the Earth curvature term.
+    // 式 2：斜路径长度，含地球曲率项。
     let height_difference = rain_height_km - station_height_km;
     if height_difference <= 0.0 {
         // The station is at or above the rain layer, so the path is empty.
+        // 站在雨层处或其上，故路径为空。
         return Some(RainAttenuation {
             specific_db_per_km: specific,
             path_length_km: 0.0,
@@ -378,18 +487,22 @@ pub fn rain_attenuation(
         / ((sine * sine + 2.0 * height_difference / EFFECTIVE_EARTH_RADIUS_KM).sqrt() + sine);
 
     // Equation 3: the horizontal projection of the slant path.
+    // 式 3：斜路径的水平投影。
     let horizontal_length = (slant_length * elevation.cos()).abs();
 
     // Equation 6: the horizontal reduction factor.
+    // 式 6：水平缩减因子。
     let frequency_ghz = frequency / 1.0e9;
     let horizontal_reduction = 1.0
         / (1.0 + 0.78 * (horizontal_length * specific / frequency_ghz).sqrt()
             - 0.38 * (1.0 - (-2.0 * horizontal_length).exp()));
 
     // Equation 7: the angle at which the path crosses the rain layer.
+    // 式 7：路径穿越雨层的角度。
     let eta = (height_difference / (horizontal_length * horizontal_reduction)).atan();
 
     // Equation 8: the longer of the two path estimates.
+    // 式 8：两个路径估计中较长者。
     let path_length = if eta > elevation {
         horizontal_length * horizontal_reduction / elevation.cos()
     } else {
@@ -397,10 +510,13 @@ pub fn rain_attenuation(
     };
 
     // Equation 9: the vertical adjustment factor.
+    // 式 9：垂直调整因子。
     //
     // The exponential takes the elevation in degrees, not radians, because
     // the coefficients of 31 and 0.45 were fitted with degrees. The sine
     // takes the elevation in radians, as usual.
+    // 指数以度而非弧度接收仰角，因为 31 与 0.45 两个系数是以度拟合的。
+    // 正弦照常以弧度接收仰角。
     let latitude_magnitude = latitude.abs();
     let xi = if latitude_magnitude < 36.0 {
         36.0 - latitude_magnitude
@@ -418,6 +534,7 @@ pub fn rain_attenuation(
                     - 0.45));
 
     // Equation 10: the effective path length and the attenuation.
+    // 式 10：有效路径长度与衰减。
     let effective_length = path_length * vertical_adjustment;
     Some(RainAttenuation {
         specific_db_per_km: specific,
@@ -432,6 +549,10 @@ pub fn rain_attenuation(
 /// horizontal.
 ///
 /// This is a convenience for the two cases that are quoted by name.
+///
+/// 返回以相对水平倾角描述的极化所对应的弧度角。
+///
+/// 这是为两种常被具名引用的情形提供的便利。
 pub const fn polarisation_tilt(degrees_from_horizontal: f64) -> f64 {
     degrees_from_horizontal * core::f64::consts::PI / 180.0
 }
@@ -451,6 +572,19 @@ pub const fn polarisation_tilt(degrees_from_horizontal: f64) -> f64 {
 ///
 /// Source: the rain height is from ITU-R Recommendation P.839-4 and the path
 /// method from ITU-R Recommendation P.618-13.
+///
+/// 返回沿斜路径的总降雨衰减，雨顶高度取自建议书 P.839 模型。
+///
+/// 这与 [`rain_attenuation`] 是同一计算，只是雨层高度由给定纬经度处列表
+/// 给出的零度等温线高度查得，而非由调用方提供。除非有本地实测的等温线
+/// 高度，否则宜用此形式。
+///
+/// 站高必须给出；海拔为零的站传零。
+///
+/// 坐标不可用，或其他任何参数被 [`rain_attenuation`] 拒绝时返回 `None`。
+///
+/// 出处：雨顶高度来自 ITU-R 建议书 P.839-4，路径方法来自 ITU-R 建议书
+/// P.618-13。
 pub fn rain_attenuation_at(
     rain_rate: f64,
     frequency: f64,

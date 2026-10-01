@@ -28,42 +28,89 @@ use core::f64::consts::E;
 /// The coefficients are the ones tabulated in table 1 of ITU-R P.676-12. The
 /// first field is the line frequency in gigahertz and the rest are the
 /// dimensionless coefficients of the line.
+///
+/// 一条氧吸收谱线。
+///
+/// 各系数即 ITU-R P.676-12 表 1 所列。第一个字段是线频率，以吉赫兹计；
+/// 其余为谱线的无量纲系数。
 #[derive(Debug, Clone, Copy)]
 struct OxygenLine {
     /// The line frequency, in gigahertz.
+    ///
+    /// 线频率，以吉赫兹计。
+    ///
+    /// 线频率，以吉赫兹计。
     f0: f64,
     /// Line strength coefficient.
+    ///
+    /// 谱线强度系数。
+    ///
+    /// 谱线强度系数。
     a1: f64,
     /// Temperature dependence of the line strength.
+    ///
+    /// 谱线强度的温度依赖。
+    ///
+    /// 谱线强度的温度依赖。
     a2: f64,
     /// Line width coefficient.
+    ///
+    /// 谱线宽度系数。
+    ///
+    /// 谱线宽度系数。
     a3: f64,
     /// Pressure dependence of the line width.
+    ///
+    /// 谱线宽度的气压依赖。
+    ///
+    /// 谱线宽度的气压依赖。
     a4: f64,
     /// Pressure shift coefficient.
+    ///
+    /// 气压频移系数。
     a5: f64,
     /// Mixing ratio dependence of the pressure shift.
+    ///
+    /// 气压频移的混合比依赖。
     a6: f64,
 }
 
 /// One water vapour absorption line.
 ///
 /// The coefficients are the ones tabulated in table 2 of ITU-R P.676-12.
+///
+/// 一条水汽吸收谱线。
+///
+/// 各系数即 ITU-R P.676-12 表 2 所列。
 #[derive(Debug, Clone, Copy)]
 struct WaterLine {
     /// The line frequency, in gigahertz.
+    ///
+    /// 线频率，以吉赫兹计。
     f0: f64,
     /// Line strength coefficient.
+    ///
+    /// 谱线强度系数。
     b1: f64,
     /// Temperature dependence of the line strength.
+    ///
+    /// 谱线强度的温度依赖。
     b2: f64,
     /// Line width coefficient.
+    ///
+    /// 谱线宽度系数。
     b3: f64,
     /// Pressure dependence of the line width.
+    ///
+    /// 谱线宽度的气压依赖。
     b4: f64,
     /// Water vapour dependence of the line width.
+    ///
+    /// 谱线宽度的水汽依赖。
     b5: f64,
     /// Temperature dependence of the water vapour term.
+    ///
+    /// 水汽项的温度依赖。
     b6: f64,
 }
 
@@ -72,6 +119,11 @@ struct WaterLine {
 /// The first thirty seven entries are the fine structure of the 60 GHz
 /// complex, followed by the isolated line at 118.75 GHz and six lines in the
 /// submillimetre region.
+///
+/// ITU-R P.676-12 表 1 的氧吸收谱线。
+///
+/// 前三十七项是 60 GHz 复合体的精细结构，其后是 118.75 GHz 处的孤立线
+/// 以及亚毫米波段的六条线。
 const OXYGEN_LINES: &[OxygenLine] = &[
     OxygenLine {
         f0: 50.474_214,
@@ -472,6 +524,8 @@ const OXYGEN_LINES: &[OxygenLine] = &[
 ];
 
 /// The water vapour absorption lines of table 2 of ITU-R P.676-12.
+///
+/// ITU-R P.676-12 表 2 的水汽吸收谱线。
 const WATER_LINES: &[WaterLine] = &[
     WaterLine {
         f0: 22.235_080,
@@ -795,13 +849,24 @@ const WATER_LINES: &[WaterLine] = &[
 /// The pressure is the dry air pressure, as the recommendation specifies. The
 /// water vapour density is separate because the partial pressure of water
 /// vapour is derived from it.
+///
+/// 气体衰减所依赖的大气状态。
+///
+/// 气压是干空气气压，如建议书所规定。水汽密度单列，因为水汽分压由它
+/// 导出。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Atmosphere {
     /// The dry air pressure, in hectopascals.
+    ///
+    /// 干空气气压，以百帕计。
     pub pressure_hpa: f64,
     /// The water vapour density, in grams per cubic meter.
+    ///
+    /// 水汽密度，以克每立方米计。
     pub water_vapour_density: f64,
     /// The temperature, in kelvin.
+    ///
+    /// 温度，以开尔文计。
     pub temperature_k: f64,
 }
 
@@ -811,6 +876,11 @@ impl Atmosphere {
     /// The values are the ones the recommendation uses for its reference
     /// curves: a dry air pressure of 1013.25 hPa, a water vapour density of
     /// 7.5 g/m^3, and a temperature of 288.15 K.
+    ///
+    /// 平均海平面处的 ITU-R 参考大气。
+    ///
+    /// 各值即该建议书用于其参考曲线者：干空气气压 1013.25 hPa，水汽
+    /// 密度 7.5 g/m^3，温度 288.15 K。
     pub const REFERENCE: Self = Self {
         pressure_hpa: 1_013.25,
         water_vapour_density: 7.5,
@@ -818,6 +888,8 @@ impl Atmosphere {
     };
 
     /// Creates an atmosphere from its three parameters.
+    ///
+    /// 由其三个参数创建大气。
     pub const fn new(pressure_hpa: f64, water_vapour_density: f64, temperature_k: f64) -> Self {
         Self {
             pressure_hpa,
@@ -830,11 +902,18 @@ impl Atmosphere {
     ///
     /// The relation is `e = rho T / 216.7`, which follows from the ideal gas
     /// law with the molar masses of water and dry air.
+    ///
+    /// 返回水汽分压，以百帕计。
+    ///
+    /// 关系为 `e = rho T / 216.7`，它由理想气体定律连同水与干空气的摩尔
+    /// 质量得出。
     pub fn water_vapour_partial_pressure(self) -> f64 {
         self.water_vapour_density * self.temperature_k / 216.7
     }
 
     /// Returns `true` when the state describes a physical atmosphere.
+    ///
+    /// 当该状态描述一个物理大气时返回 `true`。
     pub fn is_valid(self) -> bool {
         self.pressure_hpa.is_finite()
             && self.pressure_hpa > 0.0
@@ -869,11 +948,13 @@ pub fn specific_attenuation_dry_air(frequency_ghz: f64, atmosphere: Atmosphere) 
     let mut sum = 0.0;
     for line in OXYGEN_LINES {
         // Equations 5 and 6: the line width and the pressure shift.
+        // 式 5 与式 6：谱线宽度与气压频移。
         let width = line.a3 * 1.0e-4 * (p * theta.powf(0.8 - line.a4) + 1.1 * e * theta);
         let width = (width * width + 2.25e-6).sqrt();
         let shift = (line.a5 + line.a6 * theta) * 1.0e-4 * (p + e) * theta.powf(0.8);
 
         // Equation 4: the line shape factor.
+        // 式 4：线型因子。
         let shape = frequency_ghz / line.f0
             * ((width - shift * (line.f0 - frequency_ghz))
                 / ((line.f0 - frequency_ghz).powi(2) + width * width)
@@ -881,11 +962,13 @@ pub fn specific_attenuation_dry_air(frequency_ghz: f64, atmosphere: Atmosphere) 
                     / ((line.f0 + frequency_ghz).powi(2) + width * width));
 
         // Equation 3: the line strength.
+        // 式 3：谱线强度。
         let strength = line.a1 * 1.0e-7 * p * theta.powi(3) * E.powf(line.a2 * (1.0 - theta));
         sum += strength * shape;
     }
 
     // The non-resonant Debye spectrum, equation 8.
+    // 非共振 Debye 谱，式 8。
     let d = 5.6e-4 * (p + e) * theta.powf(0.8);
     let debye = frequency_ghz
         * p
@@ -924,6 +1007,7 @@ pub fn specific_attenuation_water_vapour(
     for line in WATER_LINES {
         // Equation 7: the line width, which has a different form from the
         // oxygen case.
+        // 式 7：谱线宽度，其形式与氧的情形不同。
         let width =
             line.b3 * 1.0e-4 * (p * theta.powf(line.b4) + line.b5 * e * theta.powf(line.b6));
         let width = 0.535 * width
@@ -934,6 +1018,7 @@ pub fn specific_attenuation_water_vapour(
                 + width / ((line.f0 + frequency_ghz).powi(2) + width * width));
 
         // Equation 3 for the water vapour lines.
+        // 对水汽谱线的式 3。
         let strength = line.b1 * 1.0e-1 * e * theta.powf(3.5) * E.powf(line.b2 * (1.0 - theta));
         sum += strength * shape;
     }

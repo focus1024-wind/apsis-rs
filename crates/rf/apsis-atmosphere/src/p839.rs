@@ -16,12 +16,18 @@
 use crate::p839_table::ZERO_ISOTHERM_HEIGHT_METRES;
 
 /// The grid resolution of the tabulated isotherm height, in degrees.
+///
+/// 列表等温线高度的网格分辨率，单位为度。
 const STEP_DEGREES: f64 = 1.5;
 
 /// The number of rows in the table, running from north to south.
+///
+/// 表中的行数，自北向南排列。
 const ROWS: usize = 121;
 
 /// The number of columns in the table, running from east to east.
+///
+/// 表中的列数，自东向东排列。
 const COLUMNS: usize = 241;
 
 /// The offset added to the isotherm height to obtain the rain height, in
@@ -30,6 +36,11 @@ const COLUMNS: usize = 241;
 /// The recommendation states that the rain height is the isotherm height
 /// plus 0.36 km, which represents the depth of the melting layer below the
 /// isotherm.
+///
+/// 加到等温线高度上以获得雨顶高度的偏移，单位为千米。
+///
+/// 建议书指出雨顶高度是等温线高度加 0.36 km，它代表等温线以下融化层的
+/// 深度。
 pub const RAIN_HEIGHT_OFFSET_KM: f64 = 0.36;
 
 /// Returns the height of the zero degree isotherm at a location, in
@@ -45,6 +56,15 @@ pub const RAIN_HEIGHT_OFFSET_KM: f64 = 0.36;
 ///
 /// Source: ITU-R Recommendation P.839-4, equation 1 and the tabulated
 /// isotherm height.
+///
+/// 返回某位置零度等温线的高度，以平均海平面以上千米计。
+///
+/// 纬度以度计、北正；经度以度计、东正。该值由列表网格双线性插值得到，
+/// 经度先归约到 `[0, 360)`，故任何约定都被接受。
+///
+/// 任一坐标非有限，或纬度超出网格范围时返回 `None`。
+///
+/// 出处：ITU-R 建议书 P.839-4，式 1 及所列等温线高度。
 pub fn zero_isotherm_height(latitude: f64, longitude: f64) -> Option<f64> {
     if !latitude.is_finite() || !longitude.is_finite() {
         return None;
@@ -55,12 +75,14 @@ pub fn zero_isotherm_height(latitude: f64, longitude: f64) -> Option<f64> {
 
     // The rows run from north to south, so the row index grows as the
     // latitude falls.
+    // 各行自北向南排列，故行下标随纬度下降而增大。
     let row_position = (90.0 - latitude) / STEP_DEGREES;
     let row_lower = (row_position.floor() as usize).min(ROWS - 1);
     let row_upper = (row_lower + 1).min(ROWS - 1);
     let row_fraction = row_position - row_lower as f64;
 
     // The columns run from 0 to 360 degrees east, wrapping at the seam.
+    // 各列自东经 0 度到 360 度排列，在接缝处环绕。
     let longitude = longitude.rem_euclid(360.0);
     let column_position = longitude / STEP_DEGREES;
     let column_lower = (column_position.floor() as usize).min(COLUMNS - 1);
@@ -71,6 +93,7 @@ pub fn zero_isotherm_height(latitude: f64, longitude: f64) -> Option<f64> {
         |row: usize, column: usize| f64::from(ZERO_ISOTHERM_HEIGHT_METRES[row][column]) / 1000.0;
 
     // Bilinear interpolation.
+    // 双线性插值。
     let top = sample(row_lower, column_lower)
         + (sample(row_lower, column_upper) - sample(row_lower, column_lower)) * column_fraction;
     let bottom = sample(row_upper, column_lower)
@@ -84,11 +107,19 @@ pub fn zero_isotherm_height(latitude: f64, longitude: f64) -> Option<f64> {
 /// [`RAIN_HEIGHT_OFFSET_KM`], as the recommendation defines it.
 ///
 /// Returns `None` when the coordinates are not usable.
+///
+/// 返回某位置的雨顶高度，以平均海平面以上千米计。
+///
+/// 它是零度等温线高度加 [`RAIN_HEIGHT_OFFSET_KM`]，如建议书所定义。
+///
+/// 坐标不可用时返回 `None`。
 pub fn rain_height(latitude: f64, longitude: f64) -> Option<f64> {
     Some(zero_isotherm_height(latitude, longitude)? + RAIN_HEIGHT_OFFSET_KM)
 }
 
 /// Returns the grid resolution of the tabulated isotherm height, in degrees.
+///
+/// 返回列表等温线高度的网格分辨率，单位为度。
 pub const fn grid_step_degrees() -> f64 {
     STEP_DEGREES
 }
