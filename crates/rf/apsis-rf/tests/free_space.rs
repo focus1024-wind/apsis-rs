@@ -1,4 +1,6 @@
 //! Tests for free space propagation.
+//!
+//! 自由空间传播的测试。
 
 use apsis_core::constant::SPEED_OF_LIGHT;
 use apsis_rf::{Gain, free_space_path_loss, free_space_received_ratio, wavelength};
@@ -9,8 +11,10 @@ const TOLERANCE: f64 = 1e-9;
 fn wavelength_is_the_speed_of_light_over_frequency() {
     assert!((wavelength(SPEED_OF_LIGHT).expect("valid") - 1.0).abs() < TOLERANCE);
     // A frequency of 300 MHz has a wavelength of about one meter.
+    // 300 MHz 的频率波长约为米。
     assert!((wavelength(300.0e6).expect("valid") - 0.999_308).abs() < 1e-5);
     // The same relation holds for a microwave frequency.
+    // 同一关系对微波频率也成立。
     assert!((wavelength(12.0e9).expect("valid") - 0.024_982_7).abs() < 1e-6);
 }
 
@@ -26,6 +30,7 @@ fn wavelength_rejects_invalid_frequencies() {
 fn path_loss_matches_the_closed_form() {
     // Attenuation over one meter at one meter wavelength: the ratio is
     // (4 pi)^2, about 21.98 dB.
+    // 一米波长下一米距离的衰减：比值为 (4 pi)^2，约 21.98 dB。
     let loss = free_space_path_loss(1.0, SPEED_OF_LIGHT).expect("valid arguments");
     let expected = 10.0 * (4.0 * core::f64::consts::PI).powi(2).log10();
     assert!((loss.db() - expected).abs() < 1e-9, "loss {}", loss.db());
@@ -36,12 +41,16 @@ fn path_loss_matches_the_closed_form() {
 fn path_loss_matches_the_engineering_form() {
     // The form used in link budgets, with distance in kilometers and
     // frequency in megahertz,
+    // 链路预算中所用的形式，距离以千米、频率以兆赫兹计，
     //
     //   L = 32.44 + 20 log10(d_km) + 20 log10(f_MHz)
+    //    L = 32.44 + 20 log10(d_km) + 20 log10(f_MHz)
     //
     // has a constant that follows from the speed of light rounded to
     // 299 792 458 m/s, and agrees with the expression used here to the
     // precision of that constant.
+    // 其常数由舍入到 299 792 458 m/s 的光速得出，并在该常量的精度内与此处所用的
+    // 表达式一致。
     let distance_km = 1_000.0;
     let frequency_mhz = 12_000.0;
     let loss = free_space_path_loss(distance_km * 1_000.0, frequency_mhz * 1.0e6)
@@ -74,6 +83,7 @@ fn a_higher_frequency_increases_the_loss() {
 fn a_zero_or_negative_distance_is_rejected() {
     // A zero distance is outside the far field range where the expression
     // applies, and would give an infinite loss in decibels.
+    // 零距离在该表达式所适用的远场范围之外，会给出以分贝计的无穷损耗。
     assert_eq!(free_space_path_loss(0.0, 1.0e9), None);
     assert_eq!(free_space_path_loss(-1.0, 1.0e9), None);
 }
@@ -105,6 +115,9 @@ fn a_large_receive_gain_can_exceed_the_spreading_loss() {
     // ratio. This is the near field of a large antenna pair and is the
     // reason a link budget cannot be read without also checking the
     // distance regime.
+    // 两个 40 dBi 的天线，在十米与 12 GHz 下。那里的扩散损耗约为 74 dB，故 80 dB 的
+    // 合成增益留下正的比值。这是一对大天线的近场，也正是链路预算不能在不检查距离
+    // 区间的情况下阅读的原因。
     let ratio = free_space_received_ratio(
         10.0,
         12.0e9,

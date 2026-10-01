@@ -1,4 +1,6 @@
 //! Tests for the decibel scale.
+//!
+//! 分贝尺度的测试。
 
 use apsis_rf::Decibel;
 
@@ -10,6 +12,7 @@ fn unity_and_doubling_have_the_expected_readings() {
     assert!((Decibel::UNITY.ratio() - 1.0).abs() < TOLERANCE);
     // Three decibels is a ratio of 1.9953, not exactly two, which is the
     // reason the doubling constant is an approximation in practice.
+    // 三分贝是 1.9953 的比而非恰好二，这正是加倍常量在实践中是近似的原因。
     assert!((Decibel::DOUBLING.db() - 3.010_299_956_639_812).abs() < TOLERANCE);
     assert!((Decibel::DOUBLING.ratio() - 2.0).abs() < TOLERANCE);
 }
@@ -35,6 +38,7 @@ fn a_ratio_of_ten_is_ten_decibels() {
 fn amplitude_ratios_use_twenty_per_decade() {
     // A voltage ratio of ten is twenty decibels, because power is
     // proportional to the square of the amplitude.
+    // 电压比十即二十分贝，因为功率与幅度的平方成正比。
     let value = Decibel::from_amplitude_ratio(10.0).expect("positive");
     assert!((value.db() - 20.0).abs() < TOLERANCE);
     assert!((value.amplitude_ratio() - 10.0).abs() < 1e-9);
@@ -52,10 +56,12 @@ fn non_positive_ratios_are_rejected() {
 #[test]
 fn addition_multiplies_the_ratio() {
     // The exact doubling constant added to itself quadruples the ratio.
+    // 精确的加倍常量自加使其比变为四倍。
     let total = Decibel::DOUBLING + Decibel::DOUBLING;
     assert!((total.ratio() - 4.0).abs() < 1e-9);
 
     // Two ten decibel gains make a gain of one hundred.
+    // 两个十分贝增益合成一百倍增益。
     let decades = Decibel::from_db(10.0) + Decibel::from_db(10.0);
     assert!((decades.db() - 20.0).abs() < TOLERANCE);
     assert!((decades.ratio() - 100.0).abs() < 1e-9);

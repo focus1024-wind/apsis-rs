@@ -6,6 +6,12 @@
 //! with a line-by-line implementation of the recommendation and are recorded
 //! here so that a change to the line tables or the formulae shows up as a
 //! failing assertion.
+//!
+//! 气体衰减的测试。
+//!
+//! 期望值是 ITU-R 建议书 P.676-12 对参考大气的值：干空气气压 1013.25 hPa、水汽
+//! 密度 7.5 g/m^3、温度 288.15 K。它们由该建议书的逐线实现产生并记录在此，使对
+//! 线表或公式的改动表现为断言失败。
 
 use apsis_atmosphere::{
     Atmosphere, equivalent_heights, specific_attenuation, specific_attenuation_dry_air,
@@ -16,9 +22,15 @@ use apsis_atmosphere::{
 ///
 /// The implementation reproduces the reference to about twelve significant
 /// digits, so this allows for the rounding of the recorded values.
+///
+/// 比衰减的容差，单位为分贝每千米。
+///
+/// 该实现把参考值复现到约十二位有效数字，故此值容许所记录值的舍入。
 const TOLERANCE: f64 = 1e-6;
 
 /// The reference atmosphere of the recommendation.
+///
+/// 该建议书的参考大气。
 fn reference() -> Atmosphere {
     Atmosphere::REFERENCE
 }
@@ -42,6 +54,7 @@ fn the_water_vapour_partial_pressure_follows_the_ideal_gas_law() {
 #[test]
 fn dry_air_attenuation_matches_the_recommendation() {
     // The recorded values are from the reference implementation of P.676-12.
+    // 所记录的值来自 P.676-12 的参考实现。
     let cases = [
         (1.0, 0.005_388_658_168),
         (10.0, 0.008_224_416_703),
@@ -93,11 +106,13 @@ fn the_two_contributions_add() {
 fn the_oxygen_complex_dominates_near_sixty_gigahertz() {
     // The 60 GHz complex is a set of more than thirty lines, so the dry air
     // term is many orders of magnitude above the water vapour term there.
+    // 60 GHz 复合体是三十多条线的集合，故那里的干空气项比水汽项高许多个数量级。
     let frequency = 60.0;
     let dry = specific_attenuation_dry_air(frequency, reference()).expect("valid");
     let wet = specific_attenuation_water_vapour(frequency, reference()).expect("valid");
     // The dry air value is about 14.6 dB/km against 0.15 dB/km for water
     // vapour, a ratio near one hundred.
+    // 干空气值约为 14.6 dB/km，而水汽为 0.15 dB/km，比值接近一百。
     assert!(dry > 50.0 * wet, "dry {dry} wet {wet}");
 }
 
@@ -108,6 +123,7 @@ fn the_water_vapour_line_dominates_at_one_hundred_and_eighty_three_gigahertz() {
     let wet = specific_attenuation_water_vapour(frequency, reference()).expect("valid");
     assert!(wet > dry);
     // The line reaches over twenty decibels per kilometer.
+    // 该线达到每千米二十多分贝。
     assert!(wet > 20.0, "wet {wet}");
 }
 
@@ -115,6 +131,7 @@ fn the_water_vapour_line_dominates_at_one_hundred_and_eighty_three_gigahertz() {
 fn attenuation_is_small_in_the_microwave_windows() {
     // Below 15 GHz the total specific attenuation is a hundredth of a
     // decibel per kilometer or less, which is why those bands are used.
+    // 15 GHz 以下总比衰减为每千米百分之一分贝或更少，这正是那些频段被使用的原因。
     for frequency in [1.0, 2.0, 4.0, 6.0, 10.0, 12.0, 15.0] {
         let total = specific_attenuation(frequency, reference()).expect("valid");
         assert!(total < 0.05, "{frequency} GHz gave {total} dB/km");
@@ -125,6 +142,7 @@ fn attenuation_is_small_in_the_microwave_windows() {
 fn dry_air_attenuation_peaks_inside_the_oxygen_complex() {
     // The strongest line is near 60.4 GHz, and the value there must exceed
     // the values on either side.
+    // 最强线在 60.4 GHz 附近，那里的值必须超过两侧的值。
     let peak = specific_attenuation_dry_air(60.434_778, reference()).expect("valid");
     for frequency in [50.0, 55.0, 65.0, 70.0] {
         let value = specific_attenuation_dry_air(frequency, reference()).expect("valid");
@@ -172,16 +190,20 @@ fn the_dry_height_is_capped_below_seventy_gigahertz() {
     // the lower frequencies. The bound is `10.7 rp^0.3`, where `rp` is the
     // ratio of the total barometric pressure, dry air plus water vapour, to
     // the reference pressure.
+    // 式 30 在较低频率处把干空气高度限制到一个依赖气压的界。该界为 `10.7 rp^0.3`，
+    // 其中 `rp` 是总气压（干空气加水汽）与参考气压之比。
     let atmosphere = reference();
     let total = atmosphere.pressure_hpa + atmosphere.water_vapour_partial_pressure();
     let rp = total / 1_013.25;
     let bound = 10.7 * rp.powf(0.3);
 
     // At 60 GHz the uncapped value is above the bound, so the bound applies.
+    // 在 60 GHz 处未设界的值高于该界，故界适用。
     let heights = equivalent_heights(60.0, atmosphere).expect("valid");
     assert!((heights.dry_km - bound).abs() < 1e-9, "{}", heights.dry_km);
 
     // Above 70 GHz no cap is applied, and the value exceeds it.
+    // 70 GHz 以上不施加界，而该值超过它。
     let high = equivalent_heights(118.0, atmosphere).expect("valid");
     assert!(high.dry_km > bound);
 }
@@ -242,6 +264,7 @@ fn slant_path_attenuation_scales_with_the_elevation() {
     let frequency = 12.0;
     let zenith = zenith_attenuation(frequency, reference()).expect("valid");
     // At thirty degrees elevation the path is twice the zenith path.
+    // 三十度仰角处路径是天顶路径的两倍。
     let thirty =
         slant_path_attenuation(frequency, core::f64::consts::PI / 6.0, reference()).expect("valid");
     assert!((thirty - 2.0 * zenith).abs() < 1e-9);
@@ -261,6 +284,7 @@ fn the_exact_slant_path_matches_the_recommendation() {
     use apsis_atmosphere::slant_path_attenuation_exact;
     // These values are from a reference implementation of the exact method
     // of ITU-R Recommendation P.676-12.
+    // 这些值来自 ITU-R 建议书 P.676-12 精确方法的参考实现。
     let cases: [(f64, f64, f64); 10] = [
         (12.0, 90.0, 0.059926619268),
         (12.0, 30.0, 0.119683280157),
@@ -293,6 +317,9 @@ fn the_exact_and_approximate_methods_agree_at_high_elevation() {
     // parallel geometry is exact. The recommendation notes that the
     // approximate method is intended only for the elevation range above
     // about five degrees and for rough work.
+    // 两种方法使用不同的表述，故即便在天顶（那里平面平行几何是精确的）它们也只相符
+    // 到百分之几而非精确相等。该建议书指出近似方法只意在于约五度以上的仰角范围以及
+    // 粗略工作。
     let exact = slant_path_attenuation_exact(12.0, core::f64::consts::FRAC_PI_2, reference())
         .expect("valid");
     let approximate =
@@ -307,6 +334,8 @@ fn the_exact_method_exceeds_the_approximate_one_at_low_elevation() {
     // At a low elevation the curved path through the thinning atmosphere is
     // shorter than the plane parallel estimate, and the refraction bends
     // the ray downward, so the two methods diverge.
+    // 在低仰角处，穿过变稀薄大气的弯曲路径比平面平行估计短，且折射使射线向下弯折，
+    // 故两种方法分歧。
     let elevation = 2.0_f64.to_radians();
     let exact = slant_path_attenuation_exact(12.0, elevation, reference()).expect("valid");
     let approximate = slant_path_attenuation(12.0, elevation, reference()).expect("valid");

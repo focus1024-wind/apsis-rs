@@ -1,4 +1,6 @@
 //! Tests for the atmospheric path geometry.
+//!
+//! 大气路径几何的测试。
 
 use apsis_atmosphere::{air_mass, elevation_from_zenith, zenith_to_elevation};
 use core::f64::consts::{FRAC_PI_2, FRAC_PI_4, FRAC_PI_6};
@@ -25,10 +27,13 @@ fn the_air_mass_is_the_cosecant_of_the_elevation() {
 #[test]
 fn known_elevations_give_known_air_masses() {
     // Thirty degrees is a cosecant of two.
+    // 三十度的余割为二。
     assert!((air_mass(FRAC_PI_6) - 2.0).abs() < 1e-9);
     // Forty five degrees is the square root of two.
+    // 四十五度是根号二。
     assert!((air_mass(FRAC_PI_4) - 2.0_f64.sqrt()).abs() < 1e-9);
     // Ten degrees is about 5.76.
+    // 十度约为 5.76。
     assert!((air_mass(10.0_f64.to_radians()) - 5.758_8).abs() < 1e-3);
 }
 

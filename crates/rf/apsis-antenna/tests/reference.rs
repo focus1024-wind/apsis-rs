@@ -1,4 +1,6 @@
 //! Tests for the ITU-R S.465 reference antenna pattern.
+//!
+//! ITU-R S.465 参考天线方向图的测试。
 
 use apsis_antenna::{
     PEAK_GAIN_OFFSET_DB, diameter_over_wavelength_from_peak_gain, main_lobe_break_angle,
@@ -10,12 +12,14 @@ const TOLERANCE: f64 = 1e-9;
 #[test]
 fn the_peak_gain_follows_the_recommendation() {
     // The recommendation gives 20 log10(D / lambda) + 7.7.
+    // 该建议书给出 20 log10(D / lambda) + 7.7。
     for ratio in [10.0_f64, 50.0, 100.0, 200.0, 1_000.0] {
         let expected = 20.0 * ratio.log10() + PEAK_GAIN_OFFSET_DB;
         let actual = reference_peak_gain(ratio).expect("valid ratio");
         assert!((actual - expected).abs() < TOLERANCE, "ratio {ratio}");
     }
     // A ratio of one hundred gives 47.7 dBi.
+    // 比值一百给出 47.7 dBi。
     assert!((reference_peak_gain(100.0).expect("valid") - 47.7).abs() < TOLERANCE);
 }
 
@@ -40,6 +44,7 @@ fn the_pattern_at_boresight_is_the_peak_gain() {
 #[test]
 fn the_main_lobe_falls_as_the_square_of_the_angle() {
     // Inside the main lobe the attenuation is 2.5e-3 (D/lambda phi)^2.
+    // 主瓣内衰减为 2.5e-3 (D/lambda phi)^2。
     let ratio = 100.0;
     let peak = reference_peak_gain(ratio).expect("valid");
     for angle_degrees in [0.05_f64, 0.1, 0.2, 0.3] {
@@ -56,6 +61,7 @@ fn the_main_lobe_falls_as_the_square_of_the_angle() {
 fn the_pattern_matches_recorded_values() {
     // These are the values of the recommendation for a ratio of one hundred,
     // computed independently from its equations.
+    // 这些是该建议书对比值一百的值，由其方程独立计算。
     let cases: [(f64, f64); 8] = [
         (0.1, 47.45),
         (0.5, 41.45),
@@ -81,6 +87,8 @@ fn the_pattern_matches_recorded_values_for_a_small_aperture() {
     // a floor angle of 48 degrees.
     // At exactly the floor angle the branch switches to the floor, so the
     // last value of the falling branch is approached from below.
+    // 比值五十使用小孔径分支，head 为 32，底限角为 48 度。
+    // 恰在底限角处该分支切换到取底限，故下降支的最后值是从下方趋近的。
     let cases: [(f64, f64); 6] = [
         (0.1, 41.616_900_087),
         (1.0, 35.429_400_087),
@@ -102,6 +110,7 @@ fn the_pattern_matches_recorded_values_for_a_small_aperture() {
 fn the_two_branches_meet_at_the_break_angle() {
     // The main lobe and the sidelobe region must agree at the junction, or
     // the pattern would jump.
+    // 主瓣与旁瓣区必须在交界处一致，否则方向图会跳变。
     for ratio in [50.0_f64, 100.0, 200.0, 500.0] {
         let peak = reference_peak_gain(ratio).expect("valid");
         let break_angle = main_lobe_break_angle(ratio).expect("valid");
@@ -124,6 +133,7 @@ fn the_two_branches_meet_at_the_break_angle() {
 fn the_break_angle_shrinks_as_the_aperture_grows() {
     // A larger antenna has a narrower main lobe, so the sidelobe region
     // begins sooner.
+    // 更大的天线主瓣更窄，故旁瓣区开始得更早。
     let small = main_lobe_break_angle(50.0).expect("valid");
     let medium = main_lobe_break_angle(100.0).expect("valid");
     let large = main_lobe_break_angle(400.0).expect("valid");
@@ -168,6 +178,7 @@ fn the_pattern_falls_monotonically_across_the_main_lobe() {
 fn the_beam_width_follows_from_the_main_lobe_law() {
     // Three decibels is reached at sqrt(3 / 2.5e-3) / (D/lambda) degrees
     // from boresight, so the full width is twice that.
+    // 三分贝在距视轴 sqrt(3 / 2.5e-3) / (D/lambda) 度处达到，故全宽是它的两倍。
     let ratio = 100.0;
     let width = reference_beam_width(ratio).expect("valid");
     let half_degrees = (3.0_f64 / 2.5e-3).sqrt() / ratio;
@@ -175,6 +186,7 @@ fn the_beam_width_follows_from_the_main_lobe_law() {
     assert!((width - expected).abs() < 1e-15);
 
     // The gain at half the beam width from boresight is three decibels down.
+    // 距视轴半个波束宽度处的增益低三分贝。
     let gain = reference_pattern_gain(ratio, width / 2.0).expect("valid");
     let peak = reference_peak_gain(ratio).expect("valid");
     assert!(

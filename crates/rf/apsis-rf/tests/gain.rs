@@ -1,4 +1,6 @@
 //! Tests for antenna gain.
+//!
+//! 天线增益的测试。
 
 use apsis_rf::{DIPOLE_OVER_ISOTROPIC_DB, Gain, HALF_WAVE_DIPOLE_RATIO};
 use core::f64::consts::PI;
@@ -13,6 +15,7 @@ fn named_gains_match_their_definitions() {
 
     // The linear ratio and the decibel offset are derived from each other,
     // so the two must agree.
+    // 线性比值与分贝偏移由彼此导出，故二者必须一致。
     assert!((Gain::HALF_WAVE_DIPOLE.ratio() - HALF_WAVE_DIPOLE_RATIO).abs() < 1e-15);
     assert!(
         (Gain::HALF_WAVE_DIPOLE.dbi().expect("positive") - DIPOLE_OVER_ISOTROPIC_DB).abs() < 1e-12
@@ -66,6 +69,7 @@ fn non_finite_readings_are_rejected() {
 #[test]
 fn effective_aperture_follows_the_standard_relation() {
     // A gain of one has an aperture of lambda^2 / (4 pi).
+    // 增益为一的孔径为 lambda^2 / (4 pi)。
     let gain = Gain::ISOTROPIC;
     let aperture = gain.effective_aperture(0.3).expect("valid wavelength");
     assert!((aperture - 0.3 * 0.3 / (4.0 * PI)).abs() < TOLERANCE);
@@ -78,6 +82,7 @@ fn a_larger_wavelength_needs_a_larger_aperture() {
     let large = gain.effective_aperture(0.1).expect("valid");
     assert!(large > small);
     // The aperture grows with the square of the wavelength.
+    // 孔径随波长的平方增大。
     assert!((large / small - 100.0).abs() < 1e-6);
 }
 

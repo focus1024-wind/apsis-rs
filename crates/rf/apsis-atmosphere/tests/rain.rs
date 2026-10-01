@@ -3,6 +3,11 @@
 //! The coefficient values are those of ITU-R Recommendation P.838-3,
 //! produced with a reference implementation of the recommendation and
 //! recorded here. The path results exercise the P.618-13 method.
+//!
+//! 降雨衰减的测试。
+//!
+//! 各系数值是 ITU-R 建议书 P.838-3 的值，由该建议书的参考实现产生并记录在此。
+//! 路径结果检验 P.618-13 方法。
 
 use apsis_atmosphere::{
     DEFAULT_RAIN_HEIGHT_KM, polarisation_tilt, rain_attenuation, rain_coefficients,
@@ -11,15 +16,25 @@ use apsis_atmosphere::{
 use core::f64::consts::{FRAC_PI_2, PI};
 
 /// Horizontal polarisation.
+///
+/// 水平极化。
 const HORIZONTAL: f64 = 0.0;
 /// Vertical polarisation.
+///
+/// 垂直极化。
 const VERTICAL: f64 = FRAC_PI_2;
 /// The zenith, where the two polarisations coincide.
+///
+/// 天顶，两种极化在那里重合。
 const ZENITH: f64 = FRAC_PI_2;
 /// A mid latitude elevation of thirty degrees.
+///
+/// 三十度的中纬度仰角。
 const THIRTY_DEGREES: f64 = PI / 6.0;
 
 /// The relative tolerance on the coefficient values.
+///
+/// 系数值的相对容差。
 const TOLERANCE: f64 = 1e-9;
 
 fn assert_relative(actual: f64, expected: f64, context: &str) {
@@ -34,6 +49,7 @@ fn assert_relative(actual: f64, expected: f64, context: &str) {
 fn coefficients_match_the_recommendation_at_the_zenith() {
     // At the zenith the elevation term vanishes, so horizontal and vertical
     // polarisation give the same coefficients.
+    // 天顶处仰角项消失，故水平与垂直极化给出相同的系数。
     let cases = [
         (12.0, 0.024_203_061_156_1, 1.151_599_196_3),
         (20.0, 0.093_876_937_766_6, 1.019_877_631_17),
@@ -70,6 +86,8 @@ fn horizontal_and_vertical_differ_off_the_zenith() {
     // elevation the vertical coefficient is the larger of the two, and the
     // two converge as the elevation rises and the geometry becomes
     // symmetric.
+    // 远离天顶时极化要紧。12 GHz 与低仰角下垂直系数是两者中较大者，随仰角升高、
+    // 几何变得对称，二者趋于一致。
     let low_elevation = 10.0_f64.to_radians();
     let horizontal = rain_coefficients(12.0e9, HORIZONTAL, low_elevation).expect("valid");
     let vertical = rain_coefficients(12.0e9, VERTICAL, low_elevation).expect("valid");
@@ -77,6 +95,7 @@ fn horizontal_and_vertical_differ_off_the_zenith() {
     assert_relative(vertical.0, 0.024_537_918_525_868_188, "vertical k");
 
     // At the zenith they coincide.
+    // 天顶处二者重合。
     let zenith_horizontal = rain_coefficients(12.0e9, HORIZONTAL, ZENITH).expect("valid");
     let zenith_vertical = rain_coefficients(12.0e9, VERTICAL, ZENITH).expect("valid");
     assert_relative(zenith_horizontal.0, zenith_vertical.0, "zenith k");
@@ -86,6 +105,7 @@ fn horizontal_and_vertical_differ_off_the_zenith() {
 fn circular_polarisation_lies_between_the_linear_cases() {
     // A tilt of forty five degrees is circular polarisation, whose
     // coefficients are the mean of the two linear cases.
+    // 四十五度倾角是圆极化，其系数是两种线极化情形的均值。
     let horizontal = rain_coefficients(12.0e9, HORIZONTAL, THIRTY_DEGREES).expect("valid");
     let vertical = rain_coefficients(12.0e9, VERTICAL, THIRTY_DEGREES).expect("valid");
     let circular =
@@ -98,6 +118,7 @@ fn circular_polarisation_lies_between_the_linear_cases() {
 fn the_coefficients_are_smooth_across_the_band() {
     // The curve fits are continuous, so a small change in frequency gives a
     // small change in the coefficients.
+    // 各曲线拟合是连续的，故频率的小变化给出系数的小变化。
     let mut previous = rain_coefficients(10.0e9, HORIZONTAL, ZENITH).expect("valid");
     for tenth in 101..=200 {
         let frequency = tenth as f64 * 0.1e9;
@@ -128,6 +149,7 @@ fn specific_attenuation_follows_the_power_law() {
     let (k, alpha) = rain_coefficients(frequency, HORIZONTAL, THIRTY_DEGREES).expect("valid");
     assert_relative(specific, k * rain_rate.powf(alpha), "specific attenuation");
     // At 12 GHz, thirty degrees elevation, and 20 mm/h this is 0.808 dB/km.
+    // 在 12 GHz、三十度仰角与 20 mm/h 下这是 0.808 dB/km。
     assert!(
         (specific - 0.808_128_772_7).abs() < 1e-6,
         "specific {specific}"
@@ -198,6 +220,9 @@ fn the_reduction_factors_are_physical() {
     // vertical adjustment is the ratio of two path estimates and can exceed
     // one when the path crosses the rain layer at a shallow angle, which is
     // the case Recommendation P.618 allows for.
+    // 水平缩减因子计入降雨并未填满路径的整个水平范围，故它至多为一。垂直调整是两个
+    // 路径估计之比，可在路径以浅角穿越雨层时超过一，这正是建议书 P.618 所容许的
+    // 情形。
     let result = rain_attenuation(
         20.0,
         12.0e9,
@@ -245,6 +270,8 @@ fn attenuation_grows_as_the_elevation_falls() {
 fn a_heavy_rain_event_gives_a_significant_attenuation() {
     // A 20 mm/h rain cell at 12 GHz and thirty degrees elevation gives a few
     // decibels, which is the order of magnitude a Ku band link must budget.
+    // 12 GHz、三十度仰角下 20 mm/h 的雨胞给出几分贝，这是 Ku 频段链路必须预算的量
+    // 级。
     let result = rain_attenuation(
         20.0,
         12.0e9,
@@ -335,6 +362,7 @@ fn an_elevation_at_the_horizon_is_rejected() {
 fn the_latitude_enters_through_the_vertical_adjustment() {
     // Below thirty six degrees the latitude term is nonzero, so the same
     // geometry gives a different result at two latitudes.
+    // 三十六度以下纬度项非零，故同一几何在两个纬度处给出不同结果。
     let temperate = rain_attenuation(
         20.0,
         12.0e9,

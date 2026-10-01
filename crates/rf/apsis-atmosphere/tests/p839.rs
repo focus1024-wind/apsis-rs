@@ -3,6 +3,11 @@
 //! The expected values are those of the recommendation's tabulated grid,
 //! read at the grid points and interpolated between them. They were produced
 //! with the reference implementation of the recommendation.
+//!
+//! ITU-R P.839-4 雨顶高度模型的测试。
+//!
+//! 期望值是该建议书所列网格的值，在网格点处读取并在其之间插值。它们由该建议书的
+//! 参考实现产生。
 
 use apsis_atmosphere::{
     RAIN_HEIGHT_OFFSET_KM, grid_step_degrees, rain_height, zero_isotherm_height,
@@ -12,6 +17,10 @@ use apsis_atmosphere::{
 ///
 /// The table is stored in metres, so the interpolation is exact to the
 /// resolution the recommendation publishes.
+///
+/// 插值高度的容差，单位为千米。
+///
+/// 该表以米存储，故插值在该建议书所发布的分辨率内是精确的。
 const TOLERANCE: f64 = 1e-9;
 
 #[test]
@@ -28,6 +37,7 @@ fn the_rain_height_offset_matches_the_recommendation() {
 fn values_at_grid_points_match_the_recommendation() {
     // These are the tabulated values at exact grid points, so no
     // interpolation is involved.
+    // 这些是精确网格点处所列的值，故不涉及插值。
     let cases = [
         (0.0, 0.0, 4.566),
         (45.0, 0.0, 2.356),
@@ -78,11 +88,13 @@ fn the_rain_height_is_the_isotherm_height_plus_the_offset() {
 fn longitude_wraps_at_the_seam() {
     // The grid runs to 360 degrees, which is the same meridian as zero, so
     // the height must be continuous across the seam.
+    // 网格延伸到 360 度，它与零度是同一子午线，故高度必须在接缝处连续。
     let at_zero = zero_isotherm_height(10.0, 0.0).expect("valid");
     let at_360 = zero_isotherm_height(10.0, 360.0).expect("valid");
     assert!((at_zero - at_360).abs() < TOLERANCE);
 
     // A negative longitude is the same as its positive equivalent.
+    // 负经度与其正等价经度相同。
     let negative = zero_isotherm_height(10.0, -10.0).expect("valid");
     let positive = zero_isotherm_height(10.0, 350.0).expect("valid");
     assert!((negative - positive).abs() < TOLERANCE);
@@ -92,6 +104,7 @@ fn longitude_wraps_at_the_seam() {
 fn the_height_is_bounded_by_the_table() {
     // Every tabulated value lies between the minimum and maximum of the
     // recommendation's global grid, which are about 0.006 km and 6.281 km.
+    // 每个所列值都落在该建议书全球网格的最小与最大之间，即约 0.006 km 与 6.281 km。
     for latitude in [-90.0, -45.0, 0.0, 45.0, 90.0] {
         for longitude in [0.0, 90.0, 180.0, 270.0] {
             let height = zero_isotherm_height(latitude, longitude).expect("valid coordinates");
@@ -106,6 +119,7 @@ fn the_height_is_bounded_by_the_table() {
 #[test]
 fn the_height_is_continuous_across_the_grid() {
     // The interpolation must not jump between neighbouring grid cells.
+    // 插值不得在相邻网格单元之间跳变。
     let mut previous = zero_isotherm_height(0.0, 0.0).expect("valid");
     for step in 1..=240 {
         let longitude = step as f64 * 1.5;
@@ -122,6 +136,7 @@ fn the_height_is_continuous_across_the_grid() {
 fn the_tropics_are_higher_than_the_poles() {
     // The isotherm is highest near the equator, where the atmosphere is
     // warmest, and lowest at high latitudes.
+    // 等温线在赤道附近最高（那里大气最暖），在高纬度最低。
     let equator = zero_isotherm_height(0.0, 100.0).expect("valid");
     let mid_latitude = zero_isotherm_height(50.0, 100.0).expect("valid");
     let pole = zero_isotherm_height(80.0, 100.0).expect("valid");

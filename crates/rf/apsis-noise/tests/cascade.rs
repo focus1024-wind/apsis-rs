@@ -1,4 +1,6 @@
 //! Tests for the noise cascade.
+//!
+//! 噪声级联的测试。
 
 use apsis_noise::{
     NoiseTemperature, Stage, cascade_noise_figure_db, cascade_temperature,
@@ -9,6 +11,8 @@ use apsis_rf::Gain;
 const TOLERANCE: f64 = 1e-9;
 
 /// A stage that adds the given temperature with the given gain in decibels.
+///
+/// 一级，以给定分贝增益加入给定温度。
 fn stage(temperature: f64, gain_dbi: f64) -> Stage {
     Stage::new(
         NoiseTemperature::from_kelvin(temperature),
@@ -38,6 +42,7 @@ fn an_empty_cascade_has_no_noise() {
 fn the_first_stage_dominates() {
     // A 100 K first stage with 20 dB of gain followed by a 1000 K second
     // stage contributes the second stage divided by 100.
+    // 100 K 的第一级带 20 dB 增益，其后接 1000 K 的第二级，贡献第二级除以 100。
     let cascade = [stage(100.0, 20.0), stage(1_000.0, 20.0)];
     let total = cascade_temperature(&cascade).expect("valid stages");
     assert!((total.kelvin() - 110.0).abs() < 1e-6, "{}", total.kelvin());
@@ -56,6 +61,7 @@ fn a_noiseless_stage_contributes_nothing() {
 #[test]
 fn the_friis_formula_matches_by_hand() {
     // Three stages: 50 K at 20 dB, 100 K at 10 dB, 200 K at 0 dB.
+    // 三级：50 K 配 20 dB、100 K 配 10 dB、200 K 配 0 dB。
     let cascade = [stage(50.0, 20.0), stage(100.0, 10.0), stage(200.0, 0.0)];
     let total = cascade_temperature(&cascade).expect("valid stages");
     let expected = 50.0 + 100.0 / 100.0 + 200.0 / (100.0 * 10.0);
@@ -67,6 +73,8 @@ fn a_lossy_component_ahead_of_the_receiver_raises_the_noise() {
     // A 3 dB loss is a gain of one half, and it contributes its own
     // temperature divided by the gain of the stages before it, which for a
     // loss is a division by a fraction and so an increase.
+    // 3 dB 损耗是二分之一增益，它贡献自身温度除以其前各级的增益，而对损耗而言即除以
+    // 一个分数，故是增大。
     let loss = Stage::new(
         NoiseTemperature::from_kelvin(0.0),
         Gain::from_dbi(-3.0).expect("finite"),
@@ -74,6 +82,7 @@ fn a_lossy_component_ahead_of_the_receiver_raises_the_noise() {
     let receiver = stage(100.0, 30.0);
     let total = cascade_temperature(&[loss, receiver]).expect("valid stages");
     // The receiver contributes 100 / 0.5012 = 199.5 K.
+    // 接收机贡献 100 / 0.5012 = 199.5 K。
     assert!(
         total.kelvin() > 199.0 && total.kelvin() < 200.0,
         "{}",
@@ -105,6 +114,8 @@ fn a_known_receiver_chain_gives_a_plausible_figure() {
     // A low noise amplifier at 1 dB and 30 dB gain followed by a mixer at
     // 10 dB and 0 dB gain. The cascade figure is close to the first stage
     // plus the second divided by the first stage's gain.
+    // 1 dB、30 dB 增益的低噪声放大器，其后接 10 dB、0 dB 增益的混频器。级联系数接近
+    // 第一级加上第二级除以第一级增益。
     let low_noise = Stage::from_noise_figure(1.0, 30.0).expect("valid");
     let mixer = Stage::from_noise_figure(10.0, 0.0).expect("valid");
     let figure = cascade_noise_figure_db(&[low_noise, mixer]).expect("valid stages");
@@ -143,6 +154,7 @@ fn the_conversion_helper_matches_the_method() {
 fn gain_ordering_matters() {
     // Placing the noisy stage first gives a worse cascade than placing it
     // second, which is why a low noise amplifier goes at the front.
+    // 把噪声大的级放在最前给出的级联比放在第二差，这正是低噪声放大器置于前端的原因。
     let noisy = stage(500.0, 10.0);
     let quiet = stage(20.0, 20.0);
     let quiet_first = cascade_temperature(&[quiet, noisy]).expect("valid");
