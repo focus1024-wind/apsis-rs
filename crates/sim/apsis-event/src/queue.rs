@@ -10,6 +10,11 @@ use std::collections::BinaryHeap;
 /// reversed on time. Ties on time are broken by the sequence number, and
 /// that comparison is also reversed so that the earlier sequence is the
 /// greater element.
+///
+/// 一个堆元素，其排序使最早的事件为最大者。
+///
+/// 标准库的堆是最大堆，故时间上的比较被反转。时间上的并列由序号打破，
+/// 而该比较也被反转，使较早的序号成为较大的元素。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Scheduled {
     time_bits: u64,
@@ -27,6 +32,8 @@ impl Ord for Scheduled {
         // Reverse the time so that the smallest time is the greatest heap
         // element. For equal times, the smaller sequence is the greater
         // element, so an earlier scheduled event is delivered first.
+        // 反转时间，使最小的时间成为最大的堆元素。时间相等时，较小的序号
+        // 是较大的元素，故较早调度的事件先被投递。
         other
             .time_bits
             .cmp(&self.time_bits)
@@ -44,13 +51,24 @@ impl PartialOrd for Scheduled {
 ///
 /// The state is exposed so that a simulation loop can decide whether to
 /// advance the clock or to stop without popping an event first.
+///
+/// 队列当前所持有的状态。
+///
+/// 该状态被公开，使仿真循环无需先弹出一个事件即可决定是推进时钟还是
+/// 停止。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct QueueState {
     /// The number of pending events.
+    ///
+    /// 待处理事件的数量。
     pub pending: usize,
     /// The time of the earliest pending event, if there is one.
+    ///
+    /// 最早待处理事件的时间（若存在）。
     pub next_time: Option<f64>,
     /// The number of events delivered so far.
+    ///
+    /// 迄今已投递的事件数。
     pub delivered: u64,
 }
 
@@ -69,6 +87,12 @@ impl QueueState {
 /// create two events with the same identifier. Sequence numbers start at
 /// zero and increase by one with every event scheduled, including events
 /// scheduled from inside the handling of another event.
+///
+/// 按时间、再按调度次序排序的事件优先队列。
+///
+/// 序号由队列分配，故调用方无法意外创建两个具有相同标识符的事件。
+/// 序号从零开始，每个被调度的事件（包括在另一事件处理过程中调度的
+/// 事件）都使之加一。
 #[derive(Debug, Clone)]
 pub struct EventQueue<T> {
     pending: BinaryHeap<Scheduled>,
@@ -85,6 +109,8 @@ impl<T> Default for EventQueue<T> {
 
 impl<T> EventQueue<T> {
     /// Creates an empty queue.
+    ///
+    /// 创建一个空队列。
     pub const fn new() -> Self {
         Self {
             pending: BinaryHeap::new(),
@@ -95,6 +121,8 @@ impl<T> EventQueue<T> {
     }
 
     /// Returns the number of pending events.
+    ///
+    /// 返回待处理事件的数量。
     pub fn len(&self) -> usize {
         self.pending.len()
     }
@@ -107,11 +135,15 @@ impl<T> EventQueue<T> {
     }
 
     /// Returns the number of events delivered so far.
+    ///
+    /// 返回迄今已投递的事件数。
     pub const fn delivered(&self) -> u64 {
         self.delivered
     }
 
     /// Returns what the queue currently holds.
+    ///
+    /// 返回队列当前所持有的状态。
     pub fn state(&self) -> QueueState {
         QueueState {
             pending: self.pending.len(),
@@ -123,6 +155,10 @@ impl<T> EventQueue<T> {
     /// Returns the time of the earliest pending event.
     ///
     /// Returns `None` when the queue is empty.
+    ///
+    /// 返回最早待处理事件的时间。
+    ///
+    /// 队列为空时返回 `None`。
     pub fn next_time(&self) -> Option<f64> {
         self.pending.peek().map(|entry| entry.time())
     }
@@ -135,6 +171,14 @@ impl<T> EventQueue<T> {
     /// Returns the identifier of the new event, or `None` when the time is
     /// not usable: a simulation clock runs forward from zero, so a negative
     /// or non-finite time is refused rather than stored.
+    ///
+    /// 在某个时刻调度一个事件。
+    ///
+    /// 序号由队列分配，故同一瞬时各事件之间的投递次序即它们被调度的
+    /// 次序。
+    ///
+    /// 返回新事件的标识符；时刻不可用时返回 `None`：仿真时钟从零向前
+    /// 运行，故负或非有限的时刻被拒绝而非存储。
     pub fn schedule(&mut self, time: f64, payload: T) -> Option<EventId> {
         let sequence = self.next_sequence;
         let id = EventId::new(time, sequence)?;
@@ -146,6 +190,8 @@ impl<T> EventQueue<T> {
         // The payload slots are indexed by sequence, so gaps are filled with
         // `None` when a caller has popped an event without taking its
         // payload.
+        // 载荷槽位按序号索引，故当调用方弹出事件而未取其载荷时，空档以
+        // `None` 填充。
         let index = sequence as usize;
         if index < self.payloads.len() {
             self.payloads[index] = Some(payload);
@@ -164,6 +210,12 @@ impl<T> EventQueue<T> {
     /// delay is relative to the current simulation time.
     ///
     /// Returns `None` when the resulting time is not usable.
+    ///
+    /// 在相对于某基准瞬时的时刻调度一个事件。
+    ///
+    /// 这是处理器调度后续事件时所用的形式：延时相对于当前仿真时刻。
+    ///
+    /// 所得时刻不可用时返回 `None`。
     pub fn schedule_after(&mut self, now: f64, delay: f64, payload: T) -> Option<EventId> {
         if !delay.is_finite() || delay < 0.0 {
             return None;
@@ -176,6 +228,11 @@ impl<T> EventQueue<T> {
     /// Returns `None` when the queue is empty. The payload is taken from the
     /// queue, so the slot is left empty; scheduling a later event reuses the
     /// slot.
+    ///
+    /// 取出并返回最早的事件。
+    ///
+    /// 队列为空时返回 `None`。载荷被取离队列，故该槽位被留空；调度
+    /// 后续事件会复用该槽位。
     pub fn pop(&mut self) -> Option<Event<T>> {
         let entry = self.pending.pop()?;
         let index = entry.sequence as usize;
@@ -194,6 +251,8 @@ impl<T> EventQueue<T> {
 
     /// Returns a reference to the payload of the earliest event without
     /// removing it.
+    ///
+    /// 返回最早事件载荷的引用而不移除它。
     pub fn peek(&self) -> Option<&T> {
         let entry = self.pending.peek()?;
         self.payloads
@@ -205,6 +264,10 @@ impl<T> EventQueue<T> {
     ///
     /// The delivered count is left alone, because it records history rather
     /// than queue contents.
+    ///
+    /// 移除所有待处理事件并返回被丢弃的数量。
+    ///
+    /// 已投递计数保持不变，因为它记录的是历史而非队列内容。
     pub fn clear(&mut self) -> usize {
         let count = self.pending.len();
         self.pending.clear();
@@ -220,6 +283,11 @@ impl<T> EventQueue<T> {
     /// The order is the order the events would have been delivered in, which
     /// is what a caller wants when it records the remaining schedule at the
     /// end of a run.
+    ///
+    /// 按投递次序返回所有待处理事件，并使队列为空。
+    ///
+    /// 该次序即各事件本会被投递的次序，这正是调用方在运行结束时记录
+    /// 剩余调度所需的。
     pub fn drain(&mut self) -> Vec<Event<T>> {
         let mut events = Vec::with_capacity(self.pending.len());
         while let Some(event) = self.pop() {

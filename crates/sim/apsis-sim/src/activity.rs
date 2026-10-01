@@ -8,33 +8,53 @@ use apsis_task::TaskId;
 /// and an end, and the handler is called at each. The two are separate events
 /// rather than one interval so that the engine orders them with everything
 /// else on the clock, which is what lets two tasks overlap correctly.
+///
+/// 时间线上发生的一件事。
+///
+/// 时间线由一个调度导出：一处被放置的任务贡献一个开始与一个结束，
+/// 处理器在每个处被调用。二者是分开的事件而非一个区间，使引擎把它们
+/// 与时钟上其余一切一起排序，这正是让两个任务正确重叠的原因。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum Activity {
     /// A task begins.
+    ///
+    /// 某任务开始。
     Start {
         /// The task beginning.
+        ///
+        /// 正在开始的任务。
         task: TaskId,
     },
     /// A task ends.
+    ///
+    /// 某任务结束。
     End {
         /// The task ending.
+        ///
+        /// 正在结束的任务。
         task: TaskId,
     },
 }
 
 impl Activity {
     /// Creates a start activity.
+    ///
+    /// 创建一个开始活动。
     pub const fn start(task: TaskId) -> Self {
         Self::Start { task }
     }
 
     /// Creates an end activity.
+    ///
+    /// 创建一个结束活动。
     pub const fn end(task: TaskId) -> Self {
         Self::End { task }
     }
 
     /// Returns the task the activity is about.
+    ///
+    /// 返回该活动所关于的任务。
     pub const fn task(self) -> TaskId {
         match self {
             Self::Start { task } | Self::End { task } => task,
@@ -42,11 +62,15 @@ impl Activity {
     }
 
     /// Returns `true` when the activity is a start.
+    ///
+    /// 当该活动为开始时返回 `true`。
     pub const fn is_start(self) -> bool {
         matches!(self, Self::Start { .. })
     }
 
     /// Returns `true` when the activity is an end.
+    ///
+    /// 当该活动为结束时返回 `true`。
     pub const fn is_end(self) -> bool {
         matches!(self, Self::End { .. })
     }

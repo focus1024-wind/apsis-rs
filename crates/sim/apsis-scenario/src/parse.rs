@@ -17,6 +17,17 @@ use apsis_task::{Task, TaskId};
 ///
 /// Every failure carries the line it came from, so a reader can be pointed at
 /// the text that caused it.
+///
+/// 由其文本形式读取场景。
+///
+/// 该格式在 crate 文档中描述。解析分三遍进行，使 `require` 行可以指名
+/// 文件中稍后才添加的资源，`precedence` 行可以任意次序指名任务：
+///
+/// 1. 头部与资源，
+/// 2. 任务及其需求，
+/// 3. 先后约束。
+///
+/// 每次失败都携带其所来自的行，使读者可被指向造成它的文本。
 pub(crate) fn parse(text: &str) -> Result<Scenario, ScenarioError> {
     let lines = collect_lines(text);
     let mut scenario = parse_resources(&lines)?;
@@ -28,6 +39,8 @@ pub(crate) fn parse(text: &str) -> Result<Scenario, ScenarioError> {
 
 /// One significant line: its one based number and its whitespace separated
 /// fields.
+///
+/// 一个有意义的行：其以 1 为基的行号及其以空白分隔的字段。
 struct Line<'a> {
     number: usize,
     fields: Vec<&'a str>,
@@ -41,11 +54,17 @@ impl Line<'_> {
     /// Returns the fields from an index to the end, joined by single spaces.
     ///
     /// This is used for the scenario name, which may contain spaces.
+    ///
+    /// 返回自某下标到末尾的字段，以单个空格连接。
+    ///
+    /// 用于场景名称，它可能含有空格。
     fn rest(&self, index: usize) -> String {
         self.fields[index.min(self.fields.len())..].join(" ")
     }
 
     /// Returns the field at an index, or a missing argument error.
+    ///
+    /// 返回某下标处的字段，或一个缺少参数的错误。
     fn field(&self, index: usize) -> Result<&str, ScenarioError> {
         self.fields.get(index).copied().ok_or_else(|| {
             ScenarioError::new(ScenarioErrorKind::MissingArgument)
@@ -93,12 +112,16 @@ impl Line<'_> {
     }
 
     /// Reports an error at this line.
+    ///
+    /// 在本行报告一个错误。
     fn fail(&self, kind: ScenarioErrorKind) -> ScenarioError {
         ScenarioError::new(kind).with_line(self.number)
     }
 }
 
 /// Splits text into significant lines, dropping blanks and comments.
+///
+/// 把文本拆分为有意义的行，丢弃空行与注释。
 fn collect_lines(text: &str) -> Vec<Line<'_>> {
     text.lines()
         .enumerate()
@@ -120,11 +143,15 @@ fn collect_lines(text: &str) -> Vec<Line<'_>> {
 }
 
 /// The header keywords, which a resource or task pass must not see.
+///
+/// 头部关键字，资源或任务那一遍不得看到它们。
 fn is_header(keyword: &str) -> bool {
     matches!(keyword, "scenario" | "epoch" | "time_limit" | "event_limit")
 }
 
 /// The resource pass.
+///
+/// 资源那一遍。
 fn parse_resources(lines: &[Line<'_>]) -> Result<Scenario, ScenarioError> {
     let mut name: Option<String> = None;
     let mut scenario: Option<Scenario> = None;
@@ -136,6 +163,7 @@ fn parse_resources(lines: &[Line<'_>]) -> Result<Scenario, ScenarioError> {
         let keyword = line.keyword();
         // A resource must follow the header, because the scenario is built
         // when the name is read.
+        // 资源必须跟在头部之后，因为场景是在读取名称时构建的。
         if keyword == "scenario" {
             if name.is_some() {
                 return Err(line.fail(ScenarioErrorKind::DuplicateField));
@@ -217,6 +245,7 @@ fn parse_resources(lines: &[Line<'_>]) -> Result<Scenario, ScenarioError> {
                 return Err(line.fail(ScenarioErrorKind::MissingHeader));
             }
             // The task and precedence keywords are read in a later pass.
+            // 任务与先后约束关键字在稍后那一遍中读取。
             "task" | "task_window" | "task_priority" | "task_mandatory" | "require"
             | "precedence" => {}
             _ => return Err(line.fail(ScenarioErrorKind::UnknownKeyword)),
@@ -227,6 +256,8 @@ fn parse_resources(lines: &[Line<'_>]) -> Result<Scenario, ScenarioError> {
 }
 
 /// The task pass.
+///
+/// 任务那一遍。
 fn parse_tasks(lines: &[Line<'_>], scenario: &mut Scenario) -> Result<(), ScenarioError> {
     let mut current: Option<Task> = None;
 
@@ -275,6 +306,8 @@ fn parse_tasks(lines: &[Line<'_>], scenario: &mut Scenario) -> Result<(), Scenar
 }
 
 /// Adds the task being built, if there is one.
+///
+/// 添加正在构建的任务（若有）。
 fn flush(current: &mut Option<Task>, scenario: &mut Scenario) -> Result<(), ScenarioError> {
     if let Some(task) = current.take() {
         scenario.add_task(task)?;
@@ -283,6 +316,8 @@ fn flush(current: &mut Option<Task>, scenario: &mut Scenario) -> Result<(), Scen
 }
 
 /// Returns the task a qualifier line applies to, or an error naming the line.
+///
+/// 返回某限定行所适用的任务，或一个指明该行的错误。
 fn require_current<'a>(
     current: &'a Option<Task>,
     line: &Line<'_>,
@@ -295,6 +330,8 @@ fn require_current<'a>(
 }
 
 /// The precedence pass.
+///
+/// 先后约束那一遍。
 fn parse_precedence(lines: &[Line<'_>], scenario: &mut Scenario) -> Result<(), ScenarioError> {
     for line in lines {
         if line.keyword() != "precedence" {
