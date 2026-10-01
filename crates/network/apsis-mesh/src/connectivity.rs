@@ -71,6 +71,7 @@ pub fn edge_connectivity(topology: &Topology, source: usize, destination: usize)
     }
 
     // A residual capacity for each edge, indexed by the edge position.
+    // 每条边一个残余容量，按边的位置索引。
     let edges = topology.edges();
     let mut residual: Vec<usize> = vec![1; edges.len()];
 
@@ -78,6 +79,7 @@ pub fn edge_connectivity(topology: &Topology, source: usize, destination: usize)
     loop {
         // Breadth first search for an augmenting path in the residual
         // graph.
+        // 在残余图中广度优先搜索一条增广路径。
         let mut parent_edge: Vec<Option<usize>> = vec![None; topology.node_count()];
         let mut visited = vec![false; topology.node_count()];
         visited[source] = true;
@@ -90,6 +92,7 @@ pub fn edge_connectivity(topology: &Topology, source: usize, destination: usize)
             }
             for (index, edge) in edges.iter().enumerate() {
                 // Forward edges with residual capacity.
+                // 具有残余容量的正向边。
                 if edge.from == node && residual[index] > 0 && !visited[edge.to] {
                     visited[edge.to] = true;
                     parent_edge[edge.to] = Some(index);
@@ -98,6 +101,7 @@ pub fn edge_connectivity(topology: &Topology, source: usize, destination: usize)
                 }
                 // Reverse edges, which exist when flow has been pushed the
                 // other way and which cancel it.
+                // 反向边，当流量已沿另一方向推送时存在，用以抵消它。
                 if edge.to == node && residual[index] == 0 && !visited[edge.from] {
                     visited[edge.from] = true;
                     parent_edge[edge.from] = Some(index);
@@ -113,6 +117,8 @@ pub fn edge_connectivity(topology: &Topology, source: usize, destination: usize)
         // Walk the path back, adjusting the residual capacities. An edge
         // traversed in its own direction consumes one unit; an edge
         // traversed against its direction restores one.
+        // 沿路径回溯，调整残余容量。沿自身方向穿越的边消耗一个单位；
+        // 逆自身方向穿越的边恢复一个单位。
         let mut node = destination;
         while node != source {
             let index = parent_edge[node]?;
@@ -163,6 +169,7 @@ pub fn strongly_connected_components(topology: &Topology) -> usize {
     }
 
     // First pass: the finishing order over the forward edges.
+    // 第一遍：在正向边上求完成次序。
     let mut visited = vec![false; node_count];
     let mut order = Vec::with_capacity(node_count);
     for start in 0..node_count {
@@ -171,6 +178,7 @@ pub fn strongly_connected_components(topology: &Topology) -> usize {
         }
         // An iterative depth first search, pushing a node again to mark the
         // point at which its children are done.
+        // 迭代式深度优先搜索，把某节点再次压栈以标记其子节点完成之处。
         let mut stack = vec![(start, false)];
         while let Some((node, processed)) = stack.pop() {
             if processed {
@@ -192,6 +200,7 @@ pub fn strongly_connected_components(topology: &Topology) -> usize {
 
     // Second pass: the reverse edges, taking nodes in reverse finishing
     // order.
+    // 第二遍：在反向边上按完成次序的逆序取节点。
     let mut assigned = vec![false; node_count];
     let mut components = 0;
     for node in order.into_iter().rev() {

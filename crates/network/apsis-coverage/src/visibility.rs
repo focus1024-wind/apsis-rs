@@ -6,22 +6,39 @@ use apsis_math::Vec3;
 use core::f64::consts::FRAC_PI_2;
 
 /// A ground station, given as a geodetic position on an ellipsoid.
+///
+/// 一个地面站，以椭球上的大地位置给出。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct GroundPoint {
     /// The geodetic position of the station.
+    ///
+    /// 该站的大地位置。
     pub position: Geodetic,
     /// The ellipsoid the position is referred to.
+    ///
+    /// 该位置所参照的椭球。
+    ///
+    /// 该位置所参照的椭球。
+    ///
+    /// 该位置所参照的椭球。
     pub ellipsoid: Ellipsoid,
     /// The sensor elevation mask, in radians.
     ///
     /// The minimum elevation above the local horizon at which the station
     /// can see a satellite. A mask of zero means the station sees down to
     /// its own horizon.
+    ///
+    /// 传感器仰角遮蔽，单位为弧度。
+    ///
+    /// 该站能看到卫星所需高出当地地平的最小仰角。遮蔽为零意味着该站
+    /// 能看到直至自身地平。
     pub elevation_mask: f64,
 }
 
 impl GroundPoint {
     /// Creates a ground point on the WGS 84 ellipsoid with a given mask.
+    ///
+    /// 在 WGS 84 椭球上以给定遮蔽创建地面点。
     pub fn new(position: Geodetic, elevation_mask: f64) -> Self {
         Self {
             position,
@@ -35,6 +52,11 @@ impl GroundPoint {
     ///
     /// The geodetic conversion yields meters, so the result is divided by a
     /// thousand to match the frame the orbit layer uses.
+    ///
+    /// 返回该站在地固直角坐标系中的位置，单位为千米。
+    ///
+    /// 大地转换得到的是米，故结果除以一千，以与 orbit 层所用的坐标系
+    /// 一致。
     pub fn ecef(&self) -> Vec3 {
         self.position.to_cartesian(self.ellipsoid) / 1_000.0
     }
@@ -43,12 +65,18 @@ impl GroundPoint {
     ///
     /// This is the local radius of the ellipsoid at the station's latitude
     /// plus its height, so it includes the effect of the flattening.
+    ///
+    /// 返回距地心的距离，单位为千米。
+    ///
+    /// 这是该站纬度处椭球的当地半径加上其高度，故包含了扁率的影响。
     pub fn radius(&self) -> f64 {
         self.ecef().norm()
     }
 
     /// Returns `true` when the station and its mask describe a usable
     /// sensor.
+    ///
+    /// 当该站及其遮蔽描述一个可用传感器时返回 `true`。
     pub fn is_valid(&self) -> bool {
         self.position.is_valid()
             && self.elevation_mask.is_finite()
@@ -63,17 +91,28 @@ impl GroundPoint {
 /// because a station that can point anywhere with sufficient gain is
 /// modelled by its elevation mask alone; the direction matters only when the
 /// station has a fixed beam.
+///
+/// 位于地面点、具有指向方向的传感器。
+///
+/// 方向是地固系中的单位矢量。它是可选的，因为能以足够增益指向任何
+/// 方向的站仅以其仰角遮蔽建模即可；只有当站具有固定波束时方向才要紧。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Sensor {
     /// The station.
+    ///
+    /// 该地面站。
     pub ground: GroundPoint,
     /// The pointing direction in the Earth-fixed frame, if the station is
     /// directional.
+    ///
+    /// 地固系中的指向方向，若该站是定向的。
     pub pointing: Option<Vec3>,
 }
 
 impl Sensor {
     /// Creates a station that can point anywhere above its mask.
+    ///
+    /// 创建能在其遮蔽之上指向任何方向的站。
     pub const fn omnidirectional(ground: GroundPoint) -> Self {
         Self {
             ground,
@@ -85,6 +124,10 @@ impl Sensor {
     ///
     /// The direction is normalized when it is used, so the caller may pass
     /// an unnormalized vector.
+    ///
+    /// 创建具有固定指向方向的站。
+    ///
+    /// 该方向在使用时被归一化，故调用方可以传入未归一化的矢量。
     pub const fn directional(ground: GroundPoint, pointing: Vec3) -> Self {
         Self {
             ground,
@@ -94,11 +137,17 @@ impl Sensor {
 }
 
 /// The point on the Earth's surface directly below a satellite.
+///
+/// 卫星正下方的地表点。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SubSatellitePoint {
     /// The geodetic position of the sub-satellite point.
+    ///
+    /// 星下点的大地位置。
     pub position: Geodetic,
     /// The ellipsoid the position is referred to.
+    ///
+    /// 该位置所参照的椭球。
     pub ellipsoid: Ellipsoid,
 }
 
@@ -116,6 +165,16 @@ pub struct SubSatellitePoint {
 ///
 /// Returns `None` when the position is not finite or lies on the polar axis,
 /// where no longitude is defined.
+///
+/// 返回地固系中某位置的星下点。
+///
+/// 卫星位置单位为千米。星下点是从地心过卫星的直线与椭球的交点，即把
+/// 卫星高度置零而纬经度不变所得的大地位置。
+///
+/// 这是地心投影，而非过卫星的椭球法线与地表相交的点。对低轨卫星两者
+/// 相差至多约二十千米，而覆盖区几何用的是地心形式。
+///
+/// 位置非有限，或位于未定义经度的极轴上时返回 `None`。
 pub fn sub_satellite_point(
     position_ecef_km: Vec3,
     ellipsoid: Ellipsoid,
@@ -142,6 +201,15 @@ pub fn sub_satellite_point(
 /// below the horizon.
 ///
 /// Returns `None` when either position is not usable.
+///
+/// 返回自某站看某卫星的仰角，单位为弧度。
+///
+/// 卫星位置在地固系中，单位为千米。仰角自当地地平量起，后者是垂直于该
+/// 站处椭球法线的平面。
+///
+/// 正值表示卫星在地平之上，直角值表示在天顶，负值表示在地平之下。
+///
+/// 任一位置不可用时返回 `None`。
 pub fn elevation_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f64> {
     if !satellite_ecef_km.is_finite() || !ground.is_valid() {
         return None;
@@ -153,6 +221,8 @@ pub fn elevation_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<
     }
     // The local up direction is the ellipsoid normal at the station, which
     // for a geodetic position is the direction the surface normal points.
+    // 当地朝上方向是该站处的椭球法线，对大地位置而言即地表法线所指的
+    // 方向。
     let up = local_up(ground);
     let sine = line_of_sight.normalize()?.dot(up.normalize()?);
     Some(sine.clamp(-1.0, 1.0).asin())
@@ -164,6 +234,11 @@ pub fn elevation_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<
 /// geodetic position it follows from the latitude and longitude, because the
 /// normal of a biaxial ellipsoid lies in the meridian plane and makes the
 /// geodetic latitude with the equatorial plane.
+///
+/// 返回沿某站处椭球法线的单位矢量。
+///
+/// 这是当地垂线，即铅垂线所指的方向。对大地位置而言，它由纬度与经度
+/// 得出，因为双轴椭球的法线位于子午面内，并与赤道面夹大地纬度。
 pub fn local_up(ground: &GroundPoint) -> Vec3 {
     let latitude = ground.position.latitude;
     let longitude = ground.position.longitude;
@@ -182,6 +257,12 @@ pub fn local_up(ground: &GroundPoint) -> Vec3 {
 /// other visibility functions.
 ///
 /// Returns `None` when either position is not usable.
+///
+/// 返回自某站看某卫星的仰角，单位为弧度。
+///
+/// 这与 [`elevation_angle`] 相同，其命名是为与其余可见性函数对称。
+///
+/// 任一位置不可用时返回 `None`。
 pub fn line_of_sight(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f64> {
     elevation_angle(satellite_ecef_km, ground)
 }
@@ -194,6 +275,14 @@ pub fn line_of_sight(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f6
 /// the satellite is in the forward hemisphere of the beam.
 ///
 /// Returns `None` when the satellite position or the sensor is not usable.
+///
+/// 当从某传感器可见某卫星时返回 `true`。
+///
+/// 当卫星在该站处的仰角不低于该传感器的遮蔽，且（对定向传感器）到卫星
+/// 的方向与指向方向的夹角在一个直角以内，即卫星处于波束的前半球时，
+/// 卫星可见。
+///
+/// 卫星位置或传感器不可用时返回 `None`。
 pub fn visible_from(satellite_ecef_km: Vec3, sensor: &Sensor) -> Option<bool> {
     let elevation = elevation_angle(satellite_ecef_km, &sensor.ground)?;
     if elevation < sensor.ground.elevation_mask {
@@ -216,6 +305,13 @@ pub fn visible_from(satellite_ecef_km: Vec3, sensor: &Sensor) -> Option<bool> {
 /// position, without building a [`GroundPoint`].
 ///
 /// Returns `None` when the satellite position or the station is not usable.
+///
+/// 返回自某大地站看某卫星的仰角。
+///
+/// 这是为直接把站作为大地位置给出、而不构建 [`GroundPoint`] 的便利
+/// 函数。
+///
+/// 卫星位置或该站不可用时返回 `None`。
 pub fn visible_from_geodetic(
     satellite_ecef_km: Vec3,
     position: Geodetic,

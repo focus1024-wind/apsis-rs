@@ -10,19 +10,32 @@ use core::f64::consts::PI;
 /// is visible above a given elevation mask. On a sphere it is an exact
 /// circle, described here by the central angle from the sub-satellite point
 /// and the radius of the body.
+///
+/// 圆形地面覆盖区。
+///
+/// 覆盖区是能在地平遮蔽以上看见某卫星的那部分地表。在球面上它是精确
+/// 的圆，此处以自星下点的中心角和天体半径描述。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Footprint {
     /// The central half angle of the footprint, in radians.
     ///
     /// This is the angle at the centre of the Earth from the sub-satellite
     /// point to the edge of the footprint.
+    ///
+    /// 覆盖区的中心半角，单位为弧度。
+    ///
+    /// 这是在地心处自星下点到覆盖区边缘的角度。
     pub central_angle: f64,
     /// The radius of the body, in kilometers.
+    ///
+    /// 天体的半径，单位为千米。
     pub body_radius: f64,
 }
 
 impl Footprint {
     /// Creates a footprint from its central angle and body radius.
+    ///
+    /// 由其中心角与天体半径创建覆盖区。
     pub const fn new(central_angle: f64, body_radius: f64) -> Self {
         Self {
             central_angle,
@@ -32,6 +45,8 @@ impl Footprint {
 
     /// Returns the footprint radius measured along the surface, in
     /// kilometers.
+    ///
+    /// 返回沿地表量得的覆盖区半径，单位为千米。
     pub fn surface_radius(&self) -> f64 {
         self.central_angle * self.body_radius
     }
@@ -45,6 +60,16 @@ impl Footprint {
     /// ```
     ///
     /// which is exact for a spherical body.
+    ///
+    /// 返回覆盖区的面积，单位为平方千米。
+    ///
+    /// 该面积是被圆锥截去的球面部分，
+    ///
+    /// ```text
+    /// A = 2 pi R^2 (1 - cos(central))
+    /// ```
+    ///
+    /// 对球形天体这是精确的。
     pub fn area(&self) -> f64 {
         2.0 * PI * self.body_radius * self.body_radius * (1.0 - self.central_angle.cos())
     }
@@ -53,6 +78,11 @@ impl Footprint {
     ///
     /// The value is between zero and one half, because a footprint from a
     /// point above the surface can never cover more than a hemisphere.
+    ///
+    /// 返回覆盖区占整个球面的比例。
+    ///
+    /// 该值介于零与二分之一之间，因为来自地表之上某点的覆盖区覆盖范围
+    /// 绝不会超过一个半球。
     pub fn fraction_of_surface(&self) -> f64 {
         self.area() / (4.0 * PI * self.body_radius * self.body_radius)
     }
@@ -62,6 +92,10 @@ impl Footprint {
     ///
     /// The comparison is inclusive, so a point exactly on the edge is
     /// inside.
+    ///
+    /// 当距星下点给定中心角的地面点位于覆盖区内时返回 `true`。
+    ///
+    /// 比较是含端点的，故恰在边缘上的点算在内部。
     pub fn contains_central_angle(&self, central_angle: f64) -> bool {
         central_angle.is_finite() && central_angle >= 0.0 && central_angle <= self.central_angle
     }
@@ -136,6 +170,13 @@ pub fn footprint_fraction(
 ///
 /// Returns `None` when either vector has zero length or a non-finite
 /// component.
+///
+/// 返回两个地表点之间的角度，单位为弧度。
+///
+/// 两矢量必须是相对天体中心、在同一坐标系中的位置。该角度是自中心看
+/// 它们之间的中心角。
+///
+/// 任一矢量为零长或含非有限分量时返回 `None`。
 pub fn central_angle_between(first: Vec3, second: Vec3) -> Option<f64> {
     if !first.is_finite() || !second.is_finite() {
         return None;
@@ -159,6 +200,13 @@ pub fn central_angle_between(first: Vec3, second: Vec3) -> Option<f64> {
 /// and the central half angle.
 ///
 /// Returns `None` when either vector is degenerate or not finite.
+///
+/// 当某地面点位于某覆盖区内时返回 `true`。
+///
+/// 该点与星下点都是相对天体中心的位置，单位为千米。覆盖区提供天体半径
+/// 与中心半角。
+///
+/// 任一矢量退化或非有限时返回 `None`。
 pub fn point_in_footprint(
     footprint: &Footprint,
     point: Vec3,

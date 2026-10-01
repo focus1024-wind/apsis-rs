@@ -18,6 +18,10 @@ use apsis_math::parallel::map_index;
 ///
 /// The sequential form, provided for comparison and for small sets where
 /// starting a thread would cost more than the search.
+///
+/// 按次序为许多轨迹搜索可见性。
+///
+/// 顺序形式，供比较以及线程启动代价高于搜索本身的小规模情形使用。
 pub fn find_all(
     finder: &AccessFinder,
     tracks: &[Vec<OrbitSample>],
@@ -30,6 +34,11 @@ pub fn find_all(
 /// The result matches [`find_all`] element for element and in the same order.
 /// A track that cannot be searched yields its error in the same position the
 /// sequential form would put it, so one bad track does not hide the rest.
+///
+/// 跨多个线程为许多轨迹搜索可见性。
+///
+/// 结果与 [`find_all`] 逐元素、逐次序相同。无法搜索的轨迹在顺序形式会
+/// 放置它的同一位置给出其错误，故一条坏轨迹不会掩盖其余。
 pub fn find_all_parallel(
     finder: &AccessFinder,
     tracks: &[Vec<OrbitSample>],

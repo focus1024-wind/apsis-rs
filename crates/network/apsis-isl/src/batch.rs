@@ -61,6 +61,8 @@ pub fn visibility_matrix_parallel(positions: &[Vec3], body_radius: f64) -> Vec<b
     // The pairs are independent, so splitting the flat index space across
     // threads needs no coordination. `map_index` owns the output buffer,
     // which is what lets the threads write disjoint slots of one allocation.
+    // 各点对相互独立，故把扁平下标空间跨线程划分无需协调。`map_index`
+    // 拥有输出缓冲，这正是让各线程写同一分配中互不相交槽位的原因。
     map_index(len * len, |index| {
         let row = index / len;
         let column = index - row * len;

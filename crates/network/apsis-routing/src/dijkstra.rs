@@ -242,6 +242,23 @@ pub fn shortest_path(
 /// the one described in Fraire, J. A. et al., *Routing in Delay-Tolerant
 /// Networks Comprising Heterogeneous Populations of Deterministic Link
 /// Dynamics*, IEEE Transactions on Mobile Computing, 2020.
+///
+/// 返回在拓扑序列某区间上有效的最短路由。
+///
+/// 该路由在贯穿整个区间都存在的链路上计算，故它在整个区间上保持有效。
+/// 该区间取自 `start_seconds` 处生效样本的起点，到 `end_seconds` 处生效
+/// 样本的起点，并对该跨度内每个样本的链路求交。
+///
+/// 所返回的路段记录该路由有效的区间，它以 `end_seconds` 之后的下一处
+/// 拓扑变化为界。
+///
+/// 任一节点越界或两者相同、区间次序不对，或没有路由能存活整个区间时
+/// 返回错误。
+///
+/// 出处：时变图上的存储转发路由模型见 Fraire, J. A. 等，*Routing in
+/// Delay-Tolerant Networks Comprising Heterogeneous Populations of
+/// Deterministic Link Dynamics*，IEEE Transactions on Mobile Computing，
+/// 2020。
 pub fn route_over_series(
     series: &TopologySeries,
     source: usize,
@@ -284,6 +301,8 @@ pub fn route_over_series(
 
     // Intersect the links of every sample spanned by the interval, taking
     // the cost from the first sample that has each link.
+    // 对该区间所跨的每个样本的链路求交，代价取自拥有每条链路的第一
+    // 个样本。
     let mut intersection = Topology::new(series.node_count());
     let reference = &series.samples()[first].topology;
     for edge in reference.edges() {
@@ -302,6 +321,7 @@ pub fn route_over_series(
     let route = shortest_path(&intersection, source, destination)?;
 
     // The leg is valid until the topology changes after the interval ends.
+    // 该路段有效直到区间结束之后的拓扑变化。
     let end_of_validity = series
         .interval_of(last)
         .map_or(end_seconds, |(_, next)| next);

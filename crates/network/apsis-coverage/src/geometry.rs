@@ -37,6 +37,13 @@ use core::f64::consts::FRAC_PI_2;
 ///
 /// Returns `None` when the radii are not usable, when the body radius
 /// exceeds the satellite radius, or when the elevation is not finite.
+///
+/// 返回卫星处的天底角，单位为弧度。
+///
+/// 天底角在卫星处量取，介于到地心的方向与到地面点的方向之间。当地面点
+/// 恰在卫星正下方时它为零，并随该点移向地平而增大。
+///
+/// 半径不可用、天体半径超过卫星半径，或仰角非有限时返回 `None`。
 pub fn nadir_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
     if !satellite_radius.is_finite() || !body_radius.is_finite() || !elevation.is_finite() {
         return None;
@@ -46,6 +53,7 @@ pub fn nadir_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
     }
     let sine = body_radius * elevation.cos() / satellite_radius;
     // Rounding can push the sine a little above one for a grazing geometry.
+    // 对掠射几何，舍入可能把正弦略微推到一以上。
     Some(sine.clamp(-1.0, 1.0).asin())
 }
 
@@ -64,6 +72,8 @@ pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f
     // Rounding can leave a small negative value at the zenith, where the
     // true angle is zero. The negative part is not physical, so it is
     // removed before the result is returned.
+    // 在天顶处（真实角为零）舍入可能留下小的负值。该负值没有物理意义，
+    // 故在返回结果前将其去掉。
     Some((FRAC_PI_2 - elevation - nadir).max(0.0))
 }
 
@@ -118,6 +128,20 @@ pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
 ///
 /// Returns `None` when the radii are not usable or when the central angle is
 /// not finite.
+///
+/// 返回某中心角对应的仰角，单位为弧度。
+///
+/// 它反解 [`earth_central_angle`]。当已知地面点相对星下点的位置而要求
+/// 该点处仰角时使用它。
+///
+/// 关系为
+///
+/// ```text
+/// tan(elevation) = (cos(central) - body_radius / satellite_radius)
+///                  / sin(central)
+/// ```
+///
+/// 半径不可用或中心角非有限时返回 `None`。
 pub fn elevation_from_central_angle(
     satellite_radius: f64,
     body_radius: f64,
@@ -133,6 +157,7 @@ pub fn elevation_from_central_angle(
     let sine = central_angle.sin();
     if sine == 0.0 {
         // Directly below the satellite the elevation is a right angle.
+        // 在卫星正下方仰角为直角。
         return Some(FRAC_PI_2);
     }
     Some(((central_angle.cos() - ratio) / sine).atan())

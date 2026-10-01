@@ -28,11 +28,13 @@ pub fn closest_approach_to_centre(first: Vec3, second: Vec3) -> Option<f64> {
     if length_squared == 0.0 {
         // The two points coincide, so the distance is the radius of that
         // point.
+        // 两点重合，故距离即该点的半径。
         return Some(first.norm());
     }
 
     // The parameter of the closest point on the infinite line, clamped to
     // the segment.
+    // 无限直线上最接近点的参数，被夹逼到该线段。
     let parameter = (-first.dot(segment) / length_squared).clamp(0.0, 1.0);
     let closest = first + segment * parameter;
     Some(closest.norm())
