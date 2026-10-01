@@ -3,6 +3,11 @@
 //! The reference cases are small graphs whose connectivity is known by
 //! inspection: a ring has two independent paths between any pair, a line has
 //! one, and a fully connected graph has as many as there are parallel links.
+//!
+//! 网格连通性度量的测试。
+//!
+//! 参考用例是连通性可直接看出的小图：环在任意一对之间有两条独立路径，线有一条，
+//! 全连接图的独立路径数与其平行链路数一样多。
 
 use apsis_mesh::{
     CriticalLink, Mesh, edge_connectivity, reachable_from, strongly_connected_components,
@@ -10,6 +15,8 @@ use apsis_mesh::{
 use apsis_topology::Topology;
 
 /// A bidirectional ring of the given size.
+///
+/// 给定大小的双向环。
 fn ring(node_count: usize) -> Topology {
     let mut topology = Topology::new(node_count);
     for node in 0..node_count {
@@ -21,6 +28,8 @@ fn ring(node_count: usize) -> Topology {
 }
 
 /// A bidirectional line, which has no cycle.
+///
+/// 一条双向线，它没有环。
 fn line(node_count: usize) -> Topology {
     let mut topology = Topology::new(node_count);
     for node in 0..node_count.saturating_sub(1) {
@@ -32,6 +41,8 @@ fn line(node_count: usize) -> Topology {
 }
 
 /// A complete bidirectional graph.
+///
+/// 完全双向图。
 fn complete(node_count: usize) -> Topology {
     let mut topology = Topology::new(node_count);
     for first in 0..node_count {
@@ -47,6 +58,7 @@ fn complete(node_count: usize) -> Topology {
 #[test]
 fn reachability_follows_the_edge_direction() {
     // A one way line: 0 reaches 1 and 2, but 2 reaches only itself.
+    // 单向线：0 可达 1 与 2，但 2 只可达自身。
     let mut topology = Topology::new(3);
     topology.add_edge(0, 1, 1.0).expect("valid");
     topology.add_edge(1, 2, 1.0).expect("valid");
@@ -73,6 +85,8 @@ fn a_ring_has_two_independent_paths() {
     let topology = ring(4);
     // Around a ring there are exactly two ways between any two nodes, and
     // no more, because removing both directions of one link leaves a line.
+    // 环上任意两节点之间恰好有两条路，不会更多，因为移除一条链路的两个方向后会留下
+    // 一条线。
     assert_eq!(edge_connectivity(&topology, 0, 2), Some(2));
     assert_eq!(edge_connectivity(&topology, 0, 1), Some(2));
     assert_eq!(edge_connectivity(&topology, 1, 3), Some(2));
@@ -82,6 +96,7 @@ fn a_ring_has_two_independent_paths() {
 fn a_line_has_one_independent_path() {
     let topology = line(4);
     // A line has a single route, so one link failure disconnects it.
+    // 线只有单一路由，故一次链路失效即使其断连。
     assert_eq!(edge_connectivity(&topology, 0, 3), Some(1));
     assert_eq!(edge_connectivity(&topology, 0, 1), Some(1));
 }
@@ -92,6 +107,8 @@ fn a_complete_graph_has_the_full_degree() {
     // With four nodes and every pair linked both ways, there are three edge
     // disjoint paths between any two nodes: the direct link and the two
     // through the other nodes.
+    // 四节点、每对都双向相连时，任意两节点之间有三条边不相交路径：直接链路以及经由
+    // 另外两个节点的两条。
     assert_eq!(edge_connectivity(&topology, 0, 1), Some(3));
     assert_eq!(edge_connectivity(&topology, 2, 3), Some(3));
 }
@@ -122,15 +139,18 @@ fn connectivity_rejects_an_out_of_range_node() {
 fn the_connectivity_of_a_parallel_pair_is_the_number_of_links() {
     // Three parallel one way links between two nodes give three independent
     // paths.
+    // 两个节点之间的三条平行单向链路给出三条独立路径。
     let mut topology = Topology::new(2);
     topology.add_edge(0, 1, 1.0).expect("valid");
     // A second and third parallel link cannot be added as a duplicate, so
     // they are represented by routing through intermediate nodes instead.
+    // 第二与第三条平行链路不能作为重复添加，故改由经中间节点路由来表示。
     topology.add_edge(0, 1, 1.0).ok();
     assert_eq!(edge_connectivity(&topology, 0, 1), Some(1));
 
     // A pair of two node disjoint paths: the direct link and one through an
     // intermediate node.
+    // 一对节点不相交路径：直接链路以及经由一个中间节点的一条。
     let mut detour = Topology::new(3);
     detour.add_edge(0, 1, 1.0).expect("valid");
     detour.add_edge(0, 2, 1.0).expect("valid");
@@ -147,6 +167,7 @@ fn the_strongly_connected_components_of_a_bidirectional_ring_is_one() {
 #[test]
 fn a_one_way_ring_is_strongly_connected() {
     // A directed cycle can still reach every node from every node.
+    // 有向环仍可从每个节点到达每个节点。
     let mut topology = Topology::new(3);
     topology.add_edge(0, 1, 1.0).expect("valid");
     topology.add_edge(1, 2, 1.0).expect("valid");
@@ -161,6 +182,7 @@ fn a_one_way_line_has_one_component_per_node() {
     topology.add_edge(1, 2, 1.0).expect("valid");
     // No node can be reached back from a later one, so every node is its
     // own component.
+    // 没有节点能从更后者回溯到达，故每个节点自成一个分量。
     assert_eq!(strongly_connected_components(&topology), 3);
 }
 
@@ -219,11 +241,14 @@ fn the_critical_links_of_a_line_are_every_link() {
     // A three node line has two links, and each is a bridge. A link is
     // reported once even though it is present in both directions, because a
     // failure takes out the whole link.
+    // 三节点线有两条链路，每条都是桥。一条链路只报告一次，即便它有双向，因为一次
+    // 失效是整条链路失效。
     assert_eq!(critical.len(), 2);
     for link in &critical {
         assert_eq!(link.components_without, 2);
     }
     // The record carries the endpoints and the cost.
+    // 该记录带有端点与代价。
     let first = critical[0];
     assert_eq!(first.from, 0);
     assert_eq!(first.to, 1);
@@ -258,6 +283,7 @@ fn the_summary_reports_the_mesh_shape() {
 #[test]
 fn the_summary_of_a_split_mesh_reports_the_pieces() {
     // Two rings joined by nothing.
+    // 两个不相连的环。
     let mut topology = Topology::new(6);
     for node in 0..3 {
         topology
@@ -274,6 +300,7 @@ fn the_summary_of_a_split_mesh_reports_the_pieces() {
     assert_eq!(summary.components, 2);
     assert_eq!(summary.strongly_connected_components, 2);
     // The pair across the split has no path, so the minimum is zero.
+    // 跨分裂的一对没有路径，故最小值为零。
     assert_eq!(summary.minimum_connectivity, Some(0));
     assert!(!mesh.is_connected());
 }
@@ -291,6 +318,8 @@ fn a_critical_link_type_is_constructible_directly() {
 fn a_satellite_like_mesh_has_the_expected_connectivity() {
     // A grid-like mesh with each node linked to two neighbours in a ring
     // plus one cross link, which has connectivity two everywhere.
+    // 一个类网格的网，每个节点在环中与两个邻居相连并加一条交叉链路，其各处连通性
+    // 为二。
     let mut topology = ring(6);
     topology.add_bidirectional_edge(0, 3, 2.0).expect("valid");
     let mesh = Mesh::new(topology);

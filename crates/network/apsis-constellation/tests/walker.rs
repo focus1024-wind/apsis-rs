@@ -1,4 +1,6 @@
 //! Tests for the Walker constellation pattern.
+//!
+//! Walker 星座模式的测试。
 
 use apsis_constellation::{Constellation, ConstellationErrorKind, Satellite, WalkerPattern};
 use apsis_kepler::true_from_mean;
@@ -8,6 +10,8 @@ const TOLERANCE: f64 = 1e-12;
 
 /// A Walker 53 degree pattern with 24 satellites in 3 planes, as used by a
 /// mid latitude broadband constellation.
+///
+/// 一个 53 度的 Walker 模式，3 个轨道面、24 颗卫星，如中纬度宽带星座所用。
 fn broadband_pattern() -> WalkerPattern {
     WalkerPattern {
         total_satellites: 24,
@@ -24,6 +28,7 @@ fn the_derived_counts_are_correct() {
     assert_eq!(pattern.satellites_per_plane(), Some(8));
     assert!((pattern.plane_spacing().expect("valid") - 2.0 * PI / 3.0).abs() < TOLERANCE);
     // The phase offset is 1 * 360 / 24 degrees.
+    // 相位偏移为 1 * 360 / 24 度。
     let expected = 2.0 * PI / 24.0;
     assert!((pattern.phase_offset().expect("valid") - expected).abs() < TOLERANCE);
 }
@@ -87,6 +92,7 @@ fn the_phase_offset_appears_between_adjacent_planes() {
 
     // The first satellite of each plane is advanced by the phase offset
     // relative to the first satellite of the previous plane.
+    // 每个轨道面的第一颗卫星相对前一面第一颗卫星超前一个相位偏移。
     let first_of_plane = |plane: usize| -> f64 {
         constellation
             .plane(plane)
@@ -131,6 +137,7 @@ fn a_zero_phase_factor_gives_no_offset_between_planes() {
             .mean_anomaly()
     };
     // Every plane starts at the same anomaly.
+    // 每个轨道面从相同的近点角开始。
     assert!((first_of_plane(0) - first_of_plane(1)).abs() < 1e-9);
     assert!((first_of_plane(1) - first_of_plane(2)).abs() < 1e-9);
 }
@@ -158,6 +165,7 @@ fn a_single_plane_pattern_is_accepted() {
     assert_eq!(constellation.len(), 6);
     assert_eq!(constellation.plane_count(), 1);
     // All satellites share a plane, so they share a right ascension.
+    // 所有卫星共享一个轨道面，故共享一个赤经。
     for satellite in constellation.satellites() {
         assert_eq!(satellite.elements.right_ascension, 0.0);
     }
@@ -279,6 +287,7 @@ fn the_satellite_indices_are_consistent() {
         assert_eq!(satellite.index, position);
         // The satellites are emitted plane by plane, so the plane index is
         // the quotient of the position and the plane population.
+        // 卫星逐面发射，故轨道面下标是位置除以每面卫星数之商。
         assert_eq!(satellite.plane, position / 8);
         assert_eq!(satellite.index_in_plane, position % 8);
     }
@@ -343,6 +352,7 @@ fn a_custom_constellation_groups_satellites_by_right_ascension() {
     assert_eq!(constellation.pattern(), None);
 
     // The first two share a plane.
+    // 前两颗共享一个轨道面。
     assert_eq!(constellation.satellites()[0].plane, 0);
     assert_eq!(constellation.satellites()[1].plane, 0);
     assert_eq!(constellation.satellites()[2].plane, 1);
@@ -381,6 +391,7 @@ fn an_out_of_range_plane_query_is_empty() {
 fn the_satellite_type_is_copyable() {
     // The type must remain cheap to pass around, since coverage and access
     // analysis iterate over it repeatedly.
+    // 该类型必须保持传递开销小，因为覆盖与可见性分析会反复遍历它。
     fn assert_copy<T: Copy>() {}
     assert_copy::<Satellite>();
 }

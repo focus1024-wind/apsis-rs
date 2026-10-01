@@ -1,4 +1,6 @@
 //! Tests for footprint geometry and coverage fractions.
+//!
+//! 覆盖区几何与覆盖比例的测试。
 
 use apsis_coverage::{
     Footprint, central_angle_between, footprint, footprint_area, footprint_central_angle,
@@ -8,12 +10,18 @@ use apsis_math::Vec3;
 use core::f64::consts::{FRAC_PI_2, PI};
 
 /// The Earth equatorial radius, in kilometers.
+///
+/// 地球赤道半径，单位为千米。
 const BODY_RADIUS: f64 = 6_378.137;
 
 /// A low Earth orbit at 550 km altitude.
+///
+/// 550 km 高度的低轨。
 const LOW_ORBIT: f64 = BODY_RADIUS + 550.0;
 
 /// A geostationary radius.
+///
+/// 地球静止轨道半径。
 const GEOSTATIONARY: f64 = 42_164.0;
 
 const TOLERANCE: f64 = 1e-9;
@@ -23,6 +31,8 @@ fn the_footprint_at_a_ten_degree_mask_matches_a_hand_computation() {
     // A 550 km satellite at a ten degree mask has a central angle of
     // 14.9566 degrees, a surface radius of 1664.965 km, and an area of
     // 8 659 493.8 square kilometers.
+    // 十度遮蔽下 550 km 卫星的中心角为 14.9566 度，地表半径为 1664.965 km，面积为
+    // 8 659 493.8 平方千米。
     let mask = 10.0_f64.to_radians();
     let footprint = footprint(LOW_ORBIT, BODY_RADIUS, mask).expect("valid");
     assert!((footprint.central_angle.to_degrees() - 14.956_635_124_957_29).abs() < 1e-9);
@@ -56,6 +66,7 @@ fn the_area_grows_with_the_central_angle() {
 fn a_footprint_can_never_cover_more_than_a_hemisphere() {
     // The limit is a satellite at the surface with no mask, which sees half
     // the sphere. Any real satellite sees less.
+    // 极限是地表上、无遮蔽的卫星，它看到半个球面。任何真实卫星看到的都更少。
     for satellite_radius in [LOW_ORBIT, GEOSTATIONARY, 1.0e6] {
         for mask_degrees in [0.0_f64, 10.0, 45.0] {
             let fraction =
@@ -73,6 +84,7 @@ fn a_footprint_can_never_cover_more_than_a_hemisphere() {
 fn a_geostationary_satellite_sees_about_a_third_of_the_earth() {
     // A geostationary satellite at a zero degree mask sees to about 81.3
     // degrees of central angle, which is a fraction of about 0.42.
+    // 零度遮蔽的地球静止卫星看到约 81.3 度的中心角，比例约为 0.42。
     let fraction = footprint_fraction(GEOSTATIONARY, BODY_RADIUS, 0.0).expect("valid");
     assert!(fraction > 0.40 && fraction < 0.43, "fraction {fraction}");
 }
@@ -91,15 +103,18 @@ fn containment_is_inclusive_at_the_edge() {
 #[test]
 fn the_central_angle_between_two_surface_points_is_the_included_angle() {
     // Two points on the equator ninety degrees apart.
+    // 赤道上相隔九十度的两个点。
     let first = Vec3::new(BODY_RADIUS, 0.0, 0.0);
     let second = Vec3::new(0.0, BODY_RADIUS, 0.0);
     let angle = central_angle_between(first, second).expect("valid");
     assert!((angle - FRAC_PI_2).abs() < TOLERANCE);
 
     // A point with itself gives zero.
+    // 点与其自身给出零。
     assert!(central_angle_between(first, first).expect("valid").abs() < TOLERANCE);
 
     // Opposite points give a straight angle.
+    // 相对的点给出平角。
     let opposite = Vec3::new(-BODY_RADIUS, 0.0, 0.0);
     assert!((central_angle_between(first, opposite).expect("valid") - PI).abs() < TOLERANCE);
 }
@@ -107,6 +122,7 @@ fn the_central_angle_between_two_surface_points_is_the_included_angle() {
 #[test]
 fn the_central_angle_between_points_is_scale_invariant() {
     // The angle depends only on the directions, not on the radii.
+    // 该角只依赖于方向，而不依赖于半径。
     let near = Vec3::new(1.0, 0.5, 0.25);
     let far = near * 1_000.0;
     let other = Vec3::new(0.0, 1.0, 0.0);
@@ -126,9 +142,11 @@ fn a_degenerate_vector_has_no_central_angle() {
 fn point_in_footprint_uses_the_central_angle_from_the_sub_satellite_point() {
     let footprint = Footprint::new(0.1, BODY_RADIUS);
     // The sub-satellite point on the equator.
+    // 赤道上的星下点。
     let sub_satellite = Vec3::new(BODY_RADIUS, 0.0, 0.0);
 
     // A point within the footprint, about 0.05 radians away.
+    // 覆盖区内的一个点，约 0.05 弧度之外。
     let inside = Vec3::new(
         BODY_RADIUS * 0.05_f64.cos(),
         BODY_RADIUS * 0.05_f64.sin(),
@@ -140,6 +158,7 @@ fn point_in_footprint_uses_the_central_angle_from_the_sub_satellite_point() {
     );
 
     // A point well outside it, about a quarter radian away.
+    // 远在其外的一个点，约四分之一弧度之外。
     let outside = Vec3::new(
         BODY_RADIUS * 0.25_f64.cos(),
         BODY_RADIUS * 0.25_f64.sin(),
