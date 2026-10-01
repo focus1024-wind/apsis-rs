@@ -3,8 +3,8 @@
 use core::fmt;
 
 /// The category of a task error.
-    ///
-    /// 任务错误的类别。
+///
+/// 任务错误的类别。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum TaskErrorKind {
@@ -64,8 +64,8 @@ impl fmt::Display for TaskErrorKind {
 }
 
 /// A failure while building or querying a task.
-    ///
-    /// 构建或查询任务时发生的失败。
+///
+/// 构建或查询任务时发生的失败。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TaskError {
     kind: TaskErrorKind,
