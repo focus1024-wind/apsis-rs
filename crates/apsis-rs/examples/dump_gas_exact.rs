@@ -1,6 +1,8 @@
 //! Writes the exact slant path gaseous attenuation computed by this
 //! workspace, for cross-checking against ITU-R P.676-12.
 //!
+//! 写出本工作区计算的精确斜路径气体衰减，用于对照 ITU-R P.676-12 交叉核对。
+//!
 //! Usage:
 //!
 //! ```text
@@ -12,6 +14,8 @@ use apsis_atmosphere::{Atmosphere, slant_path_attenuation_exact};
 
 /// The scenarios sampled, as frequency in gigahertz and elevation in
 /// degrees.
+///
+/// 所采样的场景，以吉赫兹计的频率与以度计的仰角。
 const SCENARIOS: &[(f64, f64)] = &[
     (12.0, 90.0),
     (12.0, 30.0),

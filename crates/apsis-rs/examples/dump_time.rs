@@ -10,6 +10,15 @@
 //! Julian Date near 60 000 to better than about 40 microseconds. The two
 //! parts let the checker compare instants to well below a microsecond.
 //!
+//! 写出闰秒偏移以及本工作区在一系列瞬时上计算的时标换算。
+//!
+//! 输出是标准输出上的 CSV，带一行表头。它由
+//! `validation/python/time/check_time.py` 消费，后者用参考实现重算每个瞬时。
+//!
+//! TAI 瞬时按两部分写出，一个整数约化儒略日与一天的零头，因为单个 `f64` 无法
+//! 把接近 60 000 的约化儒略日保持到优于约 40 微秒。两部分使检查器能把瞬时比较
+//! 到远低于一微秒。
+//!
 //! Usage:
 //!
 //! ```text
@@ -21,6 +30,8 @@ use apsis_leap::{LEAP_SECONDS, tai_minus_utc_at_mjd};
 use apsis_time::{Calendar, Epoch, TT_MINUS_TAI, TimeScale};
 
 /// Splits a Modified Julian Date into its integer day and its fraction.
+///
+/// 把约化儒略日拆为其整数日与零头。
 fn split(mjd: f64) -> (i64, f64) {
     let day = mjd.floor();
     (day as i64, mjd - day)
@@ -51,6 +62,8 @@ fn main() {
 
     // Sample every leap second boundary at several times of day, so that
     // the step behaviour and the interior of each interval are covered.
+    //
+    // 在一天中的若干时刻对每个闰秒边界采样，使阶跃行为与每个区间的内部都被覆盖。
     for entry in LEAP_SECONDS {
         for (hour, minute, second) in [(0, 0, 0.0), (6, 0, 0.0), (12, 0, 0.0), (18, 0, 0.0)] {
             let calendar = Calendar::new(entry.year, entry.month, entry.day, hour, minute, second);
@@ -61,6 +74,8 @@ fn main() {
     }
 
     // The last second before a leap second and the first second after it.
+    //
+    // 闰秒前的最后一秒与其后的第一秒。
     for (year, month, day, hour, minute, second) in [
         (2016, 12, 31, 23, 59, 59.0),
         (2017, 1, 1, 0, 0, 0.0),
@@ -76,5 +91,7 @@ fn main() {
 
     // The Terrestrial Time offset is a defining constant, written here so
     // that the checker can verify it without recomputing the calendar.
+    //
+    // 地球时偏移是一个定义常量，写在这里使检查器无需重算日历即可核验它。
     println!("# tt_minus_tai_seconds={TT_MINUS_TAI:.3}");
 }

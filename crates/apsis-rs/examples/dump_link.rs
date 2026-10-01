@@ -5,6 +5,12 @@
 //! by `validation/python/link/check_link.py`, which recomputes the same
 //! quantities from the link equation and compares.
 //!
+//! 写出链路预算输入以及本工作区为它们计算的各数字。
+//!
+//! 输出是标准输出上的 CSV，带一行表头。它由
+//! `validation/python/link/check_link.py` 消费，后者从链路方程重算相同的量并
+//! 比较。
+//!
 //! Usage:
 //!
 //! ```text
@@ -19,6 +25,11 @@ use apsis_rf::{Decibel, Gain, Power};
 ///
 /// The unit of each field is in its name: powers and gains in decibels,
 /// temperature in kelvin, and everything else in SI base units.
+///
+/// 一个链路场景，命名使各字段在每次使用时保持可读。
+///
+/// 每个字段的单位在其名称中：功率与增益以分贝计，温度以开尔文计，其余以 SI
+/// 基本单位计。
 struct Scenario {
     transmit_dbw: f64,
     transmit_dbi: f64,
@@ -33,6 +44,9 @@ struct Scenario {
 
 /// The scenarios checked. They cover a Ku band downlink, an S band link, a
 /// wideband Ka link, and an L band link with a warmer receiver.
+///
+/// 被检查的各场景。它们覆盖 Ku 频段下行、S 频段链路、宽带 Ka 链路，以及一个
+/// 接收机更热的 L 频段链路。
 const SCENARIOS: &[Scenario] = &[
     Scenario {
         transmit_dbw: 10.0,
@@ -130,6 +144,8 @@ fn main() {
         let cn = budget.carrier_to_noise().map(|value| value.db());
         // The energy per bit ratio is reported at a fixed data rate equal to
         // the bandwidth, which makes it the carrier to noise ratio.
+        //
+        // 每比特能量比在等于带宽的固定数据速率下报告，这使它即为载噪比。
         let ebn0 = budget
             .energy_per_bit_over_noise(bandwidth)
             .map(|value| value.db());

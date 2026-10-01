@@ -11,6 +11,15 @@
 //! eccentricity, a retrograde inclination, a negative drag term, and a century
 //! rollover in the two digit epoch year.
 //!
+//! 写出本工作区从两行集解析出的根数字段。
+//!
+//! 输出是标准输出上的 CSV，带一行表头。它由
+//! `validation/python/orbit/check_tle.py` 消费，后者用一个独立的、按列索引的
+//! 读取器重新解析相同的集合、比较每个字段，并重算每行对十取模的校验和。
+//!
+//! 各集合包括随 SGP4 参考实现分发的历史测试用例，以及检验格式各角落的合成用例：
+//! 偏心率带隐含前导零的圆轨道、逆行倾角、负阻力项，以及两位历元年份的世纪翻转。
+//!
 //! Usage:
 //!
 //! ```text
@@ -22,10 +31,16 @@ use apsis_time::TimeScale;
 use apsis_tle::{Classification, TwoLineElement, line_checksum};
 
 /// One element set to parse, with a name for the report.
+///
+/// 一个要解析的根数集，带一个用于报告的名称。
 struct Sample {
     /// A name for the sample, so a failure in the report is readable.
+    ///
+    /// 样本的名称，使报告中的失败可读。
     name: &'static str,
     /// The two lines of the set, without a trailing carriage return.
+    ///
+    /// 该集合的两行，不带尾随回车。
     lines: [&'static str; 2],
 }
 
@@ -43,6 +58,12 @@ const fn sample(name: &'static str, first: &'static str, second: &'static str) -
 /// the format: an implied leading zero in the eccentricity, a retrograde
 /// inclination, a negative first derivative of the mean motion, a century
 /// rollover in the two digit epoch year, and a name line.
+///
+/// 被解析的各根数集。
+///
+/// 前四个是随 SGP4 参考实现分发的历史测试用例。其余是合成的，覆盖格式的边缘：
+/// 偏心率带隐含前导零、逆行倾角、平运动一阶导数为负、两位历元年份的世纪翻转，
+/// 以及一个名称行。
 const SAMPLES: &[Sample] = &[
     sample(
         "vanguard_1",
@@ -77,6 +98,8 @@ const SAMPLES: &[Sample] = &[
     sample(
         // A two digit year of 99 must expand to 1999, the last year of the
         // twentieth century branch of the convention.
+        //
+        // 两位年份 99 必须展开为 1999，即该约定二十世纪分支的最后一年。
         "two_digit_year_1999",
         "1 10000U 99001A   99365.00000000  .00000000  00000-0  00000-0 0    05",
         "2 10000  45.0000  10.0000 0001000   0.0000   0.0000 14.00000000    09",
@@ -93,6 +116,11 @@ const SAMPLES: &[Sample] = &[
 /// The epoch field of an element set stores the day of the year and its
 /// fraction, so the year and month are combined back into a day of year
 /// before the fraction of the day is added.
+///
+/// 返回某日历日期在该年中的第几天，以小数表示。
+///
+/// 根数集的历元字段保存一年中的第几天及其零头，故年与月先合回一年中的第几天，
+/// 再加上当日的零头。
 fn day_of_year_fraction(year: i32, month: u32, day: u32) -> f64 {
     use apsis_time::days_in_month;
     let mut total = 0_u32;
@@ -123,6 +151,9 @@ fn main() {
         // The epoch is stored as a Modified Julian Date; the calendar form
         // is written so the reader can compare the year and the day of year
         // against the two digit year and fraction the line encodes.
+        //
+        // 历元存为约化儒略日；写出日历形式，使读者可以把年与一年中的第几天对照该行
+        // 所编码的两位年份与零头。
         let calendar = element
             .epoch
             .calendar(TimeScale::Utc)

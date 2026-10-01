@@ -1,6 +1,8 @@
 //! Writes the rain height computed by this workspace, for cross-checking
 //! against ITU-R P.839-4.
 //!
+//! 写出本工作区计算的雨顶高度，用于对照 ITU-R P.839-4 交叉核对。
+//!
 //! Usage:
 //!
 //! ```text
@@ -11,6 +13,8 @@
 use apsis_atmosphere::{rain_height, zero_isotherm_height};
 
 /// The locations sampled, as latitude and longitude in degrees.
+///
+/// 所采样的位置，以度计的纬度与经度。
 const POINTS: &[(f64, f64)] = &[
     (0.0, 0.0),
     (45.0, 0.0),
