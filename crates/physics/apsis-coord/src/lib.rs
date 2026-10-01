@@ -39,6 +39,29 @@
 //!   implemented by `apsis-frames`.
 //! - Geodetic conversions and the WGS 84 ellipsoid: NIMA TR8350.2, third
 //!   edition, 2000, as implemented by `apsis-geodesy`.
+//!
+//! 坐标系及它们之间的变换。
+//!
+//! 本 crate 定义在类型中携带其参考系的各类位置，故在某坐标系中表达的位置
+//! 无法传递到期望另一坐标系之处。这两个坐标系是地心惯性（ECI）系与地心
+//! 地固（ECEF）系。
+//!
+//! 提供三种位置表示：
+//!
+//! - [`Eci`]，以米计的惯性直角坐标位置
+//! - [`Ecef`]，以米计的地固直角坐标位置
+//! - [`Geodetic`]，WGS 84 椭球之上的纬度、经度与高度
+//!
+//! [`Eci`] 与 [`Ecef`] 之间的变换是由地球自转角定义的转动，由
+//! `apsis-frames` 计算。[`Ecef`] 与 [`Geodetic`] 之间的变换使用来自
+//! `apsis-geodesy` 的 WGS 84 椭球。
+//!
+//! 出处：
+//!
+//! - 地球自转角：*IERS Conventions（2010）*，式 8.32，由 `apsis-frames`
+//!   实现。
+//! - 大地坐标换算与 WGS 84 椭球：NIMA TR8350.2，第三版，2000，由
+//!   `apsis-geodesy` 实现。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

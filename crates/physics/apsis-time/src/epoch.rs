@@ -9,6 +9,15 @@
 //! epochs exact regardless of the scales they were created in. The scale is
 //! therefore not part of an epoch's identity; it is a parameter of the
 //! conversion methods that read or write a number.
+//!
+//! 瞬时类型及其时标换算。
+//!
+//! [`Epoch`] 把瞬时存为国际原子时中的约化儒略日。选用 TAI 作为内部表示，
+//! 因为它均匀，且本 crate 中其余每个时标要么是相对它的常值偏移，要么（对
+//! UTC 而言）是可查表的阶跃偏移。
+//!
+//! 存储统一时标使两个历元之间的比较与求差精确，与它们创建时所处的时标无关。
+//! 因此时标不属于历元的身份；它是读取或写入某数的各换算方法的参数。
 
 use crate::calendar::{
     Calendar, SECONDS_PER_DAY, mjd_from_ymd, seconds_of_day_from_mjd, ymd_from_mjd,

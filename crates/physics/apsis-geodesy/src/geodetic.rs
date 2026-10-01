@@ -6,6 +6,12 @@
 //! frame whose third axis is the ellipsoid's minor axis, and the choice of
 //! frame is the responsibility of the caller. `apsis-coord` supplies
 //! position types that carry the frame.
+//!
+//! 大地位置及其到地固直角坐标的换算。
+//!
+//! 此处的直角坐标位置是以米计的普通 [`Vec3`]。本 crate 有意不为该坐标系
+//! 命名：同一换算适用于第三轴为椭球短轴的任何坐标系，坐标系的选择是调用方
+//! 的责任。`apsis-coord` 提供携带坐标系的各位置类型。
 
 use crate::ellipsoid::Ellipsoid;
 use apsis_math::Vec3;

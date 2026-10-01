@@ -1,4 +1,6 @@
 //! Reference ellipsoids.
+//!
+//! 参考椭球。
 
 /// A biaxial reference ellipsoid: an ellipse of revolution about its minor
 /// axis.

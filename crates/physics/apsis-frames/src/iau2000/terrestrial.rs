@@ -22,6 +22,23 @@
 //! is `eraNumat`, the rotation angle is `eraEra00`, the sidereal time for
 //! the equinox-based composition is `eraGmst06`, and the polar motion is
 //! `eraPom00`, composed by `eraC2t00b`.
+//!
+//! 天球到地球坐标系的变换。
+//!
+//! 本模块把坐标架偏差、岁差、章动、地球自转角与极移合成为把矢量从惯性系
+//! 带到地固系的转动。
+//!
+//! 合成中出现两个中间坐标系。**天球中间坐标系**是该日的真赤道与真春分点；
+//! 从惯性系到它的转动即偏差、岁差与章动。**地球中间坐标系**是经地球自转角
+//! 带到地球本初子午线的该坐标系。极移最后施加，因为它是极在地球内部的运动
+//! 而非地球在空间中的运动。
+//!
+//! 基本转动遵循参考实现的约定：`rz` 绕其第三轴转动坐标系，且合成 `a * b`
+//! 时先施加 `b`。正是该约定使下面的各乘积按各转动实际施加的次序阅读。
+//!
+//! 出处：该合成遵循 IAU SOFA 库及其 ERFA 衍生物。偏差与岁差是 `eraPmat06`，
+//! 章动矩阵是 `eraNumat`，自转角是 `eraEra00`，基于春分点合成的恒星时是
+//! `eraGmst06`，极移是 `eraPom00`，由 `eraC2t00b` 合成。
 
 use super::nutation::nutation_2000a_with_2006_adjustment;
 use super::precession::{frame_to_mean_of_date, mean_obliquity, rotation_z};

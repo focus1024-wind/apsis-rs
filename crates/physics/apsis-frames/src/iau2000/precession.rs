@@ -16,6 +16,20 @@
 //! adopted by the International Astronomical Union in 2006, as implemented
 //! in the IAU SOFA library and its ERFA derivative, functions `eraPfw06`,
 //! `eraPmat06`, `eraFw2m`, `eraBi00` and `eraObl06`.
+//!
+//! IAU 2006 岁差模型与坐标架偏差。
+//!
+//! 岁差是地球自转轴绕黄极缓慢的长期运动，主要由月球与太阳对赤道隆起的
+//! 力矩造成。IAU 2006 模型把它表达为从天球参考系到该日平赤道与平春分点的
+//! 转动，由四个角构成。
+//!
+//! 坐标架偏差计入了国际天球参考系的取向与 J2000.0 动力学平赤道与平春分点
+//! 之间的小偏移。它是常值转动，略去它会把位置放偏约二十毫角秒，这远高于
+//! 现代转换的精度。
+//!
+//! 出处：Capitaine、Wallace 与 Chapront 的 P03 岁差理论，2006 年由国际
+//! 天文学联合会采纳，如 IAU SOFA 库及其 ERFA 衍生物所实现，函数
+//! `eraPfw06`、`eraPmat06`、`eraFw2m`、`eraBi00` 与 `eraObl06`。
 
 use apsis_math::Mat3;
 use core::f64::consts::PI;

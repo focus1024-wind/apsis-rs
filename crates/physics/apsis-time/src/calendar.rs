@@ -14,6 +14,19 @@
 //! be represented as second 60. Values are not constrained here; callers
 //! that require a valid calendar date must check the fields they care
 //! about.
+//!
+//! 外推格里高利历换算。
+//!
+//! 该日历是外推格里高利历，在其历史采用之前也向前延伸。一天由其约化儒略日
+//! （MJD）标识，后者从 1858-11-17 起计天。MJD 0 是该日的起点，故某日的
+//! MJD 是整数，而日内某瞬时会加上一个零头。
+//!
+//! 该换算使用 Howard Hinnant 在 *chrono-Compatible Low-Level Date
+//! Algorithms*（2015）中发表的算法，它对格里高利历的整个范围都精确且无需
+//! 查找表。
+//!
+//! 秒字段是浮点数，以便闰秒可表示为第 60 秒。此处不对值施加约束；要求有效
+//! 日历日期的调用方必须检查它所关心的字段。
 
 use core::fmt;
 

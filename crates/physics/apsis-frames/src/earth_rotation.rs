@@ -1,5 +1,7 @@
 //! The Earth Rotation Angle and the rotation it defines between the
 //! inertial and Earth-fixed frames.
+//!
+//! 地球自转角，以及它定义的惯性系与地固系之间的转动。
 
 use apsis_math::Mat3;
 use core::f64::consts::PI;

@@ -18,6 +18,21 @@
 //! Source: the MHB2000 model of Mathews, Herring and Buffett, adopted by the
 //! International Astronomical Union in 2000, as implemented in the IAU SOFA
 //! library and its ERFA derivative, functions `eraNut00a` and `eraNut06a`.
+//!
+//! IAU 2000A 章动模型。
+//!
+//! 章动是地球自转轴绕其平均位置的周期运动部分。它主要由月球与太阳对赤道
+//! 隆起的力矩造成，行星的贡献较小。该模型把真极相对平极的偏移给出为两个
+//! 角：黄经方向的章动与黄赤交角方向的章动。
+//!
+//! 该级数有两部分，其辐角与系数组都不同。日月部分有 678 项，由 Delaunay
+//! 辐角构成，其黄赤交角系数把余弦与常数项及时间项配对，而正弦独自成立。
+//! 行星部分有 687 项，由行星黄经构成，那里正弦与常数项配对而余弦独自成立。
+//! 把这两种分组弄反会产生角秒级的误差，故此处将它们分开。
+//!
+//! 出处：Mathews、Herring 与 Buffett 的 MHB2000 模型，2000 年由国际天文
+//! 学联合会采纳，如 IAU SOFA 库及其 ERFA 衍生物所实现，函数 `eraNut00a`
+//! 与 `eraNut06a`。
 
 use super::fundamental::{DelaunayArguments, PlanetaryArguments};
 use super::nutation_table::{LUNI_SOLAR, PLANETARY};

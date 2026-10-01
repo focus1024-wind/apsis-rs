@@ -1,5 +1,7 @@
 //! Conversions between UTC and TAI expressed on the Modified Julian Date
 //! scale.
+//!
+//! 在约化儒略日尺度上表达的 UTC 与 TAI 之间的换算。
 
 use crate::table::{
     LEAP_SECONDS, TABLE_COVERS_FROM_MJD, TAI_MINUS_UTC_AFTER_LAST_ENTRY, mjd_from_ymd,

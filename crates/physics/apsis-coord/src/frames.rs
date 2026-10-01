@@ -1,4 +1,6 @@
 //! Positions that carry their reference frame in the type.
+//!
+//! 在类型中携带其参考系的各类位置。
 
 use apsis_frames::{EarthRotationAngle, rotation_ecef_to_eci, rotation_eci_to_ecef};
 use apsis_geodesy::{

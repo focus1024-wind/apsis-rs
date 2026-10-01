@@ -8,6 +8,14 @@
 //!
 //! The offset is exact, so these conversions introduce no rounding beyond
 //! the representation of the input.
+//!
+//! 约化儒略日与儒略日之间的换算。
+//!
+//! 儒略日自外推儒略历中 4713-01-01 的正午起计天。约化儒略日自 1858-11-17
+//! 的午夜起计天。故二者相差固定的天数，而半日的偏移计入了两种尺度开始一天
+//! 的时刻不同。
+//!
+//! 该偏移是精确的，故这些换算除输入的表示之外不引入舍入。
 
 /// The number of days between the start of the Julian Date scale and the
 /// start of the Modified Julian Date scale.

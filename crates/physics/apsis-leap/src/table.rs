@@ -1,5 +1,7 @@
 //! The compile time leap second table and the calendar helpers that place
 //! its entries on the Modified Julian Date scale.
+//!
+//! 编译期闰秒表，以及把其各项放到约化儒略日尺度上的日历辅助函数。
 
 /// One leap second announcement.
 ///

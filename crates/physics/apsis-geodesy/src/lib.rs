@@ -23,6 +23,19 @@
 //! let cartesian = point.to_cartesian(WGS84);
 //! assert!((cartesian.norm() - WGS84.semi_major_axis()).abs() < 1e-9);
 //! ```
+//!
+//! 参考椭球与大地计算。
+//!
+//! 大地位置写为某椭球之上的纬度、经度与高度。此处的纬度总是大地纬度，即
+//! 椭球法线与赤道面之间的角，而非地心纬度。在中纬度处二者相差至多约 0.19
+//! 度，故该区别对指向与测距是要紧的。
+//!
+//! [`WGS84`] 是 GPS 以及几乎所有卫星工作所用的椭球。其定义参数是半长轴与
+//! 扁率倒数；其余每个量都由这两个导出，故各导出值与标准中发布的值在定义
+//! 参数的精度内一致。
+//!
+//! 出处：National Imagery and Mapping Agency，*Department of Defense World
+//! Geodetic System 1984*，技术报告 TR8350.2，第三版，2000。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

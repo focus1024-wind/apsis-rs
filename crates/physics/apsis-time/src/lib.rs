@@ -31,6 +31,24 @@
 //! - Leap seconds: IERS Bulletin C, embedded by `apsis-leap`.
 //! - Calendar algorithms: Howard Hinnant, *chrono-Compatible Low-Level Date
 //!   Algorithms*, 2015.
+//!
+//! 时标、历元与日历换算。
+//!
+//! 本 crate 提供工作区其余部分所用的时间模型。[`Epoch`] 是以国际原子时时标
+//! 上的约化儒略日存储的瞬时，[`TimeScale`] 指名某数所表达的时标。
+//!
+//! 存储单一的均匀时标使算术精确：两个历元之差即它们之间流逝的 SI 时间，
+//! 与它们创建时所处的时标无关。UTC 不均匀，因为插入闰秒以使其接近地球的
+//! 转动，故 UTC 换算经由 `apsis-leap` 中的表格。
+//!
+//! 出处：
+//!
+//! - 儒略日与约化儒略日约定：IAU，如 *Explanatory Supplement to the
+//!   Astronomical Almanac* 所述。
+//! - 地球时相对 TAI 的偏移：IAU 2000 Resolution B1.9。
+//! - 闰秒：IERS Bulletin C，由 `apsis-leap` 内嵌。
+//! - 日历算法：Howard Hinnant，*chrono-Compatible Low-Level Date
+//!   Algorithms*，2015。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

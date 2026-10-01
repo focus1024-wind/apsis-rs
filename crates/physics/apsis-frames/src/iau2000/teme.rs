@@ -21,6 +21,23 @@
 //! edition, microcosm Press, 2013, section 3.7. The sidereal time
 //! expression is the one used by the SGP4 reference implementation, as
 //! given in the same work and implemented by `eraGmst82`.
+//!
+//! 真赤道平春分点坐标系及其到地固系的变换。
+//!
+//! SGP4 传播器在真赤道平春分点（TEME）坐标系中产生其状态。TEME 是该日的
+//! 真赤道，故其第三轴是真天极并携带章动，但它的第一轴指向平春分点而非真
+//! 春分点。
+//!
+//! 因为第一轴是平春分点，到地固系的变换使用格林尼治平恒星时而非视值。这
+//! 正是容易出错的细节：若像对真春分点坐标系那样再减去分点方程式，会把结果
+//! 转动约千分之一度，对低轨卫星即一千米的地面位置。
+//!
+//! 因此时间是 UT1 儒略日，由它得出平恒星时，最后施加极移。
+//!
+//! 出处：TEME 与地固系之间的关系见 Vallado, D. A.，*Fundamentals of
+//! Astrodynamics and Applications*，第 4 版，microcosm Press，2013，第 3.7
+//! 节。恒星时表达式即 SGP4 参考实现所用者，见同一著作，由 `eraGmst82`
+//! 实现。
 
 use super::terrestrial::PolarMotion;
 use apsis_math::Mat3;
