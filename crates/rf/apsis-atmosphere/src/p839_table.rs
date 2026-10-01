@@ -6,6 +6,13 @@
 //!
 //! Source: ITU-R Recommendation P.839-4, *Rain height model for prediction
 //! methods*.
+//!
+//! ITU-R P.839-4 零度等温线高度表。
+//!
+//! 该表由 `validation/tools/generate_p839_table.py` 从随该建议书发布的
+//! 数据生成，此处以米为单位的整数再现，这正是该建议书发布的分辨率。
+//!
+//! 出处：ITU-R 建议书 P.839-4，*Rain height model for prediction methods*。
 
 /// The height of the zero degree isotherm, in metres.
 ///

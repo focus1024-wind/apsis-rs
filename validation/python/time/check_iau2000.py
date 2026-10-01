@@ -13,6 +13,20 @@ Usage:
 
 Exit status is zero when every quantity agrees within tolerance and one
 otherwise.
+
+用 ERFA 交叉核对 ApsisRS 的 IAU 2000/2006 地球定向。
+
+读取由 ``cargo run -p apsis-rs --features physics --example dump_iau2000``
+写出的量，并用 ERFA 逐个重算，后者是国际天文学联合会通过 SOFA 库及其
+ERFA 衍生物分发的参考实现。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/time/check_iau2000.py [path]
+
+每个量都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -35,13 +49,27 @@ import erfa
 # `gst06a` is built on the non-rotating origin while the Rust value is built
 # on the equinox. The two formulations agree to about two microarcseconds,
 # which is 1e-11 radians, and that is what is allowed here.
+#
+# 容差。
+#
+# 章动、黄赤交角与岁差在双精度最后几位的水平上被复现，故它们以 1e-14
+# 比较。
+#
+# 恒星时与各矩阵累积了若干次转动的双精度误差，故容许更大。
+#
+# 格林尼治视恒星时有其自己的容差，因为 ERFA 的 `gst06a` 建立在非旋转原点
+# 之上，而 Rust 值建立在春分点之上。两种表述相符到约两微角秒，即 1e-11
+# 弧度，此处容许的就是这个。
 SCALAR_TOLERANCE = 1e-14
 SIDEREAL_TOLERANCE = 1e-10
 MATRIX_TOLERANCE = 1e-9
 
 
 def tolerance_for(quantity: str) -> float:
-    """Returns the tolerance that applies to a quantity."""
+    """Returns the tolerance that applies to a quantity.
+
+    返回适用于某个量的容差。
+    """
     if quantity == "gast":
         return SIDEREAL_TOLERANCE
     if quantity in ("bpn", "c2t"):
@@ -51,18 +79,25 @@ def tolerance_for(quantity: str) -> float:
 DEFAULT_INPUT = Path("validation/data/expected/rust_iau2000.csv")
 
 # The Terrestrial Time offset from UTC, in seconds, matching the Rust side.
+# 地球时相对 UTC 的偏移，单位为秒，与 Rust 侧一致。
 TT_MINUS_UTC_SECONDS = 32.184 + 37.0
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
-    """Reads the CSV rows."""
+    """Reads the CSV rows.
+
+    读取 CSV 各行。
+    """
     with path.open(newline="") as handle:
         reader = csv.DictReader(handle)
         return [row for row in reader if row.get("mjd")]
 
 
 def tt_julian_date(utc_mjd: float) -> float:
-    """Returns the Terrestrial Time Julian date for a UTC Modified Julian Date."""
+    """Returns the Terrestrial Time Julian date for a UTC Modified Julian Date.
+
+    返回某 UTC 约化儒略日对应的地球时儒略日。
+    """
     return utc_mjd + 2400000.5 + TT_MINUS_UTC_SECONDS / 86400.0
 
 
@@ -122,6 +157,8 @@ def main(argv: list[str]) -> int:
         elif quantity == "c2t":
             # The equinox based chain: the bias, precession and nutation,
             # then Greenwich apparent sidereal time, then the polar motion.
+            # 基于春分点的链条：先偏差、岁差与章动，再格林尼治视恒星时，
+            # 然后极移。
             matrix = erfa.c2t06a(d1, d2, d1, d2, 0.0, 0.0)
             reference = matrix[index // 3][index % 3]
         else:

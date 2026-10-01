@@ -27,6 +27,29 @@ Usage:
 
 Exit status is zero when every instant agrees within tolerance and one
 otherwise.
+
+交叉核对 ApsisRS 的时标换算。
+
+读取由 ``cargo run -p apsis-rs --features physics --example dump_time`` 写出
+的样本，并用 astropy 逐个重算瞬时，然后报告最大差异。
+
+把某 UTC 瞬时写为浮点日有两种约定。本工作区用带阶跃偏移的线性约化儒略日，
+故偏移 ``TAI - UTC`` 在闰秒处改变，其间恒定。Astropy 经 ERFA 用的是准儒略
+日，其中含闰秒的一天有 86 401 秒长，故其 ``tai - utc`` 之差在这样一天中
+斜坡变化。因此把两者作为儒略日之差比较，度量的是约定的差异而非数值误差。
+
+本检查改为比较 TAI 瞬时。两侧被赋予相同的 UTC 日历瞬时，所得 TAI 约化
+儒略日按两部分比较：整数日与小数，这避免了单个浮点日在接近 60 000 处会
+遭受的精度损失。
+
+本脚本不需要网络访问；它禁用 astropy 对地球定向数据的自动下载，这些换算
+并不使用该数据。
+
+用法：
+
+    pixi run python validation/python/time/check_time.py [path]
+
+每个瞬时都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -38,25 +61,33 @@ from pathlib import Path
 from astropy.time import Time
 
 # The TAI instant is compared to one microsecond.
+# TAI 瞬时比较到一微秒。
 TOLERANCE_SECONDS = 1e-6
 
 SECONDS_PER_DAY = 86400.0
 # The Modified Julian Date scale starts half a day after the Julian Date
 # scale, so this is the offset between the two day counts.
+# 约化儒略日的起点比儒略日晚半天，故这是两种日计数之间的偏移。
 MJD_OFFSET_FROM_JD = 2400000.5
 
 DEFAULT_INPUT = Path("validation/data/expected/rust_time.csv")
 
 
 def disable_remote_data() -> None:
-    """Stops astropy from trying to download Earth orientation data."""
+    """Stops astropy from trying to download Earth orientation data.
+
+    阻止 astropy 尝试下载地球定向数据。
+    """
     from astropy.utils import iers
 
     iers.conf.auto_download = False
 
 
 def read_rows(path: Path) -> tuple[list[dict[str, str]], dict[str, str]]:
-    """Reads the CSV rows and the trailing comment metadata."""
+    """Reads the CSV rows and the trailing comment metadata.
+
+    读取 CSV 各行以及末尾的注释元数据。
+    """
     metadata: dict[str, str] = {}
     data_lines = []
     with path.open(newline="") as handle:
@@ -74,7 +105,10 @@ def read_rows(path: Path) -> tuple[list[dict[str, str]], dict[str, str]]:
 
 
 def rust_tai_parts(row: dict[str, str]) -> tuple[int, float]:
-    """Returns the Rust TAI instant as an integer day and a fraction."""
+    """Returns the Rust TAI instant as an integer day and a fraction.
+
+    把 Rust 的 TAI 瞬时返回为整数日与小数。
+    """
     return int(row["tai_day"]), float(row["tai_frac"])
 
 
@@ -83,6 +117,11 @@ def reference_tai_parts(row: dict[str, str]) -> tuple[float, float]:
 
     The two part form of an astropy time keeps the day count in ``jd1`` and
     the within-day offset in ``jd2``, so the subtraction below is exact.
+
+    把 astropy 的 TAI 瞬时返回为整数日与小数。
+
+    astropy 时间的两部分形式把日计数保存在 ``jd1``、把日内偏移保存在
+    ``jd2``，故下面的减法精确。
     """
     iso = (
         f"{int(row['year']):04d}-{int(row['month']):02d}-{int(row['day']):02d}"
@@ -137,6 +176,8 @@ def main(argv: list[str]) -> int:
         # against the reference only at the points where the reference is
         # constant in the workspace's sense, which the instant comparison
         # above has already validated.
+        # 本工作区报告的偏移是阶跃函数。只在参考值于本工作区意义下恒定的点
+        # 处对它作核对，而上面的瞬时比较已验证了这些点。
         rust_offset = float(row["tai_minus_utc"])
         if abs(error) <= TOLERANCE_SECONDS and abs(rust_offset) > worst_offset:
             worst_offset = rust_offset

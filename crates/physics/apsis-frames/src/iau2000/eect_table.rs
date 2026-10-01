@@ -6,6 +6,13 @@
 //!
 //! Source: the MHB2000 model, as distributed with the IAU SOFA library
 //! and implemented by ERFA.
+//!
+//! 分点方程式的 IAU 2000 补充项。
+//!
+//! 该表由 `validation/tools/generate_eect_table.py` 从参考实现生成，
+//! 原样再现，未经改动。
+//!
+//! 出处：MHB2000 模型，随 IAU SOFA 库分发并由 ERFA 实现。
 
 use super::ComplementaryTerm;
 

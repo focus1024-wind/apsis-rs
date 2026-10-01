@@ -10,6 +10,16 @@
 //! Source: the MHB2000 model of Mathews, Herring and Buffett, adopted by
 //! the International Astronomical Union in 2000 and distributed as part
 //! of the IAU SOFA library, as implemented by ERFA.
+//!
+//! IAU 2000A 章动级数。
+//!
+//! 该表由 `validation/tools/generate_nutation_table.py` 从该模型的参考
+//! 实现生成，原样再现，未经改动。
+//!
+//! 字段次序遵循参考实现，它并非论文中列出系数的次序。
+//!
+//! 出处：Mathews、Herring 与 Buffett 的 MHB2000 模型，2000 年由国际
+//! 天文学联合会采纳，随 IAU SOFA 库分发，由 ERFA 实现。
 
 use super::{PlanetaryTerm, SeriesTerm};
 
