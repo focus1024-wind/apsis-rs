@@ -12,12 +12,22 @@ use core::fmt;
 /// value is what the `dBd` and `dBi` conventions are defined against. This
 /// crate uses the conventional value so that a conversion between the two
 /// named forms is exact, and it derives the linear ratio from it.
+///
+/// 半波振子相对各向同性辐射体的增益，单位为分贝。
+///
+/// 理想半波振子的精确方向性为 1.6409，即 2.1509 dB。工程实践将其取整为
+/// 2.15 dB，`dBd` 与 `dBi` 两种约定即以该取整值定义。本 crate 采用
+/// 该约定值，使两种具名形式之间的换算精确，并由其导出线性比值。
 pub const DIPOLE_OVER_ISOTROPIC_DB: f64 = 2.15;
 
 /// The linear gain ratio of a half wave dipole, `10^(2.15 / 10)`.
 ///
 /// This is about 1.64059, within 0.02 percent of the exact directivity of an
 /// ideal dipole, which is 1.6409.
+///
+/// 半波振子的线性增益比值，`10^(2.15 / 10)`。
+///
+/// 该值约为 1.64059，与理想振子 1.6409 的精确方向性相差在 0.02% 以内。
 pub const HALF_WAVE_DIPOLE_RATIO: f64 = 1.640_589_773_199_539_4;
 
 /// An antenna gain expressed as a ratio to an isotropic radiator.
@@ -30,6 +40,15 @@ pub const HALF_WAVE_DIPOLE_RATIO: f64 = 1.640_589_773_199_539_4;
 ///   every direction.
 /// - `dBd` is the ratio to a half wave dipole, which is
 ///   [`DIPOLE_OVER_ISOTROPIC_DB`] decibels above an isotropic radiator.
+///
+/// 以相对各向同性辐射体的比值表示的天线增益。
+///
+/// 该类型以线性比值存储。两种具名分贝形式以换算形式提供，因为这一
+/// 选择关乎约定而非增益本身：
+///
+/// - `dBi` 是相对各向同性辐射体的比值，后者向各方向均匀辐射。
+/// - `dBd` 是相对半波振子的比值，后者比各向同性辐射体高
+///   [`DIPOLE_OVER_ISOTROPIC_DB`] 分贝。
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Gain(f64);
 
@@ -38,6 +57,10 @@ impl Default for Gain {
     ///
     /// This is written by hand rather than derived, because the default for
     /// a ratio type is not its zero but its unit.
+    ///
+    /// 返回单位增益，与 [`Gain::ISOTROPIC`] 相同。
+    ///
+    /// 此处手写而非推导，因为比值类型的缺省值不是其零而是其单位。
     fn default() -> Self {
         Self::ISOTROPIC
     }
@@ -45,12 +68,20 @@ impl Default for Gain {
 
 impl Gain {
     /// Unit gain, as an isotropic radiator has.
+    ///
+    /// 单位增益，如各向同性辐射体所有。
     pub const ISOTROPIC: Self = Self(1.0);
 
     /// The gain of a half wave dipole, about 1.6406.
+    ///
+    /// 半波振子的增益，约为 1.6406。
     pub const HALF_WAVE_DIPOLE: Self = Self(HALF_WAVE_DIPOLE_RATIO);
 
     /// Creates a gain from a linear ratio.
+    ///
+    /// 由线性比值创建增益。
+    ///
+    /// 由线性比值创建增益。
     pub const fn from_ratio(ratio: f64) -> Self {
         Self(ratio)
     }
@@ -59,6 +90,10 @@ impl Gain {
     /// radiator.
     ///
     /// A gain ratio is never negative, so any finite reading is accepted.
+    ///
+    /// 由相对各向同性辐射体的分贝值创建增益。
+    ///
+    /// 增益比值不会为负，故任何有限读数都被接受。
     pub fn from_dbi(dbi: f64) -> Option<Self> {
         if !dbi.is_finite() {
             return None;
@@ -70,6 +105,10 @@ impl Gain {
     /// dipole.
     ///
     /// Returns `None` when the reading is not finite.
+    ///
+    /// 由相对半波振子的分贝值创建增益。
+    ///
+    /// 该读数非有限时返回 `None`。
     pub fn from_dbd(dbd: f64) -> Option<Self> {
         if !dbd.is_finite() {
             return None;
@@ -78,6 +117,8 @@ impl Gain {
     }
 
     /// Returns the linear ratio to an isotropic radiator.
+    ///
+    /// 返回相对各向同性辐射体的线性比值。
     pub const fn ratio(self) -> f64 {
         self.0
     }
