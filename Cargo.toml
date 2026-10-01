@@ -3,25 +3,30 @@
 # The workspace resolves without any external dependency so that the
 # numerical kernels stay self-contained and auditable. Every member crate
 # is unpublished.
+#
+# ApsisRS Rust 工作区根。
+#
+# 工作区在没有任何外部依赖的情况下解析，使各数值内核保持自包含且可
+# 审计。每个成员 crate 都不发布。
 
 [workspace]
 resolver = "2"
 
 members = [
-    # foundation
+    # foundation / 基础层
     "crates/foundation/apsis-core",
     "crates/foundation/apsis-units",
     "crates/foundation/apsis-math",
     "crates/foundation/apsis-macros",
 
-    # physics
+    # physics / 物理层
     "crates/physics/apsis-time",
     "crates/physics/apsis-leap",
     "crates/physics/apsis-coord",
     "crates/physics/apsis-geodesy",
     "crates/physics/apsis-frames",
 
-    # orbit
+    # orbit / 轨道层
     "crates/orbit/apsis-tle",
     "crates/orbit/apsis-sgp4",
     "crates/orbit/apsis-kepler",
@@ -29,7 +34,7 @@ members = [
     "crates/orbit/apsis-maneuver",
     "crates/orbit/apsis-orbit",
 
-    # rf
+    # rf / 射频层
     "crates/rf/apsis-rf",
     "crates/rf/apsis-antenna",
     "crates/rf/apsis-doppler",
@@ -38,7 +43,7 @@ members = [
     "crates/rf/apsis-interference",
     "crates/rf/apsis-link",
 
-    # network
+    # network / 网络层
     "crates/network/apsis-constellation",
     "crates/network/apsis-coverage",
     "crates/network/apsis-access",
@@ -48,21 +53,21 @@ members = [
     "crates/network/apsis-handover",
     "crates/network/apsis-mesh",
 
-    # ops
+    # ops / 运行层
     "crates/ops/apsis-resource",
     "crates/ops/apsis-task",
     "crates/ops/apsis-scheduler",
     "crates/ops/apsis-conflict",
     "crates/ops/apsis-schedule",
 
-    # sim
+    # sim / 仿真层
     "crates/sim/apsis-sim-engine",
     "crates/sim/apsis-scenario",
     "crates/sim/apsis-event",
     "crates/sim/apsis-output",
     "crates/sim/apsis-sim",
 
-    # facade
+    # facade / 门面层
     "crates/apsis-rs",
 ]
 
@@ -81,6 +86,8 @@ missing_docs = "deny"
 # Numeric literals here follow the grouping of the quantity they express,
 # such as the digits of a reference value, rather than a fixed width. The
 # style lint would force a regrouping that obscures the source of a value.
+# 此处的数值字面量按其所表达量的分组来分隔，例如某参考值的各位数字，
+# 而非固定宽度。风格 lint 会强制重新分组，从而模糊某值的来源。
 inconsistent_digit_grouping = "allow"
 
 [workspace.dependencies]

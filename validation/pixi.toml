@@ -10,6 +10,7 @@ python = "3.12.*"
 
 # Reference implementations used only for cross-checking Rust output.
 # These packages are not dependencies of any Rust crate.
+# 仅用于交叉核对 Rust 输出的参考实现。这些包不是任何 Rust crate 的依赖。
 [pypi-dependencies]
 numpy = "*"
 sgp4 = "*"

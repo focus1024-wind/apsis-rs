@@ -20,6 +20,8 @@ jobs:
       - name: Check
         # --all-features matters: the facade crate enables nothing by default,
         # so without it almost all of its code, and every example, is skipped.
+        # `--all-features` 很重要：门面 crate 默认不启用任何特性，没有它
+        # 几乎其全部代码以及每个示例都会被跳过。
         run: cargo check --workspace --all-targets --all-features
       - name: Clippy
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
@@ -30,6 +32,9 @@ jobs:
         # are also meant to be read and run by hand. `cargo test` does not run
         # them, so without this step a change that breaks one layer's
         # assumptions about another would pass CI silently.
+        # 跨层检查是示例而非测试，因为它们也意在供人阅读并手动运行。
+        # `cargo test` 不会运行它们，故没有这一步，破坏某层对另一层假设的
+        # 改动会无声地通过 CI。
         run: |
           cargo run -p apsis-rs --features network --example integrate_network
           cargo run -p apsis-rs --features ops --example integrate_ops
@@ -38,6 +43,8 @@ jobs:
         # The benchmarks are not run in CI, because their timings are only
         # meaningful on a quiet machine, but they must still compile so that
         # they do not rot.
+        # 基准在 CI 中不运行，因为其计时只在安静的机器上有意义，但它们
+        # 仍必须能编译，以免腐坏。
         run: |
           cargo build -p apsis-rs --features full --example bench
           cargo build -p apsis-rs --features full --example bench_scale
@@ -45,6 +52,7 @@ jobs:
       - name: Documentation
         # Catches a doc link that no longer resolves, which is how a doc
         # comment drifts away from the code it describes.
+        # 捕获不再解析的文档链接，文档注释正是这样与其所述代码渐行渐远。
         env:
           RUSTDOCFLAGS: -D warnings
         run: cargo doc --workspace --all-features --no-deps
@@ -52,12 +60,17 @@ jobs:
         # README.md states that a crate may only depend on layers to its
         # left. Nothing else in the build enforces that, so a reverse
         # dependency would otherwise pass CI silently.
+        # README.md 规定一个 crate 只能依赖其左侧的层。构建中没有别的
+        # 东西强制这一点，故反向依赖否则会无声地通过 CI。
         run: bash scripts/check-layers.sh
       - name: Verify dependency freedom
         run: |
           # Every package in the graph must be a workspace crate. `--prefix
           # none` prints bare `name version` lines, one per package, which the
           # box drawing prefix of the default format would otherwise hide.
+          # 依赖图中的每个包都必须是工作区 crate。`--prefix none` 打印
+          # 裸的 `name version` 行，每包一行；否则默认格式的制表前缀会把
+          # 它隐藏。
           external=$(cargo tree --workspace --all-features \
               --edges normal,build,dev --prefix none 2>/dev/null \
             | sed -E 's/ \(\*\)$//; s/ \([^)]*\)$//' \

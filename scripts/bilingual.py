@@ -12,6 +12,17 @@ skipping.
 Usage, from the repository root:
 
     python3 scripts/bilingual.py crates/orbit/apsis-kepler/src/elements.rs
+
+对文件施加一张「英文到双语注释」的替换表。
+
+对仓库的清扫是一长串编辑，每一次都把一段英文注释块改写为英文段后接中文
+段。要把每一对写两遍（作为两次独立替换）容易出错，故此辅助工具接收一张
+替换对列表，施加后重写文件，并报告有多少未匹配。未匹配的替换几乎总是
+英文文本的重新折行，值得一看而非跳过。
+
+用法（在仓库根下）：
+
+    python3 scripts/bilingual.py crates/orbit/apsis-kepler/src/elements.rs
 """
 
 from __future__ import annotations
@@ -21,7 +32,10 @@ from pathlib import Path
 
 
 def apply(path: Path, pairs: list[tuple[str, str]]) -> tuple[int, list[str]]:
-    """Replaces each pair and returns how many applied with the misses."""
+    """Replaces each pair and returns how many applied with the misses.
+
+    替换每一对，并返回已施加的数量与未匹配者。
+    """
     text = path.read_text(encoding="utf-8")
     missed: list[str] = []
     applied = 0

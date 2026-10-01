@@ -13,6 +13,8 @@ path = "src/lib.rs"
 
 # Examples that produce validation input. Each needs the layers it reads
 # from, so it is built only when the matching feature is enabled.
+# 产生验证输入的示例。每个都需要它所读取的层，故只在匹配的特性启用时
+# 才被构建。
 
 [[example]]
 name = "dump_geodesy"
@@ -37,6 +39,7 @@ workspace = true
 default = []
 
 # Enabling a layer also enables the layers it is allowed to depend on.
+# 启用某一层也会启用它所允许依赖的各层。
 foundation = [
     "dep:apsis-core",
     "dep:apsis-units",
@@ -97,6 +100,8 @@ ops = [
 
 # The simulation layer aggregates every other layer, so it enables `ops`.
 # Enable `ops` instead of `full` when the simulation layer is not needed.
+# 仿真层聚合其余每一层，故它启用 `ops`。不需要仿真层时请启用 `ops`
+# 而非 `full`。
 sim = [
     "ops",
     "dep:apsis-sim-engine",
@@ -108,6 +113,7 @@ sim = [
 
 # Every layer, including `sim`. Enabling `sim` pulls in `ops` and, through
 # it, every lower layer.
+# 每一层，包括 `sim`。启用 `sim` 会引入 `ops`，并经它引入每一个更低的层。
 full = ["sim"]
 
 [dependencies]
