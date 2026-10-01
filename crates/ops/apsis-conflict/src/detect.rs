@@ -6,22 +6,32 @@ use apsis_schedule::Schedule;
 use apsis_task::{Task, TaskId};
 
 /// A precedence constraint: one task must finish before another starts.
+///
+/// 一条优先约束：一个任务必须先于另一个开始而完成。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Precedence {
     /// The task that must finish first.
+    ///
+    /// 必须先完成的任务。
     pub before: TaskId,
     /// The task that must start after.
+    ///
+    /// 必须后开始的任务。
     pub after: TaskId,
 }
 
 impl Precedence {
     /// Creates a precedence constraint.
+    ///
+    /// 创建一条优先约束。
     pub const fn new(before: TaskId, after: TaskId) -> Self {
         Self { before, after }
     }
 }
 
 /// Returns the placements of a task, which is at most one.
+///
+/// 返回某任务的放置，至多一处。
 pub fn placements_of(schedule: &Schedule, task: TaskId) -> Option<&apsis_schedule::Placement> {
     schedule.placement_of(task)
 }
@@ -45,11 +55,28 @@ pub fn placements_of(schedule: &Schedule, task: TaskId) -> Option<&apsis_schedul
 /// total demand on a resource is constant between them, so the check is exact
 /// and takes time proportional to the number of placements rather than to the
 /// length of the plan.
+///
+/// 返回计划中的所有冲突。
+///
+/// 检查是完整执行的：报告包含所有发现的问题，而非只有首个。这是有意
+/// 的，因为拿到一份计划的规划器通常希望先知道它有多糟，再决定修复还是
+/// 重建。
+///
+/// 检查项为：
+///
+/// - 每处放置的任务都在列表中，且时长一致；
+/// - 每处放置都落在其任务窗口内；
+/// - 任何瞬时没有资源超出其容量；
+/// - 每处放置都落在其所要求的每个资源的可用窗口内。
+///
+/// 资源扫掠检查各放置的边界，因为资源上的总需求在相邻边界之间恒定，
+/// 故该检查是精确的，耗时正比于放置数而非计划长度。
 pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> ConflictReport {
     let mut conflicts = Vec::new();
 
     // The requirement and window checks need only the placement and its
     // task.
+    // 需求与窗口检查只需放置及其任务。
     for placement in schedule.placements() {
         let task = tasks.iter().find(|task| task.id == placement.task);
         let Some(task) = task else {
@@ -104,6 +131,7 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
 
     // The availability check: a placement must fall inside a window of every
     // resource it requires.
+    // 可用性检查：每处放置必须落在其所要求的每个资源的某个窗口内。
     for placement in schedule.placements() {
         let Some(task) = tasks.iter().find(|task| task.id == placement.task) else {
             continue;
@@ -123,6 +151,7 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
             };
             // A demand greater than the capacity can never be met, which is a
             // requirement problem rather than a placement problem.
+            // 超过容量的需求永远无法满足，故属需求问题而非放置问题。
             if requirement.demand > resource.capacity() + 1e-9 {
                 conflicts.push(
                     Conflict::new(
@@ -158,9 +187,11 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
     }
 
     // The capacity check, one resource at a time.
+    // 容量检查，逐个资源进行。
     for resource in resources.resources() {
         // Each event is a time, a change in demand, and the task responsible,
         // so that a conflict can name the pair.
+        // 每个事件含时刻、需求变化与责任任务，使冲突得以指明这一对。
         let mut events: Vec<(f64, f64, TaskId)> = Vec::new();
         for placement in schedule.placements() {
             let Some(task) = tasks.iter().find(|task| task.id == placement.task) else {
@@ -176,6 +207,7 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
         }
         // A release sorts before an acquisition at the same instant, so two
         // placements that touch are not counted as overlapping.
+        // 同一瞬先排释放后排获取，使两个相接的放置不计为重叠。
         events.sort_by(|first, second| {
             first
                 .0
@@ -203,6 +235,8 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
                 // Report the pair that first pushes the resource over, so
                 // that the conflict names two tasks rather than only the one
                 // that arrived last.
+                // 报告首次把该资源推过量的一对，使冲突指明两个任务而
+                // 不仅是最后到达的那个。
                 let mut involved = holders.clone();
                 involved.sort();
                 let first = involved.first().copied();
@@ -223,6 +257,8 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
                 // Report each resource once, at the first instant it is over
                 // committed. A second report at a later instant would add
                 // nothing a repair pass can use.
+                // 每个资源只报告一次，取其首次超订的时刻。较晚时刻
+                // 的第二次报告对一个修复轮毫无用处。
                 break;
             }
         }
@@ -240,6 +276,14 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
 ///
 /// The constraints are checked as given, so they must be acyclic. A cycle is
 /// a contradiction in the caller's own model and is not detected here.
+///
+/// 返回一组约束中的优先冲突。
+///
+/// 当本应居次的任务在应居首者完成之前开始，即为优先冲突。若某约束的两
+/// 个任务未被同时放置，则不构成冲突，因为对它们未作任何承诺。
+///
+/// 约束按给定形式检查，故必须无环。环是调用方自身模型中的矛盾，此处
+/// 不予检测。
 pub fn detect_precedence(schedule: &Schedule, constraints: &[Precedence]) -> Vec<Conflict> {
     let mut conflicts = Vec::new();
     for constraint in constraints {
