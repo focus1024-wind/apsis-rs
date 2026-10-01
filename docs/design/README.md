@@ -20,3 +20,4 @@ public standard.
 ## Per-layer design
 
 - [The simulation layer](sim.md)
+- [Glossary and formula conventions](glossary.md)

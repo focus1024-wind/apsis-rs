@@ -110,3 +110,7 @@ cargo run --release -p apsis-rs --features full --example bench_parallel
 ## 许可
 
 GPL-3.0-or-later，见 `LICENSE`。
+
+## 术语
+
+- [术语与公式约定](docs/design/glossary.zh.md)

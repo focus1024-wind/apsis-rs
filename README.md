@@ -124,6 +124,7 @@ crate cannot infer:
 - [Errors and tolerances](docs/design/errors.md)
 - [Layer boundaries](docs/design/layers.md)
 - [Parallelism](docs/design/parallel.md)
+- [Glossary and formula conventions](docs/design/glossary.md)
 - [The simulation layer](docs/design/sim.md)
 
 ## Licence
