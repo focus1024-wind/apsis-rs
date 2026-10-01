@@ -35,6 +35,10 @@ use core::hint;
 /// This is the machine's parallelism as reported by the standard library, at
 /// least one. It is the number the callers use to decide whether a parallel
 /// run is worth starting.
+///
+/// 某项工作应使用的线程数。
+///
+/// 这是标准库报告的机器并行度，至少为一。调用方据此决定并行运行是否值得启动。
 pub fn thread_count() -> usize {
     std::thread::available_parallelism()
         .map(|count| count.get())
@@ -48,6 +52,12 @@ pub fn thread_count() -> usize {
 /// there is enough work for a second. The threshold is a per item cost of
 /// roughly a microsecond, below which starting a thread cannot pay for
 /// itself.
+///
+/// 对 `len` 个元素的循环应使用的线程数。
+///
+/// 比线程数还短的循环会让多数线程无所事事，却仍要付出启动代价，因此在工作量
+/// 足以分给第二个线程之前本函数返回一个线程。阈值是每项约一微秒的开销，低于
+/// 此值启动线程无法收回成本。
 pub fn threads_for(len: usize) -> usize {
     const ITEMS_PER_THREAD: usize = 1_024;
     thread_count().min(len.div_ceil(ITEMS_PER_THREAD)).max(1)
@@ -70,6 +80,21 @@ pub fn threads_for(len: usize) -> usize {
 /// If the closure panics, the panic is resumed on the calling thread after
 /// the other threads have been joined, so a failure surfaces at the call
 /// rather than in a detached thread.
+///
+/// 对一段范围内的每个下标各调用一次闭包，分摊到多个线程上执行。
+///
+/// 该范围被切分为每线程一段连续区间，每个线程对落在自己区间内的下标调用闭包。
+/// 闭包可能在任意线程上被调用，故必须是 `Send` 与 `Sync`；它捕获的数据是被共享
+/// 而非复制的。本次调用只有在全部线程结束后才返回，因此闭包写入的数据此后可安全
+/// 读取。
+///
+/// 闭包收到的是下标而非元素，这让签名与具体集合无关：调用方自行读取输入并
+/// 写出输出，两者不会重叠。
+///
+/// # Panics
+///
+/// 若闭包发生 panic，该 panic 会在其它线程 join 之后于调用线程上重新抛出，
+/// 因此失败出现在调用处，而不是某个已分离的线程中。
 pub fn for_each_index<F>(len: usize, operation: F)
 where
     F: Fn(usize) + Sync,
@@ -78,6 +103,8 @@ where
     if threads <= 1 {
         // A single thread would spawn and join one thread to do exactly what
         // this loop does, so it runs directly.
+        // 单线程情况下，若走作用域仍要生成并 join 一个线程来做与本循环完全
+        // 相同的事，故直接执行。
         for index in 0..len {
             operation(index);
         }
@@ -111,6 +138,14 @@ where
 /// The closure is handed the index and returns the value for that index. As
 /// with [`for_each_index`], it may run on any thread, so captured data must be
 /// `Sync`.
+///
+/// 为一段范围内的每个下标各收集一个值，分摊到多个线程上执行。
+///
+/// 当工作的结果是值而非写入共享数组时，本函数是 [`for_each_index`] 的对应形式。
+/// 输出按下标顺序返回，与哪个线程产生了哪个元素无关，故不依赖调度。
+///
+/// 闭包收到下标并返回该下标对应的值。与 [`for_each_index`] 一样，它可能在任意
+/// 线程上运行，故捕获的数据必须为 `Sync`。
 pub fn map_index<T, F>(len: usize, operation: F) -> Vec<T>
 where
     T: Send,
@@ -125,6 +160,9 @@ where
     // split into disjoint mutable slices up front and no slot is written
     // twice. `Vec<Option<T>>` is filled in parallel and unwrapped after the
     // scope, which is where the values are moved into their final order.
+    // 每个线程写入输出的一段连续区间，故缓冲区先被切分为互不相交的可变切片，
+    // 没有槽位被写两次。`Vec<Option<T>>` 并行填充，作用域结束后解包，值在此被
+    // 移入最终顺序。
     let mut slots: Vec<Option<T>> = (0..len).map(|_| None).collect();
     let operation = &operation;
     std::thread::scope(|scope| {
