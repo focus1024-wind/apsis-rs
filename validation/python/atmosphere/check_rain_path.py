@@ -14,6 +14,20 @@ Usage:
 
 Exit status is zero when every value agrees within tolerance and one
 otherwise.
+
+用 ITU-R P.618-13 交叉核对 ApsisRS 的降雨路径。
+
+读取由 ``cargo run -p apsis-rs --features rf --example dump_rain_path``
+写出的值，并从该建议书的各式逐个重算。比衰减系数来自 ITU-R P.838-3 的
+``itur`` 实现，路径几何与两个缩减因子则抄自建议书 P.618-13。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/atmosphere/check_rain_path.py [path]
+
+每个值都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -26,28 +40,37 @@ from pathlib import Path
 from itur.models.itu838 import _ITU838_3_
 
 # Tolerance on the path length and the attenuation, in their own units.
+# 路径长度与衰减的容差，各以其自身单位计。
 LENGTH_TOLERANCE_KM = 1e-9
 ATTENUATION_TOLERANCE_DB = 1e-9
 
 # The effective radius of the Earth used by the path geometry, in
 # kilometers, from Recommendation P.618-13.
+# 路径几何所用的地球有效半径，单位为千米，取自建议书 P.618-13。
 EFFECTIVE_EARTH_RADIUS_KM = 8500.0
 
 # The rain layer height used by the Rust example, in kilometers.
+# Rust 示例所用的雨层高度，单位为千米。
 RAIN_HEIGHT_KM = 3.0
 
 DEFAULT_INPUT = Path("validation/data/expected/rust_rain_path.csv")
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
-    """Reads the CSV rows."""
+    """Reads the CSV rows.
+
+    读取 CSV 各行。
+    """
     with path.open(newline="") as handle:
         reader = csv.DictReader(handle)
         return [row for row in reader if row.get("rain_rate_mm_per_h")]
 
 
 def reference(row: dict[str, str], coefficients) -> tuple[float, float]:
-    """Recomputes the path length and the attenuation."""
+    """Recomputes the path length and the attenuation.
+
+    重算路径长度与衰减。
+    """
     rain_rate = float(row["rain_rate_mm_per_h"])
     frequency = float(row["frequency_ghz"])
     elevation = float(row["elevation_deg"])
@@ -60,6 +83,7 @@ def reference(row: dict[str, str], coefficients) -> tuple[float, float]:
     specific = float(k) * rain_rate ** float(alpha)
 
     # Equation 2: the slant path length.
+    # 式 2：斜路径长度。
     height_difference = RAIN_HEIGHT_KM - station_height
     sine = math.sin(math.radians(elevation))
     slant_length = 2.0 * height_difference / (
@@ -68,9 +92,11 @@ def reference(row: dict[str, str], coefficients) -> tuple[float, float]:
     )
 
     # Equation 3: the horizontal projection.
+    # 式 3：水平投影。
     horizontal_length = abs(slant_length * math.cos(math.radians(elevation)))
 
     # Equation 6: the horizontal reduction factor.
+    # 式 6：水平缩减因子。
     horizontal_reduction = 1.0 / (
         1.0
         + 0.78 * math.sqrt(horizontal_length * specific / frequency)
@@ -78,11 +104,13 @@ def reference(row: dict[str, str], coefficients) -> tuple[float, float]:
     )
 
     # Equation 7: the angle at which the path meets the rain layer.
+    # 式 7：路径与雨层相交的角度。
     eta = math.degrees(
         math.atan2(height_difference, horizontal_length * horizontal_reduction)
     )
 
     # Equation 8: the longer of the two path estimates.
+    # 式 8：两个路径估计中较长者。
     if eta > elevation:
         path_length = (
             horizontal_length * horizontal_reduction / math.cos(math.radians(elevation))
@@ -92,6 +120,7 @@ def reference(row: dict[str, str], coefficients) -> tuple[float, float]:
 
     # Equation 9: the vertical adjustment factor. The exponential takes the
     # elevation in degrees.
+    # 式 9：垂直调整因子。指数以度接收仰角。
     xi = 36.0 - abs(latitude) if abs(latitude) < 36.0 else 0.0
     vertical_adjustment = 1.0 / (
         1.0

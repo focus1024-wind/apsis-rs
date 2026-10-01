@@ -14,6 +14,21 @@ Usage:
 
 Exit status is zero when every value agrees within tolerance and one
 otherwise.
+
+用 ITU-R P.676-12 交叉核对 ApsisRS 的精确斜路径。
+
+读取由 ``cargo run -p apsis-rs --features rf --example dump_gas_exact``
+写出的值，并用 ``itur`` 包逐个重算，后者直接实现该建议书的精确方法。精确
+方法在分层标准大气中积分比衰减并追踪折射后的射线，故它是低仰角下宜用的
+形式。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/atmosphere/check_gas_exact.py [path]
+
+每个值都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -25,19 +40,24 @@ from pathlib import Path
 from itur.models.itu676 import _ITU676_12_
 
 # The reference atmosphere, matching the Rust side.
+# 参考大气，与 Rust 侧一致。
 PRESSURE_HPA = 1013.25
 WATER_VAPOUR_DENSITY = 7.5
 TEMPERATURE_K = 288.15
 
 # The implementation reproduces the reference to about nine significant
 # digits, so this allows for the rounding of the recorded values.
+# 该实现把参考值复现到约九位有效数字，故此值容许所记录值的舍入。
 RELATIVE_TOLERANCE = 1e-7
 
 DEFAULT_INPUT = Path("validation/data/expected/rust_gas_exact.csv")
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
-    """Reads the CSV rows."""
+    """Reads the CSV rows.
+
+    读取 CSV 各行。
+    """
     with path.open(newline="") as handle:
         reader = csv.DictReader(handle)
         return [row for row in reader if row.get("frequency_ghz")]

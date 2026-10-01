@@ -17,6 +17,23 @@ Usage:
 
 Exit status is zero when every value agrees within tolerance and one
 otherwise.
+
+用 ITU-R P.676-12 交叉核对 ApsisRS 的气体衰减。
+
+读取由 ``cargo run -p apsis-rs --features rf --example dump_gas`` 写出的
+值，并用 ``itur`` 包逐个重算，后者直接实现 ITU-R 各建议书，然后报告每列
+的最大差异。
+
+``itur`` 包是作为 ITU-R 研究计划一部分维护的建议书参考实现，故它是对线表
+与各公式的独立核对，而非对它们的复述。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/atmosphere/check_gas.py [path]
+
+每个值都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -31,6 +48,7 @@ import astropy.units as u
 from itur.models.itu676 import _ITU676_12_
 
 # The reference atmosphere of the recommendation, matching the Rust side.
+# 该建议书的参考大气，与 Rust 侧一致。
 PRESSURE_HPA = 1013.25
 WATER_VAPOUR_DENSITY = 7.5
 TEMPERATURE_K = 288.15
@@ -42,6 +60,11 @@ TEMPERATURE_K = 288.15
 # contributions, so a pure relative test is too strict there. The check
 # passes when either the relative difference is small or the absolute
 # difference is negligible.
+#
+# 容差。
+#
+# 比衰减跨越数个数量级，且低频处的水汽项是较大贡献之间的小差值，故纯粹
+# 的相对判据在那里过严。当相对差异很小或绝对差异可忽略时，检查即通过。
 RELATIVE_TOLERANCE = 1e-8
 ABSOLUTE_TOLERANCE = 1e-10
 
@@ -49,7 +72,10 @@ DEFAULT_INPUT = Path("validation/data/expected/rust_gas.csv")
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
-    """Reads the CSV rows."""
+    """Reads the CSV rows.
+
+    读取 CSV 各行。
+    """
     with path.open(newline="") as handle:
         reader = csv.DictReader(handle)
         return [row for row in reader if row.get("frequency_ghz")]
@@ -103,6 +129,8 @@ def main(argv: list[str]) -> int:
             # The column passes on either measure, so the reported figure is
             # the relative one and the acceptance test below also allows the
             # absolute difference to be negligible.
+            # 该列以两种度量之一通过即可，故所报告的数字是相对值，而下面的
+            # 接受判据也允许绝对差异可忽略。
             if relative > worst[column]:
                 worst[column] = relative
                 worst_at[column] = frequency

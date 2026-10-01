@@ -12,6 +12,19 @@ Usage:
 
 Exit status is zero when every value agrees within tolerance and one
 otherwise.
+
+用 ITU-R P.838-3 交叉核对 ApsisRS 的降雨系数。
+
+读取由 ``cargo run -p apsis-rs --features rf --example dump_rain`` 写出的
+值，并用 ``itur`` 包逐个重算，后者直接实现该建议书。
+
+本脚本不需要网络访问。
+
+用法：
+
+    pixi run python validation/python/atmosphere/check_rain.py [path]
+
+每个值都在容差内一致时退出状态为零，否则为一。
 """
 
 from __future__ import annotations
@@ -26,13 +39,18 @@ from itur.models.itu838 import _ITU838_3_
 # digits. The Rust output is written with twelve decimal places, which limits
 # the comparison for the smallest coefficients, so the tolerance is set to
 # one part in ten to the eighth.
+# 该实现把参考值复现到约十二位有效数字。Rust 输出以十二位小数写出，这限制
+# 了最小系数的比较，故容差设为十的八次方分之一。
 RELATIVE_TOLERANCE = 1e-8
 
 DEFAULT_INPUT = Path("validation/data/expected/rust_rain.csv")
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
-    """Reads the CSV rows."""
+    """Reads the CSV rows.
+
+    读取 CSV 各行。
+    """
     with path.open(newline="") as handle:
         reader = csv.DictReader(handle)
         return [row for row in reader if row.get("frequency_ghz")]
