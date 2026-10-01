@@ -18,6 +18,8 @@
 use core::fmt;
 
 /// The number of seconds in a day, not counting leap seconds.
+///
+/// 一天中的秒数，不计闰秒。
 pub const SECONDS_PER_DAY: f64 = 86_400.0;
 
 /// A calendar date and time of day.
@@ -31,24 +33,46 @@ pub const SECONDS_PER_DAY: f64 = 86_400.0;
 /// otherwise occupy. This crate therefore treats leap seconds only where
 /// they are unambiguous, in the `TAI - UTC` offset lookup, and not as
 /// calendar instants.
+///
+/// 日历日期与日内时刻。
+///
+/// 各字段为前推格里历的字段。`second` 是位于 `[0, 60)` 的浮点数。
+///
+/// 秒数不会达到 60。闰秒在 UTC 中写作第 60 秒，但该标记在连续时间标度上并没有
+/// 唯一位置：它占据的区间正是随后午夜本应占据的区间。因此本 crate 只在无歧义的
+/// 位置处理闰秒，即 `TAI - UTC` 偏移查表中，而不把它当作日历瞬时。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Calendar {
     /// Year, negative for years before year 1.
+    ///
+    /// 年，公元 1 年之前为负。
     pub year: i32,
     /// Month in `1..=12`.
+    ///
+    /// 月，取值 `1..=12`。
     pub month: u32,
     /// Day of month in `1..=31`.
+    ///
+    /// 日，取值 `1..=31`。
     pub day: u32,
     /// Hour in `0..=23`.
+    ///
+    /// 时，取值 `0..=23`。
     pub hour: u32,
     /// Minute in `0..=59`.
+    ///
+    /// 分，取值 `0..=59`。
     pub minute: u32,
     /// Second in `[0, 61)`.
+    ///
+    /// 秒，取值 `[0, 61)`。
     pub second: f64,
 }
 
 impl Calendar {
     /// Creates a calendar date from its fields.
+    ///
+    /// 由各字段创建日历日期。
     pub const fn new(year: i32, month: u32, day: u32, hour: u32, minute: u32, second: f64) -> Self {
         Self {
             year,
@@ -61,17 +85,23 @@ impl Calendar {
     }
 
     /// Creates a calendar date at the start of the given day.
+    ///
+    /// 在给定日期的起点创建日历日期。
     pub const fn from_ymd(year: i32, month: u32, day: u32) -> Self {
         Self::new(year, month, day, 0, 0, 0.0)
     }
 
     /// Returns the seconds elapsed since the start of the day.
+    ///
+    /// 返回自该日起点已过去的秒数。
     pub fn seconds_of_day(self) -> f64 {
         f64::from(self.hour) * 3_600.0 + f64::from(self.minute) * 60.0 + self.second
     }
 
     /// Returns `true` when the fields form a date that exists in the
     /// proleptic Gregorian calendar.
+    ///
+    /// 当各字段构成前推格里历中存在的日期时返回 `true`。
     pub fn is_valid(self) -> bool {
         (1..=12).contains(&self.month)
             && self.day >= 1
@@ -95,6 +125,8 @@ impl fmt::Display for Calendar {
 
 /// Returns `true` when `year` is a leap year in the proleptic Gregorian
 /// calendar.
+///
+/// 当 `year` 是前推格里历中的闰年时返回 `true`。
 pub const fn is_leap_year(year: i32) -> bool {
     (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
 }
@@ -102,6 +134,10 @@ pub const fn is_leap_year(year: i32) -> bool {
 /// Returns the number of days in the given month of the given year.
 ///
 /// Returns zero when `month` is outside `1..=12`.
+///
+/// 返回给定年给定月的天数。
+///
+/// `month` 超出 `1..=12` 时返回零。
 pub const fn days_in_month(year: i32, month: u32) -> u32 {
     match month {
         1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
@@ -123,10 +159,17 @@ pub const fn days_in_month(year: i32, month: u32) -> u32 {
 /// The result is the MJD of the start of the given day, so it is an
 /// integer. The time of day is ignored; use [`Calendar::seconds_of_day`] to
 /// account for it.
+///
+/// 把日历日期（忽略日内时刻）转换为修正儒略日（Modified Julian Date）。
+///
+/// 结果是该日起点的 MJD，故为整数。日内时刻被忽略；若需计入，请用
+/// [`Calendar::seconds_of_day`]。
 pub const fn mjd_from_ymd(year: i32, month: u32, day: u32) -> f64 {
     // Shift the year so that March is the first month, which places the
     // leap day at the end of the shifted year and removes a special case
     // from the day count.
+    // 平移年份使三月成为首月，从而把闰日置于平移后年份的末尾，免去天数统计中
+    // 的特例。
     let a = (14 - month as i64) / 12;
     let y = year as i64 + 4800 - a;
     let m = month as i64 + 12 * a - 3;
@@ -138,6 +181,10 @@ pub const fn mjd_from_ymd(year: i32, month: u32, day: u32) -> f64 {
 ///
 /// The fractional part is ignored, so the result is the calendar day
 /// containing the instant.
+///
+/// 把修正儒略日（Modified Julian Date）转换为日历日期。
+///
+/// 小数部分被忽略，故结果是包含该瞬时的日历日。
 pub fn ymd_from_mjd(mjd: f64) -> (i32, u32, u32) {
     let jdn = mjd.floor() as i64 + 2_400_001;
     let a = jdn + 32_044;
@@ -155,6 +202,10 @@ pub fn ymd_from_mjd(mjd: f64) -> (i32, u32, u32) {
 /// Keeps only the fractional part of an MJD as seconds since midnight.
 ///
 /// The result lies in `[0, 86400)` for any finite input.
+///
+/// 只保留 MJD 的小数部分，表示为自午夜起的秒数。
+///
+/// 对任何有限输入，结果都位于 `[0, 86400)`。
 pub fn seconds_of_day_from_mjd(mjd: f64) -> f64 {
     let fraction = mjd - mjd.floor();
     fraction * SECONDS_PER_DAY

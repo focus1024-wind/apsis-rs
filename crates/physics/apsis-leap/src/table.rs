@@ -7,15 +7,28 @@
 /// effect. It does not record the size of the inserted second, because in
 /// every announcement to date the inserted second was exactly one second
 /// and the new offset is one greater than the previous one.
+///
+/// 一条闰秒公告。
+///
+/// 该条目记录 `TAI - UTC` 新值生效的日期。它不记录所插入闰秒的长度，因为迄今
+/// 每一次公告插入的闰秒都恰为一秒，且新偏移比前一个大一。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LeapSecond {
     /// Year of the effective date, in the proleptic Gregorian calendar.
+    ///
+    /// 生效日期的年，前推格里历。
     pub year: i32,
     /// Month of the effective date, in `1..=12`.
+    ///
+    /// 生效日期的月，取值 `1..=12`。
     pub month: u32,
     /// Day of the effective date, in `1..=31`.
+    ///
+    /// 生效日期的日，取值 `1..=31`。
     pub day: u32,
     /// The value of `TAI - UTC` in seconds from this date onward.
+    ///
+    /// 自该日起生效的 `TAI - UTC` 值，单位为秒。
     pub tai_minus_utc: f64,
 }
 
@@ -24,6 +37,10 @@ impl LeapSecond {
     ///
     /// Leap seconds take effect at 00:00:00 UTC, so the effective instant
     /// is the start of the given calendar day.
+    ///
+    /// 返回生效瞬时的修正儒略日（Modified Julian Date）。
+    ///
+    /// 闰秒在 00:00:00 UTC 生效，故生效瞬时即该日历日的起点。
     pub const fn effective_mjd(self) -> f64 {
         mjd_from_ymd(self.year, self.month, self.day)
     }
@@ -34,6 +51,11 @@ impl LeapSecond {
 /// Source: IERS Bulletin C. The first entry is 1972-01-01, when the
 /// current scheme began with an initial offset of 10 s inherited from
 /// earlier adjustments.
+///
+/// 闰秒表，按生效日期排序。
+///
+/// 出处：IERS Bulletin C。首条为 1972-01-01，即现行方案开始之时，其初始偏移
+/// 10 s 承自更早的调整。
 pub const LEAP_SECONDS: &[LeapSecond] = &[
     LeapSecond {
         year: 1972,
@@ -209,6 +231,10 @@ pub const LEAP_SECONDS: &[LeapSecond] = &[
 ///
 /// Queries earlier than this instant are rejected because UTC did not yet
 /// use integer second offsets.
+///
+/// 表中首条的修正儒略日（Modified Julian Date），1972-01-01。
+///
+/// 早于该瞬时的查询会被拒绝，因为那时的 UTC 尚未采用整数秒偏移。
 pub const TABLE_COVERS_FROM_MJD: f64 = mjd_from_ymd(
     LEAP_SECONDS[0].year,
     LEAP_SECONDS[0].month,
@@ -219,6 +245,10 @@ pub const TABLE_COVERS_FROM_MJD: f64 = mjd_from_ymd(
 ///
 /// This is the offset that remains in force until a new leap second is
 /// announced.
+///
+/// 自表中末条起生效的 `TAI - UTC` 值。
+///
+/// 在新的闰秒公布之前，该偏移持续有效。
 pub const TAI_MINUS_UTC_AFTER_LAST_ENTRY: f64 = LEAP_SECONDS[LEAP_SECONDS.len() - 1].tai_minus_utc;
 
 /// Converts a proleptic Gregorian calendar date to a Modified Julian Date.
@@ -230,6 +260,14 @@ pub const TAI_MINUS_UTC_AFTER_LAST_ENTRY: f64 = LEAP_SECONDS[LEAP_SECONDS.len() 
 /// The computation is done in `i64` and converted once at the end, so the
 /// result is exact for the range of dates in which a leap second can
 /// plausibly occur.
+///
+/// 把前推格里历日期转换为修正儒略日（Modified Julian Date）。
+///
+/// 结果是给定日期 00:00:00 的 MJD。算法采用 Fliegel-Van Flandern 整数换算，
+/// 对格里历定义范围内的每个日期都精确，且无需查表。
+///
+/// 计算在 `i64` 中进行并仅在末尾换算一次，故在闰秒可能发生的日期范围内结果
+/// 精确。
 pub const fn mjd_from_ymd(year: i32, month: u32, day: u32) -> f64 {
     let a = (14 - month as i64) / 12;
     let y = year as i64 + 4800 - a;
@@ -237,5 +275,7 @@ pub const fn mjd_from_ymd(year: i32, month: u32, day: u32) -> f64 {
     let jdn = day as i64 + (153 * m + 2) / 5 + 365 * y + y / 4 - y / 100 + y / 400 - 32045;
     // The Julian Day Number counts days from noon, and MJD 0 is the
     // midnight starting 1858-11-17, whose Julian Day Number is 2 400 001.
+    // 儒略日数从正午起计，而 MJD 0 是始于 1858-11-17 的午夜，其儒略日数为
+    // 2 400 001。
     (jdn - 2_400_001) as f64
 }

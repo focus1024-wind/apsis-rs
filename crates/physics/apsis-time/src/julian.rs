@@ -11,14 +11,20 @@
 
 /// The number of days between the start of the Julian Date scale and the
 /// start of the Modified Julian Date scale.
+///
+/// 儒略日标度起点与修正儒略日标度起点之间的天数。
 pub const JULIAN_DATE_OFFSET: f64 = 2_400_000.5;
 
 /// Converts a Julian Date to a Modified Julian Date.
+///
+/// 把儒略日（Julian Date）转换为修正儒略日（Modified Julian Date）。
 pub const fn mjd_from_julian_date(julian_date: f64) -> f64 {
     julian_date - JULIAN_DATE_OFFSET
 }
 
 /// Converts a Modified Julian Date to a Julian Date.
+///
+/// 把修正儒略日（Modified Julian Date）转换为儒略日（Julian Date）。
 pub const fn julian_date_from_mjd(mjd: f64) -> f64 {
     mjd + JULIAN_DATE_OFFSET
 }
