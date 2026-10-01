@@ -103,6 +103,11 @@ impl LinkBudget {
     ///
     /// Returns `None` when any input is not usable.
     ///
+    /// 返回等效全向辐射功率，单位为瓦特。
+    ///
+    /// 这是发射功率减去发射损耗、加上发射天线增益。它是一个各向同性辐射体为
+    /// 在接收机方向上产生相同通量密度所必须辐射的功率。
+    ///
     /// 任一输入不可用时返回 `None`。
     pub fn eirp(&self) -> Option<Power> {
         if !self.transmit_loss.is_finite() || !self.geometry.is_valid() {
@@ -116,6 +121,8 @@ impl LinkBudget {
     /// Returns the carrier power at the receiver input, in watts.
     ///
     /// Returns `None` when any input is not usable.
+    ///
+    /// 返回接收机输入端的载波功率，单位为瓦特。
     ///
     /// 任一输入不可用时返回 `None`。
     pub fn received_power(&self) -> Option<Power> {
@@ -160,6 +167,11 @@ impl LinkBudget {
     ///
     /// Returns `None` when any input is not usable.
     ///
+    /// 返回载噪密度比。
+    ///
+    /// 这是载波功率除以一赫兹内的噪声功率。它是把链路与某调制的每比特能量要求
+    /// 相比较所用的形式，因为数据速率被分开计入。
+    ///
     /// 任一输入不可用时返回 `None`。
     pub fn carrier_to_noise_density(&self) -> Option<Decibel> {
         let carrier = self.received_power()?;
@@ -182,6 +194,11 @@ impl LinkBudget {
     /// different bandwidth.
     ///
     /// Returns `None` when any input is not usable.
+    ///
+    /// 返回接收机带宽内的载噪比。
+    ///
+    /// 这是载噪密度比减去带宽的贡献。与密度比不同，它依赖于接收机，这正是同一
+    /// 链路在不同带宽的接收机中可显示不同载噪比的原因。
     ///
     /// 任一输入不可用时返回 `None`。
     pub fn carrier_to_noise(&self) -> Option<Decibel> {

@@ -1,7 +1,5 @@
 //! The rain height model of ITU-R Recommendation P.839.
 //!
-//! ITU-R 建议书 P.839 的雨顶高度模型。
-//!
 //! The height of the rain layer is taken as the height of the zero degree
 //! isotherm above sea level. The recommendation tabulates that height on a
 //! global grid, and the value at a given location is found by bilinear
@@ -14,6 +12,16 @@
 //!
 //! Source: ITU-R Recommendation P.839-4, *Rain height model for prediction
 //! methods*.
+//!
+//! ITU-R 建议书 P.839 的雨顶高度模型。
+//!
+//! 雨层的高度取为零度等温线在海平面以上的高度。该建议书把该高度列在一个全球网格
+//! 上，而给定位置处的值由周围四个网格点之间的双线性插值求得。
+//!
+//! 雨顶高度是下落雪花融化的高度，其下降水为液态。其上的衰减小得多，故它是衰减层的
+//! 有效厚度，也是建议书 P.618 路径计算的输入。
+//!
+//! 出处：ITU-R 建议书 P.839-4，*Rain height model for prediction methods*。
 
 use crate::p839_table::ZERO_ISOTHERM_HEIGHT_METRES;
 

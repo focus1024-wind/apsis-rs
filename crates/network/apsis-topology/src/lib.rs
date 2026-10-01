@@ -1,7 +1,5 @@
 //! Time-varying network topology.
 //!
-//! 时变网络拓扑。
-//!
 //! A satellite network is not a single graph. The set of usable links
 //! changes as the satellites move, so the network is a sequence of graphs
 //! indexed by time, and this crate provides the data structures for that
@@ -35,6 +33,21 @@
 //! assert_eq!(series.len(), 1);
 //! assert!(series.topology_at(0.0).expect("a topology exists").has_edge(0, 1));
 //! ```
+//!
+//! 时变网络拓扑。
+//!
+//! 卫星网络不是单一的图。可用链路的集合随卫星移动而改变，故该网络是按时间索引的
+//! 一个图序列，而本 crate 提供该序列的数据结构。
+//!
+//! 模型有意简单。一个 [`Topology`] 是节点集合固定、边集合可有可无的图，节点是卫星
+//! 或地面站。一个 [`TopologySeries`] 是递增时刻上一串拓扑，连同各自适用的区间。
+//!
+//! 该序列是阶跃函数：一个拓扑从其自身时间起保持到下一项的时间。这是时变图的标准
+//! 离散时间模型，也是对该序列路由所期望的。
+//!
+//! 边除存在与否外还携带代价，使路由算法有可最小化之物。该代价是一个普通数，故
+//! 调用方可以放一个时延、一个跳数，或任何别的东西，只要路由算法与代价在含义上
+//! 一致。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

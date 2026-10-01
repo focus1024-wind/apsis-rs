@@ -24,6 +24,10 @@
 //! cargo run -p apsis-rs --features network --example dump_coverage \
 //!     > validation/data/expected/rust_coverage.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_coverage::{
     earth_central_angle, elevation_from_central_angle, footprint_area, footprint_central_angle,

@@ -9,6 +9,10 @@
 //! cargo run -p apsis-rs --features physics --example dump_iau2000 \
 //!     > validation/data/expected/rust_iau2000.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_frames::iau2000::{
     PolarMotion, bias_precession_nutation_matrix, celestial_to_terrestrial_matrix,

@@ -132,6 +132,10 @@ pub fn carrier_to_interference(carrier: Power, interferers: &[Interferer]) -> Op
 ///
 /// Returns `None` when either power is not positive.
 ///
+/// 返回单个干扰源下的载干比。
+///
+/// 这是为一个占主导的干扰源这一常见情形提供的便利。
+///
 /// 两个功率之一非正时返回 `None`。
 pub fn carrier_to_interference_single(carrier: Power, interferer: Interferer) -> Option<Decibel> {
     carrier_to_interference(carrier, &[interferer])
@@ -210,6 +214,11 @@ pub fn carrier_to_noise_plus_interference(
 /// zero means it must be accounted for.
 ///
 /// Returns `None` when either power is not positive.
+///
+/// 返回干扰与噪声之比。
+///
+/// 它把干扰功率与接收机中的热噪声功率相比较。远低于零分贝的值意味着干扰相对
+/// 噪声可忽略、可以不计；接近或高于零的值意味着必须计入它。
 ///
 /// 两个功率之一非正时返回 `None`。
 pub fn interference_to_noise_ratio(interference: Power, noise: Power) -> Option<Decibel> {

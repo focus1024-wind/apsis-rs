@@ -130,11 +130,15 @@ pub fn mean_obliquity(t: f64) -> f64 {
 /// Returns the four precession angles for a time.
 ///
 /// The time is in Julian centuries from J2000.0 on the Terrestrial Time
-///
-/// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度
 /// scale.
 ///
 /// Source: the P03 precession, as implemented by `eraPfw06`.
+///
+/// 返回某时刻的四个岁差角。
+///
+/// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度。
+///
+/// 出处：P03 岁差，按 `eraPfw06` 所实现。
 pub fn precession_angles(t: f64) -> PrecessionAngles {
     let gamma_bar = -0.052_928
         + t * (10.556_378
@@ -191,11 +195,17 @@ pub fn frame_bias_matrix() -> Mat3 {
 /// reach the true equator and equinox of date.
 ///
 /// The time is in Julian centuries from J2000.0 on the Terrestrial Time
-///
-/// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度
 /// scale.
 ///
 /// Source: as implemented by `eraPmat06`.
+///
+/// 返回从天球参考系到该日平赤道与平春分点的转动。
+///
+/// 这是偏差-岁差矩阵。章动施加于其上，以到达该日的真赤道与真春分点。
+///
+/// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度。
+///
+/// 出处：按 `eraPmat06` 所实现。
 pub fn bias_precession_matrix(t: f64) -> Mat3 {
     let angles = precession_angles(t);
     frame_to_mean_of_date(&angles)

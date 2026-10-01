@@ -20,18 +20,12 @@ pub struct Sample {
     /// The time of the sample, in seconds from the caller's origin.
     ///
     /// 样本时刻，单位为自调用方原点起的秒数。
-    ///
-    /// 样本时刻，单位为自调用方原点起的秒数。
     pub seconds: f64,
     /// Position, in kilometers.
     ///
     /// 位置，单位为千米。
-    ///
-    /// 位置，单位为千米。
     pub position: Vec3,
     /// Velocity, in kilometers per second.
-    ///
-    /// 速度，单位为千米每秒。
     ///
     /// 速度，单位为千米每秒。
     pub velocity: Vec3,
@@ -39,8 +33,6 @@ pub struct Sample {
 
 impl Sample {
     /// Creates a sample.
-    ///
-    /// 创建一个样本。
     ///
     /// 创建一个样本。
     pub const fn new(seconds: f64, position: Vec3, velocity: Vec3) -> Self {

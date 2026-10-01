@@ -117,10 +117,12 @@ impl Error {
 
     /// Creates an error with the given kind and message.
     ///
-    /// 用给定类别与消息创建一个错误。
-    ///
     /// The message should describe the concrete cause of this specific
     /// failure. It is meant for humans reading logs, not for matching.
+    ///
+    /// 用给定类别与消息创建一个错误。
+    ///
+    /// 该消息应描述这一具体失败的具体原因。它意在供人阅读日志，而非供匹配。
     pub fn with_message(kind: ErrorKind, message: impl Into<String>) -> Self {
         Self {
             kind,

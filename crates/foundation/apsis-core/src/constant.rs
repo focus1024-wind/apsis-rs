@@ -20,6 +20,20 @@
 //! because several derived quantities depend on the exact value rather than
 //! the rounded printed one.
 //!
+//! 工作区各处在用的物理与天文常量。
+//!
+//! 除非名称或文档注释另有说明，所有值以 SI 单位表达。由定义固定的值精确给出；
+//! 实测值携带公共来源所证明的有效数字位数。
+//!
+//! 出处：
+//!
+//! - SI 定义常量：BIPM，*The International System of Units (SI)*，第 9 版，
+//!   2019。
+//! - CODATA 2018 推荐值：E. Tiesinga 等，*CODATA recommended values of the
+//!   fundamental physical constants: 2018*，Rev. Mod. Phys. 93，025010，2021。
+//! - 地球引力参数与赤道半径：WGS 84，NIMA TR8350.2，2000。
+//! - 天文单位：IAU 2012 Resolution B2。
+//!
 //! 当某个数值由标准精确定义时，文档注释会指出这一点，因为若干导出量依赖精确值
 //! 而非取整后的打印值。
 

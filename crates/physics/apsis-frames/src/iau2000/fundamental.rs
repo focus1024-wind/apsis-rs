@@ -257,8 +257,6 @@ pub struct DelaunayArguments {
     /// The mean anomaly of the Moon.
     ///
     /// 月球的平近点角。
-    ///
-    /// 月球的平近点角。
     pub l: f64,
     /// The mean anomaly of the Sun.
     ///
@@ -267,18 +265,12 @@ pub struct DelaunayArguments {
     /// The mean argument of latitude of the Moon.
     ///
     /// 月球的平纬度参数。
-    ///
-    /// 月球的平纬度参数。
     pub f: f64,
     /// The mean elongation of the Moon from the Sun.
     ///
     /// 月球相对太阳的平距角。
-    ///
-    /// 月球相对太阳的平距角。
     pub d: f64,
     /// The mean longitude of the Moon's ascending node.
-    ///
-    /// 月球升交点的平黄经。
     ///
     /// 月球升交点的平黄经。
     pub omega: f64,
@@ -299,8 +291,6 @@ impl DelaunayArguments {
     }
 
     /// Returns the arguments as an array in series order.
-    ///
-    /// 按级数次序把各参数作为数组返回。
     ///
     /// 按级数次序把各参数作为数组返回。
     pub const fn as_array(self) -> [f64; 5] {

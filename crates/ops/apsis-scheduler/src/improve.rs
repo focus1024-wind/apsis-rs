@@ -1,7 +1,5 @@
 //! A second pass that tries to place what the greedy first pass left out.
 //!
-//! 第二遍，尝试放置贪心第一遍所遗漏的。
-//!
 //! The greedy pass places each task at the earliest time it fits and never
 //! moves a placement once it is made, so a task that does not fit is lost
 //! even when moving a placement would make room. This pass addresses the
@@ -27,6 +25,26 @@
 //! with resource constraints is intractable, so the pass reduces the loss
 //! rather than removing it, and the caller continues to see what was left
 //! out.
+//!
+//! 第二遍，尝试放置贪心第一遍所遗漏的。
+//!
+//! 贪心遍把每个任务放到它放得下的最早时间，且一处放置作出后绝不移动，故放不下的
+//! 任务会丢失，即便移动一处放置能腾出空间。本遍处理该问题中最便宜的情形。
+//!
+//! 对一个被遗漏的任务，本遍查看阻挡它的各放置，即与它共享某个它所需资源的放置。
+//! 对每个阻挡者，它尝试对这一对做重定位：
+//!
+//! 1. 记下阻挡者所在，然后移除它。
+//! 2. 找出等待任务在无它时放得下的最早时间。
+//! 3. 把等待任务放到那里，然后问阻挡者在有了新邻居后能否放到别处。
+//! 4. 当二者都放得下时保留新安排，否则撤销它。
+//!
+//! 第 4 步的检查就是整个安全性论证：仅当两处放置都通过贪心遍所用的同一可行性判定时
+//! 才保留这一对，故每次被接受的重定位都使调度保持可行。
+//!
+//! 本遍是有界的。每对重定位花费两次可行性搜索，而每对只尝试有界次数，故本遍在任务
+//! 数上保持线性。它仍是启发式：带资源约束的调度是难解的，故本遍减少损失而非消除它，
+//! 而调用方继续看到被遗漏的内容。
 
 use crate::sweep::earliest_feasible_start;
 use apsis_resource::ResourceSet;

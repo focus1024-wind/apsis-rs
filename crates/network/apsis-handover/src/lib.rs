@@ -1,7 +1,5 @@
 //! Handover decision logic for mobile terminals.
 //!
-//! 移动终端的切换决策逻辑。
-//!
 //! A terminal that can be served by more than one satellite must choose one,
 //! and it must change its choice when the current server becomes unsuitable.
 //! This crate makes that decision. It does not compute access windows, which
@@ -47,6 +45,27 @@
 //! let decision = decide(&policy, Some(1), &candidates).expect("valid input");
 //! assert_eq!(decision, HandoverDecision::Stay);
 //! ```
+//!
+//! 移动终端的切换决策逻辑。
+//!
+//! 能被不止一颗卫星服务的终端必须选择其一，并在当前服务星变得不合适时改变其
+//! 选择。本 crate 作出该决策。它不计算可见性窗口，那属于可见性层；它接收一份带有
+//! 各自质量的候选卫星列表，并决定是否切换。
+//!
+//! 有两种效果相互对抗，二者都必须纳入策略：
+//!
+//! - **切换太迟**会掉链。若当前服务星跌到终端的最低值以下，链路在切换发生之前即
+//!   失效。
+//! - **切换太频繁**浪费容量与时间。每次切换都要付出信令代价并中断数据流，故在每个
+//!   小起伏上都切换的终端表现很差，即便每个单独的选择看起来更好。
+//!
+//! 故该策略有三部分：当前服务星被视为不可用的阈值、候选在值得切换之前必须超出
+//! 当前服务星的余量，以及两次切换之间的最短时间。该余量正是抑制振荡者，也是该
+//! 决策的滞回。
+//!
+//! 出处：阈值、余量与驻留时间的结构即蜂窝网与卫星网中切换所用者，例如见 ITU-R
+//! 建议书 M.1184 关于移动卫星系统技术特性的内容，以及移动无线电中切换滞回的一般
+//! 论述。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

@@ -284,6 +284,11 @@ impl HandoverTracker {
     ///
     /// Returns an error when the candidates or the policy are not usable.
     ///
+    /// 在某一时刻把策略施加于一组候选。
+    ///
+    /// 跟踪器按该决策更新其状态并返回该决策，使调用方既能对它作出反应，也能
+    /// 依赖跟踪器已记录它。
+    ///
     /// 候选或策略不可用时返回错误。
     pub fn step(
         &mut self,

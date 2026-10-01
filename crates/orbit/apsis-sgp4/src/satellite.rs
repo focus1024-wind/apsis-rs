@@ -64,24 +64,16 @@ pub struct Satellite {
     /// Inclination, in radians.
     ///
     /// 倾角，单位为弧度。
-    ///
-    /// 倾角，单位为弧度。
     pub(crate) inclo: f64,
     /// Right ascension of the ascending node, in radians.
-    ///
-    /// 升交点赤经，单位为弧度。
     ///
     /// 升交点赤经，单位为弧度。
     pub(crate) nodeo: f64,
     /// Argument of perigee, in radians.
     ///
     /// 近地点幅角，单位为弧度。
-    ///
-    /// 近地点幅角，单位为弧度。
     pub(crate) argpo: f64,
     /// Mean anomaly, in radians.
-    ///
-    /// 平近点角，单位为弧度。
     ///
     /// 平近点角，单位为弧度。
     pub(crate) mo: f64,
@@ -234,6 +226,8 @@ impl Satellite {
     /// the elements are rejected.
     ///
     /// 由已解析的根数集初始化卫星。
+    ///
+    /// 当根数被拒绝时，返回一个说明哪个根数不可传播的错误。
     pub fn try_from_element(
         element: &TwoLineElement,
         model: GravityModel,
@@ -290,6 +284,8 @@ impl Satellite {
     /// The instant is a Modified Julian Date on the TAI scale.
     ///
     /// 返回卫星在某瞬时的状态。
+    ///
+    /// 该瞬时是 TAI 时标上的约化儒略日。
     pub fn propagate_at(&self, tai_mjd: f64) -> Result<State, PropagationError> {
         self.propagate_minutes(self.minutes_since_epoch(tai_mjd))
     }
@@ -306,6 +302,9 @@ impl Satellite {
     /// model treats as the satellite having re-entered.
     ///
     /// 返回卫星距根数集历元若干分钟处的状态。
+    ///
+    /// 负值向后传播。结果在真赤道平春分点坐标系中，位置以千米计、速度以千米
+    /// 每秒计。
     ///
     /// 当传播所得半径低于一个地球半径时返回
     /// [`PropagationErrorKind::Decayed`](crate::PropagationErrorKind::Decayed)，

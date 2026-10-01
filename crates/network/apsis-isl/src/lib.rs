@@ -1,7 +1,5 @@
 //! Inter-satellite link geometry and visibility.
 //!
-//! 星间链路几何与可见性。
-//!
 //! Two satellites can form a link when the straight line between them does
 //! not pass through the Earth. This crate decides that condition, gives the
 //! geometry a link budget needs, and reports the range and the angles at
@@ -34,6 +32,20 @@
 //! let opposite = Vec3::new(-6_928.137, 0.0, 0.0);
 //! assert_eq!(mutual_visibility(first, opposite, 6_378.137), Some(false));
 //! ```
+//!
+//! 星间链路几何与可见性。
+//!
+//! 当两颗卫星之间的直线不穿过地球时，它们可以形成一条链路。本 crate 判定该条件、
+//! 给出链路预算所需的几何，并报告距离以及每颗卫星必须指向的角度。
+//!
+//! 遮挡判据是两点之间的线段是否有点位于天体内部。对球形天体而言这是一个垂距判定，
+//! 它精确且廉价，故此处采用它。
+//!
+//! 光链路还加一个条件：太阳不得位于任一终端的视场内，因为背景会淹没信号。那是一个
+//! 单独的判定，作为 [`sun_blocks_link`] 提供，它接收太阳方向。
+//!
+//! 长度以千米计，角度以弧度计。各位置所在的坐标系中地球是给定半径的球，对链路
+//! 几何而言它与 orbit 层所产生的是同一坐标系。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

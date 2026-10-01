@@ -186,8 +186,6 @@ impl Evaluation {
     /// Returns `true` when every offered task was placed.
     ///
     /// 当所有提交任务均被放置时返回 `true`。
-    ///
-    /// 当所有提交任务均被放置时返回 `true`。
     pub fn is_complete(&self) -> bool {
         self.placed_count == self.offered_count
     }

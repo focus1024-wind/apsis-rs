@@ -1,8 +1,6 @@
 //! The spherical geometry of a satellite, a ground point, and the Earth's
 //! centre.
 //!
-//! 卫星、地面点与地心的球面几何。
-//!
 //! The three points form a triangle. The angles of that triangle are the
 //! elevation at the ground point, the nadir angle at the satellite, and the
 //! central angle at the centre of the Earth. Because the ground point is
@@ -27,6 +25,27 @@
 //! is the distance from the centre of the Earth to the ground point, so a
 //! station above sea level should pass its own radius rather than the
 //! equatorial radius.
+//!
+//! 卫星、地面点与地心的球面几何。
+//!
+//! 三个点构成一个三角形。该三角形的角是地面点处的仰角、卫星处的天底角，以及
+//! 地心处的中心角。因为地面点正位于当地地平之下，仰角与地面点处的邻角互补，故
+//! 三个角满足
+//!
+//! ```text
+//! elevation + nadir + central = 90 degrees
+//! ```
+//!
+//! 所关注的各量由正弦定理施加于该三角形得出：
+//!
+//! ```text
+//! sin(nadir) / body_radius = cos(elevation) / satellite_radius
+//! ```
+//!
+//! 其中出现余弦，是因为三角形内地面点处的角是仰角的余角。
+//!
+//! 所有角以弧度计，所有长度以千米计。天体半径是自地心到地面点的距离，故海拔高于
+//! 海平面的站应传其自身的半径，而非赤道半径。
 
 use core::f64::consts::FRAC_PI_2;
 
@@ -68,6 +87,10 @@ pub fn nadir_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
 ///
 /// Returns `None` when the geometry is not usable.
 ///
+/// 返回星下点与地面点之间的地心中心角，单位为弧度。
+///
+/// 中心角是地心处两个径向方向之间的角。它是沿地表的距离除以天体半径。
+///
 /// 几何不可用时返回 `None`。
 pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
     let nadir = nadir_angle(satellite_radius, body_radius, elevation)?;
@@ -100,6 +123,21 @@ pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f
 /// even though the range there is simply the altitude.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 返回卫星与地面点之间的斜距，单位为千米。
+///
+/// 该距离是直线距离，而非沿地表的距离。它是链路预算所需的量，因为它决定自由
+/// 空间路径损耗。
+///
+/// 该关系是余弦定理施加于卫星、地面点与地心构成的三角形：
+///
+/// ```text
+/// range^2 = satellite_radius^2 + body_radius^2
+///           - 2 satellite_radius body_radius cos(central)
+/// ```
+///
+/// 此处用余弦定理而非等价形式 `Rs sin(central) / cos(elevation)`，因为后者在
+/// 天顶处奇异，那里仰角是直角、其余弦为零，尽管那里的距离恰是高度。
 ///
 /// 几何不可用时返回 `None`。
 pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {

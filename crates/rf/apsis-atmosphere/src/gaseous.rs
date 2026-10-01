@@ -1,7 +1,5 @@
 //! Specific attenuation of atmospheric gases.
 //!
-//! 大气气体的比衰减。
-//!
 //! The attenuation caused by oxygen and water vapour is computed by the
 //! line-by-line summation of ITU-R Recommendation P.676. Each absorption
 //! line contributes a resonance whose strength depends on the temperature
@@ -22,6 +20,23 @@
 //! gases*, sections 1 and 2. The line tables are the ones tabulated in
 //! tables 1 and 2 of that recommendation, and the expressions for the line
 //! widths and the strengths are equations 1 through 8.
+//!
+//! 大气气体的比衰减。
+//!
+//! 氧与水汽造成的衰减由 ITU-R 建议书 P.676 的逐线求和计算。每条吸收线贡献一个
+//! 共振，其强度经线宽与气压频移取决于温度与气压。
+//!
+//! 该模型由四个大气量参数化：
+//!
+//! - 干空气气压，以百帕计。
+//! - 水汽密度，以克每立方米计。
+//! - 温度，以开尔文计。
+//! - 频率，以吉赫兹计。
+//!
+//! 气压是干空气气压，而非总气压。水汽分压由密度与温度得出，二者在线宽中分开使用。
+//!
+//! 出处：ITU-R 建议书 P.676-12，*Attenuation by atmospheric gases*，第 1 与第 2
+//! 节。各线表即该建议书表 1 与表 2 所列，而线宽与线强的表达式是式 1 至式 8。
 
 use core::f64::consts::E;
 
@@ -40,30 +55,20 @@ struct OxygenLine {
     /// The line frequency, in gigahertz.
     ///
     /// 线频率，以吉赫兹计。
-    ///
-    /// 线频率，以吉赫兹计。
     f0: f64,
     /// Line strength coefficient.
-    ///
-    /// 谱线强度系数。
     ///
     /// 谱线强度系数。
     a1: f64,
     /// Temperature dependence of the line strength.
     ///
     /// 谱线强度的温度依赖。
-    ///
-    /// 谱线强度的温度依赖。
     a2: f64,
     /// Line width coefficient.
     ///
     /// 谱线宽度系数。
-    ///
-    /// 谱线宽度系数。
     a3: f64,
     /// Pressure dependence of the line width.
-    ///
-    /// 谱线宽度的气压依赖。
     ///
     /// 谱线宽度的气压依赖。
     a4: f64,
@@ -934,9 +939,14 @@ impl Atmosphere {
 ///
 /// The frequency is in gigahertz.
 ///
-/// 频率单位为吉赫。
-///
 /// Returns `None` when the frequency or atmosphere is not usable.
+///
+/// 返回干空气的比衰减，单位为分贝每千米。
+///
+/// 这是氧的贡献，由 ITU-R P.676-12 式 1 的逐线求和计算，加上计入所有谱线远翼
+/// 合在一起的非共振 Debye 项。
+///
+/// 频率单位为吉赫。
 ///
 /// 频率或大气不可用时返回 `None`。
 pub fn specific_attenuation_dry_air(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<f64> {
@@ -989,9 +999,13 @@ pub fn specific_attenuation_dry_air(frequency_ghz: f64, atmosphere: Atmosphere) 
 ///
 /// The frequency is in gigahertz.
 ///
-/// 频率单位为吉赫。
-///
 /// Returns `None` when the frequency or atmosphere is not usable.
+///
+/// 返回水汽的比衰减，单位为分贝每千米。
+///
+/// 这是水汽的贡献，由 ITU-R P.676-12 式 1 的逐线求和计算。
+///
+/// 频率单位为吉赫。
 ///
 /// 频率或大气不可用时返回 `None`。
 pub fn specific_attenuation_water_vapour(
@@ -1034,6 +1048,10 @@ pub fn specific_attenuation_water_vapour(
 /// This is the sum of the dry air and water vapour contributions.
 ///
 /// Returns `None` when the frequency or atmosphere is not usable.
+///
+/// 返回大气的总比衰减，单位为分贝每千米。
+///
+/// 这是干空气与水汽贡献之和。
 ///
 /// 频率或大气不可用时返回 `None`。
 pub fn specific_attenuation(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<f64> {

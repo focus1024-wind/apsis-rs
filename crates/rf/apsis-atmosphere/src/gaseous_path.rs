@@ -1,7 +1,5 @@
 //! Slant path attenuation through the atmosphere.
 //!
-//! 穿过大气的斜路径衰减。
-//!
 //! The attenuation along a slant path is not simply the specific attenuation
 //! divided by the sine of the elevation, because the atmosphere thins with
 //! height and the path is curved. ITU-R Recommendation P.676 reduces the
@@ -15,6 +13,17 @@
 //! pressure and temperature.
 //!
 //! Source: ITU-R Recommendation P.676-12, equations 30 through 38.
+//!
+//! 穿过大气的斜路径衰减。
+//!
+//! 斜路径上的衰减并非简单地是比衰减除以仰角的正弦，因为大气随高度变稀薄且路径
+//! 是弯曲的。ITU-R 建议书 P.676 把问题归约为两个等效高度，一为干空气、一为水汽，
+//! 使天顶衰减是地表处的比衰减乘以该高度。
+//!
+//! 干空气的等效高度经氧复合体的形状取决于频率，水汽的等效高度取决于频率与水汽
+//! 密度。二者都依赖于地表气压与温度。
+//!
+//! 出处：ITU-R 建议书 P.676-12，式 30 至式 38。
 
 use crate::gaseous::{Atmosphere, specific_attenuation_dry_air, specific_attenuation_water_vapour};
 
@@ -89,9 +98,16 @@ pub struct EquivalentHeights {
 ///
 /// Returns `None` when the frequency or atmosphere is not usable.
 ///
+/// 返回干空气与水汽的等效高度。
+///
+/// 各高度是这样的长度：乘以地表比衰减即给出天顶衰减。干空气高度在 70 GHz
+/// 以下被限制到一个依赖气压的界，那里氧复合体足够窄，否则该高度会被高估。
+///
+/// 频率单位为吉赫。
+///
 /// 频率或大气不可用时返回 `None`。
 ///
-/// Source: ITU-R Recommendation P.676-12, equations 30 through 38.
+/// 出处：ITU-R 建议书 P.676-12，式 30 至式 38。
 pub fn equivalent_heights(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<EquivalentHeights> {
     if !frequency_ghz.is_finite() || frequency_ghz <= 0.0 || !atmosphere.is_valid() {
         return None;
@@ -166,6 +182,12 @@ pub fn equivalent_heights(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<
 /// 频率单位为吉赫。
 ///
 /// Returns `None` when the frequency or atmosphere is not usable.
+///
+/// 返回大气的天顶衰减，单位为分贝。
+///
+/// 这是地表比衰减乘以等效高度，并对两个成分求和。
+///
+/// 频率单位为吉赫。
 ///
 /// 频率或大气不可用时返回 `None`。
 pub fn zenith_attenuation(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<f64> {

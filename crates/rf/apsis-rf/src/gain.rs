@@ -82,8 +82,6 @@ impl Gain {
     /// Creates a gain from a linear ratio.
     ///
     /// 由线性比值创建增益。
-    ///
-    /// 由线性比值创建增益。
     pub const fn from_ratio(ratio: f64) -> Self {
         Self(ratio)
     }
@@ -129,6 +127,8 @@ impl Gain {
     ///
     /// Returns `None` when the ratio is not positive.
     ///
+    /// 返回该增益，相对各向同性辐射体以分贝计。
+    ///
     /// 比值非正时返回 `None`。
     pub fn dbi(self) -> Option<f64> {
         if self.0 > 0.0 && self.0.is_finite() {
@@ -142,6 +142,8 @@ impl Gain {
     ///
     /// Returns `None` when the ratio is not positive.
     ///
+    /// 返回该增益，相对半波振子以分贝计。
+    ///
     /// 比值非正时返回 `None`。
     pub fn dbd(self) -> Option<f64> {
         self.dbi().map(|dbi| dbi - DIPOLE_OVER_ISOTROPIC_DB)
@@ -150,6 +152,8 @@ impl Gain {
     /// Returns this gain as a ratio in decibels.
     ///
     /// Returns `None` when the ratio is not positive.
+    ///
+    /// 返回该增益，以分贝比表示。
     ///
     /// 比值非正时返回 `None`。
     pub fn as_decibel(self) -> Option<Decibel> {

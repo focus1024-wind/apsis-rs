@@ -39,18 +39,12 @@ pub struct KeplerianElements {
     /// Right ascension of the ascending node, in radians.
     ///
     /// 升交点赤经，单位为弧度。
-    ///
-    /// 升交点赤经，单位为弧度。
     pub right_ascension: f64,
     /// Argument of perigee, in radians.
     ///
     /// 近地点幅角，单位为弧度。
-    ///
-    /// 近地点幅角，单位为弧度。
     pub argument_of_perigee: f64,
     /// True anomaly, in radians.
-    ///
-    /// 真近点角，单位为弧度。
     ///
     /// 真近点角，单位为弧度。
     pub true_anomaly: f64,
@@ -72,12 +66,8 @@ pub struct State {
     /// Position, in kilometers.
     ///
     /// 位置，单位为千米。
-    ///
-    /// 位置，单位为千米。
     pub position: Vec3,
     /// Velocity, in kilometers per second.
-    ///
-    /// 速度，单位为千米每秒。
     ///
     /// 速度，单位为千米每秒。
     pub velocity: Vec3,

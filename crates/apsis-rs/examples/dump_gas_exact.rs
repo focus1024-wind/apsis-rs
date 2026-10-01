@@ -9,6 +9,10 @@
 //! cargo run -p apsis-rs --features rf --example dump_gas_exact \
 //!     > validation/data/expected/rust_gas_exact.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_atmosphere::{Atmosphere, slant_path_attenuation_exact};
 

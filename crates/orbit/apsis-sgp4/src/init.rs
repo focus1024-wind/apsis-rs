@@ -78,30 +78,20 @@ pub struct Elements {
     /// Eccentricity, dimensionless.
     ///
     /// 偏心率，无量纲。
-    ///
-    /// 偏心率，无量纲。
     pub eccentricity: f64,
     /// Inclination, in radians.
-    ///
-    /// 倾角，单位为弧度。
     ///
     /// 倾角，单位为弧度。
     pub inclination: f64,
     /// Right ascension of the ascending node, in radians.
     ///
     /// 升交点赤经，单位为弧度。
-    ///
-    /// 升交点赤经，单位为弧度。
     pub right_ascension: f64,
     /// Argument of perigee, in radians.
     ///
     /// 近地点幅角，单位为弧度。
-    ///
-    /// 近地点幅角，单位为弧度。
     pub argument_of_perigee: f64,
     /// Mean anomaly, in radians.
-    ///
-    /// 平近点角，单位为弧度。
     ///
     /// 平近点角，单位为弧度。
     pub mean_anomaly: f64,
@@ -139,19 +129,6 @@ impl Elements {
     }
 }
 
-/// Applies the Kozai to Brouwer mean motion correction.
-///
-/// The mean motion in an element set is a Kozai mean motion, which the
-/// theory must convert to a Brouwer mean motion before use. The relation is
-///
-/// ```text
-/// n0 = n / (1 + 1.5 k2 (3 cos^2 i - 1) / (a^2 sqrt(1 - e^2)) / a^2)
-/// ```
-///
-/// written in the form used here as a fixed point iteration, because `a`
-/// depends on `n0` through Kepler's third law. The iteration converges from
-/// the unmodified mean motion in a few steps for every orbit that appears in
-/// an element set.
 /// Applies the Kozai to Brouwer mean motion correction.
 ///
 /// The mean motion in an element set is a Kozai mean motion, which the

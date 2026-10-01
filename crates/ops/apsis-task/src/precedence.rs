@@ -1,7 +1,5 @@
 //! Precedence constraints between tasks.
 //!
-//! 任务之间的先后约束。
-//!
 //! A precedence constraint says that one task must finish before another
 //! starts. A set of such constraints forms a directed acyclic graph, and a
 //! scheduler must respect it: a task cannot be placed until every task that
@@ -16,6 +14,18 @@
 //! because the constraints are a property of the set of tasks rather than of
 //! any one task, and because a caller may want to plan the same tasks under
 //! different constraint graphs.
+//!
+//! 任务之间的先后约束。
+//!
+//! 一条先后约束说一个任务必须在另一个开始之前完成。一组这样的约束构成有向无环图，
+//! 而调度器必须遵守它：一个任务在其必须先行的每个任务都被放置并完成之前无法被
+//! 放置。
+//!
+//! 该图以邻接表存储。它在添加边时拒绝环，因为环不是一组可满足的约束，且否则会产生
+//! 一个空的拓扑序，调用方可能把它误认为调度失败而非建模错误。
+//!
+//! 先后关系图是与 [`Task`](crate::Task) 不同的类型，因为约束是任务集合的性质而非
+//! 任一单个任务的性质，也因为调用方可能想在不同约束图下规划同一批任务。
 
 use crate::error::{TaskError, TaskErrorKind};
 use crate::task::TaskId;

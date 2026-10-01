@@ -1,7 +1,5 @@
 //! Resource and time conflict detection.
 //!
-//! 资源与时间冲突检测。
-//!
 //! A schedule can be wrong in several ways, and this crate finds them. It
 //! reports conflicts rather than refusing them, so that a plan loaded from a
 //! file can be checked in full and every problem listed at once instead of
@@ -45,6 +43,22 @@
 //! assert_eq!(report.conflicts().len(), 0);
 //! let _ = ConflictKind::Capacity;
 //! ```
+//!
+//! 资源与时间冲突检测。
+//!
+//! 一份调度可能以若干方式出错，本 crate 找出它们。它报告冲突而非拒绝它们，使从
+//! 文件加载的计划能被完整检查，并一次列出每个问题，而不是每次尝试报一个。
+//!
+//! 检测五类冲突：
+//!
+//! - **容量**：两处放置在同一瞬时需要的某资源超过该资源所有。
+//! - **窗口**：一处放置在任务可开始之前开始，或在它必须结束之后结束。
+//! - **需求**：一处放置的任务未知，或其时长与调度不符。
+//! - **可用性**：一处放置落在它所需某资源的可用性窗口之外，故该资源实际上不在场。
+//! - **先后**：一个必须跟随另一任务的任务在其结束之前开始。
+//!
+//! 容量冲突与可用性冲突之别在实践中要紧：前者说明计划超额承诺，后者说明计划在资源
+//! 被关闭或不可见之时索求它，二者是不同的修复。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

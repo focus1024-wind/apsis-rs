@@ -26,11 +26,14 @@ use core::fmt;
 
 /// A unit of a single physical dimension.
 ///
-/// 单一物理量纲的单位。
-///
 /// Implementors are zero sized marker types. Two units that implement
 /// `Unit` for the same dimension convert through
 /// [`Quantity::to_unit`](crate::Quantity::to_unit).
+///
+/// 单一物理量纲的单位。
+///
+/// 实现者是零尺寸标记类型。对同一量纲实现 `Unit` 的两个单位经
+/// [`Quantity::to_unit`](crate::Quantity::to_unit) 换算。
 pub trait Unit: Copy + fmt::Debug + fmt::Display + 'static {
     /// The physical dimension this unit measures, such as length or time.
     ///
@@ -39,10 +42,12 @@ pub trait Unit: Copy + fmt::Debug + fmt::Display + 'static {
 
     /// The number of base units in one of this unit.
     ///
-    /// 一个该单位相当于多少个基本单位。
-    ///
     /// For example a kilometer has a factor of 1000 when the base unit is
     /// the meter. The base unit of a dimension has a factor of exactly one.
+    ///
+    /// 一个该单位相当于多少个基本单位。
+    ///
+    /// 例如当基本单位是米时，一千米的因子为 1000。某量纲的基本单位其因子恰为一。
     fn factor_to_base() -> f64;
 
     /// The symbol used to print the unit, such as `m` or `s`.
@@ -53,11 +58,14 @@ pub trait Unit: Copy + fmt::Debug + fmt::Display + 'static {
 
 /// A value paired with a unit.
 ///
-/// 与单位配对的一个数值。
-///
 /// Implementors are newtypes over `f64` and a [`Unit`]. The trait gives
 /// generic code access to the stored value and its unit without assuming
 /// which newtype it was handed.
+///
+/// 与单位配对的一个数值。
+///
+/// 实现者是包装 `f64` 与 [`Unit`] 的 newtype。该 trait 使泛型代码能访问所存的
+/// 值与其单位，而不假定所接到的是哪个 newtype。
 pub trait Quantity: Copy {
     /// The unit this quantity is expressed in.
     ///
@@ -76,12 +84,15 @@ pub trait Quantity: Copy {
 
     /// Converts this quantity to another unit of the same dimension.
     ///
-    /// 把该量换算为同一量纲的另一个单位。
-    ///
     /// The value is scaled by the ratio of the two unit factors. The
     /// conversion is exact only when the factors are exact powers of ten,
     /// so callers that need a specific unit for output should convert once
     /// at the boundary rather than repeatedly.
+    ///
+    /// 把该量换算为同一量纲的另一个单位。
+    ///
+    /// 该值按两个单位因子之比缩放。仅当因子是十的精确幂时换算才精确，故需要特定
+    /// 单位作输出的调用方宜在边界处换算一次，而非反复换算。
     fn to_unit<U>(self) -> U
     where
         U: Quantity,

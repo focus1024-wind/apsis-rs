@@ -1,7 +1,5 @@
 //! Ground station access windows.
 //!
-//! 地面站可见性窗口。
-//!
 //! A satellite is accessible from a ground station during the intervals when
 //! it rises above the station's elevation mask. Each such interval is a
 //! pass, or access window, and the sequence of windows over a period is the
@@ -32,6 +30,18 @@
 //! };
 //! assert!(finder.is_valid());
 //! ```
+//!
+//! 地面站可见性窗口。
+//!
+//! 当卫星升到地面站仰角遮蔽之上时，它在那段时间内可从该站访问。每个这样的区间
+//! 是一次过境，或称可见性窗口，而一段时间上的窗口序列即可见性调度。本 crate 从
+//! 传播后的轨道找出这些窗口，并报告其开始、结束、时长以及峰值处的几何。
+//!
+//! 窗口通过对仰角以固定步长采样、并对仰角穿过遮蔽的每个穿越加以细化来找到。采样
+//! 步长设定所能找到的最短过境，而细化给出独立于步长的穿越时刻精度。
+//!
+//! 仰角由地固系中的卫星位置求值，故调用方提供从轨道坐标系来的变换。在本工作区中
+//! 那是 `apsis-coord` 中的换算，配以来自 `apsis-frames` 的地球自转角。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

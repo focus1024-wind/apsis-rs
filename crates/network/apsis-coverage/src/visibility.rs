@@ -19,10 +19,6 @@ pub struct GroundPoint {
     /// The ellipsoid the position is referred to.
     ///
     /// 该位置所参照的椭球。
-    ///
-    /// 该位置所参照的椭球。
-    ///
-    /// 该位置所参照的椭球。
     pub ellipsoid: Ellipsoid,
     /// The sensor elevation mask, in radians.
     ///
@@ -331,6 +327,11 @@ pub fn visible_from_geodetic(
 /// is used only for its radius.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 返回卫星与地面站之间的中心角，单位为弧度。
+///
+/// 它使用两个半径与仰角之间的球面关系，故与覆盖区几何一致。卫星位置只用于其
+/// 半径。
 ///
 /// 几何不可用时返回 `None`。
 pub fn central_angle_to_station(

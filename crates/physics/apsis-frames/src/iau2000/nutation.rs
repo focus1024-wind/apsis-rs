@@ -158,11 +158,16 @@ fn planetary_term(term: &PlanetaryTerm, arguments: &PlanetaryArguments) -> Nutat
 /// Returns the nutation in longitude and obliquity for a time.
 ///
 /// The time is in Julian centuries from J2000.0 on the Terrestrial Time
-///
-/// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度
 /// scale. This is the IAU 2000A model, which includes the planetary terms.
 ///
 /// Source: IAU 2000A, as implemented by `eraNut00a`.
+///
+/// 返回某时刻的黄经与黄赤交角方向的章动。
+///
+/// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度。这是 IAU 2000A
+/// 模型，含行星项。
+///
+/// 出处：IAU 2000A，按 `eraNut00a` 所实现。
 pub fn nutation_2000a(t: f64) -> Nutation {
     let delaunay = DelaunayArguments::at(t);
     let planetary = PlanetaryArguments::at(t);

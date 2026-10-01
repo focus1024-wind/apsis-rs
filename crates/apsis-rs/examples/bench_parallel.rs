@@ -51,6 +51,10 @@
 //! ```text
 //! cargo run --release -p apsis-rs --features full --example bench_parallel
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_access::{AccessFinder, OrbitSample};
 use apsis_coord::Eci;

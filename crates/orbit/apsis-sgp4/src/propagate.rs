@@ -203,7 +203,8 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
     // The `aycof` and `xlcof` used below come from the perturbed
     // inclination in the deep space branch and from the epoch inclination
     // otherwise.
-    // 下文所用的 `aycof` 与 `xlcof` 来自受扰动的
+    // 下文所用的 `aycof` 与 `xlcof`，在深空分支中来自受扰动的倾角，其余
+    // 情形下来自历元倾角。
     let (aycof, xlcof) = if satellite.method == Method::DeepSpace {
         let aycof = -0.5 * satellite.model.j3_over_j2() * sin_perturbed;
         let xlcof = if (cos_perturbed + 1.0).abs() > INCLINATION_GUARD {

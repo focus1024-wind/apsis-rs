@@ -17,6 +17,10 @@
 //! cargo run -p apsis-rs --features physics --example dump_geodesy \
 //!     > validation/data/expected/rust_geodetic.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_coord::{Geodetic, WGS84};
 

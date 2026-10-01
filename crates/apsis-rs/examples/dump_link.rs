@@ -17,6 +17,10 @@
 //! cargo run -p apsis-rs --features rf --example dump_link \
 //!     > validation/data/expected/rust_link.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_link::{LinkBudget, LinkGeometry};
 use apsis_rf::{Decibel, Gain, Power};

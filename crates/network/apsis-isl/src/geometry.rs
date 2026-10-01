@@ -106,8 +106,6 @@ pub fn link_geometry(first: Vec3, second: Vec3, body_radius: f64) -> Option<Link
 /// Returns `true` when the Sun is within the field of view of an optical
 /// link.
 ///
-/// 当太阳位于某光链路的视场内时返回 `true`。
-///
 /// The test is the angle between the link direction and the direction to the
 /// Sun. If that angle is within the field of view at either terminal, the
 /// Sun is in the beam and the link cannot be used.
@@ -122,6 +120,18 @@ pub fn link_geometry(first: Vec3, second: Vec3, body_radius: f64) -> Option<Link
 /// caller with such an ephemeris supplies the direction.
 ///
 /// Returns `None` when the directions or the field of view are not usable.
+///
+/// 当太阳位于某光链路的视场内时返回 `true`。
+///
+/// 判据是链路方向与太阳方向之间的夹角。若该夹角落在任一终端的视场内，则太阳进入
+/// 波束，该链路不可用。
+///
+/// 视场以半角（弧度）给出，即望远镜的接受锥角。典型光终端的半角为若干微弧度。
+///
+/// 太阳方向是与位置同系的单位矢量。本 crate 不计算它，因为这需要太阳星历，而
+/// orbit 层当前不提供；拥有该星历的调用方自行提供该方向。
+///
+/// 方向或视场不可用时返回 `None`。
 pub fn sun_blocks_link(
     link: &LinkGeometry,
     sun_direction: Vec3,

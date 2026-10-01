@@ -1,7 +1,5 @@
 //! The reference standard atmosphere of ITU-R Recommendation P.835.
 //!
-//! ITU-R 建议书 P.835 的参考标准大气。
-//!
 //! The exact slant path method of Recommendation P.676 integrates the
 //! specific attenuation through a stack of layers, so it needs the
 //! temperature, pressure, and water vapour density at each layer height.
@@ -15,6 +13,17 @@
 //!
 //! Source: ITU-R Recommendation P.835-6, *Reference Standard Atmospheres*,
 //! section 1, the mean annual global reference atmosphere.
+//!
+//! ITU-R 建议书 P.835 的参考标准大气。
+//!
+//! 建议书 P.676 的精确斜路径方法在一叠层上积分比衰减，故它需要每一层高度处的
+//! 温度、气压与水汽密度。本模块由建议书 P.835 的年平均全球参考大气提供这些。
+//!
+//! 高度在热层底部以下以势高度度量。势高度是为引力随高度变化而调整过的几何高度，
+//! 它是温度与气压廓线所表达的自变量。
+//!
+//! 出处：ITU-R 建议书 P.835-6，*Reference Standard Atmospheres*，第 1 节，年
+//! 平均全球参考大气。
 
 /// The radius of the Earth used in the geopotential conversion, in
 /// kilometers.
@@ -66,6 +75,11 @@ pub fn geopotential_height(geometric_height_km: f64) -> f64 {
 ///
 /// The geometric height is in kilometers.
 ///
+/// 返回参考大气的温度，单位为开尔文。
+///
+/// 该廓线在势高度 84.852 km 以下分段线性，其后由延伸至 100 km 的两段定义。
+/// 100 km 以上该建议书不定义全球廓线，本函数返回 100 km 处的值。
+///
 /// 几何高度单位为千米。
 pub fn standard_temperature(geometric_height_km: f64) -> f64 {
     let height = geopotential_height(geometric_height_km);
@@ -101,6 +115,10 @@ pub fn standard_temperature(geometric_height_km: f64) -> f64 {
 ///
 /// The geometric height is in kilometers.
 ///
+/// 返回参考大气的气压，单位为百帕。
+///
+/// 该廓线是分段的，在各分段边界处连续，由静力关系施加于每个温度分段得出。
+///
 /// 几何高度单位为千米。
 pub fn standard_pressure(geometric_height_km: f64) -> f64 {
     let height = geopotential_height(geometric_height_km);
@@ -135,6 +153,10 @@ pub fn standard_pressure(geometric_height_km: f64) -> f64 {
 /// so that the density at the surface is the value given.
 ///
 /// The geometric height is in kilometers.
+///
+/// 返回参考大气的水汽密度，单位为克每立方米。
+///
+/// 该廓线是指数式的，标高两千米，并缩放使地表的密度为所给值。
 ///
 /// 几何高度单位为千米。
 pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: f64) -> f64 {

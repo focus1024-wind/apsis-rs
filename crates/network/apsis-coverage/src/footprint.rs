@@ -110,6 +110,10 @@ impl Footprint {
 ///
 /// Returns `None` when the geometry is not usable.
 ///
+/// 返回覆盖区的中心半角，单位为弧度。
+///
+/// 这是卫星仍高于仰角遮蔽时的最大中心角。
+///
 /// 几何不可用时返回 `None`。
 pub fn footprint_central_angle(
     satellite_radius: f64,
@@ -127,6 +131,8 @@ pub fn footprint_central_angle(
 /// Returns the footprint for a satellite and an elevation mask.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 返回卫星与仰角遮蔽所对应的覆盖区。
 ///
 /// 几何不可用时返回 `None`。
 pub fn footprint(
@@ -146,6 +152,10 @@ pub fn footprint(
 ///
 /// Returns `None` when the geometry is not usable.
 ///
+/// 返回覆盖区的面积，单位为平方千米。
+///
+/// 这是 [`Footprint::area`] 的自由函数形式。
+///
 /// 几何不可用时返回 `None`。
 pub fn footprint_area(satellite_radius: f64, body_radius: f64, elevation_mask: f64) -> Option<f64> {
     Some(footprint(satellite_radius, body_radius, elevation_mask)?.area())
@@ -154,6 +164,8 @@ pub fn footprint_area(satellite_radius: f64, body_radius: f64, elevation_mask: f
 /// Returns the fraction of the Earth's surface covered by a footprint.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 返回覆盖区所占地球表面的比例。
 ///
 /// 几何不可用时返回 `None`。
 pub fn footprint_fraction(
@@ -225,6 +237,11 @@ pub fn point_in_footprint(
 /// footprint is known and the mask it corresponds to is wanted.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 返回自地面看覆盖区边缘的仰角，单位为弧度。
+///
+/// 它是 [`footprint_central_angle`] 的逆，当已知覆盖区而想求它对应的遮蔽时
+/// 有用。
 ///
 /// 几何不可用时返回 `None`。
 pub fn footprint_edge_elevation(satellite_radius: f64, footprint: &Footprint) -> Option<f64> {

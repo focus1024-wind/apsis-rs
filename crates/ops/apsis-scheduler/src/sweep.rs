@@ -1,7 +1,5 @@
 //! The earliest start search, done in one pass over the schedule.
 //!
-//! 最早开始搜索，对调度做一遍完成。
-//!
 //! The sequential form asks the same question in a loop: it lists every time
 //! at which feasibility could change, sorts them, and tests each in turn until
 //! one passes. That is correct but it recomputes the busy profile of every
@@ -21,6 +19,21 @@
 //! sweep and the direct test disagree because of floating point rounding at a
 //! capacity boundary. The fast path is therefore an accelerator, never a
 //! second definition of what is feasible.
+//!
+//! 最早开始搜索，对调度做一遍完成。
+//!
+//! 顺序形式在循环中问同一个问题：它列出可行性可能改变的每个时刻，排序，并逐个
+//! 检验直到有一个通过。这正确，但它对每个候选都重算每个资源的繁忙廓线，故在一
+//! 资源上有很多放置的计划，判定每个任务花费二次工作，整个计划花费三次工作。
+//!
+//! 廓线并不依赖于候选。一处放置在它的开始与结束之间繁忙，无论新任务被提议在什么
+//! 时间，故该资源没有空档的各区间对每个候选都相同。本模块把它们计算一次，从可用性
+//! 窗口中减去，并从最前读出所存活的最早开始。这是每个资源一次扫描加一次线性合并，
+//! 而不是每个候选一次扫描。
+//!
+//! 结果在返回前用 [`feasible_at`] 确认，而候选枚举被保留为回退，用于扫描与直接判定
+//! 因容量边界处的浮点舍入而不一致的罕见情形。故该快路径是加速器，绝不是可行性的
+//! 第二种定义。
 
 use crate::greedy::{feasible_at_indexed, resources_have_capacity};
 use apsis_resource::ResourceId;

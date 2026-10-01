@@ -1,7 +1,5 @@
 //! Rain attenuation.
 //!
-//! 降雨衰减。
-//!
 //! The specific attenuation of rain is modelled as a power law in the rain
 //! rate, `gamma = k R^alpha`, where `k` and `alpha` depend on the frequency,
 //! on the polarisation, and on the elevation. The coefficients are given by
@@ -23,6 +21,24 @@
 //! - Slant path method: ITU-R Recommendation P.618-13, *Propagation data and
 //!   prediction methods required for the design of Earth-space
 //!   telecommunication systems*, equations 1 through 10.
+//!
+//! 降雨衰减。
+//!
+//! 降雨的比衰减建模为降雨率中的幂律 `gamma = k R^alpha`，其中 `k` 与 `alpha`
+//! 取决于频率、极化与仰角。各系数由 ITU-R 建议书 P.838 以闭式曲线拟合而非表格给出，
+//! 这是该建议书当前修订版所采用的。
+//!
+//! 斜路径上的衰减遵循 ITU-R 建议书 P.618。穿过降雨的路径长度受站上方雨层高度限制，
+//! 而两个缩减因子计入降雨率沿路径并不均匀这一事实：一个水平缩减与一个垂直调整。
+//! 二者都依赖于比衰减，故该计算不是速率与长度的简单乘积。
+//!
+//! 出处：
+//!
+//! - 比衰减系数：ITU-R 建议书 P.838-3，*Specific attenuation model for rain for
+//!   use in prediction methods*，式 2 与式 3 以及表 1 与表 2。
+//! - 斜路径方法：ITU-R 建议书 P.618-13，*Propagation data and prediction methods
+//!   required for the design of Earth-space telecommunication systems*，式 1 至
+//!   式 10。
 
 use apsis_rf::Decibel;
 

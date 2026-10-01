@@ -148,6 +148,10 @@ impl Power {
     ///
     /// Returns `None` when either power is not positive.
     ///
+    /// 返回 `self` 与 `rhs` 之比，以分贝计。
+    ///
+    /// 这是链路预算中用来表达两个功率电平之间损耗或增益的形式。
+    ///
     /// 两个功率之一非正时返回 `None`。
     pub fn ratio_in_decibels(self, rhs: Self) -> Option<Decibel> {
         if self.0 > 0.0 && rhs.0 > 0.0 {

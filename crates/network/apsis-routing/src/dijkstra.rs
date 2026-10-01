@@ -1,7 +1,5 @@
 //! Shortest path computation over a topology.
 //!
-//! 某拓扑上的最短路径计算。
-//!
 //! The algorithm is Dijkstra's, using a binary heap keyed by the tentative
 //! distance. Costs are positive, so a node's distance is final when it is
 //! first removed from the heap, which makes the algorithm exact.
@@ -10,6 +8,22 @@
 //! standard library's [`BinaryHeap`](std::collections::BinaryHeap) is a
 //! maximum heap. The key is the tentative distance, and ties are broken by
 //! the node index so that the result is deterministic for a given topology.
+//!
+//! 该算法是 Dijkstra 的，使用以暂定距离为键的二叉堆。代价为正，故某节点首次从
+//! 堆中取出时其距离即为最终，这使该算法精确。
+//!
+//! 该堆是反转排序键上的最小堆，因为标准库的
+//! [`BinaryHeap`](std::collections::BinaryHeap) 是最大堆。键是暂定距离，并列时按
+//! 节点下标打破，使结果对给定拓扑是确定的。
+//!
+//! 某拓扑上的最短路径计算。
+//!
+//! 该算法是 Dijkstra 的，使用以暂定距离为键的二叉堆。代价为正，故某节点首次从
+//! 堆中取出时其距离即为最终，这使该算法精确。
+//!
+//! 该堆是反转排序键上的最小堆，因为标准库的
+//! [`BinaryHeap`](std::collections::BinaryHeap) 是最大堆。键是暂定距离，并列时按
+//! 节点下标打破，使结果对给定拓扑是确定的。
 
 use crate::error::{RoutingError, RoutingErrorKind};
 use crate::route::{Route, RouteLeg, RouteStep};
@@ -58,12 +72,15 @@ impl PartialOrd for Candidate {
 
 /// The result of a single source shortest path computation.
 ///
-/// 单源最短路计算的结果。
-///
 /// The distances are to every node reachable from the source, and the
 /// predecessor map records the edge by which each node was reached. Both are
 /// what a routing table needs, and a single computation fills a whole row of
 /// it.
+///
+/// 单源最短路计算的结果。
+///
+/// 各距离是自源到每个可达节点的距离，而前驱图记录每个节点是经哪条边到达的。二者
+/// 都是路由表所需的，且一次计算即填满它的一整行。
 #[derive(Debug, Clone, PartialEq)]
 pub struct PathTree {
     /// The source node.
@@ -83,10 +100,12 @@ pub struct PathTree {
 impl PathTree {
     /// Returns the distance to a node.
     ///
-    /// 返回到某节点的距离。
-    ///
     /// Returns `None` when the node index is out of range or the node is
     /// unreachable.
+    ///
+    /// 返回到某节点的距离。
+    ///
+    /// 当节点下标越界或节点不可达时返回 `None`。
     pub fn distance(&self, node: usize) -> Option<f64> {
         let distance = *self.distances.get(node)?;
         distance.is_finite().then_some(distance)
@@ -100,8 +119,6 @@ impl PathTree {
     }
 
     /// Returns the number of reachable nodes, including the source itself.
-    ///
-    /// 返回可达节点的数量，含源点自身。
     ///
     /// 返回可达节点的数量，含源点自身。
     pub fn reachable_count(&self) -> usize {
@@ -209,10 +226,14 @@ pub fn shortest_paths_from(topology: &Topology, source: usize) -> Result<PathTre
     })
 }
 
-/// 返回两节点之间的最短路由。
+/// Returns the shortest route between two nodes.
 ///
 /// Returns an error when either node is out of range, when they are the
 /// same node, or when no route exists.
+///
+/// 返回两节点之间的最短路由。
+///
+/// 任一节点越界、两者相同，或不存在路由时返回错误。
 pub fn shortest_path(
     topology: &Topology,
     source: usize,

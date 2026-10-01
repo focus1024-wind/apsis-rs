@@ -18,6 +18,10 @@
 //! cargo run -p apsis-rs --features orbit --example dump_orbit \
 //!     > validation/data/expected/rust_sgp4.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_sgp4::{GravityModel, Satellite};
 use apsis_tle::TwoLineElement;

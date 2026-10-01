@@ -1,7 +1,5 @@
 //! Ground coverage analysis.
 //!
-//! 地面覆盖分析。
-//!
 //! A satellite covers the part of the Earth's surface from which it can be
 //! seen above a minimum elevation angle. That part is a circle, called the
 //! footprint, whose size depends on the satellite altitude and on the
@@ -43,6 +41,26 @@
 //!     .expect("valid geometry");
 //! assert!((range - 1_815.65).abs() < 0.01);
 //! ```
+//!
+//! 地面覆盖分析。
+//!
+//! 卫星覆盖地表上能在最小仰角以上看到它的那部分。那部分是一个圆，称为覆盖区，
+//! 其大小取决于卫星高度与仰角遮蔽。本 crate 计算覆盖区几何、判定某地面点是否落在
+//! 覆盖区内，并度量某区域被覆盖的比例。
+//!
+//! [`geometry`](self) 中的球面模型把地球当作一个球。对星座设计已足够准确，那里
+//! 所要的量是覆盖区半径到万分之几以及可见卫星数。[`line_of_sight`] 中的精确视线
+//! 判定使用实际位置，故它计入了扁率以及高于椭球的地面点。
+//!
+//! 卫星、地面点与地心构成的几何是一个三角形。其三个角是地面点处的仰角、卫星处的
+//! 天底角，以及地心处的中心角，它们相加为直角：
+//!
+//! ```text
+//! elevation + nadir + central = 90 degrees
+//! ```
+//!
+//! 出处：此处所用的关系是标准的卫星几何，例如见 Vallado, D. A.，*Fundamentals of
+//! Astrodynamics and Applications*，第 4 版，microcosm Press，2013，第 5.3 节。
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

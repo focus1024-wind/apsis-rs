@@ -25,6 +25,10 @@
 //! cargo run -p apsis-rs --features physics --example dump_time \
 //!     > validation/data/expected/rust_time.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_leap::{LEAP_SECONDS, tai_minus_utc_at_mjd};
 use apsis_time::{Calendar, Epoch, TT_MINUS_TAI, TimeScale};

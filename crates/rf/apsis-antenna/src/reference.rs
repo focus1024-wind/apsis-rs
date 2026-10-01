@@ -89,6 +89,10 @@ fn sidelobe_branch(diameter_over_wavelength: f64) -> (f64, f64) {
 ///
 /// Returns `None` when the ratio is not positive and finite.
 ///
+/// 返回参考方向图的峰值增益，相对各向同性辐射体以分贝计。
+///
+/// 表达式为 `20 log10(D / lambda) + 7.7`。
+///
 /// 比值非正或非有限时返回 `None`。
 pub fn reference_peak_gain(diameter_over_wavelength: f64) -> Option<f64> {
     if !diameter_over_wavelength.is_finite() || diameter_over_wavelength <= 0.0 {
@@ -247,6 +251,11 @@ pub fn diameter_over_wavelength_from_peak_gain(peak_gain_dbi: f64) -> Option<f64
 /// full width between the two three decibel points is twice that value.
 ///
 /// Returns `None` when the ratio is not positive and finite.
+///
+/// 返回参考方向图主瓣的半功率波束宽度，单位为弧度。
+///
+/// 主瓣在距视轴 `phi = sqrt(3 / 2.5e-3) / (D / lambda)` 度处降到三分贝，故
+/// 两个三分贝点之间的全宽是该值的两倍。
 ///
 /// 比值非正或非有限时返回 `None`。
 pub fn reference_beam_width(diameter_over_wavelength: f64) -> Option<f64> {

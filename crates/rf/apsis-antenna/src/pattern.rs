@@ -195,12 +195,8 @@ pub enum Pattern {
         /// The peak gain on boresight.
         ///
         /// 视轴上的峰值增益。
-        ///
-        /// 视轴上的峰值增益。
         peak: Gain,
         /// The half power beam width, in radians.
-        ///
-        /// 半功率波束宽度，单位为弧度。
         ///
         /// 半功率波束宽度，单位为弧度。
         beam_width: f64,

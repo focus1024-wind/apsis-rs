@@ -9,6 +9,10 @@
 //! cargo run -p apsis-rs --features physics --example dump_teme \
 //!     > validation/data/expected/rust_teme.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_frames::iau2000::{PolarMotion, teme_to_terrestrial_matrix};
 

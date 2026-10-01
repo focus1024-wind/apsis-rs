@@ -53,6 +53,8 @@ const ZNL: f64 = 1.583_521_8e-4;
 /// The rate of rotation of the Earth used by the resonance integral, in
 /// radians per minute.
 ///
+/// 共振积分所用的地球自转速率，单位为每分钟弧度。
+///
 /// 该值为 `7.292 115 146 688 55e-5` 弧度每秒。
 const RPTIM: f64 = 4.375_269_088_011_3e-3;
 
@@ -819,7 +821,8 @@ fn initialise_resonance(satellite: &Satellite, ls: &Lunisolar, deep: &mut DeepSp
         // Half-day resonance. The eccentricity series is evaluated at the
         // eccentricity from the element set, not the value carried through
         // the secular rates.
-        // 半日共振。偏心率级数取
+        // 半日共振。偏心率级数按根数集给出的偏心率求值，而非按经长期速率
+        // 传递后的值。
         let cosisq = cosim * cosim;
         let emo = em;
         let em = satellite.ecco;

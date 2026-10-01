@@ -9,6 +9,10 @@
 //! cargo run -p apsis-rs --features rf --example dump_gas \
 //!     > validation/data/expected/rust_gas.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_atmosphere::{
     Atmosphere, equivalent_heights, specific_attenuation_dry_air, specific_attenuation_water_vapour,

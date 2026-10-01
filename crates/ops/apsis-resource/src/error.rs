@@ -63,15 +63,11 @@ impl ResourceError {
     /// Creates an error with the given category.
     ///
     /// 用给定类别创建一个错误。
-    ///
-    /// 用给定类别创建一个错误。
     pub fn new(kind: ResourceErrorKind) -> Self {
         Self { kind, detail: None }
     }
 
     /// Attaches a description of the values that caused the failure.
-    ///
-    /// 附加对该失败所涉数值的说明。
     ///
     /// 附加对该失败所涉数值的说明。
     pub fn with_detail(mut self, detail: impl Into<String>) -> Self {
@@ -82,15 +78,11 @@ impl ResourceError {
     /// Returns the category of this failure.
     ///
     /// 返回该失败的类别。
-    ///
-    /// 返回该失败的类别。
     pub fn kind(&self) -> ResourceErrorKind {
         self.kind
     }
 
     /// Returns the detail text attached to this error, if any.
-    ///
-    /// 返回附加在该错误上的说明文本，若有。
     ///
     /// 返回附加在该错误上的说明文本，若有。
     pub fn detail(&self) -> Option<&str> {

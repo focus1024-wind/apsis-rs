@@ -6,8 +6,6 @@ use core::fmt;
 
 /// A ratio expressed in decibels.
 ///
-/// 以分贝表示的比值。
-///
 /// A decibel is ten times the base ten logarithm of a power ratio, so a
 /// value of zero is unity gain or loss, a value of three is very close to a
 /// doubling, and a value of minus three is very close to a halving.
@@ -15,6 +13,14 @@ use core::fmt;
 /// The type stores the decibel value rather than the ratio, because a chain
 /// of gains and losses is then a sum, which is both faster and less prone to
 /// overflow than a product of ratios.
+///
+/// 以分贝表示的比值。
+///
+/// 分贝是功率比的十进对数的十倍，故值为零是单位增益或损耗，值为三非常接近加倍，
+/// 值为负三非常接近减半。
+///
+/// 该类型存储分贝值而非比值，因为一串增益与损耗于是成为求和，这比比值之积既更快
+/// 也更不易溢出。
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
 pub struct Decibel(f64);
 
@@ -38,10 +44,12 @@ impl Decibel {
 
     /// Creates a value from a power ratio.
     ///
-    /// 由功率比创建一个取值。
-    ///
     /// Returns `None` when the ratio is not positive and finite, because the
     /// logarithm is not defined there.
+    ///
+    /// 由功率比创建一个取值。
+    ///
+    /// 比值非正且非有限时返回 `None`，因为那里没有定义对数。
     pub fn from_ratio(ratio: f64) -> Option<Self> {
         if ratio > 0.0 && ratio.is_finite() {
             Some(Self(10.0 * ratio.log10()))

@@ -1,8 +1,6 @@
 //! Searching access windows for many tracks, optionally across several
 //! threads.
 //!
-//! 为许多轨迹搜索可见性窗口，可选跨多个线程。
-//!
 //! A ground station sees a whole constellation, so the access schedule is
 //! the search of one track per satellite. Each track is independent of the
 //! others, which makes the search the natural place to use several cores: the
@@ -12,6 +10,15 @@
 //! The parallel entry point returns exactly what the sequential one does, in
 //! the same order, so a caller can switch between them without changing what
 //! it computes.
+//!
+//! 为许多轨迹搜索可见性窗口，可选跨多个线程。
+//!
+//! 一座地面站看到整个星座，故可见性调度即是每颗卫星一条轨迹的搜索。每条轨迹与
+//! 其余独立，这使该搜索成为使用多核的自然之处：工作量与卫星数成正比，而几百颗的
+//! 壳层已足以值得动用线程。
+//!
+//! 并行入口所返回的与顺序入口完全相同，次序也相同，故调用方可在二者之间切换而
+//! 不改变它所计算的东西。
 
 use crate::{AccessError, AccessFinder, OrbitSample, PassSummary};
 use apsis_math::parallel::map_index;

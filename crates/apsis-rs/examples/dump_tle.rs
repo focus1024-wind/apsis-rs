@@ -26,6 +26,10 @@
 //! cargo run -p apsis-rs --features orbit --example dump_tle \
 //!     > validation/data/expected/rust_tle.csv
 //! ```
+//!
+//! 用法：
+//!
+//! 运行上方的命令即可得到该示例的输出。
 
 use apsis_time::TimeScale;
 use apsis_tle::{Classification, TwoLineElement, line_checksum};

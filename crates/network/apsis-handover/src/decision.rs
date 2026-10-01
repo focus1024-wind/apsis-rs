@@ -201,6 +201,20 @@ fn validate(policy: &HandoverPolicy, candidates: &[Candidate]) -> Result<(), Han
 ///
 /// Returns an error when the candidates or the policy are not usable.
 ///
+/// 返回策略在不设驻留时间时所蕴含的决策。
+///
+/// 这是终端在每一瞬时独立决策、而调用方自行跟踪历史时所用的形式。当必须强制
+/// 驻留时间时，用 [`decide_with_history`]。
+///
+/// 各条规则，按其施加次序：
+///
+/// 1. 没有当前服务星时，获取最优候选；若没有一个满足最低质量，则放弃。
+/// 2. 当前服务星不在候选中时，它已不可用，故切换到最优候选；若没有一个满足
+///    最低质量，则放弃。
+/// 3. 当前服务星低于最低质量时，放弃它而取最优候选；若没有一个满足最低质量，
+///    则放弃。
+/// 4. 否则保持，除非某候选超出当前服务星的质量多于余量。
+///
 /// 候选或策略不可用时返回错误。
 pub fn decide(
     policy: &HandoverPolicy,
@@ -221,6 +235,13 @@ pub fn decide(
 /// prevents.
 ///
 /// Returns an error when the candidates or the policy are not usable.
+///
+/// 返回策略在强制驻留时间时所蕴含的决策。
+///
+/// 它在 [`decide`] 的各条规则之上再加一条。当距上次切换的时间少于驻留时间时，
+/// 本会因质量增益而发生的切换被拒绝，终端保持。被强制的切换——因为当前服务星
+/// 已不可用或已跌至最低质量以下——无论如何都允许：拒绝它会掉链，这比驻留时间
+/// 所要防止的频繁切换更糟。
 ///
 /// 候选或策略不可用时返回错误。
 pub fn decide_with_history(
