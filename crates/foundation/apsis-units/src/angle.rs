@@ -8,6 +8,15 @@
 //! factor is the irrational constant pi. The factor is derived from
 //! [`f64::consts::PI`](core::f64::consts::PI) rather than from a rounded
 //! literal.
+//!
+//! 平面角量。
+//!
+//! 基本单位是弧度。[`Radians`] 与 [`Degrees`] 都度量
+//! [`Angle`](crate::dimension::Angle)，并通过
+//! [`Quantity::to_unit`](apsis_core::Quantity::to_unit) 相互换算。
+//!
+//! 度并非弧度的十的整数次幂，故换算因子是无理常数 pi。该因子取自
+//! [`f64::consts::PI`](core::f64::consts::PI) 而非某个取整后的字面量。
 
 use crate::dimension::Angle;
 use crate::macros::impl_quantity_ops;
@@ -16,25 +25,35 @@ use core::f64::consts::PI;
 use core::fmt;
 
 /// An angle in radians.
+///
+/// 以弧度表示的角度。
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
 pub struct Radians(f64);
 
 /// An angle in degrees.
+///
+/// 以度表示的角度。
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
 pub struct Degrees(f64);
 
 impl Radians {
     /// Creates an angle from a value in radians.
+    ///
+    /// 由弧度值创建角度。
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
 
     /// Returns this angle in radians.
+    ///
+    /// 返回该角度的弧度值。
     pub const fn value(self) -> f64 {
         self.0
     }
 
     /// Converts this angle to degrees.
+    ///
+    /// 把该角度换算为度。
     pub fn to_degrees(self) -> Degrees {
         Degrees(self.0 * 180.0 / PI)
     }
@@ -43,6 +62,11 @@ impl Radians {
     ///
     /// Wrapping uses [`f64::rem_euclid`](f64::rem_euclid) so the result is
     /// well defined for negative inputs as well as large ones.
+    ///
+    /// 返回该角度归约到半开区间 `[-pi, pi)` 后的值。
+    ///
+    /// 归约使用 [`f64::rem_euclid`](f64::rem_euclid)，因此对负输入与很大输入
+    /// 都有良好定义。
     pub fn wrap(self) -> Self {
         let two_pi = 2.0 * PI;
         let wrapped = (self.0 + PI).rem_euclid(two_pi) - PI;
@@ -52,16 +76,22 @@ impl Radians {
 
 impl Degrees {
     /// Creates an angle from a value in degrees.
+    ///
+    /// 由角度值创建角度。
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
 
     /// Returns this angle in degrees.
+    ///
+    /// 返回该角度的度值。
     pub const fn value(self) -> f64 {
         self.0
     }
 
     /// Converts this angle to radians.
+    ///
+    /// 把该角度换算为弧度。
     pub fn to_radians(self) -> Radians {
         Radians(self.0 * PI / 180.0)
     }

@@ -3,6 +3,12 @@
 //! The base unit is the meter. [`Meters`] and [`Kilometers`] both measure
 //! [`Length`](crate::dimension::Length) and convert into each other through
 //! [`Quantity::to_unit`](apsis_core::Quantity::to_unit).
+//!
+//! 长度量。
+//!
+//! 基本单位是米。[`Meters`] 与 [`Kilometers`] 都度量
+//! [`Length`](crate::dimension::Length)，并通过
+//! [`Quantity::to_unit`](apsis_core::Quantity::to_unit) 相互换算。
 
 use crate::dimension::Length;
 use crate::macros::impl_quantity_ops;
@@ -10,25 +16,35 @@ use apsis_core::{Quantity, Unit};
 use core::fmt;
 
 /// A length in meters.
+///
+/// 以米为单位的长度。
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
 pub struct Meters(f64);
 
 /// A length in kilometers.
+///
+/// 以千米为单位的长度。
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
 pub struct Kilometers(f64);
 
 impl Meters {
     /// Creates a length from a value in meters.
+    ///
+    /// 由米值创建长度。
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
 
     /// Returns this length in meters.
+    ///
+    /// 返回该长度的米值。
     pub const fn value(self) -> f64 {
         self.0
     }
 
     /// Converts this length to kilometers.
+    ///
+    /// 把该长度换算为千米。
     pub fn to_kilometers(self) -> Kilometers {
         Kilometers(self.0 / 1_000.0)
     }
@@ -36,16 +52,22 @@ impl Meters {
 
 impl Kilometers {
     /// Creates a length from a value in kilometers.
+    ///
+    /// 由千米值创建长度。
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
 
     /// Returns this length in kilometers.
+    ///
+    /// 返回该长度的千米值。
     pub const fn value(self) -> f64 {
         self.0
     }
 
     /// Converts this length to meters.
+    ///
+    /// 把该长度换算为米。
     pub fn to_meters(self) -> Meters {
         Meters(self.0 * 1_000.0)
     }
