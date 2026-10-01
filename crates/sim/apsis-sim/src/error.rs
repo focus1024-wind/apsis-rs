@@ -3,14 +3,22 @@
 use core::fmt;
 
 /// The category of a simulation error.
+///
+/// 仿真错误的类别。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum SimulationErrorKind {
     /// The scenario is not usable.
+    ///
+    /// 该场景不可用。
     InvalidScenario,
     /// The scheduled resources do not form a usable set.
+    ///
+    /// 所调度的资源未构成可用的集合。
     InvalidResources,
     /// A scheduled placement does not match the task it names.
+    ///
+    /// 某处放置与其所指名的任务不匹配。
     InconsistentPlan,
 }
 
@@ -26,6 +34,8 @@ impl fmt::Display for SimulationErrorKind {
 }
 
 /// A failure while preparing or starting a simulation.
+///
+/// 准备或启动仿真时发生的失败。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SimulationError {
     kind: SimulationErrorKind,
@@ -41,6 +51,8 @@ impl SimulationError {
     }
 
     /// Attaches a description of what caused the failure.
+    ///
+    /// 附加对导致该失败之事的说明。
     pub fn with_detail(mut self, detail: impl Into<String>) -> Self {
         self.detail = Some(detail.into());
         self

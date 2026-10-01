@@ -3,22 +3,38 @@
 use core::fmt;
 
 /// The category of a topology error.
+///
+/// 拓扑错误的类别。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum TopologyErrorKind {
     /// A node index is outside the range of the graph.
+    ///
+    /// 节点下标超出该图的取值范围。
     NoSuchNode,
     /// An edge already exists between the two nodes.
+    ///
+    /// 两节点之间已存在该边。
     DuplicateEdge,
     /// No edge exists between the two nodes.
+    ///
+    /// 两节点之间不存在该边。
     NoSuchEdge,
     /// A cost is not finite or not positive.
+    ///
+    /// 代价非有限或非正。
     InvalidCost,
     /// The series is empty.
+    ///
+    /// 该序列为空。
     EmptySeries,
     /// The times in a series are not strictly increasing.
+    ///
+    /// 序列中的时刻非严格递增。
     UnorderedTimes,
     /// A time is not finite.
+    ///
+    /// 某时刻非有限。
     InvalidTime,
 }
 
@@ -38,6 +54,8 @@ impl fmt::Display for TopologyErrorKind {
 }
 
 /// A failure while building or querying a topology.
+///
+/// 构建或查询拓扑时发生的失败。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TopologyError {
     kind: TopologyErrorKind,

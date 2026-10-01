@@ -12,6 +12,13 @@ use apsis_math::Vec3;
 /// blocking body lies between the terminals.
 ///
 /// Returns `None` when either point is not finite.
+///
+/// 返回原点到两点连线的最短距离。
+///
+/// 最近点落在两端之间时它是垂距，否则是到较近一端的距离。对星间链路
+/// 而言前一种情形是要紧的，因为遮挡天体位于两端之间。
+///
+/// 任一点非有限时返回 `None`。
 pub fn closest_approach_to_centre(first: Vec3, second: Vec3) -> Option<f64> {
     if !first.is_finite() || !second.is_finite() {
         return None;
@@ -39,6 +46,13 @@ pub fn closest_approach_to_centre(first: Vec3, second: Vec3) -> Option<f64> {
 ///
 /// Returns `None` when either position is not finite or the body radius is
 /// not positive.
+///
+/// 当两颗卫星能越过该天体互相可见时返回 `true`。
+///
+/// 判据是两位置之间的线段是否保持在给定半径的球体之外。恰好擦过表面
+/// 的链路被视为通畅，因为该极限即几何地平线。
+///
+/// 任一位置非有限或天体半径非正时返回 `None`。
 pub fn mutual_visibility(first: Vec3, second: Vec3, body_radius: f64) -> Option<bool> {
     if !body_radius.is_finite() || body_radius <= 0.0 {
         return None;
@@ -57,6 +71,14 @@ pub fn mutual_visibility(first: Vec3, second: Vec3, body_radius: f64) -> Option<
 /// or when the body radius is not usable. A cell that reports its own
 /// position for both ends has no link, so that case is rejected rather than
 /// returned with a zero range.
+///
+/// 返回两颗卫星之间链路的完整几何。
+///
+/// 各方向是自每颗卫星指向对方的单位矢量。其中含对中心的最接近距离，使
+/// 调用方能判断该链路有多少余量。
+///
+/// 任一位置非有限、两者重合或天体半径不可用时返回 `None`。两端回报
+/// 自身位置的单元没有链路，故该情形被拒绝而非以零距离返回。
 pub fn link_geometry(first: Vec3, second: Vec3, body_radius: f64) -> Option<LinkGeometry> {
     if !body_radius.is_finite() || body_radius < 0.0 {
         return None;
@@ -79,6 +101,8 @@ pub fn link_geometry(first: Vec3, second: Vec3, body_radius: f64) -> Option<Link
 
 /// Returns `true` when the Sun is within the field of view of an optical
 /// link.
+///
+/// 当太阳位于某光链路的视场内时返回 `true`。
 ///
 /// The test is the angle between the link direction and the direction to the
 /// Sun. If that angle is within the field of view at either terminal, the

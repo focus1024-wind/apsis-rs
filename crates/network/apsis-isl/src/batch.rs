@@ -21,6 +21,14 @@ use apsis_math::{Vec3, parallel::map_index};
 ///
 /// A pair whose test is undefined, because a position is not finite or the
 /// body radius is not positive, yields `false`.
+///
+/// 按顺序返回各位置有序对的可见性。
+///
+/// 结果按行主序：位于 `row * positions.len() + column` 的元素是
+/// `positions[row]` 对 `positions[column]` 的可见性。卫星对自身总可见，
+/// 这提示调用方跳过对角线。
+///
+/// 测试未定义的点对（位置非有限或天体半径非正）给出 `false`。
 pub fn visibility_matrix(positions: &[Vec3], body_radius: f64) -> Vec<bool> {
     let len = positions.len();
     let mut matrix = vec![false; len * len];
@@ -34,6 +42,7 @@ pub fn visibility_matrix(positions: &[Vec3], body_radius: f64) -> Vec<bool> {
 }
 
 /// Returns the visibility of every ordered pair of positions, across several
+/// 跨多个线程返回各位置有序对的可见性。
 /// threads.
 ///
 /// The result matches [`visibility_matrix`] element for element and in the

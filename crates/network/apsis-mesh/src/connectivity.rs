@@ -9,6 +9,13 @@ use apsis_topology::Topology;
 /// hops. The result is in node order.
 ///
 /// Returns an empty vector when the node is out of range.
+///
+/// 沿边的方向返回自某节点可达的节点集合。
+///
+/// 起点节点被包含在内，因为节点经零跳路径可达自身。结果按节点次序
+/// 排列。
+///
+/// 节点越界时返回空向量。
 pub fn reachable_from(topology: &Topology, source: usize) -> Vec<usize> {
     if source >= topology.node_count() {
         return Vec::new();
@@ -43,6 +50,18 @@ pub fn reachable_from(topology: &Topology, source: usize) -> Vec<usize> {
 /// Returns `Some(0)` when no path exists, and `None` when either node is out
 /// of range or the two nodes are the same, for which the question is not
 /// defined.
+///
+/// 返回两节点之间相互独立的路径条数。
+///
+/// 两条路径在不含公共边时相互独立。依 Menger 定理，该条数即使这两节点
+/// 断连所需移除的最少边数，故即该连接可承受的链路失效次数。
+///
+/// 该值以两节点之间单位容量的最大流计算，采用 Ford-Fulkerson 方法的
+/// Edmonds-Karp 变体，每步沿最短增广。对卫星网这样的小图它既快又
+/// 精确。
+///
+/// 不存在路径时返回 `Some(0)`；任一节点越界或两节点相同（此时该问题
+/// 无定义）时返回 `None`。
 pub fn edge_connectivity(topology: &Topology, source: usize, destination: usize) -> Option<usize> {
     if source >= topology.node_count() || destination >= topology.node_count() {
         return None;
@@ -125,6 +144,18 @@ pub fn edge_connectivity(topology: &Topology, source: usize, destination: usize)
 ///
 /// Source: Kosaraju's algorithm as described in Cormen et al.,
 /// *Introduction to Algorithms*, 3rd edition, MIT Press, 2009, chapter 22.
+///
+/// 返回强连通分量的数量。
+///
+/// 一个分量内每个节点都能沿边的方向到达其余每个节点时，它即强连通。
+/// 该计数是各自内部可路由的独立网络数，对含定向星间链路的卫星网而
+/// 言，它正是衡量该网由几部分构成的恰当度量。
+///
+/// 算法为 Kosaraju：一次深度优先搜索记录各节点的完成次序，再在反向
+/// 边上按完成次序的逆序做第二次搜索，输出各分量。
+///
+/// 出处：Kosaraju 算法，见 Cormen 等，*Introduction to Algorithms*，
+/// 第 3 版，MIT Press，2009，第 22 章。
 pub fn strongly_connected_components(topology: &Topology) -> usize {
     let node_count = topology.node_count();
     if node_count == 0 {

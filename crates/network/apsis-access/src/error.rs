@@ -3,20 +3,34 @@
 use core::fmt;
 
 /// The category of an access error.
+///
+/// 接入错误的类别。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum AccessErrorKind {
     /// The station or its mask is not usable.
+    ///
+    /// 地面站或其遮蔽角不可用。
     InvalidStation,
     /// The sampling step is not positive and finite.
+    ///
+    /// 采样步长非正或非有限。
     InvalidSampleStep,
     /// The crossing tolerance is not positive and finite.
+    ///
+    /// 交叉容差非正或非有限。
     InvalidTolerance,
     /// The search interval is empty or not ordered.
+    ///
+    /// 搜索区间为空或次序不对。
     InvalidInterval,
     /// The sample sequence is not in increasing time order.
+    ///
+    /// 样本序列未按时间递增排列。
     UnorderedSamples,
     /// A supplied satellite position is not usable.
+    ///
+    /// 所提供的卫星位置不可用。
     InvalidPosition,
 }
 
@@ -35,6 +49,8 @@ impl fmt::Display for AccessErrorKind {
 }
 
 /// A failure while finding access windows.
+///
+/// 查找可见性窗口时发生的失败。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AccessError {
     kind: AccessErrorKind,

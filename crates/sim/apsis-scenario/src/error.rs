@@ -3,6 +3,8 @@
 use core::fmt;
 
 /// The category of a scenario error.
+///
+/// 场景错误的类别。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum ScenarioErrorKind {

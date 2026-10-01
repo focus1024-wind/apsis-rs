@@ -3,16 +3,26 @@
 use core::fmt;
 
 /// The category of a handover error.
+///
+/// 切换错误的类别。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum HandoverErrorKind {
     /// The candidate list is empty.
+    ///
+    /// 候选列表为空。
     NoCandidates,
     /// The same satellite appears more than once in the candidate list.
+    ///
+    /// 同一卫星在候选列表中出现多次。
     DuplicateSatellite,
     /// A quality value is outside its range or not finite.
+    ///
+    /// 某质量值超出取值范围或非有限。
     InvalidQuality,
     /// A policy parameter is not usable.
+    ///
+    /// 某策略参数不可用。
     InvalidPolicy,
 }
 
@@ -29,6 +39,8 @@ impl fmt::Display for HandoverErrorKind {
 }
 
 /// A failure while making a handover decision.
+///
+/// 作出切换决策时发生的失败。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HandoverError {
     kind: HandoverErrorKind,
