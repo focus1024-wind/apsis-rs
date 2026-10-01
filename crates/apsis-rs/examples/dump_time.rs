@@ -62,7 +62,6 @@ fn main() {
 
     // Sample every leap second boundary at several times of day, so that
     // the step behaviour and the interior of each interval are covered.
-    //
     // 在一天中的若干时刻对每个闰秒边界采样，使阶跃行为与每个区间的内部都被覆盖。
     for entry in LEAP_SECONDS {
         for (hour, minute, second) in [(0, 0, 0.0), (6, 0, 0.0), (12, 0, 0.0), (18, 0, 0.0)] {
@@ -74,7 +73,6 @@ fn main() {
     }
 
     // The last second before a leap second and the first second after it.
-    //
     // 闰秒前的最后一秒与其后的第一秒。
     for (year, month, day, hour, minute, second) in [
         (2016, 12, 31, 23, 59, 59.0),
@@ -91,7 +89,6 @@ fn main() {
 
     // The Terrestrial Time offset is a defining constant, written here so
     // that the checker can verify it without recomputing the calendar.
-    //
     // 地球时偏移是一个定义常量，写在这里使检查器无需重算日历即可核验它。
     println!("# tt_minus_tai_seconds={TT_MINUS_TAI:.3}");
 }

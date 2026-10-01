@@ -25,7 +25,6 @@ fn main() {
     for &frequency in FREQUENCIES_GHZ {
         // A horizontal path, which removes the elevation dependence and
         // isolates the coefficient curves.
-        //
         // 水平路径，它去除仰角依赖并分离出各系数曲线。
         for &(elevation_degrees, polarisation_degrees) in
             &[(90.0_f64, 0.0_f64), (90.0, 90.0), (30.0, 0.0), (30.0, 45.0)]

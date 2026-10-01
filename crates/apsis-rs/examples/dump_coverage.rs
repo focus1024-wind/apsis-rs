@@ -121,7 +121,6 @@ const CENTRAL_ANGLES_DEGREES: &[f64] = &[0.0, 1.0, 5.0, 15.0, 30.0, 45.0, 60.0, 
 fn main() {
     // The header names every column so that the Python side can read by name
     // rather than by position.
-    //
     // 表头为每一列命名，使 Python 侧可以按名而非按位置读取。
     println!(
         "case,satellite_radius_km,body_radius_km,elevation_mask_rad,\
@@ -162,7 +161,6 @@ fn main() {
 
     // The inverse relation, written with its own header so the Python side
     // can tell the two blocks apart by the first column.
-    //
     // 反解关系，带上它自己的表头，使 Python 侧可以按第一列区分两个块。
     println!();
     println!("inverse_central_degrees,elevation_rad,round_trip_central_degrees");
@@ -171,7 +169,6 @@ fn main() {
         // Use the equatorial radius as the satellite radius for the inverse
         // check, so the geometry is the degenerate one where the elevation is
         // always zero. A more useful check uses a satellite altitude.
-        //
         // 反解检查把赤道半径用作卫星半径，故几何是退化的那种，其中仰角恒为零。更
         // 有用的检查要用卫星高度。
         let satellite_radius = BODY_RADIUS_KM + 550.0;
@@ -181,7 +178,6 @@ fn main() {
             // Beyond the horizon the inverse has no solution, which is
             // reported as an empty row rather than skipped, so the count of
             // rows stays fixed.
-            //
             // 在地平之外反解无解，故报告为一个空行而非跳过，使行数保持固定。
             println!("{degrees},,");
             continue;

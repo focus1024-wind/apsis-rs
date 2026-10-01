@@ -30,7 +30,6 @@ use apsis_tle::TwoLineElement;
 /// 中、高偏心率以及深空分支。
 const ELEMENT_SETS: &[&str] = &[
     // International Space Station, near circular low Earth orbit.
-    //
     // 国际空间站，近圆形低轨。
     concat!(
         "1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927\r\n",
@@ -38,21 +37,18 @@ const ELEMENT_SETS: &[&str] = &[
     ),
     // A highly eccentric orbit, which exercises the eccentric anomaly
     // iteration and the drag terms away from circular motion.
-    //
     // 一个高度偏心的轨道，它检验偏近点角迭代以及远离圆运动时的阻力项。
     concat!(
         "1 00005U 58002B   00179.78495062  .00000023  00000-0  28098-4 0  4753\r\n",
         "2 00005  34.2682 348.7242 1859667 331.7664  19.3264 10.82419157413667\r\n",
     ),
     // A geostationary transfer orbit with a low perigee.
-    //
     // 一个近地点很低的地球静止转移轨道。
     concat!(
         "1 27651U 03004A   06185.99374200  .00000109  00000-0  19909-4 0   445\r\n",
         "2 27651   7.1743 182.9443 7867251 269.0386  18.6601  1.03461646  9884\r\n",
     ),
     // A deep space orbit, whose period exceeds 225 minutes.
-    //
     // 一个深空轨道，其周期超过 225 分钟。
     concat!(
         "1 09880U 77021A   06174.85710247  .00000090  00000-0  10000-3 0  7322\r\n",

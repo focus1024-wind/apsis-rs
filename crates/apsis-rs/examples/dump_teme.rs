@@ -32,7 +32,6 @@ fn main() {
         // is used directly here and the check tolerates that difference.
         // The Julian date is split into a whole number of days and a
         // fraction, which preserves more of the day than a single value.
-        //
         // 该变换需要 UT1 时间，因为是地球自转在带动坐标系。UT1 与 UTC 相差不到
         // 0.9 秒，即 0.0037 度的转动，故此处直接使用 UTC 值，而检查容忍该差异。儒略日
         // 被拆成整数天数与零头，这比单个值保留更多当日信息。

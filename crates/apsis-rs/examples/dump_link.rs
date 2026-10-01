@@ -144,7 +144,6 @@ fn main() {
         let cn = budget.carrier_to_noise().map(|value| value.db());
         // The energy per bit ratio is reported at a fixed data rate equal to
         // the bandwidth, which makes it the carrier to noise ratio.
-        //
         // 每比特能量比在等于带宽的固定数据速率下报告，这使它即为载噪比。
         let ebn0 = budget
             .energy_per_bit_over_noise(bandwidth)

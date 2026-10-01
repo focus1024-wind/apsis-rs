@@ -98,7 +98,6 @@ const SAMPLES: &[Sample] = &[
     sample(
         // A two digit year of 99 must expand to 1999, the last year of the
         // twentieth century branch of the convention.
-        //
         // 两位年份 99 必须展开为 1999，即该约定二十世纪分支的最后一年。
         "two_digit_year_1999",
         "1 10000U 99001A   99365.00000000  .00000000  00000-0  00000-0 0    05",
@@ -151,7 +150,6 @@ fn main() {
         // The epoch is stored as a Modified Julian Date; the calendar form
         // is written so the reader can compare the year and the day of year
         // against the two digit year and fraction the line encodes.
-        //
         // 历元存为约化儒略日；写出日历形式，使读者可以把年与一年中的第几天对照该行
         // 所编码的两位年份与零头。
         let calendar = element

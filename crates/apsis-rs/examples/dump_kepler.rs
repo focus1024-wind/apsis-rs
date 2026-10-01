@@ -160,7 +160,6 @@ const GEO_RADIUS: f64 = 42_164.0;
 
 fn main() {
     // The first table: elements to a Cartesian state.
-    //
     // 第一张表：根数到直角坐标状态。
     println!(
         "case,semi_major_axis_km,eccentricity,inclination_rad,right_ascension_rad,\
@@ -175,7 +174,6 @@ fn main() {
         // The specific energy is reported as well, because it is the
         // quantity the Python side uses to check the speed independently of
         // the direction.
-        //
         // 比能量也被报告，因为它是 Python 侧用来独立于方向核对速率的量。
         let radius = state.position.norm();
         let energy = state.velocity.norm_squared() / 2.0 - MU.value() / radius;
@@ -201,7 +199,6 @@ fn main() {
 
     // A circular orbit at the geostationary radius, whose speed has a closed
     // form, is included in the same table under its own name.
-    //
     // 地球静止半径处的圆轨道，其速率有闭式，故以它自己的名称纳入同一张表。
     let geo = KeplerianElements {
         semi_major_axis: GEO_RADIUS,
@@ -235,7 +232,6 @@ fn main() {
     // The second table: a state back to elements, over a grid of true
     // anomalies on one orbit. This exercises the vector algebra rather than
     // the perifocal formulae the first table uses.
-    //
     // 第二张表：在一个轨道的真近点角网格上从状态转回根数。它检验矢量代数，而非
     // 第一张表所用的近焦点公式。
     println!();

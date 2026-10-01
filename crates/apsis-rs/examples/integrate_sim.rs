@@ -20,6 +20,19 @@
 //! ```text
 //! cargo run -p apsis-rs --features sim --example integrate_sim
 //! ```
+//!
+//! 跨层集成检查：把一个场景作为仿真运行。
+//!
+//! 本示例端到端走完仿真层，并断言每一步都为下一步产生合理的输入。它不是数值交叉
+//! 核对；逐层测试做那件事。它的目的是在某 crate 的改动破坏另一 crate 的假设时
+//! 失败。
+//!
+//! 该链是：
+//!
+//! 1. 从文本加载一个场景，它描述资源、任务以及它们之间的先后约束。
+//! 2. 用 `apsis-sim` 准备它，后者规划任务并构建时间线。
+//! 3. 启动一个会话并运行它，在每个活动处记录状态。
+//! 4. 读回运行报告，其中含有引擎结果与轨迹。
 
 use apsis_sim::{RecordKind, Scenario, Simulation, StopReason};
 
@@ -29,6 +42,11 @@ use apsis_sim::{RecordKind, Scenario, Simulation, StopReason};
 /// and the downlink that follows uses the transmitter, so the two are joined
 /// by a precedence constraint. A third task of low priority may or may not
 /// fit, which is what makes the plan interesting to report.
+///
+/// 本示例所运行的场景。
+///
+/// 地面站在两次过境中可用。一次观测使用载荷，随后的下行使用发射机，故二者由一条
+/// 先后约束连接。第三个低优先级任务或许放得下、或许放不下，这正使该计划值得报告。
 const SCENARIO: &str = "\
 # A short downlink scenario.
 scenario leo downlink
@@ -59,6 +77,7 @@ precedence 0 1
 fn main() {
     // Step 1: load the scenario. A failure here is a problem with the text,
     // so the example reports it rather than unwrapping.
+    // 第 1 步：加载场景。此处失败是文本有问题，故本示例报告它而非 unwrap。
     let scenario = match Scenario::parse(SCENARIO) {
         Ok(scenario) => scenario,
         Err(error) => {
@@ -77,6 +96,7 @@ fn main() {
 
     // Step 2: prepare the simulation. This plans the tasks and builds the
     // timeline that the plan implies.
+    // 第 2 步：准备仿真。它规划各任务并构建该计划所蕴含的时间线。
     let simulation = match Simulation::prepare(scenario) {
         Ok(simulation) => simulation,
         Err(error) => {
@@ -103,6 +123,8 @@ fn main() {
 
     // Step 3: run the timeline. The handler records what it sees, which is
     // what a real model would do with the physics it has.
+    // 第 3 步：运行时间线。处理器记录它所看到的，这正是真实模型会用它手头的物理
+    // 所做的。
     let mut session = simulation.start();
     let mut starts = 0_u32;
     let mut ends = 0_u32;
@@ -117,6 +139,7 @@ fn main() {
     });
 
     // Step 4: read the report back.
+    // 第 4 步：读回报告。
     println!(
         "run: {} activity(s) executed, {} start(s), {} end(s)",
         report.executed(),
@@ -136,6 +159,7 @@ fn main() {
 
     // Two tasks are joined by precedence, so their ends and starts must line
     // up in the timeline the handler saw.
+    // 两个任务由先后约束连接，故它们的结束与开始在处理器所见的时间线中必须对齐。
     let trace = &report.trace;
     let collection_end = trace
         .with_label("finished")
@@ -157,6 +181,7 @@ fn main() {
     }
 
     // A run of the same prepared simulation must reproduce the trace.
+    // 对同一已准备仿真的运行必须复现该轨迹。
     let mut again = simulation.start();
     let repeated = again.run(|_engine, recorder, event| {
         if event.payload.is_start() {

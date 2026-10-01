@@ -42,7 +42,6 @@ const TAI_MINUS_UTC: f64 = 37.0;
 /// 返回 UTC 时标上某约化儒略日对应的 TT 儒略日。
 fn tt_julian_date(utc_mjd: f64) -> f64 {
     // TAI = UTC + 37, TT = TAI + 32.184, so TT = UTC + 69.184 seconds.
-    //
     // TAI = UTC + 37，TT = TAI + 32.184，故 TT = UTC + 69.184 秒。
     utc_mjd + 2_400_000.5 + (TT_MINUS_TAI + TAI_MINUS_UTC) / 86_400.0
 }
@@ -54,26 +53,22 @@ fn main() {
         let t = (tt - 2_451_545.0) / 36_525.0;
 
         // The obliquity, in radians.
-        //
         // 黄赤交角，单位为弧度。
         println!("{mjd},obliquity,0,{:.17e}", mean_obliquity(t));
 
         // The nutation, from the IAU 2000A model.
-        //
         // 章动，取自 IAU 2000A 模型。
         let nutation = nutation_2000a(t);
         println!("{mjd},nutation_longitude_a,0,{:.17e}", nutation.longitude);
         println!("{mjd},nutation_obliquity_a,0,{:.17e}", nutation.obliquity);
 
         // The nutation with the IAU 2006 adjustment.
-        //
         // 施加 IAU 2006 调整后的章动。
         let adjusted = nutation_2000a_with_2006_adjustment(t);
         println!("{mjd},nutation_longitude_06a,0,{:.17e}", adjusted.longitude);
         println!("{mjd},nutation_obliquity_06a,0,{:.17e}", adjusted.obliquity);
 
         // The four precession angles.
-        //
         // 四个岁差角。
         let angles = precession_angles(t);
         println!("{mjd},precession_gamma_bar,0,{:.17e}", angles.gamma_bar);
@@ -83,7 +78,6 @@ fn main() {
 
         // The bias-precession-nutation matrix, which carries the celestial
         // reference frame to the true equator and equinox of date.
-        //
         // 偏差-岁差-章动矩阵，它把天球参考系带到该日的真赤道与真春分点。
         let bpn = bias_precession_nutation_matrix(t);
         for row in 0..3 {
@@ -94,7 +88,6 @@ fn main() {
         }
 
         // Greenwich apparent sidereal time, in radians.
-        //
         // 格林尼治视恒星时，单位为弧度。
         println!(
             "{mjd},gast,0,{:.17e}",
@@ -102,7 +95,6 @@ fn main() {
         );
 
         // The celestial-to-terrestrial matrix, with zero polar motion.
-        //
         // 天球到地球坐标系矩阵，极移为零。
         let matrix = celestial_to_terrestrial_matrix(tt, tt, PolarMotion::NONE);
         for row in 0..3 {
