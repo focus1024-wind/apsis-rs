@@ -1,4 +1,6 @@
 //! Running a prepared simulation.
+//!
+//! 运行已准备的仿真。
 
 use crate::activity::Activity;
 use crate::simulation::Simulation;

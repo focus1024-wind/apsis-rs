@@ -1,4 +1,6 @@
 //! The schedule itself.
+//!
+//! 调度本身。
 
 use crate::error::{ScheduleError, ScheduleErrorKind};
 use crate::placement::{Evaluation, Placement, ResourceUsage};

@@ -1,5 +1,7 @@
 //! The earliest start search, done in one pass over the schedule.
 //!
+//! 最早开始搜索，对调度做一遍完成。
+//!
 //! The sequential form asks the same question in a loop: it lists every time
 //! at which feasibility could change, sorts them, and tests each in turn until
 //! one passes. That is correct but it recomputes the busy profile of every

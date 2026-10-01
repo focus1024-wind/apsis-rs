@@ -1,4 +1,6 @@
 //! Building a trace as a simulation runs.
+//!
+//! 在仿真运行过程中构建轨迹。
 
 use crate::record::{Record, RecordKind};
 use crate::trace::Trace;

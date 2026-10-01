@@ -1,5 +1,7 @@
 //! Simulation output recording.
 //!
+//! 仿真输出记录。
+//!
 //! A simulation produces more output than a caller can act on at once: event
 //! times, the values a model computes as it runs, and the warnings it raises.
 //! This crate collects those into one trace, so that a run can be examined

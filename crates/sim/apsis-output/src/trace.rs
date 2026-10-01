@@ -1,4 +1,6 @@
 //! The trace and its summaries.
+//!
+//! 轨迹及其各汇总。
 
 use crate::record::{Record, RecordKind};
 use std::collections::BTreeMap;

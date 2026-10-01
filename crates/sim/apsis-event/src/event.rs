@@ -1,4 +1,6 @@
 //! The event type and its identifier.
+//!
+//! 事件类型及其标识符。
 
 use core::fmt;
 

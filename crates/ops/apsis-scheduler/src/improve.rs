@@ -1,5 +1,7 @@
 //! A second pass that tries to place what the greedy first pass left out.
 //!
+//! 第二遍，尝试放置贪心第一遍所遗漏的。
+//!
 //! The greedy pass places each task at the earliest time it fits and never
 //! moves a placement once it is made, so a task that does not fit is lost
 //! even when moving a placement would make room. This pass addresses the

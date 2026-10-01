@@ -1,5 +1,7 @@
 //! Resource modeling for satellite operations.
 //!
+//! 卫星运行的资源建模。
+//!
 //! A resource is anything a task can occupy: a satellite, a ground station, a
 //! transmitter, an onboard recorder. This crate models the two things a
 //! scheduler needs to know about one: when it is available, and how much of

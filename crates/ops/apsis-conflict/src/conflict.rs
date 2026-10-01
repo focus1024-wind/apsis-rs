@@ -1,4 +1,6 @@
 //! The conflict type and the report that collects them.
+//!
+//! 冲突类型以及收集它们的报告。
 
 use apsis_resource::ResourceId;
 use apsis_task::TaskId;

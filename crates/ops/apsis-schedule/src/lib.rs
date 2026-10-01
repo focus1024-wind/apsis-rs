@@ -1,5 +1,7 @@
 //! Schedule representation and evaluation.
 //!
+//! 调度的表示与评估。
+//!
 //! A schedule is the answer a scheduler produces: for each task, when it runs
 //! and on which resources. This crate holds that answer and evaluates it.
 //! It does not decide the placements, which is the job of `apsis-scheduler`;

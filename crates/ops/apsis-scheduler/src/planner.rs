@@ -1,4 +1,6 @@
 //! The greedy planner.
+//!
+//! 贪心规划器。
 
 use crate::greedy::infeasible_tasks;
 use crate::improve::{ImprovementSettings, improve};

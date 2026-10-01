@@ -1,4 +1,6 @@
 //! The building blocks a greedy scheduler needs.
+//!
+//! 贪心调度器所需的基本构件。
 
 use apsis_resource::{ResourceId, ResourceSet};
 use apsis_schedule::Schedule;

@@ -1,4 +1,6 @@
 //! What a run produced and what the engine currently holds.
+//!
+//! 一次运行所产生的结果以及引擎当前所持有的状态。
 
 use core::fmt;
 

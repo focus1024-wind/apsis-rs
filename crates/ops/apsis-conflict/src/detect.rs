@@ -1,4 +1,6 @@
 //! The conflict detection itself.
+//!
+//! 冲突检测本身。
 
 use crate::conflict::{Conflict, ConflictKind, ConflictReport};
 use apsis_resource::{ResourceId, ResourceSet};

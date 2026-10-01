@@ -1,4 +1,6 @@
 //! The scenario type and its text form.
+//!
+//! 场景类型及其文本形式。
 
 use crate::error::{ScenarioError, ScenarioErrorKind};
 use apsis_resource::{Resource, ResourceSet};

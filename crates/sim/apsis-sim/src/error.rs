@@ -1,4 +1,6 @@
 //! Errors reported while preparing or starting a simulation.
+//!
+//! 准备或启动仿真时报告的错误。
 
 use core::fmt;
 

@@ -1,4 +1,6 @@
 //! The event queue.
+//!
+//! 事件队列。
 
 use crate::event::{Event, EventId};
 use std::cmp::Ordering;

@@ -1,4 +1,6 @@
 //! Reading a scenario from its text form.
+//!
+//! 由其文本形式读取场景。
 
 use crate::error::{ScenarioError, ScenarioErrorKind};
 use crate::scenario::Scenario;

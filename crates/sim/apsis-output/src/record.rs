@@ -1,4 +1,6 @@
 //! One recorded value.
+//!
+//! 一条被记录的值。
 
 use core::fmt;
 

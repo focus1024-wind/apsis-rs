@@ -1,4 +1,6 @@
 //! Tasks, their requirements, and the set that holds them.
+//!
+//! 任务、其需求，以及保存它们的集合。
 
 use crate::error::{TaskError, TaskErrorKind};
 use apsis_resource::ResourceId;

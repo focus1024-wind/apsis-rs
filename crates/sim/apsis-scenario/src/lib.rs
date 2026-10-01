@@ -1,5 +1,7 @@
 //! Scenario definition and loading.
 //!
+//! 场景的定义与加载。
+//!
 //! A scenario is a simulation's initial conditions: the resources a plan may
 //! use, the tasks it must place, the precedence constraints between those
 //! tasks, and the limits the run should respect. It is the input a run is

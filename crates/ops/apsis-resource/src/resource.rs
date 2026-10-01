@@ -1,4 +1,6 @@
 //! Resources, their availability, and their capacity.
+//!
+//! 资源、其可用性与容量。
 
 use crate::error::{ResourceError, ResourceErrorKind};
 use crate::window::{Interval, Window, merge_windows, subtract_window};

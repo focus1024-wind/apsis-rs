@@ -1,4 +1,6 @@
 //! Availability windows and the interval algebra over them.
+//!
+//! 可用性窗口以及其上的区间代数。
 
 use crate::error::{ResourceError, ResourceErrorKind};
 use core::fmt;

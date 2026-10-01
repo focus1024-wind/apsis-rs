@@ -1,4 +1,6 @@
 //! What happens at an instant in a simulated timeline.
+//!
+//! 仿真时间线中某瞬时发生的事。
 
 use apsis_task::TaskId;
 

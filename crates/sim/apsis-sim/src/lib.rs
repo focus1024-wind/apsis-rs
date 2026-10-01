@@ -1,5 +1,7 @@
 //! Simulation facade that integrates the simulation layer.
 //!
+//! 整合仿真层的仿真门面。
+//!
 //! This crate is the single entry point to the simulation layer. It ties the
 //! four pieces together: a [`Scenario`] describes the initial conditions, the
 //! ops layer plans it, the engine runs the resulting timeline, and a

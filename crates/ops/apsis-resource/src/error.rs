@@ -1,4 +1,6 @@
 //! Errors reported while building or querying a resource.
+//!
+//! 构建或查询资源时报告的错误。
 
 use core::fmt;
 

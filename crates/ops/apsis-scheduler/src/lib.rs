@@ -1,5 +1,7 @@
 //! Scheduling algorithms for satellite task planning.
 //!
+//! 卫星任务规划的调度算法。
+//!
 //! A scheduler takes a list of tasks and a set of resources and produces a
 //! schedule. This crate provides a greedy scheduler and the pieces needed to
 //! build others.

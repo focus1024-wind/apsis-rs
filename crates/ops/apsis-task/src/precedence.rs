@@ -1,5 +1,7 @@
 //! Precedence constraints between tasks.
 //!
+//! 任务之间的先后约束。
+//!
 //! A precedence constraint says that one task must finish before another
 //! starts. A set of such constraints forms a directed acyclic graph, and a
 //! scheduler must respect it: a task cannot be placed until every task that

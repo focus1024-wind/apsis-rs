@@ -1,4 +1,6 @@
 //! The engine itself.
+//!
+//! 引擎本身。
 
 use crate::outcome::{EngineOutcome, EngineState, StopReason};
 use apsis_event::{Event, EventId, EventQueue};

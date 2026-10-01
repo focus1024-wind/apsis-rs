@@ -1,5 +1,7 @@
 //! Discrete-event simulation engine.
 //!
+//! 离散事件仿真引擎。
+//!
 //! The engine advances a clock by jumping from one event to the next. It
 //! holds the event queue, the current simulation time, and the statistics a
 //! caller needs to judge a run. What an event means is the caller's: it

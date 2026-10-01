@@ -1,4 +1,6 @@
 //! Preparing a scenario for a run.
+//!
+//! 为一次运行准备场景。
 
 use crate::activity::Activity;
 use crate::error::{SimulationError, SimulationErrorKind};

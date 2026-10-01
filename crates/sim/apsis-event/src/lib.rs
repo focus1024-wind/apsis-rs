@@ -1,5 +1,7 @@
 //! Simulation event types and event queue.
 //!
+//! 仿真事件类型与事件队列。
+//!
 //! A discrete-event simulation advances by jumping from one event to the
 //! next rather than by stepping through every instant. This crate provides
 //! the queue that makes that possible: a priority queue ordered by time,

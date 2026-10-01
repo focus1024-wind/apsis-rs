@@ -1,4 +1,6 @@
 //! Errors reported while building or evaluating a schedule.
+//!
+//! 构建或评估调度时报告的错误。
 
 use core::fmt;
 

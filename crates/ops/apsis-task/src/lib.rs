@@ -1,5 +1,7 @@
 //! Task modeling for satellite operations.
 //!
+//! 卫星运行的任务建模。
+//!
 //! A task is a unit of work that a scheduler places on a set of resources. It
 //! carries everything a scheduler needs to decide whether and where to run
 //! it: how long it takes, when it may run, which resources it needs and in

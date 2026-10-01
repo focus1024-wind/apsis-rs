@@ -1,4 +1,6 @@
 //! Errors reported while building, loading, or validating a scenario.
+//!
+//! 构建、加载或校验场景时报告的错误。
 
 use core::fmt;
 

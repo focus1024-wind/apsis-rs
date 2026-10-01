@@ -1,5 +1,7 @@
 //! Resource and time conflict detection.
 //!
+//! 资源与时间冲突检测。
+//!
 //! A schedule can be wrong in several ways, and this crate finds them. It
 //! reports conflicts rather than refusing them, so that a plan loaded from a
 //! file can be checked in full and every problem listed at once instead of
