@@ -45,6 +45,7 @@ fn path_loss_matches_the_engineering_form() {
     //
     //   L = 32.44 + 20 log10(d_km) + 20 log10(f_MHz)
     //    L = 32.44 + 20 log10(d_km) + 20 log10(f_MHz)
+    //    L = 32.44 + 20 log10(d_km) + 20 log10(f_MHz)
     //
     // has a constant that follows from the speed of light rounded to
     // 299 792 458 m/s, and agrees with the expression used here to the
