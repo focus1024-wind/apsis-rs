@@ -380,12 +380,26 @@ fn too_few_samples_are_rejected() {
 fn an_unordered_sample_sequence_is_rejected() {
     let samples = reference_samples(1.0, 1_000.0, 0.0);
     assert!(samples.is_empty());
-    let unordered = [
+    // The ends run backwards.
+    let backwards = [
         OrbitSample::new(100.0, reference_position(100.0)),
         OrbitSample::new(50.0, reference_position(50.0)),
     ];
-    let error = finder().find(&unordered).expect_err("time runs backwards");
-    assert_eq!(error.kind(), AccessErrorKind::InvalidInterval);
+    let error = finder().find(&backwards).expect_err("time runs backwards");
+    assert_eq!(error.kind(), AccessErrorKind::UnorderedSamples);
+
+    // The ends are in order but the middle is not. This is the case that a
+    // check of the ends alone misses: the interpolation binary searches the
+    // list, and a binary search over an unordered list returns a wrong index
+    // without failing, so the search would refine a crossing against the
+    // wrong pair of positions and report a pass that never happened.
+    let mut shuffled = reference_samples(60.0, 0.0, 1_200.0);
+    assert!(shuffled.len() > 6, "the reference track is long enough");
+    shuffled.swap(2, 4);
+    let error = finder()
+        .find(&shuffled)
+        .expect_err("the middle is out of order");
+    assert_eq!(error.kind(), AccessErrorKind::UnorderedSamples);
 }
 
 #[test]

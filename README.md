@@ -72,7 +72,7 @@ that does not run simulations.
   input is always a `Result` or an `Option`. An `expect` is allowed on an
   internal invariant that a check just above already guards, such as the
   element just pushed onto a vector, or a value whose absence the line above
-  ruled out. There are twelve such sites and each is listed with its guard in
+  ruled out. There are thirteen such sites and each is listed with its guard in
   `docs/design/errors.md`.
 - Every public item carries a documentation comment, and the comment is
   self-contained

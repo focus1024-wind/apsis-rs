@@ -14,6 +14,8 @@ pub enum AccessErrorKind {
     InvalidTolerance,
     /// The search interval is empty or not ordered.
     InvalidInterval,
+    /// The sample sequence is not in increasing time order.
+    UnorderedSamples,
     /// A supplied satellite position is not usable.
     InvalidPosition,
 }
@@ -25,6 +27,7 @@ impl fmt::Display for AccessErrorKind {
             Self::InvalidSampleStep => "the sampling step is not usable",
             Self::InvalidTolerance => "the crossing tolerance is not usable",
             Self::InvalidInterval => "the search interval is not usable",
+            Self::UnorderedSamples => "the sample sequence is not ordered",
             Self::InvalidPosition => "a satellite position is not usable",
         };
         f.write_str(text)

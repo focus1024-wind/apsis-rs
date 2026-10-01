@@ -44,8 +44,12 @@ impl WalkerPattern {
     /// Returns the spacing between adjacent planes in right ascension, in
     /// radians.
     ///
-    /// Returns the spacing regardless of whether the pattern is consistent,
-    /// so that a caller can report the value it would use.
+    /// Returns `None` when the plane count is zero, which is the only case
+    /// in which the spacing is undefined.
+    ///
+    /// The spacing does not depend on the pattern being consistent, so a
+    /// caller can report the value it would use even for a pattern that
+    /// cannot be instantiated.
     pub fn plane_spacing(self) -> Option<f64> {
         (self.planes > 0).then(|| 2.0 * PI / self.planes as f64)
     }
@@ -54,6 +58,9 @@ impl WalkerPattern {
     ///
     /// This is `f * 360 / t` degrees, where `f` is the phase factor and `t`
     /// the total satellite count.
+    ///
+    /// Returns `None` when the satellite count is zero, which is the only
+    /// case in which the offset is undefined.
     pub fn phase_offset(self) -> Option<f64> {
         if self.total_satellites == 0 {
             return None;

@@ -100,8 +100,12 @@ impl GravityModel {
         self.j3 / self.j2
     }
 
-    /// Returns `2 * xke^2`, a term that appears in the mean motion
-    /// correction.
+    /// Returns `2 / 3`, the exponent the model uses in the mean motion and
+    /// drag corrections.
+    ///
+    /// It appears as a power rather than a factor, in terms such as
+    /// `(xke / mean_motion)^(2/3)`, so it is a constant and does not depend
+    /// on this model.
     pub fn x2o3(self) -> f64 {
         2.0 / 3.0
     }

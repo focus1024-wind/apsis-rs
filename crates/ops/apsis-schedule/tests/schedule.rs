@@ -480,10 +480,15 @@ fn an_invalid_placement_is_reported() {
 
 #[test]
 fn the_evaluation_type_is_nameable() {
-    // The type must be usable by a caller that stores the results.
+    // The type must be usable by a caller that stores the results, and an
+    // empty schedule against one resource must report itself as empty.
     fn takes(_evaluation: &Evaluation) {}
     let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
     let schedule = Schedule::new();
     let evaluation = schedule.evaluate(&[], &resources);
     takes(&evaluation);
+    assert_eq!(evaluation.placed_count, 0);
+    assert_eq!(evaluation.offered_count, 0);
+    assert_eq!(evaluation.scheduled_seconds, 0.0);
+    assert_eq!(evaluation.resource_usage.len(), 1);
 }

@@ -305,9 +305,13 @@ fn a_route_over_a_series_validates_its_arguments() {
 
 #[test]
 fn the_path_tree_type_is_public() {
-    // The type must be nameable by a caller that stores a routing table.
+    // The type must be nameable by a caller that stores a routing table,
+    // and what it hands back must be the tree for the source asked for.
     fn takes_tree(_tree: &PathTree) {}
     let topology = topology_with(2, &[(0, 1)]);
     let tree = shortest_paths_from(&topology, 0).expect("valid");
     takes_tree(&tree);
+    assert_eq!(tree.source, 0);
+    assert_eq!(tree.distance(0), Some(0.0));
+    assert_eq!(tree.distance(1), Some(1.0));
 }

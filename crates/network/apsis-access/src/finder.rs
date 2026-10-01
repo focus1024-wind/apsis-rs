@@ -122,12 +122,16 @@ impl AccessFinder {
     /// rather than extrapolated beyond it.
     ///
     /// Returns an error when the settings are not usable, when the sample
-    /// sequence has fewer than two entries, or when a sample is not usable.
+    /// sequence has fewer than two entries, when a sample is not usable, or
+    /// when the sequence is not in increasing time order. The order is
+    /// checked rather than assumed, because the interpolation between two
+    /// samples binary searches the sequence and a binary search over an
+    /// unordered list returns a wrong index without failing.
     pub fn find(&self, samples: &[OrbitSample]) -> Result<PassSummary, AccessError> {
         self.find_internal(samples, |seconds| {
             // Interpolate the position between the bracketing samples. The
-            // caller is responsible for the ordering and the step, which
-            // were checked before this closure is called.
+            // order of the sequence is checked by `find_internal` before
+            // this closure runs, and the step is the caller's to choose.
             let index = match samples.binary_search_by(|sample| {
                 sample
                     .seconds
@@ -172,9 +176,35 @@ impl AccessFinder {
                 .with_detail("at least two samples are needed"));
         }
 
+        // The whole sequence must be in strictly increasing time, not just its
+        // ends. The interpolation between two samples binary searches this
+        // list, and a binary search over an unordered list returns a wrong
+        // index rather than failing, so an unordered sequence would refine a
+        // crossing against the wrong pair of positions and report a pass that
+        // never happened. Checking only the ends, as this once did, let that
+        // through silently.
+        for (index, pair) in samples.windows(2).enumerate() {
+            // The test is written out rather than as `!(a < b)` so that it
+            // also rejects a pair whose times are not finite, and so that a
+            // reader can see that equality and disorder are both refused.
+            let ordered = pair[0].seconds.is_finite()
+                && pair[1].seconds.is_finite()
+                && pair[0].seconds < pair[1].seconds;
+            if !ordered {
+                return Err(
+                    AccessError::new(AccessErrorKind::UnorderedSamples).with_detail(format!(
+                        "sample {} at {} s does not precede {} s",
+                        index + 1,
+                        pair[0].seconds,
+                        pair[1].seconds
+                    )),
+                );
+            }
+        }
+
         let first = samples[0].seconds;
         let last = samples[samples.len() - 1].seconds;
-        if !first.is_finite() || !last.is_finite() || last <= first {
+        if !first.is_finite() || !last.is_finite() {
             return Err(AccessError::new(AccessErrorKind::InvalidInterval)
                 .with_detail(format!("times run from {first} to {last}")));
         }
