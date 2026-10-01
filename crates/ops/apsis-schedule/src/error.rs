@@ -3,8 +3,8 @@
 use core::fmt;
 
 /// The category of a schedule error.
-    ///
-    /// 计划错误的类别。
+///
+/// 计划错误的类别。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 pub enum ScheduleErrorKind {
@@ -54,8 +54,8 @@ impl fmt::Display for ScheduleErrorKind {
 }
 
 /// A failure while building or evaluating a schedule.
-    ///
-    /// 构建或评估计划时发生的失败。
+///
+/// 构建或评估计划时发生的失败。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScheduleError {
     kind: ScheduleErrorKind,
