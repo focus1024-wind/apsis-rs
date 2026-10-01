@@ -62,16 +62,24 @@ pub struct Satellite {
     /// Inclination, in radians.
     ///
     /// 倾角，单位为弧度。
+    ///
+    /// 倾角，单位为弧度。
     pub(crate) inclo: f64,
     /// Right ascension of the ascending node, in radians.
+    ///
+    /// 升交点赤经，单位为弧度。
     ///
     /// 升交点赤经，单位为弧度。
     pub(crate) nodeo: f64,
     /// Argument of perigee, in radians.
     ///
     /// 近地点幅角，单位为弧度。
+    ///
+    /// 近地点幅角，单位为弧度。
     pub(crate) argpo: f64,
     /// Mean anomaly, in radians.
+    ///
+    /// 平近点角，单位为弧度。
     ///
     /// 平近点角，单位为弧度。
     pub(crate) mo: f64,

@@ -101,6 +101,8 @@ impl Power {
     /// between two power levels.
     ///
     /// Returns `None` when either power is not positive.
+    ///
+    /// 两个功率之一非正时返回 `None`。
     pub fn ratio_in_decibels(self, rhs: Self) -> Option<Decibel> {
         if self.0 > 0.0 && rhs.0 > 0.0 {
             Decibel::from_ratio(self.0 / rhs.0)

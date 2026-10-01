@@ -85,6 +85,8 @@ impl Gain {
     /// Returns this gain in decibels relative to an isotropic radiator.
     ///
     /// Returns `None` when the ratio is not positive.
+    ///
+    /// 比值非正时返回 `None`。
     pub fn dbi(self) -> Option<f64> {
         if self.0 > 0.0 && self.0.is_finite() {
             Some(10.0 * self.0.log10())
@@ -96,6 +98,8 @@ impl Gain {
     /// Returns this gain in decibels relative to a half wave dipole.
     ///
     /// Returns `None` when the ratio is not positive.
+    ///
+    /// 比值非正时返回 `None`。
     pub fn dbd(self) -> Option<f64> {
         self.dbi().map(|dbi| dbi - DIPOLE_OVER_ISOTROPIC_DB)
     }
@@ -103,6 +107,8 @@ impl Gain {
     /// Returns this gain as a ratio in decibels.
     ///
     /// Returns `None` when the ratio is not positive.
+    ///
+    /// 比值非正时返回 `None`。
     pub fn as_decibel(self) -> Option<Decibel> {
         Decibel::from_ratio(self.0)
     }

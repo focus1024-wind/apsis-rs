@@ -34,6 +34,8 @@ pub struct SimulationError {
 
 impl SimulationError {
     /// Creates an error with the given category.
+    ///
+    /// 用给定类别创建一个错误。
     pub fn new(kind: SimulationErrorKind) -> Self {
         Self { kind, detail: None }
     }
@@ -45,11 +47,15 @@ impl SimulationError {
     }
 
     /// Returns the category of this failure.
+    ///
+    /// 返回该失败的类别。
     pub const fn kind(&self) -> SimulationErrorKind {
         self.kind
     }
 
     /// Returns the detail text attached to this error, if any.
+    ///
+    /// 返回附加在该错误上的说明文本，若有。
     pub fn detail(&self) -> Option<&str> {
         self.detail.as_deref()
     }

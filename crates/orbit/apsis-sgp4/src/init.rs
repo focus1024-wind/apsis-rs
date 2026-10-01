@@ -66,20 +66,30 @@ pub struct Elements {
     /// Eccentricity, dimensionless.
     ///
     /// 偏心率，无量纲。
+    ///
+    /// 偏心率，无量纲。
     pub eccentricity: f64,
     /// Inclination, in radians.
+    ///
+    /// 倾角，单位为弧度。
     ///
     /// 倾角，单位为弧度。
     pub inclination: f64,
     /// Right ascension of the ascending node, in radians.
     ///
     /// 升交点赤经，单位为弧度。
+    ///
+    /// 升交点赤经，单位为弧度。
     pub right_ascension: f64,
     /// Argument of perigee, in radians.
     ///
     /// 近地点幅角，单位为弧度。
+    ///
+    /// 近地点幅角，单位为弧度。
     pub argument_of_perigee: f64,
     /// Mean anomaly, in radians.
+    ///
+    /// 平近点角，单位为弧度。
     ///
     /// 平近点角，单位为弧度。
     pub mean_anomaly: f64,

@@ -91,6 +91,8 @@ pub fn carrier_to_interference(carrier: Power, interferers: &[Interferer]) -> Op
 /// This is a convenience for the common case of one dominant interferer.
 ///
 /// Returns `None` when either power is not positive.
+///
+/// 两个功率之一非正时返回 `None`。
 pub fn carrier_to_interference_single(carrier: Power, interferer: Interferer) -> Option<Decibel> {
     carrier_to_interference(carrier, &[interferer])
 }
@@ -147,6 +149,8 @@ pub fn carrier_to_noise_plus_interference(
 /// zero means it must be accounted for.
 ///
 /// Returns `None` when either power is not positive.
+///
+/// 两个功率之一非正时返回 `None`。
 pub fn interference_to_noise_ratio(interference: Power, noise: Power) -> Option<Decibel> {
     if !interference.is_valid() || !noise.is_valid() {
         return None;

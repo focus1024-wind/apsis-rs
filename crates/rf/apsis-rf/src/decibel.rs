@@ -45,6 +45,8 @@ impl Decibel {
     /// Use this for a voltage or field ratio.
     ///
     /// Returns `None` when the ratio is not positive and finite.
+    ///
+    /// 比值非正或非有限时返回 `None`。
     pub fn from_amplitude_ratio(ratio: f64) -> Option<Self> {
         if ratio > 0.0 && ratio.is_finite() {
             Some(Self(20.0 * ratio.log10()))

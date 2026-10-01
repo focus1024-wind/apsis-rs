@@ -67,6 +67,8 @@ impl LinkBudget {
     /// density in the direction of the receiver.
     ///
     /// Returns `None` when any input is not usable.
+    ///
+    /// 任一输入不可用时返回 `None`。
     pub fn eirp(&self) -> Option<Power> {
         if !self.transmit_loss.is_finite() || !self.geometry.is_valid() {
             return None;
@@ -79,6 +81,8 @@ impl LinkBudget {
     /// Returns the carrier power at the receiver input, in watts.
     ///
     /// Returns `None` when any input is not usable.
+    ///
+    /// 任一输入不可用时返回 `None`。
     pub fn received_power(&self) -> Option<Power> {
         if !self.receive_loss.is_finite() {
             return None;
@@ -113,6 +117,8 @@ impl LinkBudget {
     /// separately.
     ///
     /// Returns `None` when any input is not usable.
+    ///
+    /// 任一输入不可用时返回 `None`。
     pub fn carrier_to_noise_density(&self) -> Option<Decibel> {
         let carrier = self.received_power()?;
         let density = self.noise_density()?;
@@ -133,6 +139,8 @@ impl LinkBudget {
     /// different bandwidth.
     ///
     /// Returns `None` when any input is not usable.
+    ///
+    /// 任一输入不可用时返回 `None`。
     pub fn carrier_to_noise(&self) -> Option<Decibel> {
         if !self.bandwidth.is_finite() || self.bandwidth <= 0.0 {
             return None;

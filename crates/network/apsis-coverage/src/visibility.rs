@@ -233,6 +233,8 @@ pub fn visible_from_geodetic(
 /// is used only for its radius.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 几何不可用时返回 `None`。
 pub fn central_angle_to_station(
     satellite_ecef_km: Vec3,
     ground: &GroundPoint,

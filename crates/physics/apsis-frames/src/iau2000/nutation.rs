@@ -28,6 +28,8 @@ use core::f64::consts::PI;
 const UNIT_TO_RADIAN: f64 = 1.0e-7 * PI / (180.0 * 3_600.0);
 
 /// Converts arcseconds to radians.
+///
+/// 把角秒转换为弧度。
 const ARCSECOND_TO_RADIAN: f64 = PI / (180.0 * 3_600.0);
 
 /// The nutation in longitude and obliquity, in radians.
@@ -112,6 +114,8 @@ fn planetary_term(term: &PlanetaryTerm, arguments: &PlanetaryArguments) -> Nutat
 /// Returns the nutation in longitude and obliquity for a time.
 ///
 /// The time is in Julian centuries from J2000.0 on the Terrestrial Time
+///
+/// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度
 /// scale. This is the IAU 2000A model, which includes the planetary terms.
 ///
 /// Source: IAU 2000A, as implemented by `eraNut00a`.

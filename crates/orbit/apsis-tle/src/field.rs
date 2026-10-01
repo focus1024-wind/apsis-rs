@@ -85,12 +85,16 @@ impl ElementError {
     /// Attaches a description of the offending text.
     ///
     /// 附加对有问题的文本的说明。
+    ///
+    /// 附加对有问题的文本的说明。
     pub fn with_detail(mut self, detail: impl Into<String>) -> Self {
         self.detail = Some(detail.into());
         self
     }
 
     /// Returns the category of this failure.
+    ///
+    /// 返回该失败的类别。
     ///
     /// 返回该失败的类别。
     pub fn kind(&self) -> ElementErrorKind {
@@ -112,6 +116,8 @@ impl ElementError {
     }
 
     /// Returns the detail text attached to this error, if any.
+    ///
+    /// 返回附加在该错误上的说明文本，若有。
     ///
     /// 返回附加在该错误上的说明文本，若有。
     pub fn detail(&self) -> Option<&str> {

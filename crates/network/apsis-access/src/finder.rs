@@ -14,6 +14,8 @@ use apsis_math::Vec3;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct OrbitSample {
     /// The time of the sample, in seconds from the caller's origin.
+    ///
+    /// 样本时刻，单位为自调用方原点起的秒数。
     pub seconds: f64,
     /// The satellite position in the Earth-fixed frame, in kilometers.
     pub position_ecef_km: Vec3,

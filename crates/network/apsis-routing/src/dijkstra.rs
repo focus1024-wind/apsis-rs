@@ -16,11 +16,17 @@ use core::cmp::Ordering;
 use std::collections::BinaryHeap;
 
 /// A heap entry holding a node and its tentative distance.
+///
+/// 堆中的一项，保存某个节点及其暂定距离。
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct Candidate {
     /// The tentative distance from the source.
+    ///
+    /// 自源点出发的暂定距离。
     distance: f64,
     /// The node index.
+    ///
+    /// 节点下标。
     node: usize,
 }
 
@@ -32,6 +38,8 @@ impl Ord for Candidate {
         // the greatest element, which is what the maximum heap needs. Equal
         // distances are ordered by node index so that the sequence of
         // relaxations is reproducible.
+        // 反转距离比较，使最小距离成为最大元素，这正是最大堆所需。距离
+        // 相等时按节点下标排序，使松弛的次序可复现。
         other
             .distance
             .partial_cmp(&self.distance)
@@ -48,6 +56,8 @@ impl PartialOrd for Candidate {
 
 /// The result of a single source shortest path computation.
 ///
+/// 单源最短路计算的结果。
+///
 /// The distances are to every node reachable from the source, and the
 /// predecessor map records the edge by which each node was reached. Both are
 /// what a routing table needs, and a single computation fills a whole row of
@@ -55,15 +65,23 @@ impl PartialOrd for Candidate {
 #[derive(Debug, Clone, PartialEq)]
 pub struct PathTree {
     /// The source node.
+    ///
+    /// 源节点。
     pub source: usize,
     /// The distance to each node, or infinity when it is unreachable.
+    ///
+    /// 到各节点的距离；不可达时为无穷。
     pub distances: Vec<f64>,
     /// The predecessor of each node on the shortest path, if any.
+    ///
+    /// 各节点在最短路上的前驱，若有。
     pub predecessors: Vec<Option<usize>>,
 }
 
 impl PathTree {
     /// Returns the distance to a node.
+    ///
+    /// 返回到某节点的距离。
     ///
     /// Returns `None` when the node index is out of range or the node is
     /// unreachable.
@@ -73,11 +91,17 @@ impl PathTree {
     }
 
     /// Returns `true` when the node is reachable from the source.
+    ///
+    /// 当该节点自源点可达时返回 `true`。
     pub fn is_reachable(&self, node: usize) -> bool {
         self.distance(node).is_some()
     }
 
     /// Returns the number of reachable nodes, including the source itself.
+    ///
+    /// 返回可达节点的数量，含源点自身。
+    ///
+    /// 返回可达节点的数量，含源点自身。
     pub fn reachable_count(&self) -> usize {
         self.distances
             .iter()
@@ -86,6 +110,8 @@ impl PathTree {
     }
 
     /// Reconstructs the route to a node.
+    ///
+    /// 重建到某节点的路由。
     ///
     /// Returns an error when the node is out of range or unreachable.
     pub fn route_to(&self, destination: usize, topology: &Topology) -> Result<Route, RoutingError> {
@@ -99,6 +125,7 @@ impl PathTree {
         }
 
         // Walk the predecessor chain back to the source, then reverse it.
+        // 沿前驱链回溯到源点，然后反转。
         let mut nodes = vec![destination];
         let mut current = destination;
         while current != self.source {
@@ -129,6 +156,10 @@ impl PathTree {
 ///
 /// Returns an error when the source node is out of range.
 ///
+/// 计算自一个源点到每个可达节点的最短距离。
+///
+/// 源节点超出取值范围时返回错误。
+///
 /// Source: Dijkstra, E. W., *A note on two problems in connexion with
 /// graphs*, Numerische Mathematik 1, 1959.
 pub fn shortest_paths_from(topology: &Topology, source: usize) -> Result<PathTree, RoutingError> {
@@ -150,6 +181,7 @@ pub fn shortest_paths_from(topology: &Topology, source: usize) -> Result<PathTre
 
     while let Some(Candidate { distance, node }) = heap.pop() {
         // A stale entry: the node already has a shorter distance.
+        // 过时项：该节点已有更短的距离。
         if settled[node] {
             continue;
         }
@@ -175,7 +207,7 @@ pub fn shortest_paths_from(topology: &Topology, source: usize) -> Result<PathTre
     })
 }
 
-/// Returns the shortest route between two nodes.
+/// 返回两节点之间的最短路由。
 ///
 /// Returns an error when either node is out of range, when they are the
 /// same node, or when no route exists.
@@ -261,7 +293,7 @@ pub fn route_over_series(
                 .has_edge(edge.from, edge.to)
         });
         if present_everywhere {
-            // The link was checked above, so a failure here would mean the
+            // 链路已在上方校验，故此处的失败意味着
             // reference topology contradicts itself.
             let _ = intersection.add_edge(edge.from, edge.to, edge.cost);
         }

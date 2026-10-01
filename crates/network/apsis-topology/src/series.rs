@@ -15,6 +15,8 @@ pub struct TopologySample {
 
 impl TopologySample {
     /// Creates a sample.
+    ///
+    /// 创建一个样本。
     pub const fn new(seconds: f64, topology: Topology) -> Self {
         Self { seconds, topology }
     }

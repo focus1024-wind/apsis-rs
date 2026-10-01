@@ -56,6 +56,8 @@ fn sidelobe_branch(diameter_over_wavelength: f64) -> (f64, f64) {
 /// The expression is `20 log10(D / lambda) + 7.7`.
 ///
 /// Returns `None` when the ratio is not positive and finite.
+///
+/// 比值非正或非有限时返回 `None`。
 pub fn reference_peak_gain(diameter_over_wavelength: f64) -> Option<f64> {
     if !diameter_over_wavelength.is_finite() || diameter_over_wavelength <= 0.0 {
         return None;
@@ -174,6 +176,8 @@ pub fn diameter_over_wavelength_from_peak_gain(peak_gain_dbi: f64) -> Option<f64
 /// full width between the two three decibel points is twice that value.
 ///
 /// Returns `None` when the ratio is not positive and finite.
+///
+/// 比值非正或非有限时返回 `None`。
 pub fn reference_beam_width(diameter_over_wavelength: f64) -> Option<f64> {
     if !diameter_over_wavelength.is_finite() || diameter_over_wavelength <= 0.0 {
         return None;

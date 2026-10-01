@@ -47,6 +47,8 @@ pub fn geopotential_height(geometric_height_km: f64) -> f64 {
 /// function returns the value at 100 km.
 ///
 /// The geometric height is in kilometers.
+///
+/// 几何高度单位为千米。
 pub fn standard_temperature(geometric_height_km: f64) -> f64 {
     let height = geopotential_height(geometric_height_km);
     if height <= 11.0 {
@@ -80,6 +82,8 @@ pub fn standard_temperature(geometric_height_km: f64) -> f64 {
 /// segment.
 ///
 /// The geometric height is in kilometers.
+///
+/// 几何高度单位为千米。
 pub fn standard_pressure(geometric_height_km: f64) -> f64 {
     let height = geopotential_height(geometric_height_km);
     if height <= 11.0 {
@@ -113,6 +117,8 @@ pub fn standard_pressure(geometric_height_km: f64) -> f64 {
 /// so that the density at the surface is the value given.
 ///
 /// The geometric height is in kilometers.
+///
+/// 几何高度单位为千米。
 pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: f64) -> f64 {
     surface_density * (-geometric_height_km / 2.0).exp()
 }

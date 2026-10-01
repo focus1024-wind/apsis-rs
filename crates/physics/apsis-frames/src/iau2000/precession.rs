@@ -21,6 +21,8 @@ use apsis_math::Mat3;
 use core::f64::consts::PI;
 
 /// Converts arcseconds to radians.
+///
+/// 把角秒转换为弧度。
 const ARCSECOND_TO_RADIAN: f64 = PI / (180.0 * 3_600.0);
 
 /// The frame bias in right ascension, in radians.
@@ -79,6 +81,8 @@ pub fn mean_obliquity(t: f64) -> f64 {
 /// Returns the four precession angles for a time.
 ///
 /// The time is in Julian centuries from J2000.0 on the Terrestrial Time
+///
+/// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度
 /// scale.
 ///
 /// Source: the P03 precession, as implemented by `eraPfw06`.
@@ -129,6 +133,8 @@ pub fn frame_bias_matrix() -> Mat3 {
 /// reach the true equator and equinox of date.
 ///
 /// The time is in Julian centuries from J2000.0 on the Terrestrial Time
+///
+/// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度
 /// scale.
 ///
 /// Source: as implemented by `eraPmat06`.

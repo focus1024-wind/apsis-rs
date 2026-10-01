@@ -29,6 +29,8 @@ use apsis_math::Mat3;
 use core::f64::consts::PI;
 
 /// Converts arcseconds to radians.
+///
+/// 把角秒转换为弧度。
 const ARCSECOND_TO_RADIAN: f64 = PI / (180.0 * 3_600.0);
 
 /// Returns the bias-precession-nutation matrix for a time.

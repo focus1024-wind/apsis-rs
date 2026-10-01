@@ -57,6 +57,8 @@ pub fn nadir_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
 /// body radius.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 几何不可用时返回 `None`。
 pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
     let nadir = nadir_angle(satellite_radius, body_radius, elevation)?;
     // Rounding can leave a small negative value at the zenith, where the
@@ -86,6 +88,8 @@ pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f
 /// even though the range there is simply the altitude.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 几何不可用时返回 `None`。
 pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
     let central = earth_central_angle(satellite_radius, body_radius, elevation)?;
     if !central.is_finite() || central < 0.0 {

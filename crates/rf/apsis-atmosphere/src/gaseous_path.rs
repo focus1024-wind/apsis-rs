@@ -69,7 +69,11 @@ pub struct EquivalentHeights {
 ///
 /// The frequency is in gigahertz.
 ///
+/// 频率单位为吉赫。
+///
 /// Returns `None` when the frequency or atmosphere is not usable.
+///
+/// 频率或大气不可用时返回 `None`。
 ///
 /// Source: ITU-R Recommendation P.676-12, equations 30 through 38.
 pub fn equivalent_heights(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<EquivalentHeights> {
@@ -138,7 +142,11 @@ pub fn equivalent_heights(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<
 ///
 /// The frequency is in gigahertz.
 ///
+/// 频率单位为吉赫。
+///
 /// Returns `None` when the frequency or atmosphere is not usable.
+///
+/// 频率或大气不可用时返回 `None`。
 pub fn zenith_attenuation(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<f64> {
     let heights = equivalent_heights(frequency_ghz, atmosphere)?;
     let dry = specific_attenuation_dry_air(frequency_ghz, atmosphere)?;

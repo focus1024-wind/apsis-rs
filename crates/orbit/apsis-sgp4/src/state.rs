@@ -19,8 +19,12 @@ pub struct State {
     /// Position, in kilometers.
     ///
     /// 位置，单位为千米。
+    ///
+    /// 位置，单位为千米。
     pub position: Vec3,
     /// Velocity, in kilometers per second.
+    ///
+    /// 速度，单位为千米每秒。
     ///
     /// 速度，单位为千米每秒。
     pub velocity: Vec3,

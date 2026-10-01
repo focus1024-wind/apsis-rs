@@ -73,6 +73,8 @@ impl Footprint {
 /// the elevation mask.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 几何不可用时返回 `None`。
 pub fn footprint_central_angle(
     satellite_radius: f64,
     body_radius: f64,
@@ -89,6 +91,8 @@ pub fn footprint_central_angle(
 /// Returns the footprint for a satellite and an elevation mask.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 几何不可用时返回 `None`。
 pub fn footprint(
     satellite_radius: f64,
     body_radius: f64,
@@ -105,6 +109,8 @@ pub fn footprint(
 /// This is a free function form of [`Footprint::area`].
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 几何不可用时返回 `None`。
 pub fn footprint_area(satellite_radius: f64, body_radius: f64, elevation_mask: f64) -> Option<f64> {
     Some(footprint(satellite_radius, body_radius, elevation_mask)?.area())
 }
@@ -112,6 +118,8 @@ pub fn footprint_area(satellite_radius: f64, body_radius: f64, elevation_mask: f
 /// Returns the fraction of the Earth's surface covered by a footprint.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 几何不可用时返回 `None`。
 pub fn footprint_fraction(
     satellite_radius: f64,
     body_radius: f64,
@@ -167,6 +175,8 @@ pub fn point_in_footprint(
 /// footprint is known and the mask it corresponds to is wanted.
 ///
 /// Returns `None` when the geometry is not usable.
+///
+/// 几何不可用时返回 `None`。
 pub fn footprint_edge_elevation(satellite_radius: f64, footprint: &Footprint) -> Option<f64> {
     elevation_from_central_angle(
         satellite_radius,

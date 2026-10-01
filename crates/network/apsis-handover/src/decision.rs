@@ -147,6 +147,8 @@ fn validate(policy: &HandoverPolicy, candidates: &[Candidate]) -> Result<(), Han
 ///    quality by more than the margin.
 ///
 /// Returns an error when the candidates or the policy are not usable.
+///
+/// 候选或策略不可用时返回错误。
 pub fn decide(
     policy: &HandoverPolicy,
     current: Option<usize>,
@@ -166,6 +168,8 @@ pub fn decide(
 /// prevents.
 ///
 /// Returns an error when the candidates or the policy are not usable.
+///
+/// 候选或策略不可用时返回错误。
 pub fn decide_with_history(
     policy: &HandoverPolicy,
     current: Option<usize>,

@@ -141,6 +141,8 @@ impl Simulation {
     }
 
     /// Returns `true` when every offered task was placed.
+    ///
+    /// 当所有提交任务均被放置时返回 `true`。
     pub fn has_full_plan(&self) -> bool {
         self.result.is_complete()
     }

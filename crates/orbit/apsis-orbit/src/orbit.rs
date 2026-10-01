@@ -27,6 +27,8 @@ pub struct Orbit {
 impl Orbit {
     /// Prepares an orbit from a parsed element set and a gravity model.
     ///
+    /// 由已解析的根数集与重力模型准备轨道。
+    ///
     /// The gravity model must match the one the element set was fitted
     /// against, which for a catalogued satellite means
     /// [`GravityModel::WGS72`]. Returns `None` when the elements are not
@@ -41,6 +43,8 @@ impl Orbit {
     }
 
     /// Prepares an orbit from a parsed element set and a gravity model.
+    ///
+    /// 由已解析的根数集与重力模型准备轨道。
     ///
     /// Returns an error describing which element is not propagatable.
     ///

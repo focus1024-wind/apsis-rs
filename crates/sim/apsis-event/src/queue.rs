@@ -56,6 +56,8 @@ pub struct QueueState {
 
 impl QueueState {
     /// Returns `true` when no events are pending.
+    ///
+    /// 当没有待处理事件时返回 `true`。
     pub const fn is_idle(&self) -> bool {
         self.pending == 0
     }
@@ -98,6 +100,8 @@ impl<T> EventQueue<T> {
     }
 
     /// Returns `true` when no events are pending.
+    ///
+    /// 当没有待处理事件时返回 `true`。
     pub fn is_empty(&self) -> bool {
         self.pending.is_empty()
     }

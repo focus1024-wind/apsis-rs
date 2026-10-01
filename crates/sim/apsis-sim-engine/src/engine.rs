@@ -96,6 +96,8 @@ impl<T> Engine<T> {
     }
 
     /// Returns `true` when no events are pending.
+    ///
+    /// 当没有待处理事件时返回 `true`。
     pub fn is_idle(&self) -> bool {
         self.queue.is_empty()
     }

@@ -210,6 +210,8 @@ impl HandoverTracker {
     /// tracker having recorded it.
     ///
     /// Returns an error when the candidates or the policy are not usable.
+    ///
+    /// 候选或策略不可用时返回错误。
     pub fn step(
         &mut self,
         seconds: f64,

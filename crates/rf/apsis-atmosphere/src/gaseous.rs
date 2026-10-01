@@ -853,7 +853,11 @@ impl Atmosphere {
 ///
 /// The frequency is in gigahertz.
 ///
+/// 频率单位为吉赫。
+///
 /// Returns `None` when the frequency or atmosphere is not usable.
+///
+/// 频率或大气不可用时返回 `None`。
 pub fn specific_attenuation_dry_air(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<f64> {
     if !frequency_ghz.is_finite() || frequency_ghz <= 0.0 || !atmosphere.is_valid() {
         return None;
@@ -900,7 +904,11 @@ pub fn specific_attenuation_dry_air(frequency_ghz: f64, atmosphere: Atmosphere) 
 ///
 /// The frequency is in gigahertz.
 ///
+/// 频率单位为吉赫。
+///
 /// Returns `None` when the frequency or atmosphere is not usable.
+///
+/// 频率或大气不可用时返回 `None`。
 pub fn specific_attenuation_water_vapour(
     frequency_ghz: f64,
     atmosphere: Atmosphere,
@@ -939,6 +947,8 @@ pub fn specific_attenuation_water_vapour(
 /// This is the sum of the dry air and water vapour contributions.
 ///
 /// Returns `None` when the frequency or atmosphere is not usable.
+///
+/// 频率或大气不可用时返回 `None`。
 pub fn specific_attenuation(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<f64> {
     Some(
         specific_attenuation_dry_air(frequency_ghz, atmosphere)?
