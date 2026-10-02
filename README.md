@@ -64,6 +64,51 @@ The features are `foundation`, `physics`, `orbit`, `rf`, `network`, `ops`,
 everything including `sim`; `ops` is every layer except `sim`, for a project
 that does not run simulations.
 
+## Performance
+
+The three benchmarks are examples of the facade. They run in release mode and
+depend on nothing outside the workspace, so a build is the compiler and
+nothing else. The figures below are one run on an AMD Ryzen 7 8845HS (eight
+cores, sixteen threads); absolute times move with the machine, so compare the
+ratios within a table. The method, every size in the sweeps and the reasoning
+behind each conclusion are in
+[Benchmark method and results](docs/design/bench.md).
+
+**One call on the hot paths**
+
+| Path | Per call |
+| --- | --- |
+| Hermite ephemeris query | 24 ns |
+| TEME to Earth-fixed rotation | 27 ns |
+| Keplerian elements to a state | 38 ns |
+| Earth-fixed to geodetic | 50 ns |
+| Link budget C/N0 | 61 ns |
+| SGP4 propagation, thirty minutes from epoch | 249 ns |
+| Access search, 120 samples | 7.5 us |
+| Planning 60 tasks on one resource | 239 us |
+
+An ephemeris query is an order of magnitude cheaper than the propagation it
+stands in for, which is why a densely queried track is tabulated once and then
+interpolated.
+
+**Growth with size.** A flat cost per unit is what shows the complexity is
+right:
+
+- A day of a constellation at a sixty second step is linear in the satellite
+  count: 24 satellites in 8.7 ms, 2016 in 0.68 s, about 234 ns a sample, an
+  exponent of 0.00.
+- Access search is flat at about 7.3 us a track from 8 to 128 tracks.
+- Topology construction is about O(n squared) and greedy planning eases from
+  O(n squared) towards O(n); both are limited by their algorithm, and the
+  design note says why.
+
+**Threads.** The numerical kernels split by satellite. Propagating 2000
+satellites over a day takes 671 ms on one thread and 85 ms on sixteen, a
+speedup of 7.9x; access search over 256 tracks reaches 5.3x. Efficiency is
+about eighty-five percent at eight threads, one per core; sixteen puts two on
+a core and returns about half of that. Every parallel result equals the serial one,
+so threading buys throughput and never changes a number.
+
 ## Conventions
 
 - Toolchain `stable`, edition 2024, rust-version 1.85
@@ -124,6 +169,7 @@ crate cannot infer:
 - [Errors and tolerances](docs/design/errors.md)
 - [Layer boundaries](docs/design/layers.md)
 - [Parallelism](docs/design/parallel.md)
+- [Benchmark method and results](docs/design/bench.md)
 - [Glossary and formula conventions](docs/design/glossary.md)
 - [The simulation layer](docs/design/sim.md)
 
