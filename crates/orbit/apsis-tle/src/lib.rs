@@ -22,7 +22,7 @@
 //!   example the eccentricity field `0006703` means `0.0006703`.
 //!
 //! Source: the field layout follows the format description published by
-//! CelesTrak, *FAQs: Two-Line Element Set Format*, which documents the
+//! `CelesTrak`, *FAQs: Two-Line Element Set Format*, which documents the
 //! columns defined by the original NORAD specification. The checksum rule
 //! is the one stated there and used by Space-Track.
 //!
@@ -55,7 +55,7 @@
 //!   `0.12345e-3`，而非 `12345e-3`。
 //! - 隐含小数点不写小数点。例如偏心率字段 `0006703` 意为 `0.0006703`。
 //!
-//! 出处：字段布局遵循 CelesTrak 发布的格式说明，*FAQs: Two-Line Element Set
+//! 出处：字段布局遵循 `CelesTrak` 发布的格式说明，*FAQs: Two-Line Element Set
 //! Format*，它记录了原 NORAD 规范所定义的各列。校验和规则即其中所述、
 //! Space-Track 所用者。
 

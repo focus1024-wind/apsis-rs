@@ -156,7 +156,7 @@ fn the_pattern_never_rises_above_the_peak() {
     let ratio = 100.0;
     let peak = reference_peak_gain(ratio).expect("valid");
     for tenth in 0..=100 {
-        let angle = tenth as f64 * 0.01;
+        let angle = f64::from(tenth) * 0.01;
         let gain = reference_pattern_gain(ratio, angle).expect("valid");
         assert!(gain <= peak + TOLERANCE, "angle {angle} gave {gain}");
     }
@@ -167,7 +167,7 @@ fn the_pattern_falls_monotonically_across_the_main_lobe() {
     let ratio = 100.0;
     let mut previous = f64::INFINITY;
     for step in 0..=80 {
-        let angle_degrees = step as f64 * 0.01;
+        let angle_degrees = f64::from(step) * 0.01;
         let gain = reference_pattern_gain(ratio, angle_degrees.to_radians()).expect("valid");
         assert!(gain <= previous + TOLERANCE, "angle {angle_degrees}");
         previous = gain;

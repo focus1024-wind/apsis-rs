@@ -52,6 +52,7 @@ const TOLERANCE: f64 = 1e-14;
 /// Reduces an angle into `[-pi, pi)`.
 ///
 /// 把角度归约到 `[-pi, pi)`。
+#[must_use]
 pub fn wrap_to_pi(angle: f64) -> f64 {
     let wrapped = (angle + PI).rem_euclid(2.0 * PI) - PI;
     // `rem_euclid` can return exactly pi for an input just below pi, which
@@ -89,6 +90,7 @@ pub fn wrap_to_pi(angle: f64) -> f64 {
 /// </div>
 ///
 /// 采用半角形式而非直接的余弦关系，使结果在四个象限中都正确，无需判别象限。
+#[must_use]
 pub fn true_from_eccentric(eccentric_anomaly: f64, eccentricity: f64) -> f64 {
     let half = eccentric_anomaly / 2.0;
     let factor = ((1.0 + eccentricity) / (1.0 - eccentricity)).sqrt();
@@ -102,6 +104,7 @@ pub fn true_from_eccentric(eccentric_anomaly: f64, eccentricity: f64) -> f64 {
 /// 由真近点角与偏心率返回偏近点角。
 ///
 /// 这是 [`true_from_eccentric`] 的逆运算。
+#[must_use]
 pub fn eccentric_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
     let half = true_anomaly / 2.0;
     let factor = ((1.0 - eccentricity) / (1.0 + eccentricity)).sqrt();
@@ -135,6 +138,7 @@ pub fn eccentric_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
 ///
 /// 初值取平近点角加上一个正比于偏心率的项，使迭代在偏心率趋近一时保持稳定。
 /// 迭代总会终止，结果是至多固定步数后达到的值。
+#[must_use]
 pub fn eccentric_from_mean(mean_anomaly: f64, eccentricity: f64) -> f64 {
     let mean = wrap_to_pi(mean_anomaly);
     // A first order correction to the circular guess.
@@ -162,6 +166,7 @@ pub fn eccentric_from_mean(mean_anomaly: f64, eccentricity: f64) -> f64 {
 /// 由偏近点角与偏心率返回平近点角。
 ///
 /// 这是直接求值的开普勒方程，`M = E - e sin E`。
+#[must_use]
 pub fn mean_from_eccentric(eccentric_anomaly: f64, eccentricity: f64) -> f64 {
     wrap_to_pi(eccentric_anomaly - eccentricity * eccentric_anomaly.sin())
 }
@@ -177,6 +182,7 @@ pub fn mean_from_eccentric(eccentric_anomaly: f64, eccentricity: f64) -> f64 {
 ///
 /// 先把真近点角转为偏近点角，再由开普勒方程得平近点角。绕经偏近点角避免了
 /// 另立扫过面积的闭式解，使该关系只由一个表达式负责。
+#[must_use]
 pub fn mean_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
     let eccentric_anomaly = eccentric_from_true(true_anomaly, eccentricity);
     mean_from_eccentric(eccentric_anomaly, eccentricity)
@@ -185,6 +191,7 @@ pub fn mean_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
 /// Returns the true anomaly for a mean anomaly and eccentricity.
 ///
 /// 由平近点角与偏心率返回真近点角。
+#[must_use]
 pub fn true_from_mean(mean_anomaly: f64, eccentricity: f64) -> f64 {
     true_from_eccentric(
         eccentric_from_mean(mean_anomaly, eccentricity),

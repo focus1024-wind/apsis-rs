@@ -37,6 +37,7 @@ impl GroundPoint {
     /// Creates a ground point on the WGS 84 ellipsoid with a given mask.
     ///
     /// 在 WGS 84 椭球上以给定遮蔽创建地面点。
+    #[must_use]
     pub fn new(position: Geodetic, elevation_mask: f64) -> Self {
         Self {
             position,
@@ -55,6 +56,7 @@ impl GroundPoint {
     ///
     /// 大地转换得到的是米，故结果除以一千，以与 orbit 层所用的坐标系
     /// 一致。
+    #[must_use]
     pub fn ecef(&self) -> Vec3 {
         self.position.to_cartesian(self.ellipsoid) / 1_000.0
     }
@@ -67,6 +69,7 @@ impl GroundPoint {
     /// 返回距地心的距离，单位为千米。
     ///
     /// 这是该站纬度处椭球的当地半径加上其高度，故包含了扁率的影响。
+    #[must_use]
     pub fn radius(&self) -> f64 {
         self.ecef().norm()
     }
@@ -75,6 +78,7 @@ impl GroundPoint {
     /// sensor.
     ///
     /// 当该站及其遮蔽描述一个可用传感器时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.position.is_valid()
             && self.elevation_mask.is_finite()
@@ -111,6 +115,7 @@ impl Sensor {
     /// Creates a station that can point anywhere above its mask.
     ///
     /// 创建能在其遮蔽之上指向任何方向的站。
+    #[must_use]
     pub const fn omnidirectional(ground: GroundPoint) -> Self {
         Self {
             ground,
@@ -126,6 +131,7 @@ impl Sensor {
     /// 创建具有固定指向方向的站。
     ///
     /// 该方向在使用时被归一化，故调用方可以传入未归一化的矢量。
+    #[must_use]
     pub const fn directional(ground: GroundPoint, pointing: Vec3) -> Self {
         Self {
             ground,
@@ -173,6 +179,7 @@ pub struct SubSatellitePoint {
 /// 相差至多约二十千米，而覆盖区几何用的是地心形式。
 ///
 /// 位置非有限，或位于未定义经度的极轴上时返回 `None`。
+#[must_use]
 pub fn sub_satellite_point(
     position_ecef_km: Vec3,
     ellipsoid: Ellipsoid,
@@ -208,6 +215,7 @@ pub fn sub_satellite_point(
 /// 正值表示卫星在地平之上，直角值表示在天顶，负值表示在地平之下。
 ///
 /// 任一位置不可用时返回 `None`。
+#[must_use]
 pub fn elevation_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f64> {
     if !satellite_ecef_km.is_finite() || !ground.is_valid() {
         return None;
@@ -237,6 +245,7 @@ pub fn elevation_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<
 ///
 /// 这是当地垂线，即铅垂线所指的方向。对大地位置而言，它由纬度与经度
 /// 得出，因为双轴椭球的法线位于子午面内，并与赤道面夹大地纬度。
+#[must_use]
 pub fn local_up(ground: &GroundPoint) -> Vec3 {
     let latitude = ground.position.latitude;
     let longitude = ground.position.longitude;
@@ -261,6 +270,7 @@ pub fn local_up(ground: &GroundPoint) -> Vec3 {
 /// 这与 [`elevation_angle`] 相同，其命名是为与其余可见性函数对称。
 ///
 /// 任一位置不可用时返回 `None`。
+#[must_use]
 pub fn line_of_sight(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f64> {
     elevation_angle(satellite_ecef_km, ground)
 }
@@ -281,6 +291,7 @@ pub fn line_of_sight(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f6
 /// 卫星可见。
 ///
 /// 卫星位置或传感器不可用时返回 `None`。
+#[must_use]
 pub fn visible_from(satellite_ecef_km: Vec3, sensor: &Sensor) -> Option<bool> {
     let elevation = elevation_angle(satellite_ecef_km, &sensor.ground)?;
     if elevation < sensor.ground.elevation_mask {
@@ -310,6 +321,7 @@ pub fn visible_from(satellite_ecef_km: Vec3, sensor: &Sensor) -> Option<bool> {
 /// 函数。
 ///
 /// 卫星位置或该站不可用时返回 `None`。
+#[must_use]
 pub fn visible_from_geodetic(
     satellite_ecef_km: Vec3,
     position: Geodetic,
@@ -334,6 +346,7 @@ pub fn visible_from_geodetic(
 /// 半径。
 ///
 /// 几何不可用时返回 `None`。
+#[must_use]
 pub fn central_angle_to_station(
     satellite_ecef_km: Vec3,
     ground: &GroundPoint,

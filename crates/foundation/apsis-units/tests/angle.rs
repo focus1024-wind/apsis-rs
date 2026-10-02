@@ -47,11 +47,11 @@ fn wrap_places_angles_in_the_canonical_range() {
 
 #[test]
 fn unit_metadata_is_available() {
+    fn assert_angle<U: Unit<Dimension = Angle>>() {}
     assert_eq!(Radians::symbol(), "rad");
     assert_eq!(Degrees::symbol(), "deg");
     assert_eq!(Radians::factor_to_base(), 1.0);
     assert!((Degrees::factor_to_base() - PI / 180.0).abs() < 1e-15);
-    fn assert_angle<U: Unit<Dimension = Angle>>() {}
     assert_angle::<Radians>();
     assert_angle::<Degrees>();
 }

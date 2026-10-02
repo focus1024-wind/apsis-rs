@@ -38,6 +38,7 @@ impl Footprint {
     /// Creates a footprint from its central angle and body radius.
     ///
     /// 由其中心角与天体半径创建覆盖区。
+    #[must_use]
     pub const fn new(central_angle: f64, body_radius: f64) -> Self {
         Self {
             central_angle,
@@ -49,6 +50,7 @@ impl Footprint {
     /// kilometers.
     ///
     /// 返回沿地表量得的覆盖区半径，单位为千米。
+    #[must_use]
     pub fn surface_radius(&self) -> f64 {
         self.central_angle * self.body_radius
     }
@@ -76,6 +78,7 @@ impl Footprint {
     /// </div>
     ///
     /// 对球形天体这是精确的。
+    #[must_use]
     pub fn area(&self) -> f64 {
         2.0 * PI * self.body_radius * self.body_radius * (1.0 - self.central_angle.cos())
     }
@@ -89,6 +92,7 @@ impl Footprint {
     ///
     /// 该值介于零与二分之一之间，因为来自地表之上某点的覆盖区覆盖范围
     /// 绝不会超过一个半球。
+    #[must_use]
     pub fn fraction_of_surface(&self) -> f64 {
         self.area() / (4.0 * PI * self.body_radius * self.body_radius)
     }
@@ -102,6 +106,7 @@ impl Footprint {
     /// 当距星下点给定中心角的地面点位于覆盖区内时返回 `true`。
     ///
     /// 比较是含端点的，故恰在边缘上的点算在内部。
+    #[must_use]
     pub fn contains_central_angle(&self, central_angle: f64) -> bool {
         central_angle.is_finite() && central_angle >= 0.0 && central_angle <= self.central_angle
     }
@@ -119,6 +124,7 @@ impl Footprint {
 /// 这是卫星仍高于仰角遮蔽时的最大中心角。
 ///
 /// 几何不可用时返回 `None`。
+#[must_use]
 pub fn footprint_central_angle(
     satellite_radius: f64,
     body_radius: f64,
@@ -139,6 +145,7 @@ pub fn footprint_central_angle(
 /// 返回卫星与仰角遮蔽所对应的覆盖区。
 ///
 /// 几何不可用时返回 `None`。
+#[must_use]
 pub fn footprint(
     satellite_radius: f64,
     body_radius: f64,
@@ -161,6 +168,7 @@ pub fn footprint(
 /// 这是 [`Footprint::area`] 的自由函数形式。
 ///
 /// 几何不可用时返回 `None`。
+#[must_use]
 pub fn footprint_area(satellite_radius: f64, body_radius: f64, elevation_mask: f64) -> Option<f64> {
     Some(footprint(satellite_radius, body_radius, elevation_mask)?.area())
 }
@@ -172,6 +180,7 @@ pub fn footprint_area(satellite_radius: f64, body_radius: f64, elevation_mask: f
 /// 返回覆盖区所占地球表面的比例。
 ///
 /// 几何不可用时返回 `None`。
+#[must_use]
 pub fn footprint_fraction(
     satellite_radius: f64,
     body_radius: f64,
@@ -195,6 +204,7 @@ pub fn footprint_fraction(
 /// 它们之间的中心角。
 ///
 /// 任一矢量为零长或含非有限分量时返回 `None`。
+#[must_use]
 pub fn central_angle_between(first: Vec3, second: Vec3) -> Option<f64> {
     if !first.is_finite() || !second.is_finite() {
         return None;
@@ -225,6 +235,7 @@ pub fn central_angle_between(first: Vec3, second: Vec3) -> Option<f64> {
 /// 与中心半角。
 ///
 /// 任一矢量退化或非有限时返回 `None`。
+#[must_use]
 pub fn point_in_footprint(
     footprint: &Footprint,
     point: Vec3,
@@ -248,6 +259,7 @@ pub fn point_in_footprint(
 /// 有用。
 ///
 /// 几何不可用时返回 `None`。
+#[must_use]
 pub fn footprint_edge_elevation(satellite_radius: f64, footprint: &Footprint) -> Option<f64> {
     elevation_from_central_angle(
         satellite_radius,

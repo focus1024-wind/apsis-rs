@@ -73,6 +73,7 @@ use core::f64::consts::FRAC_PI_2;
 /// 恰在卫星正下方时它为零，并随该点移向地平而增大。
 ///
 /// 半径不可用、天体半径超过卫星半径，或仰角非有限时返回 `None`。
+#[must_use]
 pub fn nadir_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
     if !satellite_radius.is_finite() || !body_radius.is_finite() || !elevation.is_finite() {
         return None;
@@ -100,6 +101,7 @@ pub fn nadir_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
 /// 中心角是地心处两个径向方向之间的角。它是沿地表的距离除以天体半径。
 ///
 /// 几何不可用时返回 `None`。
+#[must_use]
 pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
     let nadir = nadir_angle(satellite_radius, body_radius, elevation)?;
     // Rounding can leave a small negative value at the zenith, where the
@@ -152,6 +154,7 @@ pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f
 /// 天顶处奇异，那里仰角是直角、其余弦为零，尽管那里的距离恰是高度。
 ///
 /// 几何不可用时返回 `None`。
+#[must_use]
 pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
     let central = earth_central_angle(satellite_radius, body_radius, elevation)?;
     if !central.is_finite() || central < 0.0 {
@@ -196,6 +199,7 @@ pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
 /// </div>
 ///
 /// 半径不可用或中心角非有限时返回 `None`。
+#[must_use]
 pub fn elevation_from_central_angle(
     satellite_radius: f64,
     body_radius: f64,

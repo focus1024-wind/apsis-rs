@@ -81,6 +81,7 @@ impl Impulse {
     /// Returns the velocity change vector, in kilometers per second.
     ///
     /// 返回速度变化矢量，单位为千米每秒。
+    #[must_use]
     pub const fn delta_v(self) -> Vec3 {
         self.delta_v
     }
@@ -92,6 +93,7 @@ impl Impulse {
     /// 返回该变化的大小，单位为千米每秒。
     ///
     /// 这就是该次点火所需的 delta-v。
+    #[must_use]
     pub fn magnitude(self) -> f64 {
         self.delta_v.norm()
     }
@@ -113,6 +115,7 @@ impl Impulse {
     /// Returns a copy of the change reversed, which undoes the burn.
     ///
     /// 返回取反后的变化副本，即撤销该次点火。
+    #[must_use]
     pub fn reversed(self) -> Self {
         Self {
             delta_v: -self.delta_v,
@@ -122,6 +125,7 @@ impl Impulse {
     /// Applies the impulse to a velocity, returning the new velocity.
     ///
     /// 把该冲量作用于一个速度，返回新的速度。
+    #[must_use]
     pub fn apply_to_velocity(self, velocity: Vec3) -> Vec3 {
         velocity + self.delta_v
     }

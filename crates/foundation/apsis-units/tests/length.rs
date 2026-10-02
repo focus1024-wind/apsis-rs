@@ -34,6 +34,7 @@ fn conversion_round_trips() {
 
 #[test]
 fn units_report_their_metadata() {
+    fn assert_length<U: Unit<Dimension = Length>>() {}
     assert_eq!(Meters::symbol(), "m");
     assert_eq!(Kilometers::symbol(), "km");
     assert_eq!(Meters::factor_to_base(), 1.0);
@@ -41,7 +42,6 @@ fn units_report_their_metadata() {
     // Both units measure the same dimension, which is what makes the
     // generic conversion above type check.
     // 两种单位测量同一量纲，这正是使上面的泛型换算通过类型检查的原因。
-    fn assert_length<U: Unit<Dimension = Length>>() {}
     assert_length::<Meters>();
     assert_length::<Kilometers>();
 }

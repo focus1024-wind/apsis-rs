@@ -30,6 +30,7 @@ impl LinkGeometry {
     /// 返回该几何的自由空间路径损耗。
     ///
     /// 距离或频率不可用时返回 `None`。
+    #[must_use]
     pub fn path_loss(self) -> Option<Decibel> {
         free_space_path_loss(self.distance, self.frequency)
     }
@@ -37,6 +38,7 @@ impl LinkGeometry {
     /// Returns `true` when the geometry is usable.
     ///
     /// 当该几何可用时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.distance.is_finite()
             && self.distance > 0.0
@@ -109,6 +111,7 @@ impl LinkBudget {
     /// 在接收机方向上产生相同通量密度所必须辐射的功率。
     ///
     /// 任一输入不可用时返回 `None`。
+    #[must_use]
     pub fn eirp(&self) -> Option<Power> {
         if !self.transmit_loss.is_finite() || !self.geometry.is_valid() {
             return None;
@@ -125,6 +128,7 @@ impl LinkBudget {
     /// 返回接收机输入端的载波功率，单位为瓦特。
     ///
     /// 任一输入不可用时返回 `None`。
+    #[must_use]
     pub fn received_power(&self) -> Option<Power> {
         if !self.receive_loss.is_finite() {
             return None;
@@ -151,6 +155,7 @@ impl LinkBudget {
     /// 带宽，这正是载噪密度比成为链路属性而非接收机属性的原因。
     ///
     /// 系统温度不可用时返回 `None`。
+    #[must_use]
     pub fn noise_density(&self) -> Option<f64> {
         if !self.system_temperature.is_valid() {
             return None;
@@ -173,6 +178,7 @@ impl LinkBudget {
     /// 相比较所用的形式，因为数据速率被分开计入。
     ///
     /// 任一输入不可用时返回 `None`。
+    #[must_use]
     pub fn carrier_to_noise_density(&self) -> Option<Decibel> {
         let carrier = self.received_power()?;
         let density = self.noise_density()?;
@@ -201,6 +207,7 @@ impl LinkBudget {
     /// 链路在不同带宽的接收机中可显示不同载噪比的原因。
     ///
     /// 任一输入不可用时返回 `None`。
+    #[must_use]
     pub fn carrier_to_noise(&self) -> Option<Decibel> {
         if !self.bandwidth.is_finite() || self.bandwidth <= 0.0 {
             return None;
@@ -223,6 +230,7 @@ impl LinkBudget {
     /// 速率。
     ///
     /// 数据速率非正，或载噪密度比不可用时返回 `None`。
+    #[must_use]
     pub fn energy_per_bit_over_noise(&self, data_rate: f64) -> Option<Decibel> {
         if !data_rate.is_finite() || data_rate <= 0.0 {
             return None;
@@ -246,6 +254,7 @@ impl LinkBudget {
     /// 的地球、太阳或雨胞的形式。
     ///
     /// 所加温度不可用时返回 `None`。
+    #[must_use]
     pub fn with_added_noise(&self, added: NoiseTemperature) -> Option<Self> {
         if !added.is_valid() {
             return None;
@@ -263,6 +272,7 @@ impl LinkBudget {
     /// 返回载波的波长，单位为米。
     ///
     /// 频率不可用时返回 `None`。
+    #[must_use]
     pub fn carrier_wavelength(&self) -> Option<f64> {
         wavelength(self.geometry.frequency)
     }
@@ -270,6 +280,7 @@ impl LinkBudget {
     /// Returns `true` when every input describes a usable link.
     ///
     /// 当每个输入都描述一条可用链路时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.transmit_power.is_valid()
             && self.transmit_gain.dbi().is_some()
@@ -307,6 +318,7 @@ impl LinkMargin {
     /// 返回余量，单位为分贝。
     ///
     /// 正余量意味着链路闭合并有余，负余量意味着不能闭合。
+    #[must_use]
     pub fn margin(self) -> Decibel {
         self.achieved - self.required
     }
@@ -314,6 +326,7 @@ impl LinkMargin {
     /// Returns `true` when the margin is not negative.
     ///
     /// 当余量非负时返回 `true`。
+    #[must_use]
     pub fn closes(self) -> bool {
         self.margin().db() >= 0.0
     }
@@ -326,6 +339,7 @@ impl LinkMargin {
 /// 返回所达到的比与所要求的比之间的余量。
 ///
 /// 这一比较决定链路是否闭合。
+#[must_use]
 pub fn link_margin(achieved: Decibel, required: Decibel) -> LinkMargin {
     LinkMargin { achieved, required }
 }
@@ -342,6 +356,7 @@ pub fn link_margin(achieved: Decibel, required: Decibel) -> LinkMargin {
 /// 这是 [`LinkBudget::carrier_to_noise_density`] 的自由函数形式。
 ///
 /// 预算不可用时返回 `None`。
+#[must_use]
 pub fn carrier_to_noise_density(budget: &LinkBudget) -> Option<Decibel> {
     budget.carrier_to_noise_density()
 }
@@ -368,6 +383,7 @@ pub fn carrier_to_noise_density(budget: &LinkBudget) -> Option<Decibel> {
 /// 这是通常引用的形式。
 ///
 /// 增益或温度不可用时返回 `None`。
+#[must_use]
 pub fn gain_to_temperature(gain: Gain, temperature: NoiseTemperature) -> Option<f64> {
     if !temperature.is_valid() || temperature.kelvin() <= 0.0 {
         return None;

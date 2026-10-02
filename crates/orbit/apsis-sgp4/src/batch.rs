@@ -29,6 +29,7 @@ use apsis_math::parallel::map_index;
 /// 按顺序在历元后若干分钟列表处传播该卫星。
 ///
 /// 顺序形式，供比较以及线程开销高于工作时的小列表使用。
+#[must_use]
 pub fn propagate_minutes_at(satellite: &Satellite, minutes: &[f64]) -> Vec<Option<State>> {
     minutes
         .iter()
@@ -67,6 +68,7 @@ pub fn propagate_minutes_at(satellite: &Satellite, minutes: &[f64]) -> Vec<Optio
 /// 天按一分钟步长是一千四百个状态，收益很小；一个月是四万三千个，可获数倍
 /// 提升。拥有许多短轨迹的调用方更适合用下方的按卫星形式，它一次调用处理
 /// 整个列表。
+#[must_use]
 pub fn propagate_minutes_at_parallel(satellite: &Satellite, minutes: &[f64]) -> Vec<Option<State>> {
     map_index(minutes.len(), |index| {
         satellite.propagate_minutes(minutes[index]).ok()
@@ -83,6 +85,7 @@ pub fn propagate_minutes_at_parallel(satellite: &Satellite, minutes: &[f64]) -> 
 ///
 /// 各卫星的工作彼此独立，故整壳在同一瞬时的状态是天然的批处理单元。卫星
 /// 只读，因此在各线程间按引用共享。
+#[must_use]
 pub fn propagate_at(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>> {
     satellites
         .iter()
@@ -105,6 +108,7 @@ pub fn propagate_at(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>
 ///
 /// 覆盖计算需要的形式：它一次调用持有整壳，故线程为所有卫星启动一次而非
 /// 每颗一次，即便几百颗的壳也能获益。
+#[must_use]
 pub fn propagate_at_parallel(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>> {
     map_index(satellites.len(), |index| {
         satellites[index].propagate_at(tai_mjd).ok()

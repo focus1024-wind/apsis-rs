@@ -57,6 +57,7 @@ impl PrecedenceGraph {
     /// Creates an empty graph.
     ///
     /// 创建一个空图。
+    #[must_use]
     pub fn new() -> Self {
         Self {
             successors: BTreeMap::new(),
@@ -81,6 +82,7 @@ impl PrecedenceGraph {
     /// Returns `true` when the constraint from `before` to `after` exists.
     ///
     /// 当存在从 `before` 到 `after` 的约束时返回 `true`。
+    #[must_use]
     pub fn has_constraint(&self, before: TaskId, after: TaskId) -> bool {
         self.successors
             .get(&before.index())
@@ -139,6 +141,7 @@ impl PrecedenceGraph {
     /// constraints.
     ///
     /// 当沿约束可自 `from` 到达 `to` 时返回 `true`。
+    #[must_use]
     pub fn is_reachable(&self, from: TaskId, to: TaskId) -> bool {
         if from == to {
             return true;
@@ -168,6 +171,7 @@ impl PrecedenceGraph {
     /// 返回必须在某任务开始前完成的任务。
     ///
     /// 结果按约束添加顺序排列。它只含直接前驱，不含传递闭包。
+    #[must_use]
     pub fn predecessors_of(&self, task: TaskId) -> Vec<TaskId> {
         self.predecessors
             .get(&task.index())
@@ -183,6 +187,7 @@ impl PrecedenceGraph {
     /// 返回必须等待某任务完成的任务。
     ///
     /// 结果按约束添加顺序排列。它只含直接后继，不含传递闭包。
+    #[must_use]
     pub fn successors_of(&self, task: TaskId) -> Vec<TaskId> {
         self.successors
             .get(&task.index())
@@ -304,6 +309,7 @@ impl PrecedenceGraph {
     /// Returns the number of tasks in the graph.
     ///
     /// 返回图中的任务数。
+    #[must_use]
     pub fn task_count(&self) -> usize {
         let mut all: Vec<usize> = self.successors.keys().copied().collect();
         for task in self.predecessors.keys() {

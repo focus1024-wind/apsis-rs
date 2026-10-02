@@ -58,6 +58,7 @@ use core::f64::consts::PI;
 /// 它在主瓣上以及旁瓣区的形状上都与本模型不同。
 ///
 /// 峰值增益没有分贝形式，或波束宽度、底限非正且非有限时返回 `None`。
+#[must_use]
 pub fn off_axis_attenuation(
     peak: Gain,
     beam_width: f64,
@@ -153,6 +154,7 @@ pub fn off_axis_attenuation(
 ///
 /// 出处：ITU，*Radio Regulations*，附录 8，其中再现了 ITU-R 建议书
 /// S.465 的参考方向图。
+#[must_use]
 pub fn mask_gain(diameter_over_wavelength: f64, off_axis_angle: f64) -> Option<f64> {
     if !diameter_over_wavelength.is_finite() || diameter_over_wavelength <= 0.0 {
         return None;
@@ -234,6 +236,7 @@ impl Pattern {
     /// 返回本方向图在给定波长处的峰值增益。
     ///
     /// 对直接指定的方向图，波长被忽略，因为它已带有其峰值增益。
+    #[must_use]
     pub fn peak_gain(self, wavelength: f64) -> Option<Gain> {
         match self {
             Self::Parabolic {
@@ -252,6 +255,7 @@ impl Pattern {
     /// wavelength, in radians.
     ///
     /// 返回本方向图在给定波长处的半功率波束宽度，单位为弧度。
+    #[must_use]
     pub fn beam_width(self, wavelength: f64) -> Option<f64> {
         match self {
             Self::Parabolic {
@@ -319,6 +323,7 @@ impl ElementPattern {
     ///
     /// 旁瓣底限被设为《无线电规则》参考方向图的值，即相对峰值低
     /// 32 分贝，这是小型地球站常见的坏情形。
+    #[must_use]
     pub const fn new(peak: Gain, beam_width: f64) -> Self {
         Self {
             peak,
@@ -334,6 +339,7 @@ impl ElementPattern {
     /// 由某波长处的抛物面孔径创建方向图。
     ///
     /// 孔径或波长不可用时返回 `None`。
+    #[must_use]
     pub fn from_parabolic(aperture: ParabolicAperture, wavelength: f64) -> Option<Self> {
         Some(Self {
             peak: aperture.peak_gain(wavelength)?,
@@ -345,6 +351,7 @@ impl ElementPattern {
     /// Returns this pattern with a different sidelobe floor.
     ///
     /// 返回本方向图的一个具有不同旁瓣底限的副本。
+    #[must_use]
     pub const fn with_floor(mut self, floor_db: f64) -> Self {
         self.floor_db = floor_db;
         self
@@ -358,6 +365,7 @@ impl ElementPattern {
     /// 返回偏离视轴某角度处的增益。
     ///
     /// 方向图不可用或角度非有限时返回 `None`。
+    #[must_use]
     pub fn gain_at(self, off_axis_angle: f64) -> Option<Gain> {
         let attenuation =
             off_axis_attenuation(self.peak, self.beam_width, off_axis_angle, self.floor_db)?;
@@ -368,6 +376,7 @@ impl ElementPattern {
     /// pattern.
     ///
     /// 当波束宽度与底限描述一个可用方向图时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.peak.dbi().is_some()
             && self.beam_width.is_finite()

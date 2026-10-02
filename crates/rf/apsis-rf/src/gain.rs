@@ -82,6 +82,7 @@ impl Gain {
     /// Creates a gain from a linear ratio.
     ///
     /// 由线性比值创建增益。
+    #[must_use]
     pub const fn from_ratio(ratio: f64) -> Self {
         Self(ratio)
     }
@@ -94,6 +95,7 @@ impl Gain {
     /// 由相对各向同性辐射体的分贝值创建增益。
     ///
     /// 增益比值不会为负，故任何有限读数都被接受。
+    #[must_use]
     pub fn from_dbi(dbi: f64) -> Option<Self> {
         if !dbi.is_finite() {
             return None;
@@ -109,6 +111,7 @@ impl Gain {
     /// 由相对半波振子的分贝值创建增益。
     ///
     /// 该读数非有限时返回 `None`。
+    #[must_use]
     pub fn from_dbd(dbd: f64) -> Option<Self> {
         if !dbd.is_finite() {
             return None;
@@ -119,6 +122,7 @@ impl Gain {
     /// Returns the linear ratio to an isotropic radiator.
     ///
     /// 返回相对各向同性辐射体的线性比值。
+    #[must_use]
     pub const fn ratio(self) -> f64 {
         self.0
     }
@@ -130,6 +134,7 @@ impl Gain {
     /// 返回该增益，相对各向同性辐射体以分贝计。
     ///
     /// 比值非正时返回 `None`。
+    #[must_use]
     pub fn dbi(self) -> Option<f64> {
         if self.0 > 0.0 && self.0.is_finite() {
             Some(10.0 * self.0.log10())
@@ -145,6 +150,7 @@ impl Gain {
     /// 返回该增益，相对半波振子以分贝计。
     ///
     /// 比值非正时返回 `None`。
+    #[must_use]
     pub fn dbd(self) -> Option<f64> {
         self.dbi().map(|dbi| dbi - DIPOLE_OVER_ISOTROPIC_DB)
     }
@@ -156,6 +162,7 @@ impl Gain {
     /// 返回该增益，以分贝比表示。
     ///
     /// 比值非正时返回 `None`。
+    #[must_use]
     pub fn as_decibel(self) -> Option<Decibel> {
         Decibel::from_ratio(self.0)
     }
@@ -175,6 +182,7 @@ impl Gain {
     /// 其辐射功率这一要求得出。
     ///
     /// 波长非正且非有限时返回 `None`。
+    #[must_use]
     pub fn effective_aperture(self, wavelength: f64) -> Option<f64> {
         if wavelength > 0.0 && wavelength.is_finite() && self.0.is_finite() {
             Some(self.0 * wavelength * wavelength / (4.0 * PI))
@@ -196,6 +204,7 @@ impl Gain {
     /// 它是 [`Gain::effective_aperture`] 的逆。
     ///
     /// 波长非正且非有限，或孔径为负时返回 `None`。
+    #[must_use]
     pub fn from_effective_aperture(aperture: f64, wavelength: f64) -> Option<Self> {
         if wavelength > 0.0 && wavelength.is_finite() && aperture >= 0.0 && aperture.is_finite() {
             Some(Self(4.0 * PI * aperture / (wavelength * wavelength)))

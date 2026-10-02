@@ -22,6 +22,7 @@ impl ResourceId {
     /// Creates an identifier.
     ///
     /// 创建一个标识符。
+    #[must_use]
     pub const fn new(index: usize) -> Self {
         Self(index)
     }
@@ -29,6 +30,7 @@ impl ResourceId {
     /// Returns the index.
     ///
     /// 返回该下标。
+    #[must_use]
     pub const fn index(self) -> usize {
         self.0
     }
@@ -86,6 +88,7 @@ impl Resource {
     ///
     /// 没有窗口的资源永不可用，故调用方须先添加窗口再使用。这是安全的
     /// 默认值：忘记设置可用性的资源是不可用，而非始终可用。
+    #[must_use]
     pub const fn new(id: ResourceId, capacity: f64) -> Self {
         Self {
             id,
@@ -97,6 +100,7 @@ impl Resource {
     /// Returns the capacity.
     ///
     /// 返回该容量。
+    #[must_use]
     pub const fn capacity(&self) -> f64 {
         self.capacity
     }
@@ -120,6 +124,7 @@ impl Resource {
     /// Returns `true` when the capacity is usable.
     ///
     /// 当该容量可用时返回 `true`。
+    #[must_use]
     pub fn has_valid_capacity(&self) -> bool {
         self.capacity.is_finite() && self.capacity > 0.0
     }
@@ -127,6 +132,7 @@ impl Resource {
     /// Returns the availability windows, merged and in time order.
     ///
     /// 返回可用窗口，已合并且按时间有序。
+    #[must_use]
     pub fn windows(&self) -> &[Window] {
         &self.windows
     }
@@ -134,6 +140,7 @@ impl Resource {
     /// Returns the number of availability windows.
     ///
     /// 返回可用窗口的数量。
+    #[must_use]
     pub fn window_count(&self) -> usize {
         self.windows.len()
     }
@@ -141,6 +148,7 @@ impl Resource {
     /// Returns `true` when the resource has no availability at all.
     ///
     /// 当该资源完全没有可用性时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.windows.is_empty()
     }
@@ -208,6 +216,7 @@ impl Resource {
     ///
     /// 瞬时查询即零时长查询，当该瞬落在某个窗口内即得到满足。在窗口
     /// 终点处该资源不可用，因为窗口是半开的。
+    #[must_use]
     pub fn is_available_at(&self, time: f64) -> bool {
         self.windows
             .iter()
@@ -223,6 +232,7 @@ impl Resource {
     /// 当该资源在整段区间上可用时返回 `true`。
     ///
     /// 只要资源在所请求瞬时可用，即可满足零时长请求，故零时长按瞬时检查。
+    #[must_use]
     pub fn is_available_over(&self, start: f64, duration: f64) -> bool {
         if !start.is_finite() || !duration.is_finite() || duration < 0.0 {
             return false;
@@ -275,6 +285,7 @@ impl Resource {
     ///
     /// 这是该资源能满足给定时长请求的最早时刻，即贪心调度器所询问的量。
     /// 没有足够长的窗口时返回 `None`。
+    #[must_use]
     pub fn earliest_fit(&self, duration: f64) -> Option<Window> {
         if !duration.is_finite() || duration < 0.0 {
             return None;
@@ -293,6 +304,7 @@ impl Resource {
     /// 返回第一个能容纳请求的窗口，且该请求的起点不早于给定时刻。
     ///
     /// 没有既够晚又够长的窗口时返回 `None`。
+    #[must_use]
     pub fn earliest_fit_after(&self, not_before: f64, duration: f64) -> Option<Window> {
         if !not_before.is_finite() || !duration.is_finite() || duration < 0.0 {
             return None;
@@ -312,11 +324,12 @@ impl Resource {
     /// 返回该资源不再可用的时刻。
     ///
     /// 该资源在所给瞬时不可用时返回 `None`；包含该瞬的窗口无界时返回无穷。
+    #[must_use]
     pub fn busy_until(&self, time: f64) -> Option<f64> {
         self.windows
             .iter()
             .find(|window| window.interval.contains(time))
-            .map(|window| window.end())
+            .map(super::window::Window::end)
     }
 }
 
@@ -339,6 +352,7 @@ impl ResourceSet {
     /// Creates an empty set.
     ///
     /// 创建一个空集合。
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             resources: Vec::new(),
@@ -380,6 +394,7 @@ impl ResourceSet {
     /// Returns the resource with the given identifier.
     ///
     /// 返回具有所给标识符的资源。
+    #[must_use]
     pub fn get(&self, id: ResourceId) -> Option<&Resource> {
         self.resources.iter().find(|resource| resource.id == id)
     }
@@ -412,6 +427,7 @@ impl ResourceSet {
     /// Returns the resources in the order they were added.
     ///
     /// 返回按添加顺序排列的资源。
+    #[must_use]
     pub fn resources(&self) -> &[Resource] {
         &self.resources
     }
@@ -419,6 +435,7 @@ impl ResourceSet {
     /// Returns the number of resources.
     ///
     /// 返回资源数量。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.resources.len()
     }
@@ -426,6 +443,7 @@ impl ResourceSet {
     /// Returns `true` when there are no resources.
     ///
     /// 当集合中没有资源时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.resources.is_empty()
     }
@@ -437,6 +455,7 @@ impl ResourceSet {
     /// 返回在某瞬可用的资源标识符。
     ///
     /// 结果按资源添加顺序排列。
+    #[must_use]
     pub fn available_at(&self, time: f64) -> Vec<ResourceId> {
         self.resources
             .iter()
@@ -449,6 +468,7 @@ impl ResourceSet {
     /// interval.
     ///
     /// 返回在整段区间上可用的资源标识符。
+    #[must_use]
     pub fn available_over(&self, start: f64, duration: f64) -> Vec<ResourceId> {
         self.resources
             .iter()

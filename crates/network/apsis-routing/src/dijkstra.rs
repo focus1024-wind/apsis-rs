@@ -99,6 +99,7 @@ impl PathTree {
     /// 返回到某节点的距离。
     ///
     /// 当节点下标越界或节点不可达时返回 `None`。
+    #[must_use]
     pub fn distance(&self, node: usize) -> Option<f64> {
         let distance = *self.distances.get(node)?;
         distance.is_finite().then_some(distance)
@@ -107,6 +108,7 @@ impl PathTree {
     /// Returns `true` when the node is reachable from the source.
     ///
     /// 当该节点自源点可达时返回 `true`。
+    #[must_use]
     pub fn is_reachable(&self, node: usize) -> bool {
         self.distance(node).is_some()
     }
@@ -114,6 +116,7 @@ impl PathTree {
     /// Returns the number of reachable nodes, including the source itself.
     ///
     /// 返回可达节点的数量，含源点自身。
+    #[must_use]
     pub fn reachable_count(&self) -> usize {
         self.distances
             .iter()

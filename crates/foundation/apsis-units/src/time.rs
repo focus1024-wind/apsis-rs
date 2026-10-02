@@ -23,6 +23,7 @@ impl Seconds {
     /// Creates a duration from a value in seconds.
     ///
     /// 由秒值创建时长。
+    #[must_use]
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
@@ -30,6 +31,7 @@ impl Seconds {
     /// Returns this duration in seconds.
     ///
     /// 返回该时长的秒值。
+    #[must_use]
     pub const fn value(self) -> f64 {
         self.0
     }

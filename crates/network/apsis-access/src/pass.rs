@@ -55,6 +55,7 @@ impl Pass {
     /// Returns the duration of the pass, in seconds.
     ///
     /// 返回该过境的时长，单位为秒。
+    #[must_use]
     pub fn duration(&self) -> f64 {
         self.set_seconds - self.rise_seconds
     }
@@ -62,6 +63,7 @@ impl Pass {
     /// Returns the time from the rise to the peak, in seconds.
     ///
     /// 返回从升起到峰值的时间，单位为秒。
+    #[must_use]
     pub fn rise_to_peak(&self) -> f64 {
         self.peak_seconds - self.rise_seconds
     }
@@ -77,6 +79,7 @@ impl Pass {
     ///
     /// 过境只保存峰值，故该辅助函数在三个界定时刻报告所存的值，其余
     /// 情形交由调用方的仰角函数。
+    #[must_use]
     pub fn contains(&self, seconds: f64) -> bool {
         seconds >= self.rise_seconds && seconds <= self.set_seconds
     }
@@ -89,6 +92,7 @@ impl Pass {
     /// 返回该过境的最大仰角，单位为弧度。
     ///
     /// 这与峰值仰角相同，其命名是为在比较过境的调用处更具可读性。
+    #[must_use]
     pub fn maximum_elevation(&self) -> f64 {
         self.peak_elevation
     }
@@ -113,6 +117,7 @@ impl PassSummary {
     /// Creates a summary from a list of passes and the interval length.
     ///
     /// 由过境列表与区间长度创建汇总。
+    #[must_use]
     pub fn new(passes: Vec<Pass>, interval_seconds: f64) -> Self {
         Self {
             passes,
@@ -123,6 +128,7 @@ impl PassSummary {
     /// Returns the number of passes.
     ///
     /// 返回过境的数量。
+    #[must_use]
     pub fn count(&self) -> usize {
         self.passes.len()
     }
@@ -146,6 +152,7 @@ impl PassSummary {
     /// 返回卫星可见所占该区间的比例。
     ///
     /// 区间长度非正时返回 `None`。
+    #[must_use]
     pub fn access_fraction(&self) -> Option<f64> {
         if self.interval_seconds > 0.0 && self.interval_seconds.is_finite() {
             Some(self.total_access_seconds() / self.interval_seconds)
@@ -161,6 +168,7 @@ impl PassSummary {
     /// 返回过境的平均时长，单位为秒。
     ///
     /// 没有过境时返回 `None`。
+    #[must_use]
     pub fn mean_duration_seconds(&self) -> Option<f64> {
         if self.passes.is_empty() {
             return None;
@@ -171,6 +179,7 @@ impl PassSummary {
     /// Returns the longest pass, if there is one.
     ///
     /// 返回最长的过境（若存在）。
+    #[must_use]
     pub fn longest(&self) -> Option<&Pass> {
         self.passes.iter().max_by(|first, second| {
             first
@@ -183,6 +192,7 @@ impl PassSummary {
     /// Returns the highest pass, if there is one.
     ///
     /// 返回仰角最高的过境（若存在）。
+    #[must_use]
     pub fn highest(&self) -> Option<&Pass> {
         self.passes.iter().max_by(|first, second| {
             first
@@ -200,6 +210,7 @@ impl PassSummary {
     /// 返回两个相邻过境之间的间隙，单位为秒。
     ///
     /// 任一下标越界，或两个下标不相邻且递增时返回 `None`。
+    #[must_use]
     pub fn gap_seconds(&self, first: usize, second: usize) -> Option<f64> {
         if second != first + 1 {
             return None;
@@ -218,6 +229,7 @@ impl PassSummary {
     ///
     /// 这是一个地面站在两次通信之间等待的最长时间。过境少于两个时返回
     /// `None`。
+    #[must_use]
     pub fn longest_gap_seconds(&self) -> Option<f64> {
         if self.passes.len() < 2 {
             return None;

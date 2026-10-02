@@ -77,6 +77,7 @@ impl Mat3 {
     /// 由九个元素按行主序创建矩阵。
     ///
     /// 参数按行分组：先 `row0`，再 `row1`，最后 `row2`。
+    #[must_use]
     pub const fn from_rows(row0: [f64; 3], row1: [f64; 3], row2: [f64; 3]) -> Self {
         Self::from_rows_raw(row0, row1, row2)
     }
@@ -84,6 +85,7 @@ impl Mat3 {
     /// Creates a matrix from three column vectors.
     ///
     /// 由三个列向量创建矩阵。
+    #[must_use]
     pub const fn from_columns(c0: Vec3, c1: Vec3, c2: Vec3) -> Self {
         Self {
             m00: c0.x,
@@ -101,6 +103,7 @@ impl Mat3 {
     /// Creates a diagonal matrix from a vector of diagonal entries.
     ///
     /// 由对角元素向量创建对角矩阵。
+    #[must_use]
     pub const fn from_diagonal(diagonal: Vec3) -> Self {
         Self::from_rows_raw(
             [diagonal.x, 0.0, 0.0],
@@ -118,6 +121,7 @@ impl Mat3 {
     ///
     /// 假定该四元数为单位长度。非单位四元数会得到一个带缩放的矩阵，随后被
     /// [`Mat3::is_rotation`] 拒绝。
+    #[must_use]
     pub fn from_quat(q: Quat) -> Self {
         let (w, x, y, z) = (q.w, q.x, q.y, q.z);
         Self::from_rows(
@@ -154,6 +158,7 @@ impl Mat3 {
     /// Creates a rotation matrix of `angle` radians about the first axis.
     ///
     /// 创建绕第一轴旋转 `angle` 弧度的旋转矩阵。
+    #[must_use]
     pub fn from_rotation_x(angle: f64) -> Self {
         Self::from_quat(Quat::from_rotation_x(angle))
     }
@@ -161,6 +166,7 @@ impl Mat3 {
     /// Creates a rotation matrix of `angle` radians about the second axis.
     ///
     /// 创建绕第二轴旋转 `angle` 弧度的旋转矩阵。
+    #[must_use]
     pub fn from_rotation_y(angle: f64) -> Self {
         Self::from_quat(Quat::from_rotation_y(angle))
     }
@@ -168,6 +174,7 @@ impl Mat3 {
     /// Creates a rotation matrix of `angle` radians about the third axis.
     ///
     /// 创建绕第三轴旋转 `angle` 弧度的旋转矩阵。
+    #[must_use]
     pub fn from_rotation_z(angle: f64) -> Self {
         Self::from_quat(Quat::from_rotation_z(angle))
     }
@@ -179,6 +186,7 @@ impl Mat3 {
     /// 返回第 `row` 行第 `column` 列的元素。
     ///
     /// 任一下标超出 `0..=2` 时返回 `None`。
+    #[must_use]
     pub const fn get(self, row: usize, column: usize) -> Option<f64> {
         match (row, column) {
             (0, 0) => Some(self.m00),
@@ -201,6 +209,7 @@ impl Mat3 {
     /// 返回第 `index` 列。
     ///
     /// `index` 超出 `0..=2` 时返回 `None`。
+    #[must_use]
     pub const fn column(self, index: usize) -> Option<Vec3> {
         match index {
             0 => Some(Vec3::new(self.m00, self.m10, self.m20)),
@@ -217,6 +226,7 @@ impl Mat3 {
     /// 返回第 `index` 行。
     ///
     /// `index` 超出 `0..=2` 时返回 `None`。
+    #[must_use]
     pub const fn row(self, index: usize) -> Option<Vec3> {
         match index {
             0 => Some(Vec3::new(self.m00, self.m01, self.m02)),
@@ -229,6 +239,7 @@ impl Mat3 {
     /// Returns the transpose.
     ///
     /// 返回转置。
+    #[must_use]
     pub const fn transpose(self) -> Self {
         Self {
             m00: self.m00,
@@ -246,6 +257,7 @@ impl Mat3 {
     /// Returns the sum of the diagonal entries.
     ///
     /// 返回对角元素之和。
+    #[must_use]
     pub const fn trace(self) -> f64 {
         self.m00 + self.m11 + self.m22
     }
@@ -253,6 +265,7 @@ impl Mat3 {
     /// Returns the determinant.
     ///
     /// 返回行列式。
+    #[must_use]
     pub fn determinant(self) -> f64 {
         self.m00 * (self.m11 * self.m22 - self.m12 * self.m21)
             - self.m01 * (self.m10 * self.m22 - self.m12 * self.m20)
@@ -269,6 +282,7 @@ impl Mat3 {
     ///
     /// 正交且行列式为一的矩阵即旋转矩阵。该检查逐元素比较 `M^T M` 与单位
     /// 矩阵，然后把行列式与一比较。
+    #[must_use]
     pub fn is_rotation(self, tolerance: f64) -> bool {
         let product = self.transpose() * self;
         let identity = Self::IDENTITY;
@@ -286,6 +300,7 @@ impl Mat3 {
     /// Returns `true` when all nine entries are finite.
     ///
     /// 当九个元素都有限时返回 `true`。
+    #[must_use]
     pub fn is_finite(self) -> bool {
         [
             self.m00, self.m10, self.m20, self.m01, self.m11, self.m21, self.m02, self.m12,

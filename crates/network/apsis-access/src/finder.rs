@@ -34,6 +34,7 @@ impl OrbitSample {
     /// Creates a sample from a time and a position.
     ///
     /// 由时间与位置创建样本。
+    #[must_use]
     pub const fn new(seconds: f64, position_ecef_km: Vec3) -> Self {
         Self {
             seconds,
@@ -44,6 +45,7 @@ impl OrbitSample {
     /// Returns `true` when the sample is usable.
     ///
     /// 当该样本可用时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.seconds.is_finite() && self.position_ecef_km.is_finite()
     }
@@ -91,6 +93,7 @@ impl AccessFinder {
     /// Returns `true` when the finder settings are usable.
     ///
     /// 当查找器设置可用时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.station.is_valid()
             && self.sample_step_seconds.is_finite()
@@ -130,6 +133,7 @@ impl AccessFinder {
     /// 返回某样本的仰角，单位为弧度。
     ///
     /// 样本或地面站不可用时返回 `None`。
+    #[must_use]
     pub fn elevation_of(&self, sample: &OrbitSample) -> Option<f64> {
         if !sample.is_valid() {
             return None;
@@ -404,7 +408,7 @@ impl AccessFinder {
             if high - low <= self.crossing_tolerance_seconds {
                 break;
             }
-            let middle = 0.5 * (low + high);
+            let middle = f64::midpoint(low, high);
             let value = difference(middle);
             if value == 0.0 {
                 return middle;
@@ -416,7 +420,7 @@ impl AccessFinder {
                 high = middle;
             }
         }
-        0.5 * (low + high)
+        f64::midpoint(low, high)
     }
 
     /// Finds the access windows over an interval, calling a propagator for
@@ -473,14 +477,14 @@ impl AccessFinder {
         // 当区间是步长的精确整数倍时，上面的循环可能把端点追加两次，故
         // 当最后一个样本与端点重复时将其替换。
         if let Some(last) = samples.last_mut() {
-            if last.seconds != end_seconds {
+            if last.seconds == end_seconds {
+                last.seconds = end_seconds;
+            } else {
                 let position = propagator(end_seconds).ok_or_else(|| {
                     AccessError::new(AccessErrorKind::InvalidPosition)
                         .with_detail(format!("the propagator failed at {end_seconds} s"))
                 })?;
                 samples.push(OrbitSample::new(end_seconds, position));
-            } else {
-                last.seconds = end_seconds;
             }
         }
 

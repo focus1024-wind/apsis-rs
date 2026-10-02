@@ -1,6 +1,6 @@
-//! Copies the vendored MathJax into the documentation root.
+//! Copies the vendored `MathJax` into the documentation root.
 //!
-//! The generated HTML loads MathJax from `vendor/mathjax` under the
+//! The generated HTML loads `MathJax` from `vendor/mathjax` under the
 //! documentation root so that a formula renders without network access. The
 //! header at `docs/mathjax.html` computes the path to that root at run time,
 //! but the file itself has to be present, and rustdoc has no option to copy an
@@ -10,7 +10,7 @@
 //! when the vendored directory is absent, so it is harmless for builds that do
 //! not touch the documentation.
 //!
-//! 把内置的 MathJax 复制到文档根。
+//! 把内置的 `MathJax` 复制到文档根。
 //!
 //! 生成的 HTML 从文档根下的 `vendor/mathjax` 加载 MathJax，使公式无需网络访问
 //! 即可渲染。`docs/mathjax.html` 处的头部在运行时计算到该根的路径，但文件

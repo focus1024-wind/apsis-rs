@@ -31,6 +31,7 @@ impl RouteStep {
     /// Creates a step.
     ///
     /// 创建一个步骤。
+    #[must_use]
     pub const fn new(from: usize, to: usize, cost: f64) -> Self {
         Self { from, to, cost }
     }
@@ -71,6 +72,7 @@ impl Route {
     /// 由其节点与步骤创建路由。
     ///
     /// 代价取各步骤代价之和，故调用方无法使总计与各部分不一致。
+    #[must_use]
     pub fn new(nodes: Vec<usize>, steps: Vec<RouteStep>) -> Self {
         let cost = steps.iter().map(|step| step.cost).sum();
         Self { nodes, steps, cost }
@@ -79,6 +81,7 @@ impl Route {
     /// Returns the number of hops.
     ///
     /// 返回跳数。
+    #[must_use]
     pub fn hop_count(&self) -> usize {
         self.steps.len()
     }
@@ -90,6 +93,7 @@ impl Route {
     /// 返回源节点。
     ///
     /// 路由没有节点时返回 `None`。
+    #[must_use]
     pub fn source(&self) -> Option<usize> {
         self.nodes.first().copied()
     }
@@ -101,6 +105,7 @@ impl Route {
     /// 返回目的地节点。
     ///
     /// 路由没有节点时返回 `None`。
+    #[must_use]
     pub fn destination(&self) -> Option<usize> {
         self.nodes.last().copied()
     }
@@ -115,6 +120,7 @@ impl Route {
     ///
     /// 各代价不变，因为反转后的路由穿越同样的链路。仅当每条链路都以
     /// 相同代价双向存在时才正确，这一点须由调用方保证。
+    #[must_use]
     pub fn reversed(&self) -> Self {
         let nodes = self.nodes.iter().rev().copied().collect();
         let steps = self
@@ -129,6 +135,7 @@ impl Route {
     /// Returns `true` when the route passes through a node.
     ///
     /// 当该路由经过某节点时返回 `true`。
+    #[must_use]
     pub fn passes_through(&self, node: usize) -> bool {
         self.nodes.contains(&node)
     }
@@ -136,6 +143,7 @@ impl Route {
     /// Returns the position of a node in the route, if it is on it.
     ///
     /// 返回某节点在路由中的位置（若在该路由上）。
+    #[must_use]
     pub fn position_of(&self, node: usize) -> Option<usize> {
         self.nodes.iter().position(|candidate| *candidate == node)
     }
@@ -170,6 +178,7 @@ impl RouteLeg {
     /// Creates a route leg.
     ///
     /// 创建一段路由。
+    #[must_use]
     pub const fn new(route: Route, start_seconds: f64, end_seconds: f64) -> Self {
         Self {
             route,
@@ -185,6 +194,7 @@ impl RouteLeg {
     /// 返回该路由保持的时长，单位为秒。
     ///
     /// 该路由对其后所有时间都有效时返回无穷。
+    #[must_use]
     pub fn duration_seconds(&self) -> f64 {
         self.end_seconds - self.start_seconds
     }

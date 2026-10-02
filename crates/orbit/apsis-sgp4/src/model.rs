@@ -101,6 +101,7 @@ impl GravityModel {
     /// parameter, in seconds per kilometer to the three halves.
     ///
     /// 返回引力参数平方根的倒数，单位为秒每千米的三分之二次方。
+    #[must_use]
     pub fn reciprocal_sqrt_mu(self) -> f64 {
         1.0 / self.mu.sqrt()
     }
@@ -109,6 +110,7 @@ impl GravityModel {
     /// to the three halves per second.
     ///
     /// 返回引力参数的平方根，单位为千米的三分之二次方每秒。
+    #[must_use]
     pub fn sqrt_mu(self) -> f64 {
         self.mu.sqrt()
     }
@@ -138,6 +140,7 @@ impl GravityModel {
     /// </div>
     ///
     /// 它是一个地球半径圆轨道的角速率，单位为弧度每分钟。
+    #[must_use]
     pub fn xke(self) -> f64 {
         60.0 / (self.radius * self.radius * self.radius / self.mu).sqrt()
     }
@@ -150,6 +153,7 @@ impl GravityModel {
     /// 返回 `xke` 的倒数，单位为分钟。
     ///
     /// 它是模型的时间单位：参考圆轨道的周期除以二 pi。
+    #[must_use]
     pub fn tumin(self) -> f64 {
         1.0 / self.xke()
     }
@@ -157,6 +161,7 @@ impl GravityModel {
     /// Returns `j3 / j2`, which appears as a single ratio in the theory.
     ///
     /// 返回 `j3 / j2`，理论中以单一比值形式出现。
+    #[must_use]
     pub fn j3_over_j2(self) -> f64 {
         self.j3 / self.j2
     }
@@ -172,6 +177,7 @@ impl GravityModel {
     ///
     /// 它以幂而非因子出现，例如 `(xke / mean_motion)^(2/3)`，故为常数，与
     /// 本模型无关。
+    #[must_use]
     pub fn x2o3(self) -> f64 {
         2.0 / 3.0
     }

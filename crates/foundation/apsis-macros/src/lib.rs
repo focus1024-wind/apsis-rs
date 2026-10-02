@@ -1,4 +1,4 @@
-//! Macros that support the ApsisRS workspace.
+//! Macros that support the `ApsisRS` workspace.
 //!
 //! This crate currently defines no macros. It exists so that the workspace
 //! has a single place for macro definitions if a need arises, and so that
@@ -34,7 +34,7 @@
 //! a set of conversions from one definition, that is the point at which this
 //! crate should gain its first macro.
 //!
-//! 支持 ApsisRS 工作区的宏。
+//! 支持 `ApsisRS` 工作区的宏。
 //!
 //! 本 crate 当前不定义任何宏。它的存在是为了让工作区在需要时有存放宏定义的
 //! 单一位置，也是为了日后再加一个宏时无需新建 crate。

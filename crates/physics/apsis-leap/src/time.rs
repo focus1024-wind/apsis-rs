@@ -40,6 +40,7 @@ const SECONDS_PER_DAY: f64 = 86_400.0;
 ///
 /// 当该瞬时早于 1972-01-01 时返回 `None`，因为那之前 UTC 采用小数偏移，本表
 /// 不适用。
+#[must_use]
 pub fn tai_minus_utc_at_mjd(utc_mjd: f64) -> Option<f64> {
     if !utc_mjd.is_finite() || utc_mjd < TABLE_COVERS_FROM_MJD {
         return None;
@@ -72,6 +73,7 @@ pub fn tai_minus_utc_at_mjd(utc_mjd: f64) -> Option<f64> {
 /// 瞬时。
 ///
 /// 当该瞬时早于 1972-01-01 时返回 `None`。
+#[must_use]
 pub fn tai_mjd_from_utc_mjd(utc_mjd: f64) -> Option<f64> {
     let offset = tai_minus_utc_at_mjd(utc_mjd)?;
     Some(utc_mjd + offset / SECONDS_PER_DAY)
@@ -100,6 +102,7 @@ pub fn tai_mjd_from_utc_mjd(utc_mjd: f64) -> Option<f64> {
 /// 两种情形返回 `None`。其一是早于表中起点的瞬时，那里的 UTC 采用小数偏移，本表
 /// 未予描述。其二是严格落在所插入闰秒内部的瞬时，此类瞬时没有 UTC 表示，因为
 /// UTC 时钟把该区间标记为 `23:59:60`，而该值在连续的修正儒略日标度上并不存在。
+#[must_use]
 pub fn utc_mjd_from_tai_mjd(tai_mjd: f64) -> Option<f64> {
     if !tai_mjd.is_finite() {
         return None;
@@ -126,6 +129,7 @@ pub fn utc_mjd_from_tai_mjd(tai_mjd: f64) -> Option<f64> {
 ///
 /// 这是用于定位闰秒表条目的日历换算之便捷再导出。提供它是为了免去调用方重复
 /// 实现该换算，也因为 `validation/` 中的标定脚本在比较的两侧都需要同一函数。
+#[must_use]
 pub const fn calendar_mjd(year: i32, month: u32, day: u32) -> f64 {
     mjd_from_ymd(year, month, day)
 }

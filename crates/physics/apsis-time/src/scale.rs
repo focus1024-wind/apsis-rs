@@ -88,6 +88,7 @@ impl TimeScale {
     /// 当该标度以均匀速率运行时返回 `true`。
     ///
     /// 此处只有 UTC 不是均匀的，因为闰秒使其部分分钟长达 61 秒。
+    #[must_use]
     pub const fn is_uniform(self) -> bool {
         !matches!(self, Self::Utc)
     }
@@ -95,6 +96,7 @@ impl TimeScale {
     /// Returns the short name of the scale, such as `TAI` or `UTC`.
     ///
     /// 返回该标度的简称，例如 `TAI` 或 `UTC`。
+    #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
             Self::Utc => "UTC",

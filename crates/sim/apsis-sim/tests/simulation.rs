@@ -10,11 +10,13 @@ use apsis_sim::{
 ///
 /// 构建一个含一座站与一组任务的场景。
 fn scenario_with(tasks: &[(usize, f64, f64)]) -> Scenario {
+    use core::fmt::Write as _;
+
     let mut text = String::from("scenario test\nresource 0 capacity 1\nwindow 0 0 1000\n");
     for &(id, duration, priority) in tasks {
-        text.push_str(&format!("task {id} duration {duration}\n"));
-        text.push_str(&format!("require {id} 0 1\n"));
-        text.push_str(&format!("task_priority {id} {priority}\n"));
+        let _ = writeln!(text, "task {id} duration {duration}");
+        let _ = writeln!(text, "require {id} 0 1");
+        let _ = writeln!(text, "task_priority {id} {priority}");
     }
     Scenario::parse(&text).expect("the text is well formed")
 }

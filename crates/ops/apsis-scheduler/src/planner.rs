@@ -36,6 +36,7 @@ impl PlanOutcome {
     /// Returns `true` when the task was placed.
     ///
     /// 当该任务已被放置时返回 `true`。
+    #[must_use]
     pub fn is_scheduled(&self) -> bool {
         self.state.is_scheduled()
     }
@@ -44,6 +45,7 @@ impl PlanOutcome {
     /// reason, rather than being left out for want of time.
     ///
     /// 当该任务因结构性原因无法放置、而非因时间不足被排除时返回 `true`。
+    #[must_use]
     pub fn is_infeasible(&self) -> bool {
         matches!(self.state, TaskState::Infeasible { .. })
     }
@@ -86,6 +88,7 @@ impl SchedulingResult {
     /// Returns the outcome of a task.
     ///
     /// 返回某任务的结果。
+    #[must_use]
     pub fn outcome_of(&self, task: TaskId) -> Option<&PlanOutcome> {
         self.outcomes.iter().find(|outcome| outcome.task == task)
     }
@@ -93,6 +96,7 @@ impl SchedulingResult {
     /// Returns the identifiers of the tasks that were placed.
     ///
     /// 返回已放置任务的标识符。
+    #[must_use]
     pub fn scheduled(&self) -> Vec<TaskId> {
         self.outcomes
             .iter()
@@ -104,6 +108,7 @@ impl SchedulingResult {
     /// Returns the identifiers of the tasks that were left out.
     ///
     /// 返回被排除任务的标识符。
+    #[must_use]
     pub fn deferred(&self) -> Vec<TaskId> {
         self.outcomes
             .iter()
@@ -115,6 +120,7 @@ impl SchedulingResult {
     /// Returns the identifiers of the tasks that cannot be placed at all.
     ///
     /// 返回完全无法放置的任务的标识符。
+    #[must_use]
     pub fn infeasible(&self) -> Vec<TaskId> {
         self.outcomes
             .iter()
@@ -139,6 +145,7 @@ impl SchedulingResult {
     ///
     /// 留下强制任务未放置的计划不可用，无论它为多少可选工作腾出了
     /// 空间。
+    #[must_use]
     pub fn honours_mandatory(&self, tasks: &[Task]) -> bool {
         tasks
             .iter()
@@ -156,6 +163,7 @@ impl SchedulingResult {
     ///
     /// 约束被满足，指第二个任务的起点不早于第一个的终点。两个任务未
     /// 同时放置的约束平凡地满足，因为对它们未作任何承诺。
+    #[must_use]
     pub fn honours_precedence(&self, graph: &PrecedenceGraph) -> bool {
         self.outcomes
             .iter()
@@ -227,6 +235,7 @@ impl Planner {
     ///
     /// 默认值即 [`Planner::default`] 所用者：先放置强制任务，改进轮
     /// 启用且每任务尝试四次。
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             mandatory_first: true,
@@ -237,6 +246,7 @@ impl Planner {
     /// Returns a copy of this planner with the mandatory placement rule set.
     ///
     /// 返回设置了强制放置规则的规划器副本。
+    #[must_use]
     pub const fn with_mandatory_first(mut self, mandatory_first: bool) -> Self {
         self.mandatory_first = mandatory_first;
         self
@@ -245,6 +255,7 @@ impl Planner {
     /// Returns a copy of this planner with the improvement pass configured.
     ///
     /// 返回配置了改进轮的规划器副本。
+    #[must_use]
     pub const fn with_improvement(mut self, improvement: ImprovementSettings) -> Self {
         self.improvement = improvement;
         self
@@ -269,6 +280,7 @@ impl Planner {
     /// 有优先关系图时，顺序是该图的拓扑序，并以价值次序打破平局。这
     /// 使任务在其约束允许的最早时刻被放置，而在自由的任务中优先放置
     /// 价值最高者。
+    #[must_use]
     pub fn order(&self, tasks: &[Task]) -> Vec<TaskId> {
         self.order_with_precedence(tasks, None)
     }
@@ -287,15 +299,14 @@ impl Planner {
     /// 约束含环的图会原样产生价值次序，因为这些约束此时没有可满足的
     /// 解释。调用方应在规划前校验该图；此处的次序是一个回退，使规划
     /// 仍能产出结果而非直接失败。
+    #[must_use]
     pub fn order_with_precedence(
         &self,
         tasks: &[Task],
         precedence: Option<&PrecedenceGraph>,
     ) -> Vec<TaskId> {
         let ordered = task_order(tasks);
-        let valued = if !self.mandatory_first {
-            ordered
-        } else {
+        let valued = if self.mandatory_first {
             let mandatory: Vec<TaskId> = tasks
                 .iter()
                 .filter(|task| task.mandatory)
@@ -305,6 +316,8 @@ impl Planner {
             result.extend(ordered.iter().filter(|id| mandatory.contains(id)).copied());
             result.extend(ordered.iter().filter(|id| !mandatory.contains(id)).copied());
             result
+        } else {
+            ordered
         };
 
         let Some(graph) = precedence else {
@@ -335,6 +348,7 @@ impl Planner {
     ///
     /// 返回的计划按构造即可行，因为每处放置在做下之前都对照容量校验
     /// 过。调用方可用 `apsis-conflict` 复核。
+    #[must_use]
     pub fn schedule(&self, tasks: &[Task], resources: &ResourceSet) -> SchedulingResult {
         self.plan(tasks, resources, None)
     }
@@ -362,6 +376,7 @@ impl Planner {
     /// 改进轮不作用于带优先约束的计划，因为移动某处放置可能破坏该轮
     /// 并不考虑的约束。两者皆需的调用方应先改进计划，再用
     /// [`SchedulingResult::honours_precedence`] 复核。
+    #[must_use]
     pub fn schedule_with_precedence(
         &self,
         tasks: &[Task],
@@ -400,10 +415,10 @@ impl Planner {
                 .expect("the order was built from the task list");
 
             if infeasible.contains(&id) {
-                let reason = if !task.is_valid() {
-                    "the task is not usable".to_string()
-                } else {
+                let reason = if task.is_valid() {
                     format!("the resources cannot hold the demand of {id}")
+                } else {
+                    "the task is not usable".to_string()
                 };
                 set_state(
                     &mut states,
@@ -422,7 +437,7 @@ impl Planner {
             // A task may not start before the latest end among the tasks that
             // must precede it.
             // 任务的起点不得早于其前驱中最晚的结束时刻。
-            let earliest = match self.precedence_floor(id, tasks, precedence, &schedule, &states) {
+            let earliest = match Self::precedence_floor(id, tasks, precedence, &schedule, &states) {
                 Ok(floor) => floor,
                 Err(reason) => {
                     set_state(&mut states, id, TaskState::Deferred);
@@ -448,8 +463,9 @@ impl Planner {
                 _ => task.clone(),
             };
 
-            match earliest_feasible_start(&constrained, tasks, &schedule, resources) {
-                Some(start) => match schedule.place(task, start) {
+            if let Some(start) = earliest_feasible_start(&constrained, tasks, &schedule, resources)
+            {
+                match schedule.place(task, start) {
                     Ok(_) => {
                         set_state(&mut states, id, TaskState::Scheduled { start });
                         outcomes.push(PlanOutcome {
@@ -471,15 +487,14 @@ impl Planner {
                             state: TaskState::Infeasible { reason },
                         });
                     }
-                },
-                None => {
-                    set_state(&mut states, id, TaskState::Deferred);
-                    outcomes.push(PlanOutcome {
-                        task: id,
-                        state: TaskState::Deferred,
-                    });
-                    deferred.push(id);
                 }
+            } else {
+                set_state(&mut states, id, TaskState::Deferred);
+                outcomes.push(PlanOutcome {
+                    task: id,
+                    state: TaskState::Deferred,
+                });
+                deferred.push(id);
             }
         }
 
@@ -538,7 +553,6 @@ impl Planner {
     /// 无约束时返回 `Ok(None)`；任务起点不早于 `t` 时返回 `Ok(Some(t))`；
     /// 某前驱未被放置致使约束不可满足时返回 `Err`。
     fn precedence_floor(
-        &self,
         id: TaskId,
         _tasks: &[Task],
         precedence: Option<&PrecedenceGraph>,

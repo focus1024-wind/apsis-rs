@@ -29,6 +29,7 @@ impl Classification {
     /// Returns the character used in the element set.
     ///
     /// 返回根数集中所用的字符。
+    #[must_use]
     pub const fn as_char(self) -> char {
         match self {
             Self::Unclassified => 'U',
@@ -273,10 +274,7 @@ fn exponent_field(line: &str, first: usize, last: usize, line_number: usize) -> 
     } else {
         (1.0, mantissa)
     };
-    let digits: String = mantissa
-        .chars()
-        .filter(|character| character.is_ascii_digit())
-        .collect();
+    let digits: String = mantissa.chars().filter(char::is_ascii_digit).collect();
     if digits.is_empty() {
         return Err(
             ElementError::new(ElementErrorKind::InvalidField, line_number, columns)

@@ -38,6 +38,7 @@ impl RunReport {
     /// Returns the number of activities the run executed.
     ///
     /// 返回该运行所执行的活动数。
+    #[must_use]
     pub const fn executed(&self) -> u64 {
         self.outcome.executed
     }
@@ -46,6 +47,7 @@ impl RunReport {
     /// exhausted rather than because a limit stopped it.
     ///
     /// 当运行因时间线耗尽而结束、而非因某个限制而停止时返回 `true`。
+    #[must_use]
     pub fn is_complete(&self) -> bool {
         self.outcome.is_natural()
     }
@@ -53,6 +55,7 @@ impl RunReport {
     /// Returns the number of warnings recorded.
     ///
     /// 返回所记录的警告数。
+    #[must_use]
     pub fn warning_count(&self) -> usize {
         self.trace.warning_count()
     }
@@ -102,6 +105,7 @@ impl Session {
     /// Returns the engine, for a caller that needs its state between calls.
     ///
     /// 返回引擎，供需要在两次调用之间获取其状态的调用方使用。
+    #[must_use]
     pub const fn engine(&self) -> &Engine<Activity> {
         &self.engine
     }
@@ -116,6 +120,7 @@ impl Session {
     /// Returns the recorder, for a caller that reads the trace as it grows.
     ///
     /// 返回记录器，供在轨迹增长时读取它的调用方使用。
+    #[must_use]
     pub const fn recorder(&self) -> &Recorder {
         &self.recorder
     }
@@ -130,6 +135,7 @@ impl Session {
     /// Returns the current simulation time, in seconds.
     ///
     /// 返回当前仿真时刻，单位为秒。
+    #[must_use]
     pub const fn now(&self) -> f64 {
         self.engine.now()
     }

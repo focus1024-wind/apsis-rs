@@ -25,6 +25,7 @@ impl TopologySample {
     /// Creates a sample.
     ///
     /// 创建一个样本。
+    #[must_use]
     pub const fn new(seconds: f64, topology: Topology) -> Self {
         Self { seconds, topology }
     }
@@ -118,6 +119,7 @@ impl TopologySeries {
     /// Returns the samples.
     ///
     /// 返回各样本。
+    #[must_use]
     pub fn samples(&self) -> &[TopologySample] {
         &self.samples
     }
@@ -125,6 +127,7 @@ impl TopologySeries {
     /// Returns the number of samples.
     ///
     /// 返回样本的数量。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.samples.len()
     }
@@ -139,6 +142,7 @@ impl TopologySeries {
     ///
     /// 经任一构造函数构建的序列都不会为空，故这总是返回 `false`；它的
     /// 存在是因为集合类型应在 [`TopologySeries::len`] 之外一并提供它。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.samples.is_empty()
     }
@@ -146,6 +150,7 @@ impl TopologySeries {
     /// Returns the first time in the series.
     ///
     /// 返回序列中的第一个时间。
+    #[must_use]
     pub fn start_seconds(&self) -> f64 {
         self.samples.first().map_or(0.0, |sample| sample.seconds)
     }
@@ -153,6 +158,7 @@ impl TopologySeries {
     /// Returns the last time in the series.
     ///
     /// 返回序列中的最后一个时间。
+    #[must_use]
     pub fn end_seconds(&self) -> f64 {
         self.samples.last().map_or(0.0, |sample| sample.seconds)
     }
@@ -171,6 +177,14 @@ impl TopologySeries {
     /// 序列之后的时间返回最后的下标。
     ///
     /// 时间非有限或序列为空时返回 `None`。
+    ///
+    /// # Panics
+    ///
+    /// Panics only if a stored time is not finite, which construction
+    /// rejects.
+    ///
+    /// 仅当某个已存时间非有限时 panic，而构造时会拒绝这种时间。
+    #[must_use]
     pub fn index_at(&self, seconds: f64) -> Option<usize> {
         if !seconds.is_finite() || self.samples.is_empty() {
             return None;
@@ -195,6 +209,7 @@ impl TopologySeries {
     /// 返回某时间处生效的拓扑。
     ///
     /// 时间非有限或序列为空时返回 `None`。
+    #[must_use]
     pub fn topology_at(&self, seconds: f64) -> Option<&Topology> {
         Some(&self.samples.get(self.index_at(seconds)?)?.topology)
     }
@@ -211,6 +226,7 @@ impl TopologySeries {
     /// 上界是下一样本的时间，对最后一项为正无穷。
     ///
     /// 下标越界时返回 `None`。
+    #[must_use]
     pub fn interval_of(&self, index: usize) -> Option<(f64, f64)> {
         let sample = self.samples.get(index)?;
         let end = self
@@ -230,6 +246,7 @@ impl TopologySeries {
     ///
     /// 它是样本数减一，因为每次变化引入一个新项。它衡量网络的动态
     /// 程度：变化多的序列需要能考虑到这些变化的路由。
+    #[must_use]
     pub fn change_count(&self) -> usize {
         self.samples.len().saturating_sub(1)
     }
@@ -247,6 +264,7 @@ impl TopologySeries {
     /// 间隔的那些变化。
     ///
     /// 只有一个样本时返回 `None`。
+    #[must_use]
     pub fn mean_interval_seconds(&self) -> Option<f64> {
         if self.samples.len() < 2 {
             return None;
@@ -269,6 +287,7 @@ impl TopologySeries {
     /// 贡献二，因为有一条链路发生了变化。
     ///
     /// 单样本序列返回零。
+    #[must_use]
     pub fn edge_changes(&self) -> usize {
         let mut changes = 0;
         for pair in self.samples.windows(2) {
@@ -303,6 +322,7 @@ impl TopologySeries {
     ///
     /// 每个项都应描述同一组节点，故该值取自第一项。在各项之间改变节点
     /// 数的调用方是在比较两个不同的网络，应改为构建两个序列。
+    #[must_use]
     pub fn node_count(&self) -> usize {
         self.samples
             .first()

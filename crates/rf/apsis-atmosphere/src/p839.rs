@@ -75,6 +75,7 @@ pub const RAIN_HEIGHT_OFFSET_KM: f64 = 0.36;
 /// 任一坐标非有限，或纬度超出网格范围时返回 `None`。
 ///
 /// 出处：ITU-R 建议书 P.839-4，式 1 及所列等温线高度。
+#[must_use]
 pub fn zero_isotherm_height(latitude: f64, longitude: f64) -> Option<f64> {
     if !latitude.is_finite() || !longitude.is_finite() {
         return None;
@@ -123,6 +124,7 @@ pub fn zero_isotherm_height(latitude: f64, longitude: f64) -> Option<f64> {
 /// 它是零度等温线高度加 [`RAIN_HEIGHT_OFFSET_KM`]，如建议书所定义。
 ///
 /// 坐标不可用时返回 `None`。
+#[must_use]
 pub fn rain_height(latitude: f64, longitude: f64) -> Option<f64> {
     Some(zero_isotherm_height(latitude, longitude)? + RAIN_HEIGHT_OFFSET_KM)
 }
@@ -130,6 +132,7 @@ pub fn rain_height(latitude: f64, longitude: f64) -> Option<f64> {
 /// Returns the grid resolution of the tabulated isotherm height, in degrees.
 ///
 /// 返回列表等温线高度的网格分辨率，单位为度。
+#[must_use]
 pub const fn grid_step_degrees() -> f64 {
     STEP_DEGREES
 }

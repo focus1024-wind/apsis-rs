@@ -43,6 +43,7 @@ impl LeapSecond {
     /// 返回生效瞬时的修正儒略日（Modified Julian Date）。
     ///
     /// 闰秒在 00:00:00 UTC 生效，故生效瞬时即该日历日的起点。
+    #[must_use]
     pub const fn effective_mjd(self) -> f64 {
         mjd_from_ymd(self.year, self.month, self.day)
     }
@@ -270,6 +271,7 @@ pub const TAI_MINUS_UTC_AFTER_LAST_ENTRY: f64 = LEAP_SECONDS[LEAP_SECONDS.len() 
 ///
 /// 计算在 `i64` 中进行并仅在末尾换算一次，故在闰秒可能发生的日期范围内结果
 /// 精确。
+#[must_use]
 pub const fn mjd_from_ymd(year: i32, month: u32, day: u32) -> f64 {
     let a = (14 - month as i64) / 12;
     let y = year as i64 + 4800 - a;

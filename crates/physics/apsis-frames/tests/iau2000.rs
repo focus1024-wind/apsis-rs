@@ -380,8 +380,7 @@ fn the_nutation_is_periodic() {
     let after_eighteen_years = nutation_2000a(0.18).longitude;
     assert!(
         (after_eighteen_years - initial).abs() < 1.5e-05,
-        "{} against {initial}",
-        after_eighteen_years
+        "{after_eighteen_years} against {initial}"
     );
 
     // The sign must change at some point within that span.

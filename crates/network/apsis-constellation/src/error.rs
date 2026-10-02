@@ -59,6 +59,7 @@ impl ConstellationError {
     /// Creates an error with the given category.
     ///
     /// 用给定类别创建一个错误。
+    #[must_use]
     pub fn new(kind: ConstellationErrorKind) -> Self {
         Self { kind, detail: None }
     }
@@ -66,6 +67,7 @@ impl ConstellationError {
     /// Attaches a description of the values that caused the failure.
     ///
     /// 附加对该失败所涉数值的说明。
+    #[must_use]
     pub fn with_detail(mut self, detail: impl Into<String>) -> Self {
         self.detail = Some(detail.into());
         self
@@ -74,6 +76,7 @@ impl ConstellationError {
     /// Returns the category of this failure.
     ///
     /// 返回该失败的类别。
+    #[must_use]
     pub fn kind(&self) -> ConstellationErrorKind {
         self.kind
     }
@@ -83,6 +86,7 @@ impl ConstellationError {
     /// 返回附加在该错误上的说明文本，若有。
     ///
     /// 返回附加在该错误上的说明文本，若无则返回 `None`。
+    #[must_use]
     pub fn detail(&self) -> Option<&str> {
         self.detail.as_deref()
     }

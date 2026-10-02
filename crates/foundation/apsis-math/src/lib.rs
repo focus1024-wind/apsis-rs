@@ -1,4 +1,4 @@
-//! Dependency-free linear algebra for the ApsisRS workspace.
+//! Dependency-free linear algebra for the `ApsisRS` workspace.
 //!
 //! The crate provides three types:
 //!
@@ -25,7 +25,7 @@
 //! assert_eq!(z, Vec3::new(0.0, 0.0, 1.0));
 //! ```
 //!
-//! ApsisRS 工作区无依赖的线性代数。
+//! `ApsisRS` 工作区无依赖的线性代数。
 //!
 //! 本 crate 提供三种类型：
 //!

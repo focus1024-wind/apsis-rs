@@ -19,9 +19,9 @@ fn period_is_the_reciprocal() {
 
 #[test]
 fn unit_metadata_is_available() {
+    fn assert_frequency<U: Unit<Dimension = Frequency>>() {}
     assert_eq!(Hertz::symbol(), "Hz");
     assert_eq!(Hertz::factor_to_base(), 1.0);
-    fn assert_frequency<U: Unit<Dimension = Frequency>>() {}
     assert_frequency::<Hertz>();
 }
 

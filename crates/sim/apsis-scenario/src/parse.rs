@@ -272,23 +272,23 @@ fn parse_tasks(lines: &[Line<'_>], scenario: &mut Scenario) -> Result<(), Scenar
                 current = Some(Task::new(id, duration));
             }
             "task_window" => {
-                let task = require_current(&current, line)?;
+                let task = require_current(current.as_ref(), line)?;
                 let start = line.fuse(2)?;
                 let end = line.fuse(3)?;
                 current = Some(task.clone().with_window(start, end));
             }
             "task_priority" => {
-                let task = require_current(&current, line)?;
+                let task = require_current(current.as_ref(), line)?;
                 let priority = line.fuse(2)?;
                 current = Some(task.clone().with_priority(priority));
             }
             "task_mandatory" => {
-                let task = require_current(&current, line)?;
+                let task = require_current(current.as_ref(), line)?;
                 let mandatory = line.boolean(2)?;
                 current = Some(task.clone().with_mandatory(mandatory));
             }
             "require" => {
-                let task = require_current(&current, line)?;
+                let task = require_current(current.as_ref(), line)?;
                 let resource = ResourceId::new(line.usize(2)?);
                 let demand = line.fuse(3)?;
                 let updated = task
@@ -321,10 +321,10 @@ fn flush(current: &mut Option<Task>, scenario: &mut Scenario) -> Result<(), Scen
 ///
 /// 返回某限定行所适用的任务，或一个指明该行的错误。
 fn require_current<'a>(
-    current: &'a Option<Task>,
+    current: Option<&'a Task>,
     line: &Line<'_>,
 ) -> Result<&'a Task, ScenarioError> {
-    current.as_ref().ok_or_else(|| {
+    current.ok_or_else(|| {
         ScenarioError::new(ScenarioErrorKind::MissingArgument)
             .with_detail(format!("{} before any task", line.keyword()))
             .with_line(line.number)

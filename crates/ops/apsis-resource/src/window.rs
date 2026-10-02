@@ -34,6 +34,7 @@ impl Interval {
     /// Creates an interval.
     ///
     /// 创建一个区间。
+    #[must_use]
     pub const fn new(start: f64, end: f64) -> Self {
         Self { start, end }
     }
@@ -45,6 +46,7 @@ impl Interval {
     /// 返回该区间的时长，单位为秒。
     ///
     /// 对空区间该值为零，其余情形为正。
+    #[must_use]
     pub fn duration(&self) -> f64 {
         (self.end - self.start).max(0.0)
     }
@@ -52,6 +54,7 @@ impl Interval {
     /// Returns `true` when the interval contains no time.
     ///
     /// 当该区间不含任何时刻时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.end <= self.start
     }
@@ -59,6 +62,7 @@ impl Interval {
     /// Returns `true` when the interval is finite and ordered.
     ///
     /// 当该区间有限且次序正确时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.start.is_finite() && self.end.is_finite() && self.end >= self.start
     }
@@ -71,6 +75,7 @@ impl Interval {
     /// 当某时刻落在该区间内时返回 `true`。
     ///
     /// 含起点不含终点，故边界时刻归由此处开始的区间。
+    #[must_use]
     pub fn contains(&self, time: f64) -> bool {
         time >= self.start && time < self.end
     }
@@ -83,6 +88,7 @@ impl Interval {
     /// 当该区间完全包含另一区间时返回 `true`。
     ///
     /// 空区间被任何包含其瞬时的区间所包含，故范围内的零长度查询得到满足。
+    #[must_use]
     pub fn contains_interval(&self, other: &Self) -> bool {
         if other.is_empty() {
             return other.start >= self.start && other.start <= self.end;
@@ -98,6 +104,7 @@ impl Interval {
     /// 当两个区间共享任一时刻时返回 `true`。
     ///
     /// 在一点相接的两个区间不重叠，因为在半开约定下该点只属于其中之一。
+    #[must_use]
     pub fn overlaps(&self, other: &Self) -> bool {
         self.start < other.end && other.start < self.end
     }
@@ -106,6 +113,7 @@ impl Interval {
     /// overlap.
     ///
     /// 返回两个区间的交集；二者不重叠时返回 `None`。
+    #[must_use]
     pub fn intersection(&self, other: &Self) -> Option<Self> {
         if !self.overlaps(other) {
             return None;
@@ -119,6 +127,7 @@ impl Interval {
     /// Returns the shortest interval containing both.
     ///
     /// 返回包含二者的最短区间。
+    #[must_use]
     pub fn hull(&self, other: &Self) -> Self {
         Self::new(self.start.min(other.start), self.end.max(other.end))
     }
@@ -127,6 +136,7 @@ impl Interval {
     /// can be merged without leaving a gap.
     ///
     /// 当两个区间相接或重叠时返回 `true`，此时合并它们不会留下空隙。
+    #[must_use]
     pub fn is_adjacent_to(&self, other: &Self) -> bool {
         self.start <= other.end && other.start <= self.end
     }
@@ -159,6 +169,7 @@ impl Window {
     /// Creates a window from a start and an end time.
     ///
     /// 由起始时刻与结束时刻创建窗口。
+    #[must_use]
     pub const fn new(start: f64, end: f64) -> Self {
         Self {
             interval: Interval::new(start, end),
@@ -168,6 +179,7 @@ impl Window {
     /// Creates a window from an interval.
     ///
     /// 由区间创建窗口。
+    #[must_use]
     pub const fn from_interval(interval: Interval) -> Self {
         Self { interval }
     }
@@ -175,6 +187,7 @@ impl Window {
     /// Returns the start of the window, in seconds.
     ///
     /// 返回窗口起点，单位为秒。
+    #[must_use]
     pub const fn start(&self) -> f64 {
         self.interval.start
     }
@@ -182,6 +195,7 @@ impl Window {
     /// Returns the end of the window, in seconds.
     ///
     /// 返回窗口终点，单位为秒。
+    #[must_use]
     pub const fn end(&self) -> f64 {
         self.interval.end
     }
@@ -189,6 +203,7 @@ impl Window {
     /// Returns the duration of the window, in seconds.
     ///
     /// 返回窗口时长，单位为秒。
+    #[must_use]
     pub fn duration(&self) -> f64 {
         self.interval.duration()
     }
@@ -196,6 +211,7 @@ impl Window {
     /// Returns `true` when the window is usable.
     ///
     /// 当该窗口可用时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.interval.is_valid()
     }

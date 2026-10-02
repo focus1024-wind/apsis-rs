@@ -19,6 +19,7 @@ use core::f64::consts::PI;
 /// 关系为 `lambda = c / f`，其中 `c` 依米的定义是精确的。
 ///
 /// 频率非正且非有限时返回 `None`。
+#[must_use]
 pub fn wavelength(frequency: f64) -> Option<f64> {
     if frequency > 0.0 && frequency.is_finite() {
         Some(SPEED_OF_LIGHT / frequency)
@@ -71,6 +72,7 @@ pub fn wavelength(frequency: f64) -> Option<f64> {
 /// 无穷衰减，且其背后的远场假定不成立。
 ///
 /// 距离非正，或任一参数非有限时返回 `None`。
+#[must_use]
 pub fn free_space_path_loss(distance: f64, frequency: f64) -> Option<Decibel> {
     if !distance.is_finite() || distance <= 0.0 {
         return None;
@@ -113,6 +115,7 @@ pub fn free_space_path_loss(distance: f64, frequency: f64) -> Option<Decibel> {
 /// 增益超过扩散损耗时发生。
 ///
 /// 距离或频率不可用时返回 `None`。
+#[must_use]
 pub fn free_space_received_ratio(
     distance: f64,
     frequency: f64,

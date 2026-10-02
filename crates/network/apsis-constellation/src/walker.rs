@@ -57,6 +57,7 @@ impl WalkerPattern {
     /// 返回每个轨道面上的卫星数。
     ///
     /// 当卫星总数不是轨道面数的整数倍时返回 `None`。
+    #[must_use]
     pub fn satellites_per_plane(self) -> Option<usize> {
         if self.planes == 0 || self.total_satellites % self.planes != 0 {
             return None;
@@ -80,6 +81,7 @@ impl WalkerPattern {
     ///
     /// 该间隔不依赖构型是否自洽，因此即使构型无法实例化，调用方也能报告它本会
     /// 使用的值。
+    #[must_use]
     pub fn plane_spacing(self) -> Option<f64> {
         (self.planes > 0).then(|| 2.0 * PI / self.planes as f64)
     }
@@ -97,6 +99,7 @@ impl WalkerPattern {
     /// 即 `f * 360 / t` 度，其中 `f` 为相位因子，`t` 为卫星总数。
     ///
     /// 当卫星总数为零时返回 `None`，这是该偏移未定义的唯一情形。
+    #[must_use]
     pub fn phase_offset(self) -> Option<f64> {
         if self.total_satellites == 0 {
             return None;
@@ -107,6 +110,7 @@ impl WalkerPattern {
     /// Returns `true` when the pattern can be instantiated.
     ///
     /// 当该构型可以被实例化时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.total_satellites > 0
             && self.planes > 0
@@ -129,6 +133,7 @@ impl WalkerPattern {
     ///
     /// 倾角按全精度打印，因此 53.25 度这样的值可以原样往返。该记法用作标识而
     /// 非取整后的引用值，截断它只会丢失信息而没有收益。
+    #[must_use]
     pub fn notation(self) -> String {
         format!(
             "{}: {}/{}/{}",
@@ -162,6 +167,13 @@ impl WalkerPattern {
     /// 出处：相位规则取自 Walker, J. G., *Circular Orbit Patterns Providing
     /// Continuous Whole Earth Coverage*, Royal Aircraft Establishment
     /// Technical Report 70211, 1970。
+    ///
+    /// # Panics
+    ///
+    /// Panics only if the pattern is inconsistent with the validation this
+    /// call performs, which cannot happen.
+    ///
+    /// 仅当构型与本调用所做的校验不一致时 panic，这不会发生。
     pub fn instantiate(self) -> Result<Vec<KeplerianElements>, ConstellationError> {
         if self.total_satellites == 0 {
             return Err(ConstellationError::new(
@@ -277,6 +289,13 @@ impl Constellation {
     /// 星座一并保存并原样返回；根数即该时刻的根数。
     ///
     /// 当该构型无法实例化时返回一个错误。
+    ///
+    /// # Panics
+    ///
+    /// Panics only if the division check in `instantiate` disagrees with this
+    /// call, which cannot happen.
+    ///
+    /// 仅当 `instantiate` 中的除法校验与本调用不一致时 panic，这不会发生。
     pub fn walker(pattern: WalkerPattern, reference_mjd: f64) -> Result<Self, ConstellationError> {
         if !reference_mjd.is_finite() {
             return Err(
@@ -356,16 +375,15 @@ impl Constellation {
                         .with_detail(format!("satellite {index} has invalid elements")),
                 );
             }
-            let plane = match planes
+            let plane = if let Some(plane) = planes
                 .iter()
                 .position(|value| (value - elements.right_ascension).abs() < 1e-12)
             {
-                Some(plane) => plane,
-                None => {
-                    planes.push(elements.right_ascension);
-                    counts.push(0);
-                    planes.len() - 1
-                }
+                plane
+            } else {
+                planes.push(elements.right_ascension);
+                counts.push(0);
+                planes.len() - 1
             };
             let index_in_plane = counts[plane];
             counts[plane] += 1;
@@ -387,6 +405,7 @@ impl Constellation {
     /// Returns the satellites in the constellation.
     ///
     /// 返回星座中的卫星。
+    #[must_use]
     pub fn satellites(&self) -> &[Satellite] {
         &self.satellites
     }
@@ -394,6 +413,7 @@ impl Constellation {
     /// Returns the number of satellites.
     ///
     /// 返回卫星数。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.satellites.len()
     }
@@ -406,6 +426,7 @@ impl Constellation {
     ///
     /// 经任一构造函数构建的星座都不会为空，故此函数恒返回 `false`；它存在是因为
     /// 集合类型应当与 [`Constellation::len`] 一并提供。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.satellites.is_empty()
     }
@@ -413,6 +434,7 @@ impl Constellation {
     /// Returns the number of orbital planes.
     ///
     /// 返回轨道面数。
+    #[must_use]
     pub fn plane_count(&self) -> usize {
         self.satellites
             .iter()
@@ -425,6 +447,7 @@ impl Constellation {
     /// one.
     ///
     /// 若星座由 Walker 构型构建则返回该构型，否则返回 `None`。
+    #[must_use]
     pub fn pattern(&self) -> Option<WalkerPattern> {
         self.pattern
     }
@@ -433,6 +456,7 @@ impl Constellation {
     /// scale.
     ///
     /// 返回参考时刻，为 TAI 时间尺度上的修正儒略日（Modified Julian Date）。
+    #[must_use]
     pub fn reference_mjd(&self) -> f64 {
         self.reference_mjd
     }
@@ -444,6 +468,7 @@ impl Constellation {
     /// 返回某个轨道面上的卫星。
     ///
     /// 当轨道面序号越界时返回空切片。
+    #[must_use]
     pub fn plane(&self, plane: usize) -> Vec<Satellite> {
         self.satellites
             .iter()
@@ -465,6 +490,7 @@ impl Constellation {
     /// 星座，返回的是第一颗卫星的高度。
     ///
     /// 星座为空时返回 `None`。
+    #[must_use]
     pub fn altitude_above(&self, body_radius_km: f64) -> Option<f64> {
         self.satellites
             .first()
@@ -476,6 +502,7 @@ impl Constellation {
     /// The result has one entry per plane, in plane order.
     ///
     /// 返回的向量每个轨道面一项，按轨道面顺序排列。
+    #[must_use]
     pub fn plane_populations(&self) -> Vec<usize> {
         let mut populations = vec![0; self.plane_count()];
         for satellite in &self.satellites {

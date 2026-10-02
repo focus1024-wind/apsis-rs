@@ -1,4 +1,4 @@
-//! ApsisRS: computational kernels for commercial spaceflight and satellite
+//! `ApsisRS`: computational kernels for commercial spaceflight and satellite
 //! internet systems.
 //!
 //! The workspace is organized into dependency-ordered layers:

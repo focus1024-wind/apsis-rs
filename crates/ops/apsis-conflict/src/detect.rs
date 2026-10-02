@@ -26,6 +26,7 @@ impl Precedence {
     /// Creates a precedence constraint.
     ///
     /// 创建一条优先约束。
+    #[must_use]
     pub const fn new(before: TaskId, after: TaskId) -> Self {
         Self { before, after }
     }
@@ -34,6 +35,7 @@ impl Precedence {
 /// Returns the placements of a task, which is at most one.
 ///
 /// 返回某任务的放置，至多一处。
+#[must_use]
 pub fn placements_of(schedule: &Schedule, task: TaskId) -> Option<&apsis_schedule::Placement> {
     schedule.placement_of(task)
 }
@@ -73,6 +75,7 @@ pub fn placements_of(schedule: &Schedule, task: TaskId) -> Option<&apsis_schedul
 ///
 /// 资源扫掠检查各放置的边界，因为资源上的总需求在相邻边界之间恒定，
 /// 故该检查是精确的，耗时正比于放置数而非计划长度。
+#[must_use]
 pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> ConflictReport {
     let mut conflicts = Vec::new();
 
@@ -286,6 +289,7 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
 ///
 /// 约束按给定形式检查，故必须无环。环是调用方自身模型中的矛盾，此处
 /// 不予检测。
+#[must_use]
 pub fn detect_precedence(schedule: &Schedule, constraints: &[Precedence]) -> Vec<Conflict> {
     let mut conflicts = Vec::new();
     for constraint in constraints {

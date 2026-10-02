@@ -35,6 +35,7 @@ impl Sample {
     /// Creates a sample.
     ///
     /// 创建一个样本。
+    #[must_use]
     pub const fn new(seconds: f64, position: Vec3, velocity: Vec3) -> Self {
         Self {
             seconds,
@@ -46,6 +47,7 @@ impl Sample {
     /// Returns `true` when the time, position, and velocity are finite.
     ///
     /// 当时间、位置与速度都有限时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.seconds.is_finite() && self.position.is_finite() && self.velocity.is_finite()
     }
@@ -53,6 +55,7 @@ impl Sample {
     /// Returns the distance from the origin, in kilometers.
     ///
     /// 返回到原点的距离，单位为千米。
+    #[must_use]
     pub fn radius(&self) -> f64 {
         self.position.norm()
     }
@@ -60,6 +63,7 @@ impl Sample {
     /// Returns the speed, in kilometers per second.
     ///
     /// 返回速率，单位为千米每秒。
+    #[must_use]
     pub fn speed(&self) -> f64 {
         self.velocity.norm()
     }
@@ -83,6 +87,7 @@ impl Sample {
 ///
 /// 四项即标准三次 Hermite 基：第一、三项承载端点值，第二、四项承载斜率。导数项
 /// 乘以 `dt`，因为斜率以单位时间计而 `s` 以单位区间计。
+#[must_use]
 pub fn hermite_position(p0: Vec3, v0: Vec3, p1: Vec3, v1: Vec3, dt: f64, s: f64) -> Vec3 {
     let s2 = s * s;
     let s3 = s2 * s;
@@ -103,6 +108,7 @@ pub fn hermite_position(p0: Vec3, v0: Vec3, p1: Vec3, v1: Vec3, dt: f64, s: f64)
 ///
 /// 这是与 [`hermite_position`] 配对的速度，且是该三次式的精确导数，因此重建
 /// 的状态内部自洽：调用方对位置求导会得到这个速度。
+#[must_use]
 pub fn hermite_velocity(p0: Vec3, v0: Vec3, p1: Vec3, v1: Vec3, dt: f64, s: f64) -> Vec3 {
     let s2 = s * s;
     let dh00 = 6.0 * s2 - 6.0 * s;
@@ -120,6 +126,7 @@ pub fn hermite_velocity(p0: Vec3, v0: Vec3, p1: Vec3, v1: Vec3, dt: f64, s: f64)
 /// Evaluates both the Hermite position and velocity.
 ///
 /// 同时求 Hermite 位置与速度。
+#[must_use]
 pub fn hermite_state(p0: Vec3, v0: Vec3, p1: Vec3, v1: Vec3, dt: f64, s: f64) -> (Vec3, Vec3) {
     (
         hermite_position(p0, v0, p1, v1, dt, s),
@@ -182,6 +189,7 @@ impl Ephemeris {
     /// Returns the samples in time order.
     ///
     /// 返回按时间排列的样本。
+    #[must_use]
     pub fn samples(&self) -> &[Sample] {
         &self.samples
     }
@@ -189,6 +197,7 @@ impl Ephemeris {
     /// Returns the number of samples.
     ///
     /// 返回样本数。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.samples.len()
     }
@@ -203,6 +212,7 @@ impl Ephemeris {
     ///
     /// 经 [`Ephemeris::from_samples`] 构建的表不会为空，故已存在的表恒返回
     /// `false`；提供它是为了让接受切片的泛型代码可以配上惯常的一对方法。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.samples.is_empty()
     }
@@ -210,6 +220,7 @@ impl Ephemeris {
     /// Returns the first sample time, in seconds.
     ///
     /// 返回首个样本时刻，单位为秒。
+    #[must_use]
     pub fn start_time(&self) -> f64 {
         self.samples.first().map_or(0.0, |sample| sample.seconds)
     }
@@ -217,6 +228,7 @@ impl Ephemeris {
     /// Returns the last sample time, in seconds.
     ///
     /// 返回末个样本时刻，单位为秒。
+    #[must_use]
     pub fn end_time(&self) -> f64 {
         self.samples.last().map_or(0.0, |sample| sample.seconds)
     }
@@ -224,6 +236,7 @@ impl Ephemeris {
     /// Returns the time the table covers, in seconds.
     ///
     /// 返回该表覆盖的时间，单位为秒。
+    #[must_use]
     pub fn duration(&self) -> f64 {
         self.end_time() - self.start_time()
     }
@@ -235,6 +248,7 @@ impl Ephemeris {
     /// 当某时刻落在覆盖区间内时返回 `true`。
     ///
     /// 该区间是闭的，故其端点也被覆盖。
+    #[must_use]
     pub fn covers(&self, seconds: f64) -> bool {
         seconds.is_finite() && seconds >= self.start_time() && seconds <= self.end_time()
     }
@@ -247,6 +261,7 @@ impl Ephemeris {
     /// 当样本等间隔时返回标称步长。
     ///
     /// 间隔不一致时返回 `None`；调用方应先检查这一点，再按算术方式索引样本。
+    #[must_use]
     pub fn uniform_step(&self) -> Option<f64> {
         let first = self.samples.windows(2).next()?[1].seconds - self.samples[0].seconds;
         let uniform = self
@@ -259,6 +274,7 @@ impl Ephemeris {
     /// Returns `true` when the samples are evenly spaced.
     ///
     /// 当样本等间隔时返回 `true`。
+    #[must_use]
     pub fn is_uniform(&self) -> bool {
         self.uniform_step().is_some()
     }
@@ -296,6 +312,7 @@ impl Ephemeris {
     /// 返回某时刻的状态，在样本之间插值。
     ///
     /// 时刻与某样本相同时返回该样本。落在覆盖区间之外时返回 `None`。
+    #[must_use]
     pub fn state_at(&self, seconds: f64) -> Option<Sample> {
         let index = self.interval_of(seconds)?;
         let first = self.samples[index];
@@ -334,6 +351,7 @@ impl Ephemeris {
     /// 返回某时刻的状态；时刻落在覆盖区间之外时返回最近的端点。
     ///
     /// 适用于必须对任意时刻给出取值、且宁可保持最近已知状态而不愿失败的调用方。
+    #[must_use]
     pub fn clamped_state_at(&self, seconds: f64) -> Option<Sample> {
         if self.covers(seconds) {
             return self.state_at(seconds);
@@ -351,6 +369,7 @@ impl Ephemeris {
     /// Returns the sample nearest to a time, without interpolating.
     ///
     /// 返回距某时刻最近的样本，不作插值。
+    #[must_use]
     pub fn nearest_sample(&self, seconds: f64) -> Option<Sample> {
         if !seconds.is_finite() {
             return None;
@@ -374,6 +393,7 @@ impl Ephemeris {
     /// Returns the times of every sample, in order.
     ///
     /// 返回各样本时刻，按顺序排列。
+    #[must_use]
     pub fn times(&self) -> Vec<f64> {
         self.samples.iter().map(|sample| sample.seconds).collect()
     }

@@ -78,6 +78,7 @@ fn anp(angle: f64) -> f64 {
 /// 返回月球的平近点角，单位为弧度。
 ///
 /// 这是 Delaunay 参数 `l`，取自 IERS 2003 表达式。
+#[must_use]
 pub fn mean_anomaly_moon(t: f64) -> f64 {
     let arcseconds = 485_868.249_036
         + t * (1_717_915_923.217_8 + t * (31.879_2 + t * (0.051_635 + t * (-0.000_244_70))));
@@ -93,6 +94,7 @@ pub fn mean_anomaly_moon(t: f64) -> f64 {
 ///
 /// 这是 Delaunay 参数 `l'`。参考实现是内联求值而非经通用函数，二者略有
 /// 差异。
+#[must_use]
 pub fn mean_anomaly_sun(t: f64) -> f64 {
     let arcseconds = 1_287_104.793_05
         + t * (129_596_581.048_1 + t * (-0.553_2 + t * (0.000_136 + t * (-0.000_011_49))));
@@ -113,6 +115,7 @@ pub fn mean_anomaly_sun(t: f64) -> f64 {
 /// 用内联形式；分点方程式的补充项用这一个。
 ///
 /// 出处：按 `eraFalp03` 所实现。
+#[must_use]
 pub fn mean_anomaly_sun_iers2003(t: f64) -> f64 {
     let arcseconds = 1_287_104.793_048
         + t * (129_596_581.048_1 + t * (-0.553_2 + t * (0.000_136 + t * (-0.000_011_49))));
@@ -134,6 +137,7 @@ pub fn mean_anomaly_sun_iers2003(t: f64) -> f64 {
 /// 用内联形式；分点方程式的补充项用这一个。
 ///
 /// 出处：按 `eraFad03` 所实现。
+#[must_use]
 pub fn mean_elongation_moon_sun_iers2003(t: f64) -> f64 {
     let arcseconds = 1_072_260.703_692
         + t * (1_602_961_601.209_0 + t * (-6.370_6 + t * (0.006_593 + t * (-0.000_031_69))));
@@ -148,6 +152,7 @@ pub fn mean_elongation_moon_sun_iers2003(t: f64) -> f64 {
 /// 返回月球的平纬度参数，单位为弧度。
 ///
 /// 这是 Delaunay 参数 `F`，即月球平黄经减去其升交点平黄经。
+#[must_use]
 pub fn mean_latitude_moon(t: f64) -> f64 {
     let arcseconds = 335_779.526_232
         + t * (1_739_527_262.847_8 + t * (-12.751_2 + t * (-0.001_037 + t * (0.000_004_17))));
@@ -161,6 +166,7 @@ pub fn mean_latitude_moon(t: f64) -> f64 {
 /// 返回月球相对太阳的平距角，单位为弧度。
 ///
 /// 这是 Delaunay 参数 `D`。参考实现是内联求值。
+#[must_use]
 pub fn mean_elongation_moon_sun(t: f64) -> f64 {
     let arcseconds = 1_072_260.703_69
         + t * (1_602_961_601.209_0 + t * (-6.370_6 + t * (0.006_593 + t * (-0.000_031_69))));
@@ -174,6 +180,7 @@ pub fn mean_elongation_moon_sun(t: f64) -> f64 {
 /// 返回月球升交点的平黄经，单位为弧度。
 ///
 /// 这是 Delaunay 参数 `Om`。
+#[must_use]
 pub fn mean_longitude_node(t: f64) -> f64 {
     let arcseconds = 450_160.398_036
         + t * (-6_962_890.543_1 + t * (7.472_2 + t * (0.007_702 + t * (-0.000_059_39))));
@@ -183,6 +190,7 @@ pub fn mean_longitude_node(t: f64) -> f64 {
 /// Returns the mean longitude of Mercury, in radians.
 ///
 /// 返回水星的平黄经，单位为弧度。
+#[must_use]
 pub fn mean_longitude_mercury(t: f64) -> f64 {
     anp(4.402_608_842 + 2_608.790_314_157_4 * t)
 }
@@ -190,6 +198,7 @@ pub fn mean_longitude_mercury(t: f64) -> f64 {
 /// Returns the mean longitude of Venus, in radians.
 ///
 /// 返回金星的平黄经，单位为弧度。
+#[must_use]
 pub fn mean_longitude_venus(t: f64) -> f64 {
     anp(3.176_146_697 + 1_021.328_554_621_1 * t)
 }
@@ -197,6 +206,7 @@ pub fn mean_longitude_venus(t: f64) -> f64 {
 /// Returns the mean longitude of the Earth, in radians.
 ///
 /// 返回地球的平黄经，单位为弧度。
+#[must_use]
 pub fn mean_longitude_earth(t: f64) -> f64 {
     anp(1.753_470_314 + 628.307_584_999_1 * t)
 }
@@ -204,6 +214,7 @@ pub fn mean_longitude_earth(t: f64) -> f64 {
 /// Returns the mean longitude of Mars, in radians.
 ///
 /// 返回火星的平黄经，单位为弧度。
+#[must_use]
 pub fn mean_longitude_mars(t: f64) -> f64 {
     anp(6.203_480_913 + 334.061_242_670_0 * t)
 }
@@ -211,6 +222,7 @@ pub fn mean_longitude_mars(t: f64) -> f64 {
 /// Returns the mean longitude of Jupiter, in radians.
 ///
 /// 返回木星的平黄经，单位为弧度。
+#[must_use]
 pub fn mean_longitude_jupiter(t: f64) -> f64 {
     anp(0.599_546_497 + 52.969_096_264_1 * t)
 }
@@ -218,6 +230,7 @@ pub fn mean_longitude_jupiter(t: f64) -> f64 {
 /// Returns the mean longitude of Saturn, in radians.
 ///
 /// 返回土星的平黄经，单位为弧度。
+#[must_use]
 pub fn mean_longitude_saturn(t: f64) -> f64 {
     anp(0.874_016_757 + 21.329_910_496_0 * t)
 }
@@ -225,6 +238,7 @@ pub fn mean_longitude_saturn(t: f64) -> f64 {
 /// Returns the mean longitude of Uranus, in radians.
 ///
 /// 返回天王星的平黄经，单位为弧度。
+#[must_use]
 pub fn mean_longitude_uranus(t: f64) -> f64 {
     anp(5.481_293_872 + 7.478_159_856_7 * t)
 }
@@ -238,6 +252,7 @@ pub fn mean_longitude_uranus(t: f64) -> f64 {
 ///
 /// 参考实现是内联求值，取自 MHB2000 模型，而非用于其余行星的 IERS 2003
 /// 表达式。
+#[must_use]
 pub fn mean_longitude_neptune(t: f64) -> f64 {
     anp(5.321_159_000 + 3.812_777_400_0 * t)
 }
@@ -245,6 +260,7 @@ pub fn mean_longitude_neptune(t: f64) -> f64 {
 /// Returns the general accumulated precession in longitude, in radians.
 ///
 /// 返回黄经上的一般累积岁差，单位为弧度。
+#[must_use]
 pub fn general_precession(t: f64) -> f64 {
     (0.024_381_750 + 0.000_005_386_91 * t) * t
 }
@@ -280,6 +296,7 @@ impl DelaunayArguments {
     /// Returns the five arguments for a time in Julian centuries.
     ///
     /// 返回某儒略世纪时刻的这五个参数。
+    #[must_use]
     pub fn at(t: f64) -> Self {
         Self {
             l: mean_anomaly_moon(t),
@@ -293,6 +310,7 @@ impl DelaunayArguments {
     /// Returns the arguments as an array in series order.
     ///
     /// 按级数次序把各参数作为数组返回。
+    #[must_use]
     pub const fn as_array(self) -> [f64; 5] {
         [self.l, self.l_prime, self.f, self.d, self.omega]
     }
@@ -368,6 +386,7 @@ impl PlanetaryArguments {
     /// Returns the arguments for a time in Julian centuries.
     ///
     /// 返回某儒略世纪时刻的各参数。
+    #[must_use]
     pub fn at(t: f64) -> Self {
         Self {
             l: mean_anomaly_moon(t),
@@ -389,6 +408,7 @@ impl PlanetaryArguments {
     /// Returns the arguments as an array in series order.
     ///
     /// 按级数次序把各参数作为数组返回。
+    #[must_use]
     pub const fn as_array(self) -> [f64; 13] {
         [
             self.l,

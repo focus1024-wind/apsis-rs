@@ -43,6 +43,7 @@ impl Candidate {
     /// Creates a candidate.
     ///
     /// 创建一个候选。
+    #[must_use]
     pub const fn new(satellite: usize, quality: f64, remaining_seconds: f64) -> Self {
         Self {
             satellite,
@@ -54,6 +55,7 @@ impl Candidate {
     /// Returns `true` when the candidate is usable.
     ///
     /// 当该候选可用时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.quality.is_finite()
             && self.remaining_seconds.is_finite()
@@ -110,6 +112,7 @@ impl HandoverDecision {
     /// Returns `true` when the decision changes the serving satellite.
     ///
     /// 当该决策改变服务卫星时返回 `true`。
+    #[must_use]
     pub const fn is_change(self) -> bool {
         matches!(self, Self::HandOver { .. } | Self::Acquire { .. })
     }
@@ -123,18 +126,19 @@ impl HandoverDecision {
     ///
     /// 对 [`HandoverDecision::Drop`] 以及没有当前服务星的
     /// [`HandoverDecision::Stay`] 返回 `None`。
+    #[must_use]
     pub const fn resulting_satellite(self) -> Option<usize> {
         match self {
             Self::HandOver { to, .. } => Some(to),
             Self::Acquire { satellite } => Some(satellite),
-            Self::Stay => None,
-            Self::Drop => None,
+            Self::Stay | Self::Drop => None,
         }
     }
 
     /// Returns a short name for the decision.
     ///
     /// 返回该决策的简称。
+    #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
             Self::Stay => "stay",

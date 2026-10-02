@@ -1,9 +1,9 @@
-//! Shared foundation types for the ApsisRS workspace: a general purpose
+//! Shared foundation types for the `ApsisRS` workspace: a general purpose
 //! error type, result aliases, physical constants, and the unit marker
 //! trait.
 //!
 //! This crate sits at the bottom of the dependency graph. It has no
-//! dependency on any other ApsisRS crate, so every other crate may use it.
+//! dependency on any other `ApsisRS` crate, so every other crate may use it.
 //!
 //! Three concerns live here:
 //!
@@ -21,10 +21,10 @@
 //! - [`Quantity`] marks newtypes that carry a physical unit, so generic
 //!   code can accept any quantity and still recover its unit type.
 //!
-//! ApsisRS 工作区共享的基础类型：一个通用错误类型、结果别名、物理常量，以及
+//! `ApsisRS` 工作区共享的基础类型：一个通用错误类型、结果别名、物理常量，以及
 //! 单位标记 trait。
 //!
-//! 本 crate 位于依赖图的底部。它不依赖任何其他 ApsisRS crate，故其余每个
+//! 本 crate 位于依赖图的底部。它不依赖任何其他 `ApsisRS` crate，故其余每个
 //! crate 都可以使用它。
 //!
 //! 这里有三件事：

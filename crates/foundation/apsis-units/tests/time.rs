@@ -13,9 +13,9 @@ fn stores_the_given_value() {
 
 #[test]
 fn unit_metadata_is_available() {
+    fn assert_time<U: Unit<Dimension = Time>>() {}
     assert_eq!(Seconds::symbol(), "s");
     assert_eq!(Seconds::factor_to_base(), 1.0);
-    fn assert_time<U: Unit<Dimension = Time>>() {}
     assert_time::<Seconds>();
 }
 

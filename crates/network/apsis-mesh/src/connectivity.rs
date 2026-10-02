@@ -18,6 +18,7 @@ use apsis_topology::Topology;
 /// 排列。
 ///
 /// 节点越界时返回空向量。
+#[must_use]
 pub fn reachable_from(topology: &Topology, source: usize) -> Vec<usize> {
     if source >= topology.node_count() {
         return Vec::new();
@@ -64,6 +65,7 @@ pub fn reachable_from(topology: &Topology, source: usize) -> Vec<usize> {
 ///
 /// 不存在路径时返回 `Some(0)`；任一节点越界或两节点相同（此时该问题
 /// 无定义）时返回 `None`。
+#[must_use]
 pub fn edge_connectivity(topology: &Topology, source: usize, destination: usize) -> Option<usize> {
     if source >= topology.node_count() || destination >= topology.node_count() {
         return None;
@@ -164,6 +166,7 @@ pub fn edge_connectivity(topology: &Topology, source: usize, destination: usize)
 ///
 /// 出处：Kosaraju 算法，见 Cormen 等，*Introduction to Algorithms*，
 /// 第 3 版，MIT Press，2009，第 22 章。
+#[must_use]
 pub fn strongly_connected_components(topology: &Topology) -> usize {
     let node_count = topology.node_count();
     if node_count == 0 {

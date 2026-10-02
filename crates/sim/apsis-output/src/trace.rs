@@ -25,6 +25,7 @@ impl Trace {
     /// Creates an empty trace.
     ///
     /// 创建一个空轨迹。
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             records: Vec::new(),
@@ -34,6 +35,7 @@ impl Trace {
     /// Creates a trace from a list of records.
     ///
     /// 由记录列表创建轨迹。
+    #[must_use]
     pub fn from_records(records: Vec<Record>) -> Self {
         Self { records }
     }
@@ -41,6 +43,7 @@ impl Trace {
     /// Returns the number of records.
     ///
     /// 返回记录的数量。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.records.len()
     }
@@ -48,6 +51,7 @@ impl Trace {
     /// Returns `true` when there are no records.
     ///
     /// 当没有记录时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.records.is_empty()
     }
@@ -55,6 +59,7 @@ impl Trace {
     /// Returns the records in the order they were made.
     ///
     /// 按作出次序返回各记录。
+    #[must_use]
     pub fn records(&self) -> &[Record] {
         &self.records
     }
@@ -92,6 +97,7 @@ impl Trace {
     ///
     /// 同一瞬时的记录保持其插入次序，故该排序是稳定的，结果不依赖于
     /// 排序算法。
+    #[must_use]
     pub fn in_time_order(&self) -> Vec<Record> {
         let mut ordered = self.records.clone();
         ordered.sort_by(|left, right| {
@@ -105,6 +111,7 @@ impl Trace {
     /// Returns the records of one kind, in order.
     ///
     /// 按次序返回某一类别的记录。
+    #[must_use]
     pub fn of_kind(&self, kind: RecordKind) -> Vec<&Record> {
         self.records
             .iter()
@@ -115,6 +122,7 @@ impl Trace {
     /// Returns the records with a label, in order.
     ///
     /// 按次序返回具有某标签的记录。
+    #[must_use]
     pub fn with_label(&self, label: &str) -> Vec<&Record> {
         self.records
             .iter()
@@ -131,6 +139,7 @@ impl Trace {
     ///
     /// 这是调用方在运行结束后所索取的：某序列达到的最终值。没有记录
     /// 具有该标签时返回 `None`。
+    #[must_use]
     pub fn value_of(&self, label: &str) -> Option<f64> {
         self.records
             .iter()
@@ -142,6 +151,7 @@ impl Trace {
     /// Returns the time of the last record with a label.
     ///
     /// 返回具有某标签的最后一条记录的时间。
+    #[must_use]
     pub fn last_time_of(&self, label: &str) -> Option<f64> {
         self.records
             .iter()
@@ -159,6 +169,7 @@ impl Trace {
     ///
     /// 次序是按排序而非按首次出现，使具有相同标签的两个轨迹以相同
     /// 方式列出它们。
+    #[must_use]
     pub fn labels(&self) -> Vec<&str> {
         let mut labels: Vec<&str> = self
             .records
@@ -208,6 +219,7 @@ impl Trace {
     /// Returns the number of warnings in the trace.
     ///
     /// 返回轨迹中警告的数量。
+    #[must_use]
     pub fn warning_count(&self) -> usize {
         self.records
             .iter()
@@ -218,6 +230,7 @@ impl Trace {
     /// Returns a summary of every label, in sorted label order.
     ///
     /// 按标签排序次序返回每个标签的汇总。
+    #[must_use]
     pub fn summaries(&self) -> Vec<SeriesSummary> {
         self.labels()
             .into_iter()
@@ -233,6 +246,7 @@ impl Trace {
     /// 返回共享同一标签的记录数的最大值。
     ///
     /// 它是最长序列的长度，调用方据此确定轨迹表格的大小。
+    #[must_use]
     pub fn longest_series(&self) -> usize {
         let mut counts: BTreeMap<&str, usize> = BTreeMap::new();
         for record in &self.records {
@@ -294,6 +308,7 @@ impl SeriesSummary {
     /// Returns the spread between the greatest and smallest values.
     ///
     /// 返回最大值与最小值之间的跨度。
+    #[must_use]
     pub fn range(&self) -> f64 {
         self.max - self.min
     }
@@ -301,6 +316,7 @@ impl SeriesSummary {
     /// Returns `true` when the series never changed.
     ///
     /// 当该序列从未变化时返回 `true`。
+    #[must_use]
     pub fn is_constant(&self) -> bool {
         self.max == self.min
     }

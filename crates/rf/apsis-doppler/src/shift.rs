@@ -29,6 +29,7 @@ use core::fmt;
 ///
 /// 间距为零时返回 `None`，因为那里没有定义视线；或任一参数非有限时
 /// 返回 `None`。
+#[must_use]
 pub fn range_rate_from_velocity(relative_position: Vec3, relative_velocity: Vec3) -> Option<f64> {
     if !relative_position.is_finite() || !relative_velocity.is_finite() {
         return None;
@@ -82,6 +83,7 @@ pub fn range_rate_from_velocity(relative_position: Vec3, relative_velocity: Vec3
 /// 频率是单独返回，而非把一个小频移加到一个大数上。
 ///
 /// 频率非正且非有限，或距离变化率非有限时返回 `None`。
+#[must_use]
 pub fn classical_shift(carrier_frequency: f64, range_rate: f64) -> Option<f64> {
     if !carrier_frequency.is_finite() || carrier_frequency <= 0.0 {
         return None;
@@ -121,6 +123,7 @@ pub fn classical_shift(carrier_frequency: f64, range_rate: f64) -> Option<f64> {
 /// 到十的十次方分之几。
 ///
 /// 距离变化率非有限，或其幅度达到光速（此时该式无实值）时返回 `None`。
+#[must_use]
 pub fn relativistic_doppler_factor(range_rate: f64) -> Option<f64> {
     if !range_rate.is_finite() {
         return None;
@@ -163,6 +166,7 @@ impl DopplerShift {
     /// 由载波频率与距离变化率创建频移。
     ///
     /// 频率非正且非有限，或距离变化率非有限时返回 `None`。
+    #[must_use]
     pub fn from_range_rate(carrier_frequency: f64, range_rate: f64) -> Option<Self> {
         classical_shift(carrier_frequency, range_rate)?;
         Some(Self {
@@ -174,6 +178,7 @@ impl DopplerShift {
     /// Returns the transmitted frequency, in hertz.
     ///
     /// 返回发射频率，单位为赫兹。
+    #[must_use]
     pub const fn carrier_frequency(self) -> f64 {
         self.carrier
     }
@@ -181,6 +186,7 @@ impl DopplerShift {
     /// Returns the range rate, in meters per second, positive when receding.
     ///
     /// 返回距离变化率，单位为米每秒，远离时为正。
+    #[must_use]
     pub const fn range_rate(self) -> f64 {
         self.range_rate
     }
@@ -192,6 +198,7 @@ impl DopplerShift {
     /// 返回频移，单位为赫兹。
     ///
     /// 两终端远离时该值为负。
+    #[must_use]
     pub fn shift(self) -> f64 {
         classical_shift(self.carrier, self.range_rate).unwrap_or(0.0)
     }
@@ -199,6 +206,7 @@ impl DopplerShift {
     /// Returns the received frequency, in hertz.
     ///
     /// 返回接收频率，单位为赫兹。
+    #[must_use]
     pub fn shifted_frequency(self) -> f64 {
         self.carrier + self.shift()
     }
@@ -236,6 +244,7 @@ impl DopplerShift {
     /// 载波上会损失精度。
     ///
     /// 距离变化率达到光速时返回 `None`。
+    #[must_use]
     pub fn shift_including_relativity(self) -> Option<f64> {
         let factor = relativistic_doppler_factor(self.range_rate)?;
         Some(self.carrier * (factor - 1.0))
@@ -249,6 +258,7 @@ impl DopplerShift {
     /// 返回频移，以载波的百万分率计。
     ///
     /// 这是比较位于不同载波上的链路频移的便利方式。
+    #[must_use]
     pub fn shift_in_ppm(self) -> f64 {
         self.shift() / self.carrier * 1.0e6
     }
@@ -265,6 +275,7 @@ impl DopplerShift {
     /// 这是多普勒跟踪器必须跟随的量，它由距离加速度得出。
     ///
     /// 加速度非有限时返回 `None`。
+    #[must_use]
     pub fn shift_rate(self, range_acceleration: f64) -> Option<f64> {
         if !range_acceleration.is_finite() {
             return None;
@@ -276,6 +287,7 @@ impl DopplerShift {
     /// are receding and the received frequency is lower.
     ///
     /// 当该频移是红移（即两终端远离、接收频率更低）时返回 `true`。
+    #[must_use]
     pub fn is_receding(self) -> bool {
         self.range_rate > 0.0
     }
@@ -313,6 +325,7 @@ impl fmt::Display for DopplerShift {
 /// 结果落在 `[0, pi]` 内。
 ///
 /// 速度为零长或任一参数非有限时返回 `None`。
+#[must_use]
 pub fn angle_from_range_rate(velocity: Vec3, range_rate: f64) -> Option<f64> {
     if !velocity.is_finite() || !range_rate.is_finite() {
         return None;
@@ -340,6 +353,7 @@ pub fn angle_from_range_rate(velocity: Vec3, range_rate: f64) -> Option<f64> {
 /// 接近与远离两个极端之间的总跨度的一半。
 ///
 /// 结果以正幅度返回。载波或速度非正且非有限时返回 `None`。
+#[must_use]
 pub fn maximum_shift(carrier_frequency: f64, speed: f64) -> Option<f64> {
     if !carrier_frequency.is_finite() || carrier_frequency <= 0.0 {
         return None;
@@ -363,6 +377,7 @@ pub fn maximum_shift(carrier_frequency: f64, speed: f64) -> Option<f64> {
 /// 接近与远离给出符号相反的频移，故该跨度是最大频移的两倍。
 ///
 /// 载波或速度不可用时返回 `None`。
+#[must_use]
 pub fn acquisition_span(carrier_frequency: f64, speed: f64) -> Option<f64> {
     maximum_shift(carrier_frequency, speed).map(|shift| 2.0 * shift)
 }

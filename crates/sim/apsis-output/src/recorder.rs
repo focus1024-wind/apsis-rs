@@ -51,6 +51,7 @@ impl Recorder {
     /// Creates an empty recorder.
     ///
     /// 创建一个空记录器。
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             trace: Trace::new(),
@@ -104,6 +105,7 @@ impl Recorder {
     /// Returns the number of records made.
     ///
     /// 返回已作出的记录数。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.trace.len()
     }
@@ -111,6 +113,7 @@ impl Recorder {
     /// Returns `true` when no records have been made.
     ///
     /// 当尚无记录时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.trace.is_empty()
     }
@@ -124,6 +127,7 @@ impl Recorder {
     ///
     /// 从模型记录值的调用方检查它即可看出是否有值被丢弃，而无需手工
     /// 比较计数。
+    #[must_use]
     pub const fn refused(&self) -> u64 {
         self.refused
     }
@@ -131,6 +135,7 @@ impl Recorder {
     /// Returns the trace recorded so far.
     ///
     /// 返回迄今所记录的轨迹。
+    #[must_use]
     pub const fn trace(&self) -> &Trace {
         &self.trace
     }

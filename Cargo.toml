@@ -83,12 +83,54 @@ unsafe_code = "forbid"
 missing_docs = "deny"
 
 [workspace.lints.clippy]
-# Numeric literals here follow the grouping of the quantity they express,
-# such as the digits of a reference value, rather than a fixed width. The
-# style lint would force a regrouping that obscures the source of a value.
-# 此处的数值字面量按其所表达量的分组来分隔，例如某参考值的各位数字，
-# 而非固定宽度。风格 lint 会强制重新分组，从而模糊某值的来源。
+# The pedantic group is enabled, with the exceptions below. Each exception is
+# a property of the domain rather than a relaxation of care, so a change that
+# introduces a lint outside this list still fails the build.
+# 启用 pedantic 组，例外见下。每条例外都是领域属性而非放松要求，故引入不在
+# 此列表中的 lint 仍会使构建失败。
+pedantic = { level = "warn", priority = -1 }
+
+# The numeric kernels convert between an index or a count and a float, and
+# between signed and unsigned values, at points where the range is already
+# known, so the cast cannot lose information in practice. `as` is the idiom of
+# the domain and a `try_from` chain would obscure the arithmetic.
+# 数值内核在下标或计数与浮点数之间、以及有符号与无符号值之间转换，这些位置
+# 的取值范围已知，故实践中不会丢失信息。`as` 是该领域的惯用法，而一串
+# `try_from` 会使算式变得难读。
+cast_precision_loss = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+cast_possible_wrap = "allow"
+
+# Mathematical notation uses short and similar names, such as `theta` and
+# `theta_0`, and a long algorithm reads better in one piece than split.
+# 数学记号使用简短且相近的名称，如 `theta` 与 `theta_0`；长算法整体成篇比
+# 拆开更易读。
+similar_names = "allow"
+many_single_char_names = "allow"
+too_many_lines = "allow"
+
+# A test may compare two floats exactly when both sides are the same
+# expression evaluated twice, which is what a determinism test wants.
+# 当两侧是同一次表达式求值两次所得时，测试可以精确比较浮点数，这正是确定性
+# 测试所需。
+float_cmp = "allow"
+
+# The condition under which a function returns an error is stated in the doc
+# comment itself, as "Returns an error when ..." followed by its Chinese
+# counterpart, so the separate `# Errors` heading the lint wants would only
+# repeat that sentence.
+# 函数返回错误的条件已写在文档注释中，即 “Returns an error when ...” 及其中文
+# 对应，故该 lint 要求的独立 `# Errors` 标题只会重复该句。
+missing_errors_doc = "allow"
+
+# Numeric literals follow the grouping of the quantity they express, such as
+# the digits of a reference value, rather than a fixed width. The style lint
+# would force a regrouping that obscures the source of a value.
+# 数值字面量按其所表达量的分组来分隔，例如某参考值的各位数字，而非固定
+# 宽度。风格 lint 会强制重新分组，从而模糊某值的来源。
 inconsistent_digit_grouping = "allow"
+unreadable_literal = "allow"
 
 [workspace.dependencies]
 apsis-core = { path = "crates/foundation/apsis-core" }

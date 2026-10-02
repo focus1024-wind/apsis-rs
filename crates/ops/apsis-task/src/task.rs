@@ -15,6 +15,7 @@ impl TaskId {
     /// Creates an identifier.
     ///
     /// 创建一个标识符。
+    #[must_use]
     pub const fn new(index: usize) -> Self {
         Self(index)
     }
@@ -22,6 +23,7 @@ impl TaskId {
     /// Returns the index.
     ///
     /// 返回该下标。
+    #[must_use]
     pub const fn index(self) -> usize {
         self.0
     }
@@ -60,6 +62,7 @@ impl Requirement {
     /// Creates a requirement.
     ///
     /// 创建一条需求。
+    #[must_use]
     pub const fn new(resource: ResourceId, demand: f64) -> Self {
         Self { resource, demand }
     }
@@ -67,6 +70,7 @@ impl Requirement {
     /// Returns `true` when the demand is positive and finite.
     ///
     /// 当该需求为正且有限时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.demand.is_finite() && self.demand > 0.0
     }
@@ -148,6 +152,7 @@ impl Task {
     /// 以给定时长、无资源需求创建任务。
     ///
     /// 该任务没有窗口，故可在任意有限时刻开始。其优先级为零，且非强制。
+    #[must_use]
     pub fn new(id: TaskId, duration: f64) -> Self {
         Self {
             id,
@@ -170,6 +175,7 @@ impl Task {
     ///
     /// 该窗口是整个任务必须容纳其中的区间，故任务起点不早于窗口起点、终点
     /// 不晚于窗口终点。
+    #[must_use]
     pub fn with_window(mut self, start: f64, end: f64) -> Self {
         self.earliest_start = start;
         self.latest_end = end;
@@ -179,6 +185,7 @@ impl Task {
     /// Returns a copy of this task with a priority.
     ///
     /// 返回带给定优先级的本任务副本。
+    #[must_use]
     pub fn with_priority(mut self, priority: f64) -> Self {
         self.priority = priority;
         self
@@ -187,6 +194,7 @@ impl Task {
     /// Returns a copy of this task marked mandatory or not.
     ///
     /// 返回标记为强制或非强制的本任务副本。
+    #[must_use]
     pub fn with_mandatory(mut self, mandatory: bool) -> Self {
         self.mandatory = mandatory;
         self
@@ -202,6 +210,7 @@ impl Task {
     ///
     /// 此处允许重复加入同一资源，因为构建者链无法报告错误。
     /// [`Task::validate`] 会拒绝它，[`Task::try_require`] 则立即报告。
+    #[must_use]
     pub fn require(mut self, resource: ResourceId, demand: f64) -> Self {
         self.requirements.push(Requirement::new(resource, demand));
         self
@@ -236,6 +245,7 @@ impl Task {
     /// 返回该任务对某资源的需求。
     ///
     /// 该任务不要求该资源时返回 `None`。
+    #[must_use]
     pub fn demand_for(&self, resource: ResourceId) -> Option<f64> {
         self.requirements
             .iter()
@@ -246,6 +256,7 @@ impl Task {
     /// Returns `true` when the task requires a resource.
     ///
     /// 当该任务要求某资源时返回 `true`。
+    #[must_use]
     pub fn requires(&self, resource: ResourceId) -> bool {
         self.demand_for(resource).is_some()
     }
@@ -253,6 +264,7 @@ impl Task {
     /// Returns the number of resources the task requires.
     ///
     /// 返回该任务要求的资源数量。
+    #[must_use]
     pub fn requirement_count(&self) -> usize {
         self.requirements.len()
     }
@@ -260,6 +272,7 @@ impl Task {
     /// Returns the identifiers of the required resources.
     ///
     /// 返回所要求资源的标识符。
+    #[must_use]
     pub fn resources(&self) -> Vec<ResourceId> {
         self.requirements
             .iter()
@@ -276,6 +289,7 @@ impl Task {
     /// 返回该任务必须容纳其中的窗口长度，单位为秒。
     ///
     /// 任务两端均无限制时返回无穷；窗口完全容不下该任务时返回零或负值。
+    #[must_use]
     pub fn window_length(&self) -> f64 {
         self.latest_end - self.earliest_start
     }
@@ -283,6 +297,7 @@ impl Task {
     /// Returns `true` when the window cannot hold the task.
     ///
     /// 当窗口容不下该任务时返回 `true`。
+    #[must_use]
     pub fn window_is_too_short(&self) -> bool {
         self.duration > self.window_length()
     }
@@ -295,6 +310,7 @@ impl Task {
     /// 返回在其窗口下该任务可能结束的最早时刻。
     ///
     /// 任务无上界时返回无穷，无下界时返回负无穷。
+    #[must_use]
     pub fn earliest_possible_end(&self) -> f64 {
         self.earliest_start + self.duration
     }
@@ -302,6 +318,7 @@ impl Task {
     /// Returns `true` when the task fits its window.
     ///
     /// 当该任务能容纳于其窗口时返回 `true`。
+    #[must_use]
     pub fn fits_window(&self) -> bool {
         !self.window_is_too_short()
     }
@@ -310,6 +327,7 @@ impl Task {
     /// demands a non-positive amount.
     ///
     /// 当该任务重复使用某资源，或需求非正时返回 `true`。
+    #[must_use]
     pub fn has_duplicate_requirements(&self) -> bool {
         self.requirements
             .iter()
@@ -384,6 +402,7 @@ impl Task {
     /// Returns `true` when the task is usable.
     ///
     /// 当该任务可用时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.validate().is_ok()
     }
@@ -399,6 +418,7 @@ impl Task {
     ///
     /// 当调度器被要求充分利用可用时间时，最大化的正是该量：同等优先级下
     /// 时长较长的任务价值更高。
+    #[must_use]
     pub fn weighted_value(&self) -> f64 {
         self.priority * self.duration
     }
@@ -473,6 +493,7 @@ impl TaskState {
     /// Returns `true` when the task has been placed.
     ///
     /// 当该任务已被放置时返回 `true`。
+    #[must_use]
     pub const fn is_scheduled(&self) -> bool {
         matches!(self, Self::Scheduled { .. })
     }
@@ -480,6 +501,7 @@ impl TaskState {
     /// Returns the start time of the placement, if there is one.
     ///
     /// 返回放置的起始时刻，若有。
+    #[must_use]
     pub const fn start(&self) -> Option<f64> {
         match self {
             Self::Scheduled { start } => Some(*start),
@@ -490,6 +512,7 @@ impl TaskState {
     /// Returns the end time of the placement, if there is one.
     ///
     /// 返回放置的结束时刻，若有。
+    #[must_use]
     pub fn end(&self, duration: f64) -> Option<f64> {
         self.start().map(|start| start + duration)
     }
@@ -497,6 +520,7 @@ impl TaskState {
     /// Returns a short name for the state.
     ///
     /// 返回该状态的简称。
+    #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
             Self::Pending => "pending",
@@ -519,6 +543,7 @@ impl TaskSet {
     /// Creates an empty set.
     ///
     /// 创建一个空集合。
+    #[must_use]
     pub const fn new() -> Self {
         Self { tasks: Vec::new() }
     }
@@ -561,6 +586,7 @@ impl TaskSet {
     /// Returns the task with the given identifier.
     ///
     /// 返回具有所给标识符的任务。
+    #[must_use]
     pub fn get(&self, id: TaskId) -> Option<&Task> {
         self.tasks.iter().find(|task| task.id == id)
     }
@@ -586,6 +612,7 @@ impl TaskSet {
     /// Returns the tasks in the order they were added.
     ///
     /// 返回按添加顺序排列的任务。
+    #[must_use]
     pub fn tasks(&self) -> &[Task] {
         &self.tasks
     }
@@ -593,6 +620,7 @@ impl TaskSet {
     /// Returns the number of tasks.
     ///
     /// 返回任务数量。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.tasks.len()
     }
@@ -600,6 +628,7 @@ impl TaskSet {
     /// Returns `true` when there are no tasks.
     ///
     /// 当没有任务时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.tasks.is_empty()
     }
@@ -612,6 +641,7 @@ impl TaskSet {
     /// 返回所有任务的总时长，单位为秒。
     ///
     /// 这是各任务在整个时长内各占一个单位资源时，会施加到计划上的负载。
+    #[must_use]
     pub fn total_duration(&self) -> f64 {
         self.tasks.iter().map(|task| task.duration).sum()
     }
@@ -626,6 +656,7 @@ impl TaskSet {
     /// Returns the identifiers of the tasks that require a resource.
     ///
     /// 返回要求某资源的任务标识符。
+    #[must_use]
     pub fn tasks_requiring(&self, resource: ResourceId) -> Vec<TaskId> {
         self.tasks
             .iter()
@@ -637,6 +668,7 @@ impl TaskSet {
     /// Returns the identifiers of the mandatory tasks.
     ///
     /// 返回强制任务的标识符。
+    #[must_use]
     pub fn mandatory(&self) -> Vec<TaskId> {
         self.tasks
             .iter()
@@ -666,6 +698,7 @@ impl TaskSet {
 ///
 /// 它不保证找到最优计划。带资源约束的调度在一般情况下不可解，故启发式
 /// 是现实的选择，调用方亦可自行提供次序。
+#[must_use]
 pub fn task_order(tasks: &[Task]) -> Vec<TaskId> {
     let mut ordered: Vec<&Task> = tasks.iter().collect();
     ordered.sort_by(|first, second| {

@@ -897,6 +897,7 @@ impl Atmosphere {
     /// Creates an atmosphere from its three parameters.
     ///
     /// 由其三个参数创建大气。
+    #[must_use]
     pub const fn new(pressure_hpa: f64, water_vapour_density: f64, temperature_k: f64) -> Self {
         Self {
             pressure_hpa,
@@ -914,6 +915,7 @@ impl Atmosphere {
     ///
     /// 关系为 `e = rho T / 216.7`，它由理想气体定律连同水与干空气的摩尔
     /// 质量得出。
+    #[must_use]
     pub fn water_vapour_partial_pressure(self) -> f64 {
         self.water_vapour_density * self.temperature_k / 216.7
     }
@@ -921,6 +923,7 @@ impl Atmosphere {
     /// Returns `true` when the state describes a physical atmosphere.
     ///
     /// 当该状态描述一个物理大气时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.pressure_hpa.is_finite()
             && self.pressure_hpa > 0.0
@@ -949,6 +952,7 @@ impl Atmosphere {
 /// 频率单位为吉赫。
 ///
 /// 频率或大气不可用时返回 `None`。
+#[must_use]
 pub fn specific_attenuation_dry_air(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<f64> {
     if !frequency_ghz.is_finite() || frequency_ghz <= 0.0 || !atmosphere.is_valid() {
         return None;
@@ -1008,6 +1012,7 @@ pub fn specific_attenuation_dry_air(frequency_ghz: f64, atmosphere: Atmosphere) 
 /// 频率单位为吉赫。
 ///
 /// 频率或大气不可用时返回 `None`。
+#[must_use]
 pub fn specific_attenuation_water_vapour(
     frequency_ghz: f64,
     atmosphere: Atmosphere,
@@ -1054,6 +1059,7 @@ pub fn specific_attenuation_water_vapour(
 /// 这是干空气与水汽贡献之和。
 ///
 /// 频率或大气不可用时返回 `None`。
+#[must_use]
 pub fn specific_attenuation(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<f64> {
     Some(
         specific_attenuation_dry_air(frequency_ghz, atmosphere)?

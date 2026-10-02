@@ -32,6 +32,7 @@ use crate::field::{ElementError, ElementErrorKind, Result};
 /// 68 字符的行只贡献其实际具有的列。
 ///
 /// 负号贡献 1，十进制数字贡献其数值，其余字符不贡献。
+#[must_use]
 pub fn line_checksum(line: &str) -> u32 {
     line.chars()
         .take(68)

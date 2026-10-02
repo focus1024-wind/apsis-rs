@@ -34,6 +34,7 @@ impl Stage {
     /// Creates a stage from a noise temperature and a gain.
     ///
     /// 由噪声温度与增益创建一级。
+    #[must_use]
     pub const fn new(temperature: NoiseTemperature, gain: Gain) -> Self {
         Self { temperature, gain }
     }
@@ -46,6 +47,7 @@ impl Stage {
     /// 由以分贝表示的噪声系数与以分贝表示的增益创建一级。
     ///
     /// 任一值非有限时返回 `None`。
+    #[must_use]
     pub fn from_noise_figure(noise_figure_db: f64, gain_dbi: f64) -> Option<Self> {
         Some(Self {
             temperature: NoiseTemperature::from_noise_figure_db(noise_figure_db)?,
@@ -61,6 +63,7 @@ impl Stage {
     /// 以给定增益创建无噪声的一级。
     ///
     /// 理想放大器不加噪声，故除其增益外它对级联别无贡献。
+    #[must_use]
     pub const fn ideal(gain: Gain) -> Self {
         Self {
             temperature: NoiseTemperature::from_kelvin(0.0),
@@ -71,6 +74,7 @@ impl Stage {
     /// Returns `true` when the stage is usable.
     ///
     /// 当该级可用时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.temperature.is_valid() && self.gain.ratio().is_finite() && self.gain.ratio() > 0.0
     }
@@ -110,6 +114,7 @@ impl Stage {
 /// 总温度即整链的温度，故可直接与可用增益比较以求得整链的噪声系数。
 ///
 /// 任一级不可用（包括增益比非正）时返回 `None`。
+#[must_use]
 pub fn cascade_temperature(stages: &[Stage]) -> Option<NoiseTemperature> {
     let mut total = NoiseTemperature::from_kelvin(0.0);
     let mut cumulative_gain = 1.0_f64;
@@ -138,6 +143,7 @@ pub fn cascade_temperature(stages: &[Stage]) -> Option<NoiseTemperature> {
 /// 的自由函数形式。
 ///
 /// 该系数非有限时返回 `None`。
+#[must_use]
 pub fn noise_figure_to_temperature(noise_figure_db: f64) -> Option<NoiseTemperature> {
     NoiseTemperature::from_noise_figure_db(noise_figure_db)
 }
@@ -156,6 +162,7 @@ pub fn noise_figure_to_temperature(noise_figure_db: f64) -> Option<NoiseTemperat
 /// 形式。
 ///
 /// 任一级不可用时返回 `None`。
+#[must_use]
 pub fn cascade_noise_figure_db(stages: &[Stage]) -> Option<f64> {
     cascade_temperature(stages)?.noise_figure_db()
 }
@@ -163,6 +170,7 @@ pub fn cascade_noise_figure_db(stages: &[Stage]) -> Option<f64> {
 /// Returns the reference temperature used by the noise figure definition.
 ///
 /// 返回噪声系数定义所用的参考温度。
+#[must_use]
 pub const fn reference_temperature() -> f64 {
     REFERENCE_TEMPERATURE_K
 }

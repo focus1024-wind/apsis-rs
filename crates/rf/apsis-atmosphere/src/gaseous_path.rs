@@ -108,6 +108,7 @@ pub struct EquivalentHeights {
 /// 频率或大气不可用时返回 `None`。
 ///
 /// 出处：ITU-R 建议书 P.676-12，式 30 至式 38。
+#[must_use]
 pub fn equivalent_heights(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<EquivalentHeights> {
     if !frequency_ghz.is_finite() || frequency_ghz <= 0.0 || !atmosphere.is_valid() {
         return None;
@@ -190,6 +191,7 @@ pub fn equivalent_heights(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<
 /// 频率单位为吉赫。
 ///
 /// 频率或大气不可用时返回 `None`。
+#[must_use]
 pub fn zenith_attenuation(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<f64> {
     let heights = equivalent_heights(frequency_ghz, atmosphere)?;
     let dry = specific_attenuation_dry_air(frequency_ghz, atmosphere)?;
@@ -218,6 +220,7 @@ pub fn zenith_attenuation(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<
 /// 仰角以弧度计。
 ///
 /// 频率或大气不可用，或仰角在地平及其以下时返回 `None`。
+#[must_use]
 pub fn slant_path_attenuation(
     frequency_ghz: f64,
     elevation: f64,
@@ -301,6 +304,7 @@ const RAY_TRACE_EARTH_RADIUS_KM: f64 = 6_371.0;
 ///
 /// 出处：ITU-R 建议书 P.676-12，式 13 至式 19，分层大气取自 ITU-R
 /// 建议书 P.835-6。
+#[must_use]
 pub fn slant_path_attenuation_exact(
     frequency_ghz: f64,
     elevation: f64,

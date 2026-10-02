@@ -94,6 +94,7 @@ fn sidelobe_branch(diameter_over_wavelength: f64) -> (f64, f64) {
 /// 表达式为 `20 log10(D / lambda) + 7.7`。
 ///
 /// 比值非正或非有限时返回 `None`。
+#[must_use]
 pub fn reference_peak_gain(diameter_over_wavelength: f64) -> Option<f64> {
     if !diameter_over_wavelength.is_finite() || diameter_over_wavelength <= 0.0 {
         return None;
@@ -119,6 +120,7 @@ pub fn reference_peak_gain(diameter_over_wavelength: f64) -> Option<f64> {
 /// 一个零点，这使二分法可靠。
 ///
 /// 结果落在零与旁瓣区底限角之间。
+#[must_use]
 pub fn main_lobe_break_angle(diameter_over_wavelength: f64) -> Option<f64> {
     let peak = reference_peak_gain(diameter_over_wavelength)?;
     let (head, floor_angle) = sidelobe_branch(diameter_over_wavelength);
@@ -139,14 +141,14 @@ pub fn main_lobe_break_angle(diameter_over_wavelength: f64) -> Option<f64> {
         return Some(high);
     }
     for _ in 0..100 {
-        let middle = 0.5 * (low + high);
+        let middle = f64::midpoint(low, high);
         if difference(middle) > 0.0 {
             low = middle;
         } else {
             high = middle;
         }
     }
-    Some(0.5 * (low + high))
+    Some(f64::midpoint(low, high))
 }
 
 /// Returns the gain of the S.465 reference pattern at an off-axis angle.
@@ -199,6 +201,7 @@ pub fn main_lobe_break_angle(diameter_over_wavelength: f64) -> Option<f64> {
 /// 再现而非加以平滑。
 ///
 /// 比值或角度不可用时返回 `None`。
+#[must_use]
 pub fn reference_pattern_gain(diameter_over_wavelength: f64, off_axis_angle: f64) -> Option<f64> {
     if !off_axis_angle.is_finite() || off_axis_angle < 0.0 {
         return None;
@@ -223,6 +226,7 @@ pub fn reference_pattern_gain(diameter_over_wavelength: f64, off_axis_angle: f64
 /// 返回 S.465 参考方向图的增益，以分贝值表示。
 ///
 /// 比值或角度不可用时返回 `None`。
+#[must_use]
 pub fn reference_pattern_decibel(
     diameter_over_wavelength: f64,
     off_axis_angle: f64,
@@ -246,6 +250,7 @@ pub fn reference_pattern_decibel(
 /// 它反解峰值增益表达式，当某站以其增益而非尺寸规定时有用。
 ///
 /// 增益非有限时返回 `None`。
+#[must_use]
 pub fn diameter_over_wavelength_from_peak_gain(peak_gain_dbi: f64) -> Option<f64> {
     if !peak_gain_dbi.is_finite() {
         return None;
@@ -268,6 +273,7 @@ pub fn diameter_over_wavelength_from_peak_gain(peak_gain_dbi: f64) -> Option<f64
 /// 两个三分贝点之间的全宽是该值的两倍。
 ///
 /// 比值非正或非有限时返回 `None`。
+#[must_use]
 pub fn reference_beam_width(diameter_over_wavelength: f64) -> Option<f64> {
     if !diameter_over_wavelength.is_finite() || diameter_over_wavelength <= 0.0 {
         return None;

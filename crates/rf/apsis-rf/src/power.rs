@@ -56,6 +56,7 @@ impl Power {
     /// 以瓦特值创建功率电平。
     ///
     /// 功率可以为零，表示没有功率，但不可为负。
+    #[must_use]
     pub const fn from_watts(watts: f64) -> Self {
         Self(watts)
     }
@@ -63,6 +64,7 @@ impl Power {
     /// Creates a power level from a value in milliwatts.
     ///
     /// 以毫瓦值创建功率电平。
+    #[must_use]
     pub const fn from_milliwatts(milliwatts: f64) -> Self {
         Self(milliwatts * 1.0e-3)
     }
@@ -75,6 +77,7 @@ impl Power {
     /// 以分贝瓦值创建功率电平。
     ///
     /// 零或负的读数无法表示为有限功率，故无需校验。
+    #[must_use]
     pub fn from_dbw(decibel_watts: f64) -> Option<Self> {
         if !decibel_watts.is_finite() {
             return None;
@@ -89,6 +92,7 @@ impl Power {
     /// 以分贝毫瓦值创建功率电平。
     ///
     /// 该读数非有限时返回 `None`。
+    #[must_use]
     pub fn from_dbm(decibel_milliwatts: f64) -> Option<Self> {
         if !decibel_milliwatts.is_finite() {
             return None;
@@ -99,6 +103,7 @@ impl Power {
     /// Returns this power in watts.
     ///
     /// 返回该功率的瓦特值。
+    #[must_use]
     pub const fn watts(self) -> f64 {
         self.0
     }
@@ -106,6 +111,7 @@ impl Power {
     /// Returns this power in milliwatts.
     ///
     /// 返回该功率的毫瓦值。
+    #[must_use]
     pub const fn milliwatts(self) -> f64 {
         self.0 * 1.0e3
     }
@@ -118,6 +124,7 @@ impl Power {
     /// 返回该功率的分贝瓦值。
     ///
     /// 功率非正时返回 `None`，因为对数在那里没有定义。
+    #[must_use]
     pub fn dbw(self) -> Option<f64> {
         if self.0 > 0.0 && self.0.is_finite() {
             Some(10.0 * (self.0 / DBW_REFERENCE).log10())
@@ -133,6 +140,7 @@ impl Power {
     /// 返回该功率的分贝毫瓦值。
     ///
     /// 功率非正时返回 `None`。
+    #[must_use]
     pub fn dbm(self) -> Option<f64> {
         if self.0 > 0.0 && self.0.is_finite() {
             Some(10.0 * (self.0 / DBM_REFERENCE).log10())
@@ -153,6 +161,7 @@ impl Power {
     /// 这是链路预算中用来表达两个功率电平之间损耗或增益的形式。
     ///
     /// 两个功率之一非正时返回 `None`。
+    #[must_use]
     pub fn ratio_in_decibels(self, rhs: Self) -> Option<Decibel> {
         if self.0 > 0.0 && rhs.0 > 0.0 {
             Decibel::from_ratio(self.0 / rhs.0)
@@ -169,6 +178,7 @@ impl Power {
     /// 返回该功率按某个分贝比值缩放后的值。
     ///
     /// 结果功率非有限时返回 `None`；增益极大时即如此。
+    #[must_use]
     pub fn scaled(self, ratio: Decibel) -> Option<Self> {
         if self.0 == 0.0 {
             return Some(self);
@@ -180,6 +190,7 @@ impl Power {
     /// Returns `true` when the power is finite and not negative.
     ///
     /// 当该功率有限且非负时返回 `true`。
+    #[must_use]
     pub const fn is_valid(self) -> bool {
         self.0.is_finite() && self.0 >= 0.0
     }

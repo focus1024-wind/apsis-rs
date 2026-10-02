@@ -31,6 +31,7 @@ impl Meters {
     /// Creates a length from a value in meters.
     ///
     /// 由米值创建长度。
+    #[must_use]
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
@@ -38,6 +39,7 @@ impl Meters {
     /// Returns this length in meters.
     ///
     /// 返回该长度的米值。
+    #[must_use]
     pub const fn value(self) -> f64 {
         self.0
     }
@@ -45,6 +47,7 @@ impl Meters {
     /// Converts this length to kilometers.
     ///
     /// 把该长度换算为千米。
+    #[must_use]
     pub fn to_kilometers(self) -> Kilometers {
         Kilometers(self.0 / 1_000.0)
     }
@@ -54,6 +57,7 @@ impl Kilometers {
     /// Creates a length from a value in kilometers.
     ///
     /// 由千米值创建长度。
+    #[must_use]
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
@@ -61,6 +65,7 @@ impl Kilometers {
     /// Returns this length in kilometers.
     ///
     /// 返回该长度的千米值。
+    #[must_use]
     pub const fn value(self) -> f64 {
         self.0
     }
@@ -68,6 +73,7 @@ impl Kilometers {
     /// Converts this length to meters.
     ///
     /// 把该长度换算为米。
+    #[must_use]
     pub fn to_meters(self) -> Meters {
         Meters(self.0 * 1_000.0)
     }

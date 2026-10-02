@@ -42,6 +42,7 @@ impl State {
     /// Returns the distance from the center of the Earth, in kilometers.
     ///
     /// 返回到地心的距离，单位为千米。
+    #[must_use]
     pub fn altitude_radius(self) -> f64 {
         self.position.norm()
     }
@@ -50,6 +51,7 @@ impl State {
     /// second.
     ///
     /// 返回相对地心的速率，单位为千米每秒。
+    #[must_use]
     pub fn speed(self) -> f64 {
         self.velocity.norm()
     }

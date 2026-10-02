@@ -34,6 +34,7 @@ impl Ellipsoid {
     /// 由半长轴与逆扁率创建椭球。
     ///
     /// 长度单位为米。逆扁率必须为正且有限；取无穷大则描述一个球。
+    #[must_use]
     pub const fn new(semi_major_axis: f64, inverse_flattening: f64) -> Self {
         Self {
             semi_major_axis,
@@ -44,6 +45,7 @@ impl Ellipsoid {
     /// Returns the semi-major axis, in meters.
     ///
     /// 返回半长轴，单位为米。
+    #[must_use]
     pub const fn semi_major_axis(self) -> f64 {
         self.semi_major_axis
     }
@@ -51,6 +53,7 @@ impl Ellipsoid {
     /// Returns the inverse flattening.
     ///
     /// 返回逆扁率。
+    #[must_use]
     pub const fn inverse_flattening(self) -> f64 {
         self.inverse_flattening
     }
@@ -62,6 +65,7 @@ impl Ellipsoid {
     /// 返回扁率。
     ///
     /// 对球其值为零。
+    #[must_use]
     pub fn flattening(self) -> f64 {
         1.0 / self.inverse_flattening
     }
@@ -69,6 +73,7 @@ impl Ellipsoid {
     /// Returns the semi-minor axis, in meters.
     ///
     /// 返回半短轴，单位为米。
+    #[must_use]
     pub fn semi_minor_axis(self) -> f64 {
         self.semi_major_axis * (1.0 - self.flattening())
     }
@@ -81,6 +86,7 @@ impl Ellipsoid {
     /// 返回第一偏心率平方，为位于 `[0, 1)` 的无量纲数。
     ///
     /// 对扁率 `f`，它等于 `2f - f^2`。
+    #[must_use]
     pub fn eccentricity_squared(self) -> f64 {
         let flattening = self.flattening();
         2.0 * flattening - flattening * flattening
@@ -89,6 +95,7 @@ impl Ellipsoid {
     /// Returns the first eccentricity, a dimensionless number in `[0, 1)`.
     ///
     /// 返回第一偏心率，为位于 `[0, 1)` 的无量纲数。
+    #[must_use]
     pub fn eccentricity(self) -> f64 {
         self.eccentricity_squared().sqrt()
     }
@@ -101,6 +108,7 @@ impl Ellipsoid {
     /// 返回第二偏心率平方，为无量纲数。
     ///
     /// 它等于 `e^2 / (1 - e^2)`，出现在把大地位置转换为笛卡尔坐标的闭式解中。
+    #[must_use]
     pub fn second_eccentricity_squared(self) -> f64 {
         let squared = self.eccentricity_squared();
         squared / (1.0 - squared)
@@ -114,6 +122,7 @@ impl Ellipsoid {
     /// 返回极半径曲率，单位为米。
     ///
     /// 它是极点处子午线上的曲率半径，等于 `a / sqrt(1 - e^2)`。
+    #[must_use]
     pub fn polar_radius_of_curvature(self) -> f64 {
         self.semi_major_axis / (1.0 - self.eccentricity_squared()).sqrt()
     }
@@ -133,6 +142,7 @@ impl Ellipsoid {
     /// [`Ellipsoid::polar_radius_of_curvature`]。
     ///
     /// 纬度单位为弧度。
+    #[must_use]
     pub fn prime_vertical_radius(self, latitude: f64) -> f64 {
         let sin = latitude.sin();
         self.semi_major_axis / (1.0 - self.eccentricity_squared() * sin * sin).sqrt()
@@ -146,6 +156,7 @@ impl Ellipsoid {
     /// 返回给定大地纬度处子午线上的曲率半径，单位为米。
     ///
     /// 纬度单位为弧度。
+    #[must_use]
     pub fn meridian_radius(self, latitude: f64) -> f64 {
         let sin = latitude.sin();
         let squared = self.eccentricity_squared();
@@ -165,6 +176,7 @@ impl Ellipsoid {
     ///
     /// 地心纬度自赤道面量到径向矢量，而大地纬度量到椭球法线。除赤道与极点外，
     /// 地心纬度小于大地纬度。
+    #[must_use]
     pub fn geocentric_latitude(self, geodetic_latitude: f64) -> f64 {
         let squared = self.eccentricity_squared();
         let tangent = (1.0 - squared) * geodetic_latitude.tan();

@@ -1018,10 +1018,10 @@ pub(crate) fn dspace(
         let ft = minutes - atime;
         nm = xni + xndt * ft + xnddt * ft * ft * 0.5;
         let xl = xli + xldot * ft + xndt * ft * ft * 0.5;
-        if deep.irez != 1 {
-            mm = xl - 2.0 * nodem + 2.0 * theta;
-        } else {
+        if deep.irez == 1 {
             mm = xl - nodem - argpm + theta;
+        } else {
+            mm = xl - 2.0 * nodem + 2.0 * theta;
         }
         nm = no + (nm - no);
     }
@@ -1067,15 +1067,7 @@ fn resonance_derivatives(
     const G52: f64 = 1.050_833_0;
     const G54: f64 = 4.410_889_8;
 
-    if irez != 2 {
-        let xndt = deep.del1 * (xli - FASX2).sin()
-            + deep.del2 * (2.0 * (xli - FASX4)).sin()
-            + deep.del3 * (3.0 * (xli - FASX6)).sin();
-        let xnddt = deep.del1 * (xli - FASX2).cos()
-            + 2.0 * deep.del2 * (2.0 * (xli - FASX4)).cos()
-            + 3.0 * deep.del3 * (3.0 * (xli - FASX6)).cos();
-        (xndt, xnddt)
-    } else {
+    if irez == 2 {
         let xomi = argpo + argpdot * atime;
         let x2omi = xomi + xomi;
         let x2li = xli + xli;
@@ -1100,6 +1092,14 @@ fn resonance_derivatives(
                     + deep.d4422 * (x2li - G44).cos()
                     + deep.d5421 * (xomi + x2li - G54).cos()
                     + deep.d5433 * (-xomi + x2li - G54).cos());
+        (xndt, xnddt)
+    } else {
+        let xndt = deep.del1 * (xli - FASX2).sin()
+            + deep.del2 * (2.0 * (xli - FASX4)).sin()
+            + deep.del3 * (3.0 * (xli - FASX6)).sin();
+        let xnddt = deep.del1 * (xli - FASX2).cos()
+            + 2.0 * deep.del2 * (2.0 * (xli - FASX4)).cos()
+            + 3.0 * deep.del3 * (3.0 * (xli - FASX6)).cos();
         (xndt, xnddt)
     }
 }

@@ -46,6 +46,7 @@ impl EventId {
     ///
     /// 该时刻必须有限且非负。时刻超出该范围的调用方无法使用本类型，
     /// 这是有意为之：倒退或趋于无限的仿真时钟没有有意义的次序。
+    #[must_use]
     pub fn new(time: f64, sequence: u64) -> Option<Self> {
         if !time.is_finite() || time < 0.0 {
             return None;
@@ -75,6 +76,7 @@ impl EventId {
     /// Returns the scheduled time, in seconds.
     ///
     /// 返回调度时刻，单位为秒。
+    #[must_use]
     pub fn time(self) -> f64 {
         f64::from_bits(self.time_bits)
     }
@@ -82,6 +84,7 @@ impl EventId {
     /// Returns the order in which the event was scheduled.
     ///
     /// 返回该事件被调度的次序。
+    #[must_use]
     pub const fn sequence(self) -> u64 {
         self.sequence
     }

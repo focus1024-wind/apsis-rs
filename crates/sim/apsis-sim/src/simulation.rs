@@ -126,6 +126,7 @@ impl Simulation {
     /// Returns the scenario.
     ///
     /// 返回场景。
+    #[must_use]
     pub const fn scenario(&self) -> &Scenario {
         &self.scenario
     }
@@ -133,6 +134,7 @@ impl Simulation {
     /// Returns the resources in the scenario.
     ///
     /// 返回场景中的资源。
+    #[must_use]
     pub const fn resources(&self) -> &ResourceSet {
         &self.resources
     }
@@ -140,6 +142,7 @@ impl Simulation {
     /// Returns the planning result.
     ///
     /// 返回规划结果。
+    #[must_use]
     pub const fn plan(&self) -> &SchedulingResult {
         &self.result
     }
@@ -147,6 +150,7 @@ impl Simulation {
     /// Returns the schedule.
     ///
     /// 返回调度。
+    #[must_use]
     pub const fn schedule(&self) -> &Schedule {
         &self.result.schedule
     }
@@ -154,6 +158,7 @@ impl Simulation {
     /// Returns the tasks in the scenario.
     ///
     /// 返回场景中的任务。
+    #[must_use]
     pub fn tasks(&self) -> &[Task] {
         self.scenario.tasks()
     }
@@ -169,6 +174,7 @@ impl Simulation {
     /// 每处被放置的任务贡献一个开始与一个结束。并列情形按结束先于开始
     /// 排序，使两个前后相接的任务可共享一个边界而读者不会看到它们
     /// 重叠。
+    #[must_use]
     pub fn timeline(&self) -> &[(f64, Activity)] {
         &self.timeline
     }
@@ -176,6 +182,7 @@ impl Simulation {
     /// Returns the number of start and end events in the timeline.
     ///
     /// 返回时间线中开始与结束事件的数量。
+    #[must_use]
     pub fn activity_count(&self) -> usize {
         self.timeline.len()
     }
@@ -183,6 +190,7 @@ impl Simulation {
     /// Returns `true` when every offered task was placed.
     ///
     /// 当所有提交任务均被放置时返回 `true`。
+    #[must_use]
     pub fn has_full_plan(&self) -> bool {
         self.result.is_complete()
     }
@@ -190,6 +198,7 @@ impl Simulation {
     /// Returns `true` when every mandatory task was placed.
     ///
     /// 当每个必需任务都被放置时返回 `true`。
+    #[must_use]
     pub fn honours_mandatory(&self) -> bool {
         self.result.honours_mandatory(self.scenario.tasks())
     }
@@ -197,6 +206,7 @@ impl Simulation {
     /// Returns `true` when every precedence constraint is satisfied.
     ///
     /// 当每条先后约束都被满足时返回 `true`。
+    #[must_use]
     pub fn honours_precedence(&self) -> bool {
         self.result.honours_precedence(self.scenario.precedence())
     }
@@ -204,6 +214,7 @@ impl Simulation {
     /// Returns the tasks that were not placed for want of time.
     ///
     /// 返回因时间不足而未被放置的任务。
+    #[must_use]
     pub fn deferred(&self) -> Vec<TaskId> {
         self.result.deferred()
     }
@@ -211,6 +222,7 @@ impl Simulation {
     /// Returns the tasks that cannot be placed at all.
     ///
     /// 返回完全无法放置的任务。
+    #[must_use]
     pub fn infeasible(&self) -> Vec<TaskId> {
         self.result.infeasible()
     }
@@ -218,6 +230,7 @@ impl Simulation {
     /// Evaluates the schedule against the scenario.
     ///
     /// 针对场景评估该调度。
+    #[must_use]
     pub fn evaluate(&self) -> Evaluation {
         self.schedule()
             .evaluate(self.scenario.tasks(), &self.resources)
@@ -234,6 +247,7 @@ impl Simulation {
     ///
     /// 返回的会话拥有自己的引擎与记录器，故多个会话可从同一个已准备
     /// 仿真运行而互不干扰。时钟从场景历元开始，运行限制来自场景。
+    #[must_use]
     pub fn start(&self) -> Session {
         Session::new(self)
     }

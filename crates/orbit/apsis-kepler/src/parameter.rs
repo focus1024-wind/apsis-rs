@@ -31,6 +31,7 @@ impl GravityParameter {
     /// Returns the value in cubic kilometers per second squared.
     ///
     /// 返回该值，单位为立方千米每二次方秒。
+    #[must_use]
     pub const fn value(self) -> f64 {
         self.0
     }
@@ -39,6 +40,7 @@ impl GravityParameter {
     /// halves per second.
     ///
     /// 返回该参数的平方根，单位为千米的三分之二次方每秒。
+    #[must_use]
     pub fn sqrt(self) -> f64 {
         self.0.sqrt()
     }

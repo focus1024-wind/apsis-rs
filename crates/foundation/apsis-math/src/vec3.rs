@@ -55,6 +55,7 @@ impl Vec3 {
     /// Creates a vector from its three components.
     ///
     /// 由三个分量创建向量。
+    #[must_use]
     pub const fn new(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z }
     }
@@ -62,6 +63,7 @@ impl Vec3 {
     /// Creates a vector whose three components all equal `value`.
     ///
     /// 创建三个分量都等于 `value` 的向量。
+    #[must_use]
     pub const fn splat(value: f64) -> Self {
         Self::new(value, value, value)
     }
@@ -69,6 +71,7 @@ impl Vec3 {
     /// Returns the first component.
     ///
     /// 返回第一分量。
+    #[must_use]
     pub const fn x(self) -> f64 {
         self.x
     }
@@ -76,6 +79,7 @@ impl Vec3 {
     /// Returns the second component.
     ///
     /// 返回第二分量。
+    #[must_use]
     pub const fn y(self) -> f64 {
         self.y
     }
@@ -83,6 +87,7 @@ impl Vec3 {
     /// Returns the third component.
     ///
     /// 返回第三分量。
+    #[must_use]
     pub const fn z(self) -> f64 {
         self.z
     }
@@ -95,6 +100,7 @@ impl Vec3 {
     /// 返回由 `index` 选定的分量，其中 `0`、`1`、`2` 分别对应 `x`、`y`、`z`。
     ///
     /// `index` 超出 `0..=2` 时返回 `None`。
+    #[must_use]
     pub const fn get(self, index: usize) -> Option<f64> {
         match index {
             0 => Some(self.x),
@@ -107,6 +113,7 @@ impl Vec3 {
     /// Returns the dot product of `self` and `rhs`.
     ///
     /// 返回 `self` 与 `rhs` 的点积。
+    #[must_use]
     pub fn dot(self, rhs: Self) -> f64 {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
@@ -120,6 +127,7 @@ impl Vec3 {
     ///
     /// 结果同时垂直于两个输入并遵循右手定则，因此 `Vec3::X.cross(Vec3::Y)`
     /// 等于 `Vec3::Z`。
+    #[must_use]
     pub fn cross(self, rhs: Self) -> Self {
         Self::new(
             self.y * rhs.z - self.z * rhs.y,
@@ -136,6 +144,7 @@ impl Vec3 {
     /// 返回该向量的欧几里得长度平方。
     ///
     /// 比较长度时优先用它而非 [`Vec3::norm`]，因为它省去一次开方。
+    #[must_use]
     pub fn norm_squared(self) -> f64 {
         self.dot(self)
     }
@@ -143,6 +152,7 @@ impl Vec3 {
     /// Returns the Euclidean length of this vector.
     ///
     /// 返回该向量的欧几里得长度。
+    #[must_use]
     pub fn norm(self) -> f64 {
         self.norm_squared().sqrt()
     }
@@ -155,6 +165,7 @@ impl Vec3 {
     /// 返回该向量缩放到单位长度后的结果。
     ///
     /// 长度为零或非有限时返回 `None`，此时方向未定义。
+    #[must_use]
     pub fn normalize(self) -> Option<Self> {
         let norm = self.norm();
         if norm > 0.0 && norm.is_finite() {
@@ -167,6 +178,7 @@ impl Vec3 {
     /// Returns the Euclidean distance between `self` and `rhs`.
     ///
     /// 返回 `self` 与 `rhs` 之间的欧几里得距离。
+    #[must_use]
     pub fn distance(self, rhs: Self) -> f64 {
         (self - rhs).norm()
     }
@@ -174,6 +186,7 @@ impl Vec3 {
     /// Returns the squared Euclidean distance between `self` and `rhs`.
     ///
     /// 返回 `self` 与 `rhs` 之间的欧几里得距离平方。
+    #[must_use]
     pub fn distance_squared(self, rhs: Self) -> f64 {
         (self - rhs).norm_squared()
     }
@@ -191,6 +204,7 @@ impl Vec3 {
     ///
     /// 结果位于 `[0, pi]`。当任一向量长度为零或非有限，或任一向量含非有限分量
     /// 时返回 `None`。
+    #[must_use]
     pub fn angle_between(self, rhs: Self) -> Option<f64> {
         let denominator = self.norm() * rhs.norm();
         if denominator > 0.0 && denominator.is_finite() {
@@ -212,6 +226,7 @@ impl Vec3 {
     /// 返回线性插值 `self + t * (rhs - self)`。
     ///
     /// `t = 0` 返回 `self`，`t = 1` 返回 `rhs`。`[0, 1]` 之外的值为外推。
+    #[must_use]
     pub fn lerp(self, rhs: Self, t: f64) -> Self {
         self + (rhs - self) * t
     }
@@ -219,6 +234,7 @@ impl Vec3 {
     /// Returns a vector with each component replaced by its absolute value.
     ///
     /// 返回各分量取绝对值后的向量。
+    #[must_use]
     pub fn abs(self) -> Self {
         Self::new(self.x.abs(), self.y.abs(), self.z.abs())
     }
@@ -226,6 +242,7 @@ impl Vec3 {
     /// Returns the largest component.
     ///
     /// 返回最大分量。
+    #[must_use]
     pub fn max_component(self) -> f64 {
         self.x.max(self.y).max(self.z)
     }
@@ -233,6 +250,7 @@ impl Vec3 {
     /// Returns the smallest component.
     ///
     /// 返回最小分量。
+    #[must_use]
     pub fn min_component(self) -> f64 {
         self.x.min(self.y).min(self.z)
     }
@@ -240,6 +258,7 @@ impl Vec3 {
     /// Returns `true` when all three components are finite.
     ///
     /// 当三个分量都有限时返回 `true`。
+    #[must_use]
     pub fn is_finite(self) -> bool {
         self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
     }

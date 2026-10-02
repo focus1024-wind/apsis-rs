@@ -114,6 +114,7 @@ impl Elements {
     /// 根数集历元是 UTC 日历瞬时，但传播器把它当作均匀时间原点，这正是理论
     /// 拟合所依据的约定。若先换算到均匀标度，历元会偏移一个闰秒量（约 33
     /// 秒），而该偏移会传播进深空分支的日月级数。
+    #[must_use]
     pub fn from_tle(element: &TwoLineElement) -> Option<Self> {
         let epoch_mjd = element.epoch.mjd(apsis_time::TimeScale::Utc)?;
         Some(Self {

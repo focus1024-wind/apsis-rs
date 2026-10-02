@@ -34,6 +34,7 @@ impl ParabolicAperture {
     /// Returns the physical area of the aperture, in square meters.
     ///
     /// 返回孔径的物理面积，单位为平方米。
+    #[must_use]
     pub fn area(self) -> f64 {
         PI * (self.diameter / 2.0).powi(2)
     }
@@ -48,6 +49,7 @@ impl ParabolicAperture {
     ///
     /// 这是物理面积按孔径效率缩放后的值。它是这样一块面积：若均匀收集，
     /// 将给出所观测到的功率。
+    #[must_use]
     pub fn effective_area(self) -> f64 {
         self.area() * self.efficiency
     }
@@ -55,6 +57,7 @@ impl ParabolicAperture {
     /// Returns `true` when the aperture describes a usable dish.
     ///
     /// 当该孔径描述一个可用天线时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.diameter.is_finite()
             && self.diameter > 0.0
@@ -89,6 +92,7 @@ impl ParabolicAperture {
     ///
     /// 它由有效面积经 [`Gain::from_effective_aperture`] 得出。孔径或波长
     /// 无效时返回 `None`。
+    #[must_use]
     pub fn peak_gain(self, wavelength: f64) -> Option<Gain> {
         if !self.is_valid() {
             return None;
@@ -113,6 +117,7 @@ impl ParabolicAperture {
     /// [`ParabolicAperture::half_power_beam_width`]。
     ///
     /// 孔径或波长无效时返回 `None`。
+    #[must_use]
     pub fn uniform_beam_width(self, wavelength: f64) -> Option<f64> {
         if !self.is_valid() {
             return None;
@@ -138,6 +143,7 @@ impl ParabolicAperture {
     /// 设计良好的天线的代表值。
     ///
     /// 孔径或波长无效时返回 `None`。
+    #[must_use]
     pub fn half_power_beam_width(self, wavelength: f64) -> Option<f64> {
         if !self.is_valid() {
             return None;
@@ -170,6 +176,7 @@ impl ParabolicAperture {
 /// 确认所得宽度相对一弧度很小。
 ///
 /// 直径或波长非正，或 `k` 非正时返回 `None`。
+#[must_use]
 pub fn beam_width(diameter: f64, wavelength: f64, k: f64) -> Option<f64> {
     if !diameter.is_finite()
         || diameter <= 0.0
@@ -202,6 +209,7 @@ pub fn beam_width(diameter: f64, wavelength: f64, k: f64) -> Option<f64> {
 /// `theta = theta_0 sqrt(floor / 12)`。
 ///
 /// 波束宽度或底限非正且非有限时返回 `None`。
+#[must_use]
 pub fn floor_angle(beam_width: f64, floor_db: f64) -> Option<f64> {
     if !beam_width.is_finite() || beam_width <= 0.0 {
         return None;

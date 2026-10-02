@@ -40,6 +40,7 @@ impl Orbit {
     ///
     /// 重力模型须与该根数集拟合时所用者一致；对编目卫星即 [`GravityModel::WGS72`]。
     /// 当根数不可传播时返回 `None`。
+    #[must_use]
     pub fn from_element(element: &TwoLineElement, model: GravityModel) -> Option<Self> {
         Self::try_from_element(element, model).ok()
     }
@@ -81,6 +82,7 @@ impl Orbit {
     /// Returns the underlying propagator.
     ///
     /// 返回底层的传播器。
+    #[must_use]
     pub fn satellite(&self) -> &Satellite {
         &self.satellite
     }
@@ -93,6 +95,7 @@ impl Orbit {
     /// 返回与该重力模型配对的引力参数。
     ///
     /// 该值即密切根数换算所用者，从而使换算与传播保持一致。
+    #[must_use]
     pub fn gravity_parameter(&self) -> GravityParameter {
         self.parameter
     }
@@ -106,6 +109,7 @@ impl Orbit {
     /// 返回根数历元，为 UTC 标度上的修正儒略日（Modified Julian Date）。
     ///
     /// 该历元即根数集中写下的值，也是传播器度量的时间原点。
+    #[must_use]
     pub fn epoch_mjd(&self) -> f64 {
         self.satellite.epoch_mjd()
     }
@@ -113,6 +117,7 @@ impl Orbit {
     /// Returns `true` when the propagator uses the deep space branch.
     ///
     /// 当传播器使用深空分支时返回 `true`。
+    #[must_use]
     pub fn is_deep_space(&self) -> bool {
         self.satellite.is_deep_space()
     }

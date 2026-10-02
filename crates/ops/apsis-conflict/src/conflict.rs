@@ -110,6 +110,7 @@ impl Conflict {
     /// Returns a copy of this conflict involving another task.
     ///
     /// 返回涉及另一任务的本冲突副本。
+    #[must_use]
     pub fn with_other(mut self, other: TaskId) -> Self {
         self.other = Some(other);
         self
@@ -118,6 +119,7 @@ impl Conflict {
     /// Returns a copy of this conflict involving a resource.
     ///
     /// 返回涉及某资源的本冲突副本。
+    #[must_use]
     pub fn with_resource(mut self, resource: ResourceId) -> Self {
         self.resource = Some(resource);
         self
@@ -134,6 +136,7 @@ impl Conflict {
     ///
     /// 容量或可用性冲突常可通过移动放置来修复，而需求冲突意味着该
     /// 放置本就不应出现在计划中。
+    #[must_use]
     pub const fn is_movable(&self) -> bool {
         matches!(
             self.kind,
@@ -187,6 +190,7 @@ impl ConflictReport {
     ///
     /// 冲突按时间、类别、任务依次排序，故其次序不取决于发现它们的
     /// 顺序。
+    #[must_use]
     pub fn new(mut conflicts: Vec<Conflict>, offered_tasks: usize, placed_tasks: usize) -> Self {
         conflicts.sort_by(|first, second| {
             first
@@ -207,6 +211,7 @@ impl ConflictReport {
     /// Returns the conflicts, in time order.
     ///
     /// 返回各冲突，按时间排序。
+    #[must_use]
     pub fn conflicts(&self) -> &[Conflict] {
         &self.conflicts
     }
@@ -214,6 +219,7 @@ impl ConflictReport {
     /// Returns the number of conflicts.
     ///
     /// 返回冲突数量。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.conflicts.len()
     }
@@ -226,6 +232,7 @@ impl ConflictReport {
     /// 当没有冲突时返回 `true`。
     ///
     /// 这是 [`ConflictReport::is_clear`] 的惯用拼写，二者始终一致。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.conflicts.is_empty()
     }
@@ -239,6 +246,7 @@ impl ConflictReport {
     ///
     /// 报告无冲突意味着该计划就本 crate 执行的每项检查而言是可行的，
     /// 并不意味着它最优。
+    #[must_use]
     pub fn is_clear(&self) -> bool {
         self.conflicts.is_empty()
     }
@@ -246,6 +254,7 @@ impl ConflictReport {
     /// Returns `true` when there is at least one conflict.
     ///
     /// 当至少存在一个冲突时返回 `true`。
+    #[must_use]
     pub fn has_conflicts(&self) -> bool {
         !self.conflicts.is_empty()
     }
@@ -253,6 +262,7 @@ impl ConflictReport {
     /// Returns the number of conflicts of one kind.
     ///
     /// 返回某一类别的冲突数量。
+    #[must_use]
     pub fn count_of(&self, kind: ConflictKind) -> usize {
         self.conflicts
             .iter()
@@ -263,6 +273,7 @@ impl ConflictReport {
     /// Returns the conflicts of one kind, in time order.
     ///
     /// 返回某一类别的冲突，按时间排序。
+    #[must_use]
     pub fn of_kind(&self, kind: ConflictKind) -> Vec<&Conflict> {
         self.conflicts
             .iter()
@@ -279,6 +290,7 @@ impl ConflictReport {
     ///
     /// 同一任务即使有多个冲突也只出现一次，这正是一个修复轮所需：待重新
     /// 考虑的任务集合。
+    #[must_use]
     pub fn conflicting_tasks(&self) -> Vec<TaskId> {
         let mut tasks: Vec<TaskId> = Vec::new();
         for conflict in &self.conflicts {
@@ -297,6 +309,7 @@ impl ConflictReport {
     /// Returns the number of tasks that were offered to the schedule.
     ///
     /// 返回提交给该计划的任务数量。
+    #[must_use]
     pub fn offered_tasks(&self) -> usize {
         self.offered_tasks
     }
@@ -304,6 +317,7 @@ impl ConflictReport {
     /// Returns the number of tasks that were placed.
     ///
     /// 返回已被放置的任务数量。
+    #[must_use]
     pub fn placed_tasks(&self) -> usize {
         self.placed_tasks
     }
@@ -311,6 +325,7 @@ impl ConflictReport {
     /// Returns a one line summary of the report.
     ///
     /// 返回该报告的单行摘要。
+    #[must_use]
     pub fn summary(&self) -> String {
         format!(
             "{} conflict(s) among {} placed of {} offered task(s)",

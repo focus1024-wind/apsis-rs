@@ -40,6 +40,7 @@ impl Radians {
     /// Creates an angle from a value in radians.
     ///
     /// 由弧度值创建角度。
+    #[must_use]
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
@@ -47,6 +48,7 @@ impl Radians {
     /// Returns this angle in radians.
     ///
     /// 返回该角度的弧度值。
+    #[must_use]
     pub const fn value(self) -> f64 {
         self.0
     }
@@ -54,6 +56,7 @@ impl Radians {
     /// Converts this angle to degrees.
     ///
     /// 把该角度换算为度。
+    #[must_use]
     pub fn to_degrees(self) -> Degrees {
         Degrees(self.0 * 180.0 / PI)
     }
@@ -67,6 +70,7 @@ impl Radians {
     ///
     /// 归约使用 [`f64::rem_euclid`](f64::rem_euclid)，因此对负输入与很大输入
     /// 都有良好定义。
+    #[must_use]
     pub fn wrap(self) -> Self {
         let two_pi = 2.0 * PI;
         let wrapped = (self.0 + PI).rem_euclid(two_pi) - PI;
@@ -78,6 +82,7 @@ impl Degrees {
     /// Creates an angle from a value in degrees.
     ///
     /// 由角度值创建角度。
+    #[must_use]
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
@@ -85,6 +90,7 @@ impl Degrees {
     /// Returns this angle in degrees.
     ///
     /// 返回该角度的度值。
+    #[must_use]
     pub const fn value(self) -> f64 {
         self.0
     }
@@ -92,6 +98,7 @@ impl Degrees {
     /// Converts this angle to radians.
     ///
     /// 把该角度换算为弧度。
+    #[must_use]
     pub fn to_radians(self) -> Radians {
         Radians(self.0 * PI / 180.0)
     }

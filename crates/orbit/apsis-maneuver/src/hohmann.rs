@@ -67,6 +67,7 @@ impl HohmannTransfer {
     /// 返回总速度变化，单位为千米每秒。
     ///
     /// 它是两次点火大小之和，即无论方向如何该转移所需的代价。
+    #[must_use]
     pub fn total_delta_v(&self) -> f64 {
         self.first_burn.abs() + self.second_burn.abs()
     }
@@ -74,6 +75,7 @@ impl HohmannTransfer {
     /// Returns `true` when the transfer raises the orbit.
     ///
     /// 当该转移抬升轨道时返回 `true`。
+    #[must_use]
     pub fn is_raising(&self) -> bool {
         self.to_radius > self.from_radius
     }
@@ -81,6 +83,7 @@ impl HohmannTransfer {
     /// Returns the velocity change of the first burn, unsigned.
     ///
     /// 返回第一次点火的速度变化，不带符号。
+    #[must_use]
     pub fn first_burn_magnitude(&self) -> f64 {
         self.first_burn.abs()
     }
@@ -88,6 +91,7 @@ impl HohmannTransfer {
     /// Returns the velocity change of the second burn, unsigned.
     ///
     /// 返回第二次点火的速度变化，不带符号。
+    #[must_use]
     pub fn second_burn_magnitude(&self) -> f64 {
         self.second_burn.abs()
     }
@@ -101,6 +105,7 @@ impl HohmannTransfer {
     /// 返回该转移所对称的平均半径，单位为千米。
     ///
     /// 它即该椭圆的半长轴，为两个轨道半径的算术平均。
+    #[must_use]
     pub fn mean_radius(&self) -> f64 {
         self.transfer_semi_major_axis
     }
@@ -155,7 +160,7 @@ pub fn hohmann_transfer(
     }
 
     let mu = parameter.value();
-    let transfer_semi_major_axis = (from_radius + to_radius) / 2.0;
+    let transfer_semi_major_axis = f64::midpoint(from_radius, to_radius);
 
     // The circular speeds at each radius.
     // 各半径处的圆轨道速度。

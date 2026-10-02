@@ -122,7 +122,7 @@ fn the_height_is_continuous_across_the_grid() {
     // 插值不得在相邻网格单元之间跳变。
     let mut previous = zero_isotherm_height(0.0, 0.0).expect("valid");
     for step in 1..=240 {
-        let longitude = step as f64 * 1.5;
+        let longitude = f64::from(step) * 1.5;
         let current = zero_isotherm_height(0.0, longitude).expect("valid coordinates");
         assert!(
             (current - previous).abs() < 1.0,

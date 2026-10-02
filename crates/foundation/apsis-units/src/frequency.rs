@@ -23,6 +23,7 @@ impl Hertz {
     /// Creates a frequency from a value in hertz.
     ///
     /// 由赫兹值创建频率。
+    #[must_use]
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
@@ -30,6 +31,7 @@ impl Hertz {
     /// Returns this frequency in hertz.
     ///
     /// 返回该频率的赫兹值。
+    #[must_use]
     pub const fn value(self) -> f64 {
         self.0
     }
@@ -42,6 +44,7 @@ impl Hertz {
     /// 返回与该频率对应的周期，单位为秒。
     ///
     /// 频率为零时返回 `f64::INFINITY`，这正是周期趋于无穷的正确极限。
+    #[must_use]
     pub fn period(self) -> f64 {
         1.0 / self.0
     }

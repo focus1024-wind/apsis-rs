@@ -68,6 +68,7 @@ impl TopologyError {
     /// Creates an error with the given category.
     ///
     /// 用给定类别创建一个错误。
+    #[must_use]
     pub fn new(kind: TopologyErrorKind) -> Self {
         Self { kind, detail: None }
     }
@@ -75,6 +76,7 @@ impl TopologyError {
     /// Attaches a description of the values that caused the failure.
     ///
     /// 附加对该失败所涉数值的说明。
+    #[must_use]
     pub fn with_detail(mut self, detail: impl Into<String>) -> Self {
         self.detail = Some(detail.into());
         self
@@ -83,6 +85,7 @@ impl TopologyError {
     /// Returns the category of this failure.
     ///
     /// 返回该失败的类别。
+    #[must_use]
     pub fn kind(&self) -> TopologyErrorKind {
         self.kind
     }
@@ -90,6 +93,7 @@ impl TopologyError {
     /// Returns the detail text attached to this error, if any.
     ///
     /// 返回附加在该错误上的说明文本，若有。
+    #[must_use]
     pub fn detail(&self) -> Option<&str> {
         self.detail.as_deref()
     }

@@ -65,6 +65,7 @@ const ARCSECOND_TO_RADIAN: f64 = PI / (180.0 * 3_600.0);
 /// 构成，其中最后两个角加上章动，这正是参考实现所用的形式。
 ///
 /// 出处：按 `eraPnm06a` 与 `eraFw2m` 所实现。
+#[must_use]
 pub fn bias_precession_nutation_matrix(t: f64) -> Mat3 {
     let angles = super::precession::precession_angles(t);
     let nutation = nutation_2000a_with_2006_adjustment(t);
@@ -93,6 +94,7 @@ pub fn bias_precession_nutation_matrix(t: f64) -> Mat3 {
 /// 精度给出的恒星时是重要的。
 ///
 /// 出处：MHB2000 补充项，按 `eraEect00` 所实现。
+#[must_use]
 pub fn equation_of_the_equinoxes_complementary_terms(t: f64) -> f64 {
     use super::eect_table::{CONSTANT_TERMS, LINEAR_TERMS};
 
@@ -111,7 +113,7 @@ pub fn equation_of_the_equinoxes_complementary_terms(t: f64) -> f64 {
     ];
 
     let mut constant = 0.0;
-    for term in CONSTANT_TERMS.iter() {
+    for term in &CONSTANT_TERMS {
         let argument: f64 = term
             .argument
             .iter()
@@ -123,7 +125,7 @@ pub fn equation_of_the_equinoxes_complementary_terms(t: f64) -> f64 {
     }
 
     let mut linear = 0.0;
-    for term in LINEAR_TERMS.iter() {
+    for term in &LINEAR_TERMS {
         let argument: f64 = term
             .argument
             .iter()
@@ -154,6 +156,7 @@ pub fn equation_of_the_equinoxes_complementary_terms(t: f64) -> f64 {
 /// 改正才能成为真春分点时角的量。
 ///
 /// 该值是黄经章动在真赤道上的投影 `dpsi cos(eps)`，加上该理论的补充项。
+#[must_use]
 pub fn equation_of_the_equinoxes(t: f64) -> f64 {
     let nutation = nutation_2000a_with_2006_adjustment(t);
     let obliquity = mean_obliquity(t);
@@ -215,6 +218,7 @@ impl PolarMotion {
     /// Creates a polar motion from its three angles.
     ///
     /// 由其三个角创建极移。
+    #[must_use]
     pub const fn new(x: f64, y: f64, s: f64) -> Self {
         Self { x, y, s }
     }
@@ -222,6 +226,7 @@ impl PolarMotion {
     /// Returns `true` when the angles are usable.
     ///
     /// 当各角可用时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.x.is_finite() && self.y.is_finite() && self.s.is_finite()
     }
@@ -245,6 +250,7 @@ impl PolarMotion {
     ///
     /// 出处：按 `eraPom00` 所实现，它依次施加各转动，每次都把新转动合成
     /// 到累加器的左侧。
+    #[must_use]
     pub fn matrix(self) -> Mat3 {
         rotation_x(-self.y) * rotation_y(-self.x) * rotation_z(self.s)
     }
@@ -272,6 +278,7 @@ impl PolarMotion {
 ///
 /// 出处：该合成即 `eraC2t06a` 对基于春分点的链条所产生者，极移由完整
 /// 变换的调用方单独施加。
+#[must_use]
 pub fn intermediate_to_terrestrial_matrix(ut1_julian_date: f64, tt_julian_date: f64) -> Mat3 {
     let apparent_sidereal = greenwich_apparent_sidereal_time(ut1_julian_date, tt_julian_date);
     rotation_z(apparent_sidereal)
@@ -289,6 +296,7 @@ pub fn intermediate_to_terrestrial_matrix(ut1_julian_date: f64, tt_julian_date: 
 /// 它是平恒星时加分点方程式，故即真春分点的时角。
 ///
 /// 出处：按 `eraGst06a` 所实现。
+#[must_use]
 pub fn greenwich_apparent_sidereal_time(ut1_julian_date: f64, tt_julian_date: f64) -> f64 {
     let t = (tt_julian_date - 2_451_545.0) / 36_525.0;
     let mean = greenwich_mean_sidereal_time(ut1_julian_date, tt_julian_date);
@@ -309,6 +317,7 @@ pub fn greenwich_apparent_sidereal_time(ut1_julian_date: f64, tt_julian_date: f6
 /// 的量。
 ///
 /// 出处：按 `eraGmst06` 所实现。
+#[must_use]
 pub fn greenwich_mean_sidereal_time(ut1_julian_date: f64, tt_julian_date: f64) -> f64 {
     let t = (tt_julian_date - 2_451_545.0) / 36_525.0;
     // The accumulated precession in right ascension, in arcseconds.
@@ -332,6 +341,7 @@ pub fn greenwich_mean_sidereal_time(ut1_julian_date: f64, tt_julian_date: f64) -
 /// 这是国际天文学联合会的线性表达式，它在该角已知的精度内是精确的。
 ///
 /// 出处：IERS Conventions（2010），式 8.32。
+#[must_use]
 pub fn earth_rotation_angle(ut1_julian_date: f64) -> f64 {
     let days = ut1_julian_date - 2_451_545.0;
     let turns = 0.779_057_273_264_0 + 1.002_737_811_911_354_6 * days;
@@ -356,6 +366,7 @@ pub fn earth_rotation_angle(ut1_julian_date: f64) -> f64 {
 /// 的。
 ///
 /// 出处：该合成即 `eraC2t06a` 所产生者。
+#[must_use]
 pub fn celestial_to_terrestrial_matrix(
     ut1_julian_date: f64,
     tt_julian_date: f64,

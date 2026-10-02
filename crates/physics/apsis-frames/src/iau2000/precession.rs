@@ -119,6 +119,7 @@ pub struct PrecessionAngles {
 /// 常数项为 84381.406 角秒，即 J2000.0 处的黄赤交角。
 ///
 /// 出处：IAU 2006 岁差，按 `eraObl06` 所实现。
+#[must_use]
 pub fn mean_obliquity(t: f64) -> f64 {
     let arcseconds = 84_381.406
         + t * (-46.836_769
@@ -139,6 +140,7 @@ pub fn mean_obliquity(t: f64) -> f64 {
 /// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度。
 ///
 /// 出处：P03 岁差，按 `eraPfw06` 所实现。
+#[must_use]
 pub fn precession_angles(t: f64) -> PrecessionAngles {
     let gamma_bar = -0.052_928
         + t * (10.556_378
@@ -179,6 +181,7 @@ pub fn precession_angles(t: f64) -> PrecessionAngles {
 /// 的系统误差。
 ///
 /// 出处：按 `eraBi00` 所实现，它把偏差给出为三个小转动而非一个矩阵。
+#[must_use]
 pub fn frame_bias_matrix() -> Mat3 {
     // The reference builds the bias from three elementary rotations, and
     // the result is reproduced here in the same order.
@@ -206,6 +209,7 @@ pub fn frame_bias_matrix() -> Mat3 {
 /// 时间以 J2000.0 起的儒略世纪计，位于地球时（TT）标度。
 ///
 /// 出处：按 `eraPmat06` 所实现。
+#[must_use]
 pub fn bias_precession_matrix(t: f64) -> Mat3 {
     let angles = precession_angles(t);
     frame_to_mean_of_date(&angles)
@@ -225,6 +229,7 @@ pub fn bias_precession_matrix(t: f64) -> Mat3 {
 /// 出处：按 `eraFw2m` 所实现，它依次施加四个基本转动。参考辅助函数把
 /// 每个新转动合成到累加器的左侧，故此处的乘积按最后施加的转动写在最前，
 /// 次序一致。
+#[must_use]
 pub fn frame_to_mean_of_date(angles: &PrecessionAngles) -> Mat3 {
     rotation_x(-angles.epsilon)
         * rotation_z(-angles.psi_bar)
@@ -269,6 +274,7 @@ fn rotation_y(angle: f64) -> Mat3 {
 /// 返回绕第三轴转 `angle` 的旋转，单位为弧度。
 ///
 /// 符号约定与本模块中其余各轴转动一致。
+#[must_use]
 pub fn rotation_z(angle: f64) -> Mat3 {
     let (sine, cosine) = angle.sin_cos();
     Mat3::from_rows([cosine, sine, 0.0], [-sine, cosine, 0.0], [0.0, 0.0, 1.0])

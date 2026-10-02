@@ -49,6 +49,7 @@ impl Geodetic {
     /// Creates a geodetic position from latitude, longitude, and height.
     ///
     /// 由纬度、经度与高创建大地位置。
+    #[must_use]
     pub const fn new(latitude: f64, longitude: f64, height: f64) -> Self {
         Self {
             latitude,
@@ -101,6 +102,7 @@ impl Geodetic {
     /// </div>
     ///
     /// 其中 `N` 为卯酉圈曲率半径。该形式处处精确，包括余弦因子为零的极点。
+    #[must_use]
     pub fn to_cartesian(self, ellipsoid: Ellipsoid) -> Vec3 {
         cartesian_from_geodetic(self, ellipsoid)
     }
@@ -109,6 +111,7 @@ impl Geodetic {
     /// longitude are inside their ranges.
     ///
     /// 当各字段都有限，且纬度与经度位于其范围内时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         let half_pi = core::f64::consts::FRAC_PI_2;
         self.latitude.is_finite()
@@ -129,6 +132,7 @@ impl Geodetic {
 /// 把大地位置转换为地固笛卡尔坐标。
 ///
 /// 坐标系定义与闭式解见 [`Geodetic::to_cartesian`]。
+#[must_use]
 pub fn cartesian_from_geodetic(geodetic: Geodetic, ellipsoid: Ellipsoid) -> Vec3 {
     let Geodetic {
         latitude,
@@ -164,6 +168,7 @@ pub fn cartesian_from_geodetic(geodetic: Geodetic, ellipsoid: Ellipsoid) -> Vec3
 /// 精化。对从椭球下方到地球同步半径范围内的位置，该迭代收敛到远优于一微米。
 ///
 /// 当位置非有限，或落在极轴上以致经度未定义时返回 `None`。
+#[must_use]
 pub fn geodetic_from_cartesian(cartesian: Vec3, ellipsoid: Ellipsoid) -> Option<Geodetic> {
     let Vec3 { x, y, z } = cartesian;
     if !cartesian.is_finite() {

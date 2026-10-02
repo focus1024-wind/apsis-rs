@@ -86,6 +86,7 @@ impl Calendar {
     /// Creates a calendar date from its fields.
     ///
     /// 由各字段创建日历日期。
+    #[must_use]
     pub const fn new(year: i32, month: u32, day: u32, hour: u32, minute: u32, second: f64) -> Self {
         Self {
             year,
@@ -100,6 +101,7 @@ impl Calendar {
     /// Creates a calendar date at the start of the given day.
     ///
     /// 在给定日期的起点创建日历日期。
+    #[must_use]
     pub const fn from_ymd(year: i32, month: u32, day: u32) -> Self {
         Self::new(year, month, day, 0, 0, 0.0)
     }
@@ -107,6 +109,7 @@ impl Calendar {
     /// Returns the seconds elapsed since the start of the day.
     ///
     /// 返回自该日起点已过去的秒数。
+    #[must_use]
     pub fn seconds_of_day(self) -> f64 {
         f64::from(self.hour) * 3_600.0 + f64::from(self.minute) * 60.0 + self.second
     }
@@ -115,6 +118,7 @@ impl Calendar {
     /// proleptic Gregorian calendar.
     ///
     /// 当各字段构成前推格里历中存在的日期时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         (1..=12).contains(&self.month)
             && self.day >= 1
@@ -140,6 +144,7 @@ impl fmt::Display for Calendar {
 /// calendar.
 ///
 /// 当 `year` 是前推格里历中的闰年时返回 `true`。
+#[must_use]
 pub const fn is_leap_year(year: i32) -> bool {
     (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
 }
@@ -151,6 +156,7 @@ pub const fn is_leap_year(year: i32) -> bool {
 /// 返回给定年给定月的天数。
 ///
 /// `month` 超出 `1..=12` 时返回零。
+#[must_use]
 pub const fn days_in_month(year: i32, month: u32) -> u32 {
     match month {
         1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
@@ -177,6 +183,7 @@ pub const fn days_in_month(year: i32, month: u32) -> u32 {
 ///
 /// 结果是该日起点的 MJD，故为整数。日内时刻被忽略；若需计入，请用
 /// [`Calendar::seconds_of_day`]。
+#[must_use]
 pub const fn mjd_from_ymd(year: i32, month: u32, day: u32) -> f64 {
     // Shift the year so that March is the first month, which places the
     // leap day at the end of the shifted year and removes a special case
@@ -198,6 +205,7 @@ pub const fn mjd_from_ymd(year: i32, month: u32, day: u32) -> f64 {
 /// 把修正儒略日（Modified Julian Date）转换为日历日期。
 ///
 /// 小数部分被忽略，故结果是包含该瞬时的日历日。
+#[must_use]
 pub fn ymd_from_mjd(mjd: f64) -> (i32, u32, u32) {
     let jdn = mjd.floor() as i64 + 2_400_001;
     let a = jdn + 32_044;
@@ -219,6 +227,7 @@ pub fn ymd_from_mjd(mjd: f64) -> (i32, u32, u32) {
 /// 只保留 MJD 的小数部分，表示为自午夜起的秒数。
 ///
 /// 对任何有限输入，结果都位于 `[0, 86400)`。
+#[must_use]
 pub fn seconds_of_day_from_mjd(mjd: f64) -> f64 {
     let fraction = mjd - mjd.floor();
     fraction * SECONDS_PER_DAY

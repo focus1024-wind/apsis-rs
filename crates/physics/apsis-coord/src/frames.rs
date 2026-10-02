@@ -50,6 +50,7 @@ impl Eci {
     /// Creates an inertial position from a vector in meters.
     ///
     /// 由米为单位的向量创建惯性位置。
+    #[must_use]
     pub const fn new(vector: Vec3) -> Self {
         Self(vector)
     }
@@ -57,6 +58,7 @@ impl Eci {
     /// Returns the position in meters.
     ///
     /// 返回以米为单位的位置。
+    #[must_use]
     pub const fn vector(self) -> Vec3 {
         self.0
     }
@@ -65,6 +67,7 @@ impl Eci {
     /// Earth Rotation Angle.
     ///
     /// 按给定的地球自转角把该惯性位置转换到地固系。
+    #[must_use]
     pub fn to_ecef(self, angle: EarthRotationAngle) -> Ecef {
         Ecef(rotation_eci_to_ecef(angle) * self.0)
     }
@@ -74,6 +77,7 @@ impl Ecef {
     /// Creates an Earth-fixed position from a vector in meters.
     ///
     /// 由米为单位的向量创建地固位置。
+    #[must_use]
     pub const fn new(vector: Vec3) -> Self {
         Self(vector)
     }
@@ -81,6 +85,7 @@ impl Ecef {
     /// Returns the position in meters.
     ///
     /// 返回以米为单位的位置。
+    #[must_use]
     pub const fn vector(self) -> Vec3 {
         self.0
     }
@@ -89,6 +94,7 @@ impl Ecef {
     /// Earth Rotation Angle.
     ///
     /// 按给定的地球自转角把该地固位置转换到惯性系。
+    #[must_use]
     pub fn to_eci(self, angle: EarthRotationAngle) -> Eci {
         Eci(rotation_ecef_to_eci(angle) * self.0)
     }
@@ -115,6 +121,7 @@ impl Geodetic {
     /// 由纬度、经度与高创建大地位置。
     ///
     /// 纬度与经度用弧度，高用米。
+    #[must_use]
     pub const fn new(latitude: f64, longitude: f64, height: f64) -> Self {
         Self(EllipsoidalPosition::new(latitude, longitude, height))
     }
@@ -122,6 +129,7 @@ impl Geodetic {
     /// Returns the geodetic latitude in radians.
     ///
     /// 返回大地纬度，单位为弧度。
+    #[must_use]
     pub const fn latitude(self) -> f64 {
         self.0.latitude
     }
@@ -129,6 +137,7 @@ impl Geodetic {
     /// Returns the longitude in radians, positive east.
     ///
     /// 返回经度，单位为弧度，向东为正。
+    #[must_use]
     pub const fn longitude(self) -> f64 {
         self.0.longitude
     }
@@ -136,6 +145,7 @@ impl Geodetic {
     /// Returns the height above the ellipsoid in meters.
     ///
     /// 返回椭球高，单位为米。
+    #[must_use]
     pub const fn height(self) -> f64 {
         self.0.height
     }
@@ -143,6 +153,7 @@ impl Geodetic {
     /// Returns the underlying ellipsoidal position.
     ///
     /// 返回底层的椭球位置。
+    #[must_use]
     pub const fn ellipsoidal(self) -> EllipsoidalPosition {
         self.0
     }
@@ -156,6 +167,7 @@ impl Geodetic {
     /// 把该位置转换到 WGS 84 椭球的地固系。
     ///
     /// 这是常见情形。需用其他椭球时请用 [`Geodetic::to_ecef_on`]。
+    #[must_use]
     pub fn to_ecef(self) -> Ecef {
         self.to_ecef_on(WGS84)
     }
@@ -164,6 +176,7 @@ impl Geodetic {
     /// ellipsoid.
     ///
     /// 把该位置转换到给定椭球的地固系。
+    #[must_use]
     pub fn to_ecef_on(self, ellipsoid: Ellipsoid) -> Ecef {
         Ecef(cartesian_from_geodetic(self.0, ellipsoid))
     }

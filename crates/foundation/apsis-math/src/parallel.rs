@@ -56,10 +56,9 @@ use core::hint;
 /// 某项工作应使用的线程数。
 ///
 /// 这是标准库报告的机器并行度，至少为一。调用方据此决定并行运行是否值得启动。
+#[must_use]
 pub fn thread_count() -> usize {
-    std::thread::available_parallelism()
-        .map(|count| count.get())
-        .unwrap_or(1)
+    std::thread::available_parallelism().map_or(1, std::num::NonZero::get)
 }
 
 /// The number of threads that should run a loop over `len` items.
@@ -75,6 +74,7 @@ pub fn thread_count() -> usize {
 /// 比线程数还短的循环会让多数线程无所事事，却仍要付出启动代价，因此在工作量
 /// 足以分给第二个线程之前本函数返回一个线程。阈值是每项约一微秒的开销，低于
 /// 此值启动线程无法收回成本。
+#[must_use]
 pub fn threads_for(len: usize) -> usize {
     const ITEMS_PER_THREAD: usize = 1_024;
     thread_count().min(len.div_ceil(ITEMS_PER_THREAD)).max(1)
@@ -163,6 +163,13 @@ where
 ///
 /// 闭包收到下标并返回该下标对应的值。与 [`for_each_index`] 一样，它可能在任意
 /// 线程上运行，故捕获的数据必须为 `Sync`。
+///
+/// # Panics
+///
+/// Panics only if the internal slot bookkeeping is inconsistent, which cannot
+/// happen through this API.
+///
+/// 仅当内部槽位记录不一致时 panic，这不会经本 API 发生。
 pub fn map_index<T, F>(len: usize, operation: F) -> Vec<T>
 where
     T: Send,

@@ -12,6 +12,7 @@ use core::f64::consts::PI;
 /// 返回某天顶角对应的仰角。
 ///
 /// 仰角自地平量起，天顶角自垂线量起，故两者相加为直角。
+#[must_use]
 pub fn elevation_from_zenith(zenith_angle: f64) -> f64 {
     PI / 2.0 - zenith_angle
 }
@@ -19,6 +20,7 @@ pub fn elevation_from_zenith(zenith_angle: f64) -> f64 {
 /// Returns the zenith angle for an elevation angle.
 ///
 /// 返回某仰角对应的天顶角。
+#[must_use]
 pub fn zenith_to_elevation(elevation: f64) -> f64 {
     PI / 2.0 - elevation
 }
@@ -64,6 +66,7 @@ pub fn zenith_to_elevation(elevation: f64) -> f64 {
 /// 施加；本函数报告它所建模的平面平行几何。
 ///
 /// 在地平及其以下不存在直接路径，返回无穷。
+#[must_use]
 pub fn air_mass(elevation: f64) -> f64 {
     let sine = elevation.sin();
     if sine <= 0.0 {

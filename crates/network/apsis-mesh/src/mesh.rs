@@ -32,6 +32,7 @@ impl CriticalLink {
     /// Creates a critical link record.
     ///
     /// 创建关键链路记录。
+    #[must_use]
     pub const fn new(from: usize, to: usize, cost: f64, components_without: usize) -> Self {
         Self {
             from,
@@ -97,6 +98,7 @@ impl Mesh {
     /// Creates a mesh over a topology.
     ///
     /// 在某拓扑之上创建网格。
+    #[must_use]
     pub const fn new(topology: Topology) -> Self {
         Self { topology }
     }
@@ -104,6 +106,7 @@ impl Mesh {
     /// Returns the underlying topology.
     ///
     /// 返回底层拓扑。
+    #[must_use]
     pub const fn topology(&self) -> &Topology {
         &self.topology
     }
@@ -111,6 +114,7 @@ impl Mesh {
     /// Returns the number of terminals.
     ///
     /// 返回终端的数量。
+    #[must_use]
     pub fn node_count(&self) -> usize {
         self.topology.node_count()
     }
@@ -118,6 +122,7 @@ impl Mesh {
     /// Returns the number of links.
     ///
     /// 返回链路的数量。
+    #[must_use]
     pub fn edge_count(&self) -> usize {
         self.topology.edge_count()
     }
@@ -126,6 +131,7 @@ impl Mesh {
     /// links as undirected.
     ///
     /// 把链路视为无向时，当每个终端都能到达其余每个终端，返回 `true`。
+    #[must_use]
     pub fn is_connected(&self) -> bool {
         self.topology.is_connected()
     }
@@ -133,6 +139,7 @@ impl Mesh {
     /// Returns the terminals reachable from a terminal.
     ///
     /// 返回自某终端可达的各终端。
+    #[must_use]
     pub fn reachable_from(&self, source: usize) -> Vec<usize> {
         reachable_from(&self.topology, source)
     }
@@ -145,6 +152,7 @@ impl Mesh {
     /// 返回两个终端之间独立路径的条数。
     ///
     /// 任一终端越界或两者相同时返回 `None`。
+    #[must_use]
     pub fn edge_connectivity(&self, source: usize, destination: usize) -> Option<usize> {
         edge_connectivity(&self.topology, source, destination)
     }
@@ -157,6 +165,7 @@ impl Mesh {
     /// 返回任意两个不同终端之间独立路径条数的最小值。
     ///
     /// 终端少于两个时返回 `None`。
+    #[must_use]
     pub fn minimum_connectivity(&self) -> Option<usize> {
         let node_count = self.topology.node_count();
         if node_count < 2 {
@@ -201,6 +210,7 @@ impl Mesh {
     ///
     /// 非桥的链路被省略，故空结果意味着每条链路都在某个环上，网格在
     /// 任何单条链路失效下都不会裂开。
+    #[must_use]
     pub fn critical_links(&self) -> Vec<CriticalLink> {
         let baseline = self.topology.connected_components();
         let mut critical = Vec::new();
@@ -246,6 +256,7 @@ impl Mesh {
     ///
     /// 这是网格具备单链路失效容错的条件，而这是不中断地承载业务的网络
     /// 应有的最低冗余。
+    #[must_use]
     pub fn survives_single_link_failure(&self) -> bool {
         self.critical_links().is_empty()
     }
@@ -260,6 +271,7 @@ impl Mesh {
     ///
     /// 对有向链路的网格而言，它统计可各自内部路由的块数。大于一的值
     /// 意味着有些终端无法从另一些到达。
+    #[must_use]
     pub fn strongly_connected_components(&self) -> usize {
         strongly_connected_components(&self.topology)
     }
@@ -267,6 +279,7 @@ impl Mesh {
     /// Returns a summary of the mesh connectivity.
     ///
     /// 返回网格连通性的摘要。
+    #[must_use]
     pub fn summarise(&self) -> MeshSummary {
         MeshSummary {
             node_count: self.topology.node_count(),

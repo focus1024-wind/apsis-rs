@@ -41,6 +41,7 @@ impl Sampler {
     /// Creates a sampler over an interval with a step.
     ///
     /// 按给定步长在某区间上创建采样器。
+    #[must_use]
     pub const fn new(start_seconds: f64, end_seconds: f64, step_seconds: f64) -> Self {
         Self {
             start_seconds,
@@ -60,6 +61,7 @@ impl Sampler {
     ///
     /// 各时刻须有限，结束时刻须严格晚于起始时刻，步长须有限且为正。零长度区间
     /// 会被拒绝，因为表格至少需要两个不同时刻，而插值没有区间可用。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.start_seconds.is_finite()
             && self.end_seconds.is_finite()
@@ -78,6 +80,7 @@ impl Sampler {
     ///
     /// 它等于区间内容纳的整步数，加上起点那一个；当结束时刻不在网格上时再加
     /// 结束那一个。采样器不可用时返回 `None`。
+    #[must_use]
     pub fn sample_count(&self) -> Option<usize> {
         if !self.is_valid() {
             return None;
@@ -88,11 +91,7 @@ impl Sampler {
         // whole step within a rounding tolerance.
         // 除非结束样本在舍入容差内已与最后一个整步重合，否则补上它。
         let remainder = span - whole_steps * self.step_seconds;
-        let extra = if remainder > self.step_seconds * 1e-9 {
-            1
-        } else {
-            0
-        };
+        let extra = usize::from(remainder > self.step_seconds * 1e-9);
         Some(whole_steps as usize + 1 + extra)
     }
 
@@ -106,6 +105,7 @@ impl Sampler {
     ///
     /// 采样器不可用时返回 `None`。结束时刻不落在网格上时最后一项为结束时刻，
     /// 否则为最后一个网格点。
+    #[must_use]
     pub fn times(&self) -> Option<Vec<f64>> {
         let count = self.sample_count()?;
         let mut times = Vec::with_capacity(count);

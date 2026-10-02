@@ -50,6 +50,7 @@ impl Scenario {
     /// Returns the name of the scenario.
     ///
     /// 返回该场景的名称。
+    #[must_use]
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -57,6 +58,7 @@ impl Scenario {
     /// Returns the time the simulation clock starts at, in seconds.
     ///
     /// 返回仿真时钟的起始时刻，单位为秒。
+    #[must_use]
     pub fn epoch(&self) -> f64 {
         self.epoch
     }
@@ -64,6 +66,7 @@ impl Scenario {
     /// Returns the latest time the run will process, if one is set.
     ///
     /// 返回该运行将处理的最晚时刻（若已设置）。
+    #[must_use]
     pub fn time_limit(&self) -> Option<f64> {
         self.time_limit
     }
@@ -72,6 +75,7 @@ impl Scenario {
     /// set.
     ///
     /// 返回该运行将执行的事件数上限（若已设置）。
+    #[must_use]
     pub const fn event_limit(&self) -> Option<u64> {
         self.event_limit
     }
@@ -79,6 +83,7 @@ impl Scenario {
     /// Returns the resources in the order they were added.
     ///
     /// 按添加次序返回各资源。
+    #[must_use]
     pub fn resources(&self) -> &[Resource] {
         &self.resources
     }
@@ -112,6 +117,7 @@ impl Scenario {
     /// Returns the tasks in the order they were added.
     ///
     /// 按添加次序返回各任务。
+    #[must_use]
     pub fn tasks(&self) -> &[Task] {
         &self.tasks
     }
@@ -119,6 +125,7 @@ impl Scenario {
     /// Returns the precedence constraints.
     ///
     /// 返回先后约束。
+    #[must_use]
     pub const fn precedence(&self) -> &PrecedenceGraph {
         &self.precedence
     }
@@ -132,6 +139,7 @@ impl Scenario {
     ///
     /// 返回的场景值不变而类型改变；调用方使用返回的值。历元必须有限
     /// 且非负。
+    #[must_use]
     pub fn with_epoch(mut self, epoch: f64) -> Self {
         self.epoch = epoch;
         self
@@ -146,6 +154,7 @@ impl Scenario {
     ///
     /// 负或非有限的限制清除该限制而非存储它，与引擎一致，后者忽略
     /// 它无法使用的限制。
+    #[must_use]
     pub const fn with_time_limit(mut self, limit: f64) -> Self {
         self.time_limit = if limit.is_finite() && limit >= 0.0 {
             Some(limit)
@@ -163,6 +172,7 @@ impl Scenario {
     /// 设置该运行将执行的事件数上限。
     ///
     /// 限制为零清除该限制而非存储它，与引擎一致，后者把零视为无限制。
+    #[must_use]
     pub const fn with_event_limit(mut self, limit: u64) -> Self {
         self.event_limit = if limit == 0 { None } else { Some(limit) };
         self
@@ -358,6 +368,7 @@ impl Scenario {
     /// Returns a summary of what the scenario holds.
     ///
     /// 返回场景所持有内容的摘要。
+    #[must_use]
     pub fn summary(&self) -> ScenarioSummary {
         ScenarioSummary {
             resources: self.resources.len(),
@@ -367,7 +378,7 @@ impl Scenario {
             total_availability: self
                 .resources
                 .iter()
-                .map(|resource| resource.total_availability())
+                .map(apsis_resource::Resource::total_availability)
                 .sum(),
         }
     }
@@ -381,39 +392,45 @@ impl Scenario {
     ///
     /// 输出解析回相等的场景，这正是场景可被存储并重新加载而不漂移的
     /// 原因。
+    #[must_use]
     pub fn to_text(&self) -> String {
+        use core::fmt::Write as _;
+
         let mut text = String::new();
-        text.push_str(&format!("scenario {}\n", self.name));
-        text.push_str(&format!("epoch {}\n", self.epoch));
+        let _ = writeln!(text, "scenario {}", self.name);
+        let _ = writeln!(text, "epoch {}", self.epoch);
         if let Some(limit) = self.time_limit {
-            text.push_str(&format!("time_limit {limit}\n"));
+            let _ = writeln!(text, "time_limit {limit}");
         }
         if let Some(limit) = self.event_limit {
-            text.push_str(&format!("event_limit {limit}\n"));
+            let _ = writeln!(text, "event_limit {limit}");
         }
 
         for resource in &self.resources {
-            text.push_str(&format!(
-                "\nresource {} capacity {}\n",
+            let _ = writeln!(
+                text,
+                "\nresource {} capacity {}",
                 resource.id.index(),
                 resource.capacity()
-            ));
+            );
             for window in resource.windows() {
-                text.push_str(&format!(
-                    "window {} {} {}\n",
+                let _ = writeln!(
+                    text,
+                    "window {} {} {}",
                     resource.id.index(),
                     window.start(),
                     window.end()
-                ));
+                );
             }
         }
 
         for task in &self.tasks {
-            text.push_str(&format!(
-                "\ntask {} duration {}\n",
+            let _ = writeln!(
+                text,
+                "\ntask {} duration {}",
                 task.id.index(),
                 task.duration
-            ));
+            );
             // A task with no window leaves both ends infinite, which the
             // text form omits rather than writing an infinity.
             // 没有窗口的任务使两端均为无限，文本形式省略它而不写出无限。
@@ -428,23 +445,20 @@ impl Scenario {
                 } else {
                     start + task.duration
                 };
-                text.push_str(&format!("task_window {} {start} {end}\n", task.id.index()));
+                let _ = writeln!(text, "task_window {} {start} {end}", task.id.index());
             }
-            text.push_str(&format!(
-                "task_priority {} {}\n",
-                task.id.index(),
-                task.priority
-            ));
+            let _ = writeln!(text, "task_priority {} {}", task.id.index(), task.priority);
             if task.mandatory {
-                text.push_str(&format!("task_mandatory {} true\n", task.id.index()));
+                let _ = writeln!(text, "task_mandatory {} true", task.id.index());
             }
             for requirement in &task.requirements {
-                text.push_str(&format!(
-                    "require {} {} {}\n",
+                let _ = writeln!(
+                    text,
+                    "require {} {} {}",
                     task.id.index(),
                     requirement.resource.index(),
                     requirement.demand
-                ));
+                );
             }
         }
 
@@ -459,7 +473,7 @@ impl Scenario {
             text.push('\n');
         }
         for (before, after) in edges {
-            text.push_str(&format!("precedence {before} {after}\n"));
+            let _ = writeln!(text, "precedence {before} {after}");
         }
 
         text

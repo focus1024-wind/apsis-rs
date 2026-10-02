@@ -216,6 +216,7 @@ impl Satellite {
     ///
     /// 当平均根数不描述模型可传播的轨道时返回 `None`，例如偏心率不小于一
     /// 的情形。需要知道原因的调用方应使用 [`Satellite::try_from_element`]。
+    #[must_use]
     pub fn from_element(element: &TwoLineElement, model: GravityModel) -> Option<Self> {
         Self::try_from_element(element, model).ok()
     }
@@ -254,6 +255,7 @@ impl Satellite {
     /// TAI scale.
     ///
     /// 返回根数历元，为 TAI 标度上的修正儒略日（Modified Julian Date）。
+    #[must_use]
     pub fn epoch_mjd(&self) -> f64 {
         self.epoch_mjd
     }
@@ -261,6 +263,7 @@ impl Satellite {
     /// Returns `true` when the deep space branch applies.
     ///
     /// 当深空分支适用时返回 `true`。
+    #[must_use]
     pub fn is_deep_space(&self) -> bool {
         self.method == Method::DeepSpace
     }
@@ -275,6 +278,7 @@ impl Satellite {
     ///
     /// 该瞬时以 TAI 标度上的修正儒略日（Modified Julian Date）给出，与
     /// [`Satellite::epoch_mjd`] 同一标度。
+    #[must_use]
     pub fn minutes_since_epoch(&self, tai_mjd: f64) -> f64 {
         (tai_mjd - self.epoch_mjd) * MINUTES_PER_DAY
     }
@@ -317,6 +321,7 @@ impl Satellite {
     /// Earth radius to the three halves.
     ///
     /// 返回模型的开普勒常数，单位为弧度每分每地球半径的三分之二次方。
+    #[must_use]
     pub fn xke(&self) -> f64 {
         self.model.xke()
     }
@@ -328,6 +333,13 @@ impl Satellite {
     ///
     /// 构建该记录，含所有只依赖历元根数的系数。
     fn initialise(elements: &Elements, model: GravityModel) -> Self {
+        // The divisor guards the singularity at inclination pi, where the
+        // expression is finite in the limit. `1.5e-12` is the threshold used
+        // by the reference implementation.
+        // 该除数用于保护倾角为 pi 处的奇点，该处表达式在极限下有限。`1.5e-12`
+        // 是参考实现所用的阈值。
+        const INCLINATION_GUARD: f64 = 1.5e-12;
+
         let xke = model.xke();
         let j2 = model.j2;
         let j4 = model.j4;
@@ -437,12 +449,6 @@ impl Satellite {
         let nodecf = 3.5 * omeosq * xhdot1 * cc1;
         let t2cof = 1.5 * cc1;
 
-        // The divisor guards the singularity at inclination pi, where the
-        // expression is finite in the limit. `1.5e-12` is the threshold used
-        // by the reference implementation.
-        // 该除数用于保护倾角为 pi 处的奇点，该处表达式在极限下有限。`1.5e-12`
-        // 是参考实现所用的阈值。
-        const INCLINATION_GUARD: f64 = 1.5e-12;
         let xlcof = if (cosio + 1.0).abs() > INCLINATION_GUARD {
             -0.25 * model.j3_over_j2() * sinio * (3.0 + 5.0 * cosio) / (1.0 + cosio)
         } else {

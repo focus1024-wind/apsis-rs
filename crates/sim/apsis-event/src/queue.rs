@@ -78,6 +78,7 @@ impl QueueState {
     /// Returns `true` when no events are pending.
     ///
     /// 当没有待处理事件时返回 `true`。
+    #[must_use]
     pub const fn is_idle(&self) -> bool {
         self.pending == 0
     }
@@ -113,6 +114,7 @@ impl<T> EventQueue<T> {
     /// Creates an empty queue.
     ///
     /// 创建一个空队列。
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             pending: BinaryHeap::new(),
@@ -125,6 +127,7 @@ impl<T> EventQueue<T> {
     /// Returns the number of pending events.
     ///
     /// 返回待处理事件的数量。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.pending.len()
     }
@@ -132,6 +135,7 @@ impl<T> EventQueue<T> {
     /// Returns `true` when no events are pending.
     ///
     /// 当没有待处理事件时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.pending.is_empty()
     }
@@ -139,6 +143,7 @@ impl<T> EventQueue<T> {
     /// Returns the number of events delivered so far.
     ///
     /// 返回迄今已投递的事件数。
+    #[must_use]
     pub const fn delivered(&self) -> u64 {
         self.delivered
     }
@@ -146,6 +151,7 @@ impl<T> EventQueue<T> {
     /// Returns what the queue currently holds.
     ///
     /// 返回队列当前所持有的状态。
+    #[must_use]
     pub fn state(&self) -> QueueState {
         QueueState {
             pending: self.pending.len(),
@@ -161,6 +167,7 @@ impl<T> EventQueue<T> {
     /// 返回最早待处理事件的时间。
     ///
     /// 队列为空时返回 `None`。
+    #[must_use]
     pub fn next_time(&self) -> Option<f64> {
         self.pending.peek().map(|entry| entry.time())
     }
@@ -235,6 +242,13 @@ impl<T> EventQueue<T> {
     ///
     /// 队列为空时返回 `None`。载荷被取离队列，故该槽位被留空；调度
     /// 后续事件会复用该槽位。
+    ///
+    /// # Panics
+    ///
+    /// Panics only if the queue is internally inconsistent, which cannot
+    /// happen through the public API.
+    ///
+    /// 仅当队列内部不一致时 panic，这不会经公共 API 发生。
     pub fn pop(&mut self) -> Option<Event<T>> {
         let entry = self.pending.pop()?;
         let index = entry.sequence as usize;

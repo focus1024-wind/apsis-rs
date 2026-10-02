@@ -71,6 +71,7 @@ impl HandoverPolicy {
     /// Creates a policy from its three parameters.
     ///
     /// 由其三个参数创建策略。
+    #[must_use]
     pub const fn new(
         minimum_quality: f64,
         handover_margin: f64,
@@ -96,6 +97,7 @@ impl HandoverPolicy {
     /// 余量不得为负，因为负余量会使切换到更差候选也值得做；驻留时间也
     /// 不得为负。最低质量可以是任何有限值，因为调用方可以把它放在质量
     /// 尺度范围之外以禁用强制切换。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.minimum_quality.is_finite()
             && self.handover_margin.is_finite()
@@ -128,6 +130,7 @@ impl HandoverPolicy {
     /// 返回该策略下的最优候选。
     ///
     /// 最优候选是质量最大者，并列时以较小的卫星标识符打破，使结果确定。
+    #[must_use]
     pub fn best<'a>(&self, candidates: &'a [Candidate]) -> Option<&'a Candidate> {
         candidates.iter().max_by(|first, second| {
             first
@@ -173,6 +176,7 @@ impl HandoverRecord {
     /// Creates a record.
     ///
     /// 创建一条记录。
+    #[must_use]
     pub const fn new(
         from: usize,
         to: usize,
@@ -192,6 +196,7 @@ impl HandoverRecord {
     /// Returns the gain in quality that the handover achieved.
     ///
     /// 返回该切换所取得的质量增益。
+    #[must_use]
     pub fn quality_gain(&self) -> f64 {
         self.to_quality - self.from_quality
     }
@@ -220,6 +225,7 @@ impl HandoverTracker {
     /// Creates a tracker with no serving satellite.
     ///
     /// 创建没有服务卫星的跟踪器。
+    #[must_use]
     pub fn new(policy: HandoverPolicy) -> Self {
         Self {
             policy,
@@ -232,6 +238,7 @@ impl HandoverTracker {
     /// Creates a tracker that is already serving a satellite.
     ///
     /// 创建已在服务某卫星的跟踪器。
+    #[must_use]
     pub fn serving(policy: HandoverPolicy, satellite: usize) -> Self {
         Self {
             policy,
@@ -244,6 +251,7 @@ impl HandoverTracker {
     /// Returns the policy.
     ///
     /// 返回策略。
+    #[must_use]
     pub fn policy(&self) -> HandoverPolicy {
         self.policy
     }
@@ -251,6 +259,7 @@ impl HandoverTracker {
     /// Returns the satellite currently being served, if any.
     ///
     /// 返回当前正在服务的卫星（若有）。
+    #[must_use]
     pub fn current(&self) -> Option<usize> {
         self.serving
     }
@@ -258,6 +267,7 @@ impl HandoverTracker {
     /// Returns the time of the last handover, if there has been one.
     ///
     /// 返回最后一次切换的时间（若曾发生）。
+    #[must_use]
     pub fn last_handover_seconds(&self) -> Option<f64> {
         self.last_handover_seconds
     }
@@ -265,6 +275,7 @@ impl HandoverTracker {
     /// Returns the handover history, in time order.
     ///
     /// 按时间次序返回切换历史。
+    #[must_use]
     pub fn history(&self) -> &[HandoverRecord] {
         &self.history
     }
@@ -272,6 +283,7 @@ impl HandoverTracker {
     /// Returns the number of handovers that have occurred.
     ///
     /// 返回已发生的切换次数。
+    #[must_use]
     pub fn handover_count(&self) -> usize {
         self.history.len()
     }
@@ -339,6 +351,7 @@ impl HandoverTracker {
     /// 返回两次切换之间的平均时间，单位为秒。
     ///
     /// 发生的切换少于两次时返回 `None`，因为单个间隔算不上均值。
+    #[must_use]
     pub fn mean_interval_seconds(&self) -> Option<f64> {
         if self.history.len() < 2 {
             return None;
@@ -357,6 +370,7 @@ impl HandoverTracker {
     ///
     /// 速率跨越整个历史度量，从首次切换到末次。切换少于两次或它们都
     /// 发生在同一瞬时时返回 `None`。
+    #[must_use]
     pub fn handover_rate_per_second(&self) -> Option<f64> {
         let interval = self.mean_interval_seconds()?;
         if interval <= 0.0 {

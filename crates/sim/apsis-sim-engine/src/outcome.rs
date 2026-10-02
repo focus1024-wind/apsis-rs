@@ -40,6 +40,7 @@ impl StopReason {
     /// to do rather than because a limit intervened.
     ///
     /// 当运行因模型已无工作而结束、而非因某个限制介入时返回 `true`。
+    #[must_use]
     pub const fn is_natural(self) -> bool {
         matches!(self, Self::QueueEmpty)
     }
@@ -47,6 +48,7 @@ impl StopReason {
     /// Returns a short name for the reason.
     ///
     /// 返回该原因的简称。
+    #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
             Self::QueueEmpty => "queue empty",
@@ -99,6 +101,7 @@ impl EngineOutcome {
     /// Returns the time the run covered, in seconds.
     ///
     /// 返回该运行所覆盖的时长，单位为秒。
+    #[must_use]
     pub fn duration(&self) -> f64 {
         self.ended_at - self.started_at
     }
@@ -112,6 +115,7 @@ impl EngineOutcome {
     ///
     /// 它衡量模型的繁忙程度，而非该运行在挂钟上耗时多久。运行未覆盖
     /// 任何时间时返回 `None`。
+    #[must_use]
     pub fn event_rate(&self) -> Option<f64> {
         let duration = self.duration();
         if duration > 0.0 {
@@ -125,6 +129,7 @@ impl EngineOutcome {
     /// work rather than because a limit stopped it.
     ///
     /// 当运行因模型已无工作而结束、而非因某个限制而停止时返回 `true`。
+    #[must_use]
     pub fn is_natural(&self) -> bool {
         self.reason.is_natural()
     }
@@ -167,6 +172,7 @@ impl EngineState {
     /// Returns `true` when no events are pending.
     ///
     /// 当没有待处理事件时返回 `true`。
+    #[must_use]
     pub const fn is_idle(&self) -> bool {
         self.pending == 0
     }

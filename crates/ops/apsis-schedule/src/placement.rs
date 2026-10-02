@@ -33,6 +33,7 @@ impl Placement {
     /// Creates a placement.
     ///
     /// 创建一次放置。
+    #[must_use]
     pub const fn new(task: TaskId, start: f64, duration: f64) -> Self {
         Self {
             task,
@@ -44,6 +45,7 @@ impl Placement {
     /// Returns the end time of the placement, in seconds.
     ///
     /// 返回放置的结束时刻，单位为秒。
+    #[must_use]
     pub fn end(&self) -> f64 {
         self.start + self.duration
     }
@@ -58,6 +60,7 @@ impl Placement {
     ///
     /// 区间是半开的，故放置含其起点而不含其终点。该约定使两个首尾相接的
     /// 放置可共享边界而不重叠。
+    #[must_use]
     pub fn covers(&self, time: f64) -> bool {
         time >= self.start && time < self.end()
     }
@@ -65,6 +68,7 @@ impl Placement {
     /// Returns `true` when the placement overlaps another.
     ///
     /// 当该放置与另一个放置重叠时返回 `true`。
+    #[must_use]
     pub fn overlaps(&self, other: &Self) -> bool {
         self.start < other.end() && other.start < self.end()
     }
@@ -72,6 +76,7 @@ impl Placement {
     /// Returns `true` when the placement is usable.
     ///
     /// 当该放置可用时返回 `true`。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.start.is_finite() && self.duration.is_finite() && self.duration >= 0.0
     }
@@ -115,6 +120,7 @@ impl ResourceUsage {
     /// 需求占据一半的资源同样算作忙碌。
     ///
     /// 区间非正时返回 `None`。
+    #[must_use]
     pub fn utilisation(&self, interval_seconds: f64) -> Option<f64> {
         if interval_seconds > 0.0 && interval_seconds.is_finite() {
             Some(self.busy_seconds / interval_seconds)
@@ -165,6 +171,7 @@ impl Evaluation {
     /// 返回该计划覆盖的规划时域长度，单位为秒。
     ///
     /// 它是从最早开始到最晚结束的时间，即该计划的 makespan。
+    #[must_use]
     pub fn makespan(&self) -> f64 {
         (self.makespan_end - self.makespan_start).max(0.0)
     }
@@ -176,6 +183,7 @@ impl Evaluation {
     /// 返回所提交任务中被放置的比例。
     ///
     /// 没有提交任务时返回 `None`。
+    #[must_use]
     pub fn fill_rate(&self) -> Option<f64> {
         if self.offered_count == 0 {
             return None;
@@ -186,6 +194,7 @@ impl Evaluation {
     /// Returns `true` when every offered task was placed.
     ///
     /// 当所有提交任务均被放置时返回 `true`。
+    #[must_use]
     pub fn is_complete(&self) -> bool {
         self.placed_count == self.offered_count
     }
@@ -193,6 +202,7 @@ impl Evaluation {
     /// Returns the usage of one resource.
     ///
     /// 返回某个资源的使用情况。
+    #[must_use]
     pub fn usage_of(&self, resource: ResourceId) -> Option<&ResourceUsage> {
         self.resource_usage
             .iter()

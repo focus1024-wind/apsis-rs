@@ -77,6 +77,7 @@ impl KeplerianElements {
     /// Returns `true` when the elements describe an elliptical orbit.
     ///
     /// 当这些根数描述一条椭圆轨道时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.semi_major_axis.is_finite()
             && self.semi_major_axis > 0.0
@@ -97,6 +98,7 @@ impl KeplerianElements {
     /// 返回半通径，单位为千米。
     ///
     /// 它等于 `a (1 - e^2)`，即从焦点沿垂直于长轴方向量到轨道的距离。
+    #[must_use]
     pub fn semi_latus_rectum(self) -> f64 {
         self.semi_major_axis * (1.0 - self.eccentricity * self.eccentricity)
     }
@@ -104,6 +106,7 @@ impl KeplerianElements {
     /// Returns the semi-minor axis, in kilometers.
     ///
     /// 返回半短轴，单位为千米。
+    #[must_use]
     pub fn semi_minor_axis(self) -> f64 {
         self.semi_major_axis * (1.0 - self.eccentricity * self.eccentricity).sqrt()
     }
@@ -115,6 +118,7 @@ impl KeplerianElements {
     /// 返回近地点半径，单位为千米。
     ///
     /// 它是到焦点的最近距离 `a (1 - e)`。
+    #[must_use]
     pub fn perigee_radius(self) -> f64 {
         self.semi_major_axis * (1.0 - self.eccentricity)
     }
@@ -126,6 +130,7 @@ impl KeplerianElements {
     /// 返回远地点半径，单位为千米。
     ///
     /// 它是离焦点最远的点 `a (1 + e)`。
+    #[must_use]
     pub fn apogee_radius(self) -> f64 {
         self.semi_major_axis * (1.0 + self.eccentricity)
     }
@@ -137,6 +142,7 @@ impl KeplerianElements {
     /// 返回轨道周期，单位为秒。
     ///
     /// 这是开普勒第三定律，`T = 2 pi sqrt(a^3 / mu)`。
+    #[must_use]
     pub fn period(self, parameter: GravityParameter) -> f64 {
         2.0 * core::f64::consts::PI * (self.semi_major_axis.powi(3) / parameter.value()).sqrt()
     }
@@ -144,6 +150,7 @@ impl KeplerianElements {
     /// Returns the eccentric anomaly corresponding to the true anomaly.
     ///
     /// 返回与真近点角对应的偏近点角。
+    #[must_use]
     pub fn eccentric_anomaly(self) -> f64 {
         crate::anomaly::eccentric_from_true(self.true_anomaly, self.eccentricity)
     }
@@ -151,6 +158,7 @@ impl KeplerianElements {
     /// Returns the mean anomaly corresponding to the true anomaly.
     ///
     /// 返回与真近点角对应的平近点角。
+    #[must_use]
     pub fn mean_anomaly(self) -> f64 {
         crate::anomaly::mean_from_true(self.true_anomaly, self.eccentricity)
     }
@@ -194,6 +202,7 @@ impl KeplerianElements {
     /// </div>
     ///
     /// 再依次按近地点幅角、倾角与升交点赤经旋转。
+    #[must_use]
     pub fn to_state(self, parameter: GravityParameter) -> Option<State> {
         if !self.is_valid() {
             return None;
@@ -236,6 +245,7 @@ impl KeplerianElements {
     ///
     /// 当状态非有限、半径为零或轨道非椭圆时返回 `None`。该换算假定轨道受束缚，
     /// 因此抛物线或双曲线状态被拒绝，而不是返回偏心率大于等于一的结果。
+    #[must_use]
     pub fn from_state(state: &State, parameter: GravityParameter) -> Option<Self> {
         let position = state.position;
         let velocity = state.velocity;
@@ -339,6 +349,7 @@ impl KeplerianElements {
     /// Returns a copy of these elements with a different true anomaly.
     ///
     /// 返回真近点角不同的这些根数的副本。
+    #[must_use]
     pub fn with_true_anomaly(self, true_anomaly: f64) -> Self {
         Self {
             true_anomaly,
@@ -354,6 +365,7 @@ impl KeplerianElements {
     /// 返回给定平近点角处这些根数的副本。
     ///
     /// 真近点角由平近点角经开普勒方程求得。
+    #[must_use]
     pub fn with_mean_anomaly(self, mean_anomaly: f64) -> Self {
         let eccentric = eccentric_from_mean(mean_anomaly, self.eccentricity);
         Self {
@@ -372,6 +384,7 @@ impl KeplerianElements {
     ///
     /// 其值与 [`KeplerianElements::mean_anomaly`] 相同，此处命名是为了与
     /// [`KeplerianElements::with_mean_anomaly`] 对称。
+    #[must_use]
     pub fn to_mean_anomaly(self) -> f64 {
         mean_from_eccentric(self.eccentric_anomaly(), self.eccentricity)
     }
@@ -387,6 +400,7 @@ impl KeplerianElements {
 ///
 /// 该旋转是三个基本旋转之积：先绕第三轴转近地点幅角，再绕第一轴转倾角，最后
 /// 绕第三轴转赤经。
+#[must_use]
 pub fn perifocal_to_inertial(
     argument_of_perigee: f64,
     inclination: f64,
@@ -456,6 +470,13 @@ pub fn perifocal_to_inertial(
 /// 自交点量取夹角处理，这与 [`KeplerianElements::from_state`] 处理近地点幅角
 /// 时所用的约定相同。
 fn true_anomaly_from_state(position: Vec3, velocity: Vec3, eccentricity: f64, mu: f64) -> f64 {
+    // Below this eccentricity the angle is recovered from the node instead,
+    // because the division by the eccentricity would amplify the rounding
+    // in the radial terms.
+    // 偏心率低于此值时改为自交点反求夹角，因为除以偏心率会放大径向项中的
+    // 舍入误差。
+    const CIRCULAR_THRESHOLD: f64 = 1e-8;
+
     let radius = position.norm();
     let radial_velocity = position.dot(velocity) / radius;
     let semi_major_axis = 1.0 / (2.0 / radius - velocity.norm_squared() / mu);
@@ -463,12 +484,6 @@ fn true_anomaly_from_state(position: Vec3, velocity: Vec3, eccentricity: f64, mu
         return 0.0;
     }
 
-    // Below this eccentricity the angle is recovered from the node instead,
-    // because the division by the eccentricity would amplify the rounding
-    // in the radial terms.
-    // 偏心率低于此值时改为自交点反求夹角，因为除以偏心率会放大径向项中的
-    // 舍入误差。
-    const CIRCULAR_THRESHOLD: f64 = 1e-8;
     if eccentricity < CIRCULAR_THRESHOLD {
         let angular_momentum = position.cross(velocity);
         let node = Vec3::Z.cross(angular_momentum);

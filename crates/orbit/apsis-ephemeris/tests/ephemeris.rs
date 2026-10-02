@@ -199,9 +199,7 @@ fn the_interpolated_velocity_matches_the_position_derivative() {
     let analytic = ephemeris.state_at(time).expect("covered").velocity;
     assert!(
         numeric.distance(analytic) < 1e-6,
-        "numeric {} against analytic {}",
-        numeric,
-        analytic
+        "numeric {numeric} against analytic {analytic}"
     );
 }
 

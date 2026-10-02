@@ -89,6 +89,7 @@ impl ImprovementSettings {
     /// Creates settings with the given bound.
     ///
     /// 以给定界创建设置。
+    #[must_use]
     pub const fn new(max_attempts_per_task: usize) -> Self {
         Self {
             enabled: true,
@@ -99,6 +100,7 @@ impl ImprovementSettings {
     /// Returns settings that do not run the pass.
     ///
     /// 返回不运行该轮的设置。
+    #[must_use]
     pub const fn disabled() -> Self {
         Self {
             enabled: false,
@@ -126,6 +128,7 @@ impl ImprovementOutcome {
     /// Returns the number of tasks the pass placed.
     ///
     /// 返回该轮所放置的任务数。
+    #[must_use]
     pub fn placed_count(&self) -> usize {
         self.placed.len()
     }
@@ -133,6 +136,7 @@ impl ImprovementOutcome {
     /// Returns `true` when the pass changed nothing.
     ///
     /// 当该轮未作任何改变时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.placed.is_empty() && self.moved.is_empty()
     }
@@ -290,30 +294,27 @@ fn relocate_pair(
 
     // With the waiting task placed, look for a new home for the blocker.
     // 等待任务已放置后，为阻塞者寻找新的去处。
-    match earliest_feasible_start(blocker, tasks, schedule, resources) {
-        Some(blocker_new_start) => {
-            if schedule.place(blocker, blocker_new_start).is_ok() {
-                return true;
-            }
-            // The search said the placement was feasible, so a failure here
-            // can only come from the blocker being placed already, which it
-            // is not. Restore the original arrangement and report failure
-            // rather than leaving a half applied move.
-            // 搜索已判定该放置可行，故此处的失败只可能源于阻塞者已被
-            // 放置，而它并未被放置。恢复原安排并报告失败，以免留下
-            // 半完成的移动。
-            let _ = schedule.unplace(waiting.id);
-            let _ = schedule.place(blocker, blocker_start);
-            false
+    if let Some(blocker_new_start) = earliest_feasible_start(blocker, tasks, schedule, resources) {
+        if schedule.place(blocker, blocker_new_start).is_ok() {
+            return true;
         }
-        None => {
-            // The blocker has nowhere to go, so the move is abandoned and
-            // the original arrangement restored.
-            // 阻塞者无处可去，故放弃该次移动并恢复原安排。
-            let _ = schedule.unplace(waiting.id);
-            let _ = schedule.place(blocker, blocker_start);
-            false
-        }
+        // The search said the placement was feasible, so a failure here
+        // can only come from the blocker being placed already, which it
+        // is not. Restore the original arrangement and report failure
+        // rather than leaving a half applied move.
+        // 搜索已判定该放置可行，故此处的失败只可能源于阻塞者已被
+        // 放置，而它并未被放置。恢复原安排并报告失败，以免留下
+        // 半完成的移动。
+        let _ = schedule.unplace(waiting.id);
+        let _ = schedule.place(blocker, blocker_start);
+        false
+    } else {
+        // The blocker has nowhere to go, so the move is abandoned and
+        // the original arrangement restored.
+        // 阻塞者无处可去，故放弃该次移动并恢复原安排。
+        let _ = schedule.unplace(waiting.id);
+        let _ = schedule.place(blocker, blocker_start);
+        false
     }
 }
 

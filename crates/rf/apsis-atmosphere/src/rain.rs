@@ -273,6 +273,7 @@ impl RainAttenuation {
     /// Returns the total attenuation.
     ///
     /// 返回总衰减。
+    #[must_use]
     pub fn attenuation(self) -> Decibel {
         Decibel::from_db(self.attenuation_db)
     }
@@ -280,6 +281,7 @@ impl RainAttenuation {
     /// Returns `true` when every value is finite and not negative.
     ///
     /// 当每个值有限且非负时返回 `true`。
+    #[must_use]
     pub fn is_valid(self) -> bool {
         self.specific_db_per_km.is_finite()
             && self.specific_db_per_km >= 0.0
@@ -353,6 +355,7 @@ fn base_alpha(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) 
 /// 的频率陈述。
 ///
 /// 出处：ITU-R 建议书 P.838-3，式 2 与式 3。
+#[must_use]
 pub fn rain_coefficients(frequency: f64, polarisation: f64, elevation: f64) -> Option<(f64, f64)> {
     let frequency_ghz = frequency / 1.0e9;
     if !frequency_ghz.is_finite() || !(1.0..=1_000.0).contains(&frequency_ghz) {
@@ -414,6 +417,7 @@ pub fn rain_coefficients(frequency: f64, polarisation: f64, elevation: f64) -> O
 /// 降雨率以毫米每小时计。
 ///
 /// 降雨率为负，或系数不可用时返回 `None`。
+#[must_use]
 pub fn specific_rain_attenuation(
     rain_rate: f64,
     frequency: f64,
@@ -463,6 +467,7 @@ pub fn specific_rain_attenuation(
 /// `None`。
 ///
 /// 出处：ITU-R 建议书 P.618-13，式 1 至式 10。
+#[must_use]
 pub fn rain_attenuation(
     rain_rate: f64,
     frequency: f64,
@@ -571,6 +576,7 @@ pub fn rain_attenuation(
 /// 返回以相对水平倾角描述的极化所对应的弧度角。
 ///
 /// 这是为两种常被具名引用的情形提供的便利。
+#[must_use]
 pub const fn polarisation_tilt(degrees_from_horizontal: f64) -> f64 {
     degrees_from_horizontal * core::f64::consts::PI / 180.0
 }
@@ -603,6 +609,7 @@ pub const fn polarisation_tilt(degrees_from_horizontal: f64) -> f64 {
 ///
 /// 出处：雨顶高度来自 ITU-R 建议书 P.839-4，路径方法来自 ITU-R 建议书
 /// P.618-13。
+#[must_use]
 pub fn rain_attenuation_at(
     rain_rate: f64,
     frequency: f64,

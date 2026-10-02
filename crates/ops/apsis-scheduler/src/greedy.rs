@@ -17,6 +17,7 @@ use apsis_task::{Task, TaskId};
 ///
 /// 需求超过某资源容量的任务永远无法在其上调度，故在搜索时刻之前先检查
 /// 此点。所需资源不存在时返回 `false`。
+#[must_use]
 pub fn resources_have_capacity(task: &Task, resources: &ResourceSet) -> bool {
     task.requirements.iter().all(|requirement| {
         resources
@@ -34,6 +35,7 @@ pub fn resources_have_capacity(task: &Task, resources: &ResourceSet) -> bool {
 /// 给定一份计划及其任务集合，返回某瞬时各资源上的总需求。
 ///
 /// 结果按资源在集合中的次序排列。不在集合中的资源被省略。
+#[must_use]
 pub fn demand_at(
     schedule: &Schedule,
     tasks: &[Task],
@@ -71,6 +73,7 @@ pub fn demand_at(
 ///
 /// 资源空闲当且仅当其可用窗口覆盖该瞬，且其上已放置的需求还留有一个单
 /// 位的余量。这正是水位调度器寻找有余量卫星时所作的查询。
+#[must_use]
 pub fn resources_free_at(
     schedule: &Schedule,
     tasks: &[Task],
@@ -109,6 +112,7 @@ pub fn resources_free_at(
 ///
 /// 检查内容为：每个所需资源在整个时长上可用，且其上已放置的需求加上
 /// 新需求，在放置的每个瞬时都不超过容量。
+#[must_use]
 pub fn feasible_at(
     task: &Task,
     tasks: &[Task],
@@ -193,6 +197,7 @@ pub(crate) fn feasible_at_indexed(
 ///
 /// 任务不可行的情形有：需求超过某资源容量；所需资源不存在；窗口短于其
 /// 时长。这些无法通过重排修复，值得与那些只是被排除的任务分开报告。
+#[must_use]
 pub fn infeasible_tasks(tasks: &[Task], resources: &ResourceSet) -> Vec<TaskId> {
     tasks
         .iter()

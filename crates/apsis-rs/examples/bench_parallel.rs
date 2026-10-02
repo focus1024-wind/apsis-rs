@@ -403,9 +403,7 @@ fn topology_phase_split(positions: &[Vec3], satellites: usize, range: f64) -> (f
 }
 
 fn main() {
-    let cores = std::thread::available_parallelism()
-        .map(|count| count.get())
-        .unwrap_or(1);
+    let cores = std::thread::available_parallelism().map_or(1, std::num::NonZero::get);
     println!("ApsisRS parallel scale benchmark: release build, no external dependency");
     println!("available parallelism: {cores} core(s)");
     println!("no warm-up: the cold cost of the first call is reported, not discarded");

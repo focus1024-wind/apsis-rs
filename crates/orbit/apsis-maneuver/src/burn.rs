@@ -93,6 +93,7 @@ impl FiniteBurn {
     /// Returns the acceleration vector, in kilometers per second squared.
     ///
     /// 返回加速度矢量，单位为千米每二次方秒。
+    #[must_use]
     pub const fn acceleration(self) -> Vec3 {
         self.acceleration
     }
@@ -101,6 +102,7 @@ impl FiniteBurn {
     /// squared.
     ///
     /// 返回加速度大小，单位为千米每二次方秒。
+    #[must_use]
     pub fn acceleration_magnitude(self) -> f64 {
         self.acceleration.norm()
     }
@@ -108,6 +110,7 @@ impl FiniteBurn {
     /// Returns the duration, in seconds.
     ///
     /// 返回时长，单位为秒。
+    #[must_use]
     pub const fn duration(self) -> f64 {
         self.duration
     }
@@ -126,6 +129,7 @@ impl FiniteBurn {
     /// 它是加速度乘以时长，即点火在不受引力作用时会提供的 delta-v。在引力
     /// 作用下，短点火的实际变化与之接近，长点火则不同，这正是有限推力模型
     /// 得以存在的意义。
+    #[must_use]
     pub fn nominal_delta_v(self) -> f64 {
         self.acceleration.norm() * self.duration
     }
@@ -304,6 +308,7 @@ impl BurnOutcome {
     /// Returns the magnitude of the achieved velocity change.
     ///
     /// 返回实际达到的速度变化的大小。
+    #[must_use]
     pub fn achieved_magnitude(&self) -> f64 {
         self.achieved_delta_v.norm()
     }
@@ -318,6 +323,7 @@ impl BurnOutcome {
     ///
     /// 负值表示点火期间引力把速度转向了推力的反方向，使该次点火的收获小于其
     /// 自由空间 delta-v。
+    #[must_use]
     pub fn gravity_loss(&self) -> f64 {
         self.achieved_magnitude() - self.nominal_delta_v
     }
@@ -330,6 +336,7 @@ impl BurnOutcome {
     /// 返回点火结束时的根数。
     ///
     /// 当末状态不是椭圆轨道时返回 `None`；这在点火足够大以致逃逸时发生。
+    #[must_use]
     pub fn elements(&self, parameter: GravityParameter) -> Option<KeplerianElements> {
         KeplerianElements::from_state(&self.state, parameter)
     }

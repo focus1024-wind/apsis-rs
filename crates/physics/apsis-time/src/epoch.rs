@@ -52,6 +52,7 @@ impl Epoch {
     /// Creates an epoch from a Modified Julian Date on the TAI scale.
     ///
     /// 由 TAI 标度上的修正儒略日创建历元。
+    #[must_use]
     pub const fn from_tai_mjd(tai_mjd: f64) -> Self {
         Self { tai_mjd }
     }
@@ -73,6 +74,7 @@ impl Epoch {
     ///
     /// 当该瞬时无法在所请求的标度上表达时返回 `None`。这发生在 1972 年之前的
     /// UTC，因为用于从 UTC 换算的闰秒表不适用。
+    #[must_use]
     pub fn from_mjd(mjd: f64, scale: TimeScale) -> Option<Self> {
         if !mjd.is_finite() {
             return None;
@@ -98,6 +100,7 @@ impl Epoch {
     /// 由日历日期创建历元，并按给定标度解释该日期。
     ///
     /// 当各字段不构成有效日期，或该瞬时无法在所请求的标度上表达时返回 `None`。
+    #[must_use]
     pub fn from_calendar(calendar: Calendar, scale: TimeScale) -> Option<Self> {
         if !calendar.is_valid() {
             return None;
@@ -110,6 +113,7 @@ impl Epoch {
     /// Returns the instant as a Modified Julian Date on the TAI scale.
     ///
     /// 返回该瞬时在 TAI 标度上的修正儒略日（Modified Julian Date）。
+    #[must_use]
     pub const fn tai_mjd(self) -> f64 {
         self.tai_mjd
     }
@@ -123,6 +127,7 @@ impl Epoch {
     ///
     /// 当该瞬时早于 1972 年且请求 UTC 标度时返回 `None`，因为闰秒表不覆盖该
     /// 区间。
+    #[must_use]
     pub fn mjd(self, scale: TimeScale) -> Option<f64> {
         match scale {
             TimeScale::Tai => Some(self.tai_mjd),
@@ -140,6 +145,7 @@ impl Epoch {
     /// 返回该瞬时在给定标度上的日历日期。
     ///
     /// 当该瞬时不可进行标度换算时返回 `None`；参见 [`Epoch::mjd`]。
+    #[must_use]
     pub fn calendar(self, scale: TimeScale) -> Option<Calendar> {
         let mjd = self.mjd(scale)?;
         let (year, month, day) = ymd_from_mjd(mjd);
@@ -167,6 +173,7 @@ impl Epoch {
     ///
     /// 当 `other` 更晚时结果为正。由于两个历元都存于均匀的 TAI 标度，差值
     /// 精确，且与创建二者时所用的标度无关。
+    #[must_use]
     pub fn seconds_until(self, other: Self) -> f64 {
         (other.tai_mjd - self.tai_mjd) * SECONDS_PER_DAY
     }
@@ -187,6 +194,7 @@ impl Epoch {
     /// 唯一提供的平移方式：若按 UTC 时钟平移，当区间跨越插入的闰秒时结果会
     /// 不同，而 UTC 时钟在该瞬时前后没有单一良定义的数值。需要按 UTC 标度做
     /// 日历运算的调用方，应先转为 [`Calendar`]、调整后再转回。
+    #[must_use]
     pub fn add_seconds(self, seconds: f64) -> Self {
         Self {
             tai_mjd: self.tai_mjd + seconds / SECONDS_PER_DAY,
@@ -196,6 +204,7 @@ impl Epoch {
     /// Returns `true` when the stored Modified Julian Date is finite.
     ///
     /// 当所存修正儒略日（Modified Julian Date）有限时返回 `true`。
+    #[must_use]
     pub const fn is_finite(self) -> bool {
         self.tai_mjd.is_finite()
     }

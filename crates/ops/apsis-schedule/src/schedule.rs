@@ -31,6 +31,7 @@ impl Schedule {
     /// Creates an empty schedule.
     ///
     /// 创建一份空计划。
+    #[must_use]
     pub fn new() -> Self {
         Self {
             placements: Vec::new(),
@@ -41,6 +42,7 @@ impl Schedule {
     /// Returns the placements in the order they were made.
     ///
     /// 返回按放置顺序排列的各项。
+    #[must_use]
     pub fn placements(&self) -> &[Placement] {
         &self.placements
     }
@@ -48,6 +50,7 @@ impl Schedule {
     /// Returns the number of placements.
     ///
     /// 返回放置的数量。
+    #[must_use]
     pub fn len(&self) -> usize {
         self.placements.len()
     }
@@ -55,6 +58,7 @@ impl Schedule {
     /// Returns `true` when there are no placements.
     ///
     /// 当没有放置时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.placements.is_empty()
     }
@@ -62,6 +66,7 @@ impl Schedule {
     /// Returns `true` when a task has been placed.
     ///
     /// 当某任务已被放置时返回 `true`。
+    #[must_use]
     pub fn is_placed(&self, task: TaskId) -> bool {
         self.index.contains_key(&task.index())
     }
@@ -69,6 +74,7 @@ impl Schedule {
     /// Returns the placement of a task.
     ///
     /// 返回某任务的放置。
+    #[must_use]
     pub fn placement_of(&self, task: TaskId) -> Option<&Placement> {
         self.index
             .get(&task.index())
@@ -92,6 +98,13 @@ impl Schedule {
     /// [`Schedule::validate_capacity`] 完成。
     ///
     /// 该任务已被放置、起始时刻非有限，或放置落在任务窗口之外时返回错误。
+    ///
+    /// # Panics
+    ///
+    /// Panics only if the internal index disagrees with the placement list,
+    /// which cannot happen.
+    ///
+    /// 仅当内部索引与放置列表不一致时 panic，这不会发生。
     pub fn place(
         &mut self,
         task: &apsis_task::Task,
@@ -166,6 +179,7 @@ impl Schedule {
     /// Returns the placements that use a resource, in time order.
     ///
     /// 返回使用某资源的放置，按时间排序。
+    #[must_use]
     pub fn placements_on(
         &self,
         resource: ResourceId,
@@ -203,6 +217,7 @@ impl Schedule {
     /// 这是计划与自身的比较，忽略资源。位于不相交资源上的两个任务本就可
     /// 以合法重叠，故欲知某资源是否超订的调用方应改用
     /// [`Schedule::validate_capacity`]。
+    #[must_use]
     pub fn has_overlapping_placements(&self) -> bool {
         for (index, placement) in self.placements.iter().enumerate() {
             if self.placements[..index]
@@ -218,6 +233,7 @@ impl Schedule {
     /// Returns the total placed duration, in seconds.
     ///
     /// 返回已放置的总时长，单位为秒。
+    #[must_use]
     pub fn scheduled_seconds(&self) -> f64 {
         self.placements
             .iter()
@@ -232,6 +248,7 @@ impl Schedule {
     /// 返回所有放置中最早的开始时刻。
     ///
     /// 计划为空时返回 `None`。
+    #[must_use]
     pub fn earliest_start(&self) -> Option<f64> {
         self.placements
             .iter()
@@ -367,6 +384,7 @@ impl Schedule {
     ///
     /// 评估给出各项计数、makespan 以及每个资源的使用情况。资源的峰值
     /// 需求由与容量检查相同的事件扫掠求得，故二者一致。
+    #[must_use]
     pub fn evaluate(
         &self,
         tasks: &[apsis_task::Task],
@@ -442,6 +460,7 @@ impl Schedule {
     ///
     /// 计划按其构建顺序存储，即调度器考虑任务的顺序。欲按时间阅读该计
     /// 划的调用方使用本方法。
+    #[must_use]
     pub fn in_time_order(&self) -> Vec<Placement> {
         let mut ordered = self.placements.clone();
         ordered.sort_by(|first, second| {

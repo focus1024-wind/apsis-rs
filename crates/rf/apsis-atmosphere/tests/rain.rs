@@ -110,7 +110,7 @@ fn circular_polarisation_lies_between_the_linear_cases() {
     let vertical = rain_coefficients(12.0e9, VERTICAL, THIRTY_DEGREES).expect("valid");
     let circular =
         rain_coefficients(12.0e9, polarisation_tilt(45.0), THIRTY_DEGREES).expect("valid");
-    let mean = 0.5 * (horizontal.0 + vertical.0);
+    let mean = f64::midpoint(horizontal.0, vertical.0);
     assert_relative(circular.0, mean, "circular k");
 }
 
@@ -121,7 +121,7 @@ fn the_coefficients_are_smooth_across_the_band() {
     // 各曲线拟合是连续的，故频率的小变化给出系数的小变化。
     let mut previous = rain_coefficients(10.0e9, HORIZONTAL, ZENITH).expect("valid");
     for tenth in 101..=200 {
-        let frequency = tenth as f64 * 0.1e9;
+        let frequency = f64::from(tenth) * 0.1e9;
         let current = rain_coefficients(frequency, HORIZONTAL, ZENITH).expect("valid");
         assert!(
             (current.0 - previous.0).abs() / previous.0 < 0.05,

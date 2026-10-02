@@ -31,6 +31,7 @@ use apsis_math::parallel::map_index;
 /// 按次序为许多轨迹搜索可见性。
 ///
 /// 顺序形式，供比较以及线程启动代价高于搜索本身的小规模情形使用。
+#[must_use]
 pub fn find_all(
     finder: &AccessFinder,
     tracks: &[Vec<OrbitSample>],
@@ -48,6 +49,7 @@ pub fn find_all(
 ///
 /// 结果与 [`find_all`] 逐元素、逐次序相同。无法搜索的轨迹在顺序形式会
 /// 放置它的同一位置给出其错误，故一条坏轨迹不会掩盖其余。
+#[must_use]
 pub fn find_all_parallel(
     finder: &AccessFinder,
     tracks: &[Vec<OrbitSample>],

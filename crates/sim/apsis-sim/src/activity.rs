@@ -43,6 +43,7 @@ impl Activity {
     /// Creates a start activity.
     ///
     /// 创建一个开始活动。
+    #[must_use]
     pub const fn start(task: TaskId) -> Self {
         Self::Start { task }
     }
@@ -50,6 +51,7 @@ impl Activity {
     /// Creates an end activity.
     ///
     /// 创建一个结束活动。
+    #[must_use]
     pub const fn end(task: TaskId) -> Self {
         Self::End { task }
     }
@@ -57,6 +59,7 @@ impl Activity {
     /// Returns the task the activity is about.
     ///
     /// 返回该活动所关于的任务。
+    #[must_use]
     pub const fn task(self) -> TaskId {
         match self {
             Self::Start { task } | Self::End { task } => task,
@@ -66,6 +69,7 @@ impl Activity {
     /// Returns `true` when the activity is a start.
     ///
     /// 当该活动为开始时返回 `true`。
+    #[must_use]
     pub const fn is_start(self) -> bool {
         matches!(self, Self::Start { .. })
     }
@@ -73,6 +77,7 @@ impl Activity {
     /// Returns `true` when the activity is an end.
     ///
     /// 当该活动为结束时返回 `true`。
+    #[must_use]
     pub const fn is_end(self) -> bool {
         matches!(self, Self::End { .. })
     }

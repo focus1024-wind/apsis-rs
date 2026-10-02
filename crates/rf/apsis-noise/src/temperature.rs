@@ -43,6 +43,7 @@ impl NoiseTemperature {
     /// Creates a noise temperature from a value in kelvin.
     ///
     /// 由以开尔文表示的值创建噪声温度。
+    #[must_use]
     pub const fn from_kelvin(kelvin: f64) -> Self {
         Self(kelvin)
     }
@@ -60,6 +61,7 @@ impl NoiseTemperature {
     /// 噪声系数给出零温度。
     ///
     /// 该系数非有限时返回 `None`。
+    #[must_use]
     pub fn from_noise_figure_db(decibels: f64) -> Option<Self> {
         if !decibels.is_finite() {
             return None;
@@ -76,6 +78,7 @@ impl NoiseTemperature {
     /// 由线性噪声因子创建噪声温度。
     ///
     /// 该因子非有限或小于一时返回 `None`，那将描述一个去除噪声的级。
+    #[must_use]
     pub fn from_noise_factor(factor: f64) -> Option<Self> {
         if factor.is_finite() && factor >= 1.0 {
             Some(Self(REFERENCE_TEMPERATURE_K * (factor - 1.0)))
@@ -87,6 +90,7 @@ impl NoiseTemperature {
     /// Returns this temperature in kelvin.
     ///
     /// 返回该温度的开尔文值。
+    #[must_use]
     pub const fn kelvin(self) -> f64 {
         self.0
     }
@@ -98,6 +102,7 @@ impl NoiseTemperature {
     /// 返回该温度的线性噪声因子。
     ///
     /// 该因子为 `T / T_0 + 1`，零噪声时为一。
+    #[must_use]
     pub fn noise_factor(self) -> f64 {
         self.0 / REFERENCE_TEMPERATURE_K + 1.0
     }
@@ -110,6 +115,7 @@ impl NoiseTemperature {
     /// 返回该温度的噪声系数，以分贝计。
     ///
     /// 温度非有限或为负（会给出小于一的因子）时返回 `None`。
+    #[must_use]
     pub fn noise_figure_db(self) -> Option<f64> {
         let factor = self.noise_factor();
         if factor > 0.0 && factor.is_finite() && self.0 >= 0.0 {
@@ -127,6 +133,7 @@ impl NoiseTemperature {
     /// 返回两个温度之和。
     ///
     /// 独立源的噪声温度相加，这正是该量有用的原因。
+    #[must_use]
     pub const fn plus(self, other: Self) -> Self {
         Self(self.0 + other.0)
     }
@@ -141,6 +148,7 @@ impl NoiseTemperature {
     ///
     /// 某源之后接一增益时，折算到输入其贡献为该温度除以该增益，故折算到
     /// 输入的贡献其缩放取倒数。
+    #[must_use]
     pub const fn scaled(self, factor: f64) -> Self {
         Self(self.0 * factor)
     }
@@ -148,6 +156,7 @@ impl NoiseTemperature {
     /// Returns `true` when the temperature is finite and not negative.
     ///
     /// 当该温度有限且非负时返回 `true`。
+    #[must_use]
     pub const fn is_valid(self) -> bool {
         self.0.is_finite() && self.0 >= 0.0
     }
@@ -182,6 +191,7 @@ impl core::ops::Add for NoiseTemperature {
 /// 电阻在所给带宽内向负载输送的功率。
 ///
 /// 带宽必须为正。温度或带宽无效时返回 `None`。
+#[must_use]
 pub fn thermal_noise_power(temperature: NoiseTemperature, bandwidth: f64) -> Option<Power> {
     if !temperature.is_valid() {
         return None;

@@ -75,6 +75,7 @@ impl ElementError {
     ///
     /// 行号从一开始。列区间为当时正在读取的从一开始的含两端区间，当失败与某个
     /// 字段相关时给出。
+    #[must_use]
     pub fn new(kind: ElementErrorKind, line: usize, columns: Option<(usize, usize)>) -> Self {
         Self {
             kind,
@@ -87,6 +88,7 @@ impl ElementError {
     /// Attaches a description of the offending text.
     ///
     /// 附加对有问题的文本的说明。
+    #[must_use]
     pub fn with_detail(mut self, detail: impl Into<String>) -> Self {
         self.detail = Some(detail.into());
         self
@@ -95,6 +97,7 @@ impl ElementError {
     /// Returns the category of this failure.
     ///
     /// 返回该失败的类别。
+    #[must_use]
     pub fn kind(&self) -> ElementErrorKind {
         self.kind
     }
@@ -102,6 +105,7 @@ impl ElementError {
     /// Returns the one based number of the line that failed.
     ///
     /// 返回失败行的从一而行号。
+    #[must_use]
     pub fn line(&self) -> usize {
         self.line
     }
@@ -109,6 +113,7 @@ impl ElementError {
     /// Returns the one based inclusive column range that failed, if any.
     ///
     /// 返回失败的从一开始的含两端列区间，若有。
+    #[must_use]
     pub fn columns(&self) -> Option<(usize, usize)> {
         self.columns
     }
@@ -116,6 +121,7 @@ impl ElementError {
     /// Returns the detail text attached to this error, if any.
     ///
     /// 返回附加在该错误上的说明文本，若有。
+    #[must_use]
     pub fn detail(&self) -> Option<&str> {
         self.detail.as_deref()
     }

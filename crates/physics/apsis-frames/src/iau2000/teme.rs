@@ -90,6 +90,7 @@ const SECONDS_OF_TIME_TO_RADIAN: f64 = 2.0 * PI / SECONDS_PER_DAY;
 /// 方可以分别传入整数部分与零头，或把同一个值传两次：`(jd, 0.0)`、
 /// `(2400000.5, mjd)` 与 `(jd - 0.5, 0.5)` 都可接受，但整数部分更小的
 /// 拆分能保留更多零头。
+#[must_use]
 pub fn greenwich_mean_sidereal_time_1982(day: f64, fraction: f64) -> f64 {
     // The constant absorbs the half day between the start of the Julian
     // date and the start of the day.
@@ -130,6 +131,7 @@ pub fn greenwich_mean_sidereal_time_1982(day: f64, fraction: f64) -> f64 {
 /// 实测而非建模的。
 ///
 /// 这是施加于 `apsis-sgp4` 所产生的位置与速度的变换。
+#[must_use]
 pub fn teme_to_terrestrial_matrix(
     ut1_day: f64,
     ut1_fraction: f64,

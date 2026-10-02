@@ -230,7 +230,7 @@ fn an_identifier_reports_itself() {
     let id = EventId::new(3.5, 7).expect("usable");
     assert_eq!(id.time(), 3.5);
     assert_eq!(id.sequence(), 7);
-    assert!(id.to_string().contains("7"));
+    assert!(id.to_string().contains('7'));
     assert!(id.to_string().contains("3.5"));
 }
 

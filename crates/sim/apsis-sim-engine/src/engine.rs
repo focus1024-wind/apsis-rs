@@ -45,6 +45,7 @@ impl<T> Engine<T> {
     /// 无限制的引擎一直运行到队列排空，这是会终止的模型的恰当缺省。
     /// 无界地调度事件的模型需要限制，可用 [`Engine::with_time_limit`]
     /// 或 [`Engine::with_event_limit`] 设置。
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             queue: EventQueue::new(),
@@ -66,6 +67,7 @@ impl<T> Engine<T> {
     ///
     /// 调度到超出该限制的事件被留在队列中而不执行，使调用方能检查
     /// 剩余了哪些。限制为负或非有限时该限制被禁用。
+    #[must_use]
     pub const fn with_time_limit(mut self, limit: f64) -> Self {
         self.time_limit = if limit.is_finite() && limit >= 0.0 {
             Some(limit)
@@ -83,6 +85,7 @@ impl<T> Engine<T> {
     /// 设置引擎将执行的事件数上限。
     ///
     /// 限制为零时该规则被禁用，因为不执行任何事件的运行从无用处。
+    #[must_use]
     pub const fn with_event_limit(mut self, limit: u64) -> Self {
         self.event_limit = if limit == 0 { None } else { Some(limit) };
         self
@@ -91,6 +94,7 @@ impl<T> Engine<T> {
     /// Returns the current simulation time, in seconds.
     ///
     /// 返回当前仿真时刻，单位为秒。
+    #[must_use]
     pub const fn now(&self) -> f64 {
         self.now
     }
@@ -119,6 +123,7 @@ impl<T> Engine<T> {
     /// Returns the number of events executed so far.
     ///
     /// 返回迄今已执行的事件数。
+    #[must_use]
     pub const fn executed(&self) -> u64 {
         self.executed
     }
@@ -126,6 +131,7 @@ impl<T> Engine<T> {
     /// Returns the number of pending events.
     ///
     /// 返回待处理事件的数量。
+    #[must_use]
     pub fn pending(&self) -> usize {
         self.queue.len()
     }
@@ -133,6 +139,7 @@ impl<T> Engine<T> {
     /// Returns `true` when no events are pending.
     ///
     /// 当没有待处理事件时返回 `true`。
+    #[must_use]
     pub fn is_idle(&self) -> bool {
         self.queue.is_empty()
     }
@@ -140,6 +147,7 @@ impl<T> Engine<T> {
     /// Returns the time of the next pending event, if there is one.
     ///
     /// 返回下一待处理事件的时间（若存在）。
+    #[must_use]
     pub fn next_time(&self) -> Option<f64> {
         self.queue.next_time()
     }
@@ -147,6 +155,7 @@ impl<T> Engine<T> {
     /// Returns what the engine currently holds.
     ///
     /// 返回引擎当前所持有的状态。
+    #[must_use]
     pub fn state(&self) -> EngineState {
         EngineState {
             now: self.now,
@@ -212,6 +221,7 @@ impl<T> Engine<T> {
     /// directly.
     ///
     /// 返回事件队列，供需要直接查看或操作它的调用方使用。
+    #[must_use]
     pub const fn queue(&self) -> &EventQueue<T> {
         &self.queue
     }

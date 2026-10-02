@@ -28,7 +28,7 @@ fn satellite() -> Satellite {
 #[test]
 fn a_short_track_matches_the_sequential_form() {
     let satellite = satellite();
-    let minutes: Vec<f64> = (0..100).map(|index| index as f64 * 1.0).collect();
+    let minutes: Vec<f64> = (0..100).map(|index| f64::from(index) * 1.0).collect();
     let sequential = propagate_minutes_at(&satellite, &minutes);
     let parallel = propagate_minutes_at_parallel(&satellite, &minutes);
     assert_eq!(parallel, sequential);
@@ -40,7 +40,7 @@ fn a_long_track_matches_the_sequential_form() {
     // takes the multi thread branch.
     // 一分钟步长的一天，长到足以使并行路径走多线程分支。
     let satellite = satellite();
-    let minutes: Vec<f64> = (0..1_441).map(|index| index as f64).collect();
+    let minutes: Vec<f64> = (0..1_441).map(f64::from).collect();
     let sequential = propagate_minutes_at(&satellite, &minutes);
     let parallel = propagate_minutes_at_parallel(&satellite, &minutes);
     assert_eq!(parallel, sequential);
@@ -53,7 +53,7 @@ fn a_backwards_track_matches() {
     // both forms.
     // 负分钟数向后传播，且在两种形式中必须表现相同。
     let satellite = satellite();
-    let minutes: Vec<f64> = (0..2_000).map(|index| -(index as f64) * 0.5).collect();
+    let minutes: Vec<f64> = (0..2_000).map(|index| -f64::from(index) * 0.5).collect();
     assert_eq!(
         propagate_minutes_at_parallel(&satellite, &minutes),
         propagate_minutes_at(&satellite, &minutes)
@@ -97,7 +97,7 @@ fn a_shell_result_is_in_input_order() {
     // through the minutes form, where each value differs.
     // 重复卫星的状态相同，故通过分钟形式检查次序，那里每个值都不同。
     let satellite = satellite();
-    let minutes: Vec<f64> = (0..3_000).map(|index| index as f64 * 0.25).collect();
+    let minutes: Vec<f64> = (0..3_000).map(|index| f64::from(index) * 0.25).collect();
     let parallel = propagate_minutes_at_parallel(&satellite, &minutes);
     for (index, state) in parallel.iter().enumerate() {
         let state = state.as_ref().expect("the orbit has not decayed here");

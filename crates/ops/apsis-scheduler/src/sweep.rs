@@ -71,6 +71,7 @@ const CAPACITY_SLACK: f64 = 1e-9;
 /// 改变，因为各资源的需求在这些事件之间恒定，可用性亦然。
 ///
 /// 该任务在其窗口内无处可放时返回 `None`。
+#[must_use]
 pub fn earliest_feasible_start(
     task: &Task,
     tasks: &[Task],

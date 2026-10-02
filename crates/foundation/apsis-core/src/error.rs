@@ -107,6 +107,7 @@ impl Error {
     /// Creates an error with the given kind and no message.
     ///
     /// 用给定类别创建一个不带消息的错误。
+    #[must_use]
     pub fn new(kind: ErrorKind) -> Self {
         Self {
             kind,
@@ -148,6 +149,7 @@ impl Error {
     /// Attaches a message to this error, replacing any existing message.
     ///
     /// 为该错误附加消息，替换已有消息。
+    #[must_use]
     pub fn with_context(mut self, message: impl Into<String>) -> Self {
         self.message = Some(message.into());
         self
@@ -156,6 +158,7 @@ impl Error {
     /// Attaches a source error, replacing any existing source.
     ///
     /// 为该错误附加来源错误，替换已有来源。
+    #[must_use]
     pub fn caused_by<E>(mut self, source: E) -> Self
     where
         E: StdError + Send + Sync + 'static,
@@ -167,6 +170,7 @@ impl Error {
     /// Returns the category of this error.
     ///
     /// 返回该错误的类别。
+    #[must_use]
     pub fn kind(&self) -> ErrorKind {
         self.kind
     }
@@ -174,6 +178,7 @@ impl Error {
     /// Returns the message attached to this error, if any.
     ///
     /// 返回附加在该错误上的消息，若无则返回 `None`。
+    #[must_use]
     pub fn message(&self) -> Option<&str> {
         self.message.as_deref()
     }

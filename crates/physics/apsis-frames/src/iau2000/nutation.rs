@@ -68,6 +68,7 @@ impl Nutation {
     /// Creates a nutation from its two angles.
     ///
     /// 由其两个角创建章动。
+    #[must_use]
     pub const fn new(longitude: f64, obliquity: f64) -> Self {
         Self {
             longitude,
@@ -78,6 +79,7 @@ impl Nutation {
     /// Returns the nutation in longitude, in arcseconds.
     ///
     /// 返回黄经方向的章动，单位为角秒。
+    #[must_use]
     pub fn longitude_arcseconds(self) -> f64 {
         self.longitude / ARCSECOND_TO_RADIAN
     }
@@ -85,6 +87,7 @@ impl Nutation {
     /// Returns the nutation in obliquity, in arcseconds.
     ///
     /// 返回黄赤交角方向的章动，单位为角秒。
+    #[must_use]
     pub fn obliquity_arcseconds(self) -> f64 {
         self.obliquity / ARCSECOND_TO_RADIAN
     }
@@ -92,6 +95,7 @@ impl Nutation {
     /// Returns the sum of two nutations.
     ///
     /// 返回两个章动之和。
+    #[must_use]
     pub const fn plus(self, other: Self) -> Self {
         Self::new(
             self.longitude + other.longitude,
@@ -168,15 +172,16 @@ fn planetary_term(term: &PlanetaryTerm, arguments: &PlanetaryArguments) -> Nutat
 /// 模型，含行星项。
 ///
 /// 出处：IAU 2000A，按 `eraNut00a` 所实现。
+#[must_use]
 pub fn nutation_2000a(t: f64) -> Nutation {
     let delaunay = DelaunayArguments::at(t);
     let planetary = PlanetaryArguments::at(t);
 
     let mut sum = Nutation::default();
-    for term in LUNI_SOLAR.iter() {
+    for term in &LUNI_SOLAR {
         sum = sum.plus(lunisolar_term(term, &delaunay, t));
     }
-    for term in PLANETARY.iter() {
+    for term in &PLANETARY {
         sum = sum.plus(planetary_term(term, &planetary));
     }
 
@@ -204,6 +209,7 @@ pub fn nutation_2000a(t: f64) -> Nutation {
 ///
 /// 出处：IAU 2006，按 `eraNut06a` 所实现，它施加 Wallace 与
 /// Capitaine（2006）式 5 的表达式。
+#[must_use]
 pub fn nutation_2000a_with_2006_adjustment(t: f64) -> Nutation {
     let nutation = nutation_2000a(t);
     // The adjustment scales the nutation itself rather than adding an

@@ -35,6 +35,7 @@ impl RecordKind {
     /// Returns a short name for the kind.
     ///
     /// 返回该类别的简称。
+    #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
             Self::Observation => "observation",
@@ -46,6 +47,7 @@ impl RecordKind {
     /// Returns `true` when the kind is a warning.
     ///
     /// 当该类别为警告时返回 `true`。
+    #[must_use]
     pub const fn is_warning(self) -> bool {
         matches!(self, Self::Warning)
     }
@@ -127,6 +129,7 @@ impl Record {
     /// 当该记录可用时返回 `true`。
     ///
     /// 时间或值非有限的记录在轨迹中没有位置，因为它无法被排序或汇总。
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.time.is_finite() && self.value.is_finite() && !self.label.is_empty()
     }

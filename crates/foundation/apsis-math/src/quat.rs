@@ -57,6 +57,7 @@ impl Quat {
     /// Creates a quaternion from its four components.
     ///
     /// 由四个分量创建四元数。
+    #[must_use]
     pub const fn new(w: f64, x: f64, y: f64, z: f64) -> Self {
         Self { w, x, y, z }
     }
@@ -69,6 +70,7 @@ impl Quat {
     /// 创建绕单位轴 `axis` 旋转 `angle` 弧度的四元数。
     ///
     /// 轴在内部被归一化。轴长度为零或非有限时返回 `None`。
+    #[must_use]
     pub fn from_axis_angle(axis: Vec3, angle: f64) -> Option<Self> {
         let axis = axis.normalize()?;
         let half = angle / 2.0;
@@ -79,6 +81,7 @@ impl Quat {
     /// Creates a rotation of `angle` radians about the first axis.
     ///
     /// 创建绕第一轴旋转 `angle` 弧度的四元数。
+    #[must_use]
     pub fn from_rotation_x(angle: f64) -> Self {
         let (sin, cos) = (angle / 2.0).sin_cos();
         Self::new(cos, sin, 0.0, 0.0)
@@ -87,6 +90,7 @@ impl Quat {
     /// Creates a rotation of `angle` radians about the second axis.
     ///
     /// 创建绕第二轴旋转 `angle` 弧度的四元数。
+    #[must_use]
     pub fn from_rotation_y(angle: f64) -> Self {
         let (sin, cos) = (angle / 2.0).sin_cos();
         Self::new(cos, 0.0, sin, 0.0)
@@ -95,6 +99,7 @@ impl Quat {
     /// Creates a rotation of `angle` radians about the third axis.
     ///
     /// 创建绕第三轴旋转 `angle` 弧度的四元数。
+    #[must_use]
     pub fn from_rotation_z(angle: f64) -> Self {
         let (sin, cos) = (angle / 2.0).sin_cos();
         Self::new(cos, 0.0, 0.0, sin)
@@ -112,6 +117,7 @@ impl Quat {
     /// 算法选取对角线上最大的元素作除数，从而对任何输入旋转都保持开方的良态。
     /// 当 `m` 不是旋转矩阵时返回 `None`，即在 `1e-9` 的容差内不正交或行列式
     /// 不为一。
+    #[must_use]
     pub fn from_mat3(m: crate::mat3::Mat3) -> Option<Self> {
         if !m.is_rotation(1e-9) {
             return None;
@@ -139,6 +145,7 @@ impl Quat {
     /// Returns the vector part `(x, y, z)`.
     ///
     /// 返回向量部分 `(x, y, z)`。
+    #[must_use]
     pub const fn vector(self) -> Vec3 {
         Vec3::new(self.x, self.y, self.z)
     }
@@ -146,6 +153,7 @@ impl Quat {
     /// Returns the squared length of this quaternion.
     ///
     /// 返回该四元数的长度平方。
+    #[must_use]
     pub fn norm_squared(self) -> f64 {
         self.w * self.w + self.x * self.x + self.y * self.y + self.z * self.z
     }
@@ -153,6 +161,7 @@ impl Quat {
     /// Returns the length of this quaternion.
     ///
     /// 返回该四元数的长度。
+    #[must_use]
     pub fn norm(self) -> f64 {
         self.norm_squared().sqrt()
     }
@@ -164,6 +173,7 @@ impl Quat {
     /// 返回该四元数缩放到单位长度后的结果。
     ///
     /// 长度为零或非有限时返回 `None`。
+    #[must_use]
     pub fn normalize(self) -> Option<Self> {
         let norm = self.norm();
         if norm > 0.0 && norm.is_finite() {
@@ -185,6 +195,7 @@ impl Quat {
     /// 返回共轭 `w - xi - yj - zk`。
     ///
     /// 对单位四元数，它即逆旋转。
+    #[must_use]
     pub const fn conjugate(self) -> Self {
         Self::new(self.w, -self.x, -self.y, -self.z)
     }
@@ -196,6 +207,7 @@ impl Quat {
     /// 返回逆旋转。
     ///
     /// 长度为零或非有限时返回 `None`。
+    #[must_use]
     pub fn inverse(self) -> Option<Self> {
         let norm_squared = self.norm_squared();
         if norm_squared > 0.0 && norm_squared.is_finite() {
@@ -215,6 +227,7 @@ impl Quat {
     /// component vectors.
     ///
     /// 把两者都视为四分量向量，返回 `self` 与 `rhs` 的点积。
+    #[must_use]
     pub fn dot(self, rhs: Self) -> f64 {
         self.w * rhs.w + self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
@@ -230,6 +243,7 @@ impl Quat {
     /// 假定该四元数为单位长度。旋转按
     /// `v + 2 * cross(vector, cross(vector, v) + w * v)` 计算，避免两次构造
     /// 四元数乘积矩阵。
+    #[must_use]
     pub fn rotate(self, v: Vec3) -> Vec3 {
         let q = self.vector();
         let t = q.cross(v) * 2.0;
@@ -243,6 +257,7 @@ impl Quat {
     /// 返回旋转角，单位为弧度，位于 `[0, pi]`。
     ///
     /// 假定该四元数为单位长度。
+    #[must_use]
     pub fn angle(self) -> f64 {
         2.0 * self.w.clamp(-1.0, 1.0).acos()
     }
@@ -255,6 +270,7 @@ impl Quat {
     /// 返回旋转轴的单位向量。
     ///
     /// 对恒等旋转返回 `None`，因为此时旋转轴未定义。假定该四元数为单位长度。
+    #[must_use]
     pub fn axis(self) -> Option<Vec3> {
         self.vector().normalize()
     }
@@ -269,6 +285,7 @@ impl Quat {
     ///
     /// 这是弦插值，故结果不是单位四元数，角速度也不恒定。当中间旋转必须均匀时
     /// 请用 [`Quat::slerp`]。
+    #[must_use]
     pub fn lerp(self, rhs: Self, t: f64) -> Self {
         let w = self.w + (rhs.w - self.w) * t;
         let x = self.x + (rhs.x - self.x) * t;
@@ -288,6 +305,7 @@ impl Quat {
     ///
     /// 取两段圆弧中较短者，故结果沿角度最小的旋转路径。当输入近乎平行时退回
     /// [`Quat::lerp`]，此时分母中的正弦会损失精度。
+    #[must_use]
     pub fn slerp(self, rhs: Self, t: f64) -> Self {
         let mut end = rhs;
         let mut dot = self.dot(rhs);
@@ -319,6 +337,7 @@ impl Quat {
     /// Returns `true` when the length is one within a tolerance of `1e-9`.
     ///
     /// 当长度在 `1e-9` 容差内为一时返回 `true`。
+    #[must_use]
     pub fn is_normalized(self) -> bool {
         (self.norm_squared() - 1.0).abs() < 1e-9
     }
@@ -326,6 +345,7 @@ impl Quat {
     /// Returns `true` when all four components are finite.
     ///
     /// 当四个分量都有限时返回 `true`。
+    #[must_use]
     pub fn is_finite(self) -> bool {
         self.w.is_finite() && self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
     }
@@ -333,6 +353,7 @@ impl Quat {
     /// Returns a rotation of a quarter turn about the first axis.
     ///
     /// 返回绕第一轴旋转四分之一周的四元数。
+    #[must_use]
     pub fn quarter_turn_x() -> Self {
         Self::from_rotation_x(core::f64::consts::FRAC_PI_2)
     }
@@ -340,6 +361,7 @@ impl Quat {
     /// Returns a rotation of a half turn about the third axis.
     ///
     /// 返回绕第三轴旋转半周的四元数。
+    #[must_use]
     pub fn half_turn_z() -> Self {
         Self::from_rotation_z(core::f64::consts::PI)
     }

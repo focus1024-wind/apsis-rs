@@ -43,6 +43,7 @@ pub const ERA_RATE_TURNS_PER_DAY: f64 = 1.002_737_811_911_354_6;
 /// 从 J2000.0 历元到给定 UT1 时标儒略日的天数。
 ///
 /// J2000.0 历元是儒略日 2451545.0，即 2000-01-01 的正午。
+#[must_use]
 pub fn ut1_days_from_j2000(ut1_julian_date: f64) -> f64 {
     ut1_julian_date - 2_451_545.0
 }
@@ -75,6 +76,7 @@ impl EarthRotationAngle {
     /// Creates an angle from a value in turns.
     ///
     /// 由以周表示的值创建角。
+    #[must_use]
     pub const fn from_turns(turns: f64) -> Self {
         Self { turns }
     }
@@ -82,6 +84,7 @@ impl EarthRotationAngle {
     /// Creates an angle from a value in radians.
     ///
     /// 由以弧度表示的值创建角。
+    #[must_use]
     pub fn from_radians(radians: f64) -> Self {
         Self {
             turns: radians / (2.0 * PI),
@@ -91,6 +94,7 @@ impl EarthRotationAngle {
     /// Returns the angle for a Julian Date on the UT1 scale.
     ///
     /// 返回 UT1 时标上某儒略日对应的角。
+    #[must_use]
     pub fn from_ut1_julian_date(ut1_julian_date: f64) -> Self {
         Self::from_ut1_days(ut1_days_from_j2000(ut1_julian_date))
     }
@@ -112,6 +116,7 @@ impl EarthRotationAngle {
     /// 约为 280.46 度。
     ///
     /// 出处：IERS Conventions（2010），式 8.32。
+    #[must_use]
     pub fn from_ut1_days(days_since_j2000: f64) -> Self {
         const EPOCH_TURNS: f64 = 0.779_057_273_264_0;
         Self {
@@ -126,6 +131,7 @@ impl EarthRotationAngle {
     /// 返回以周表示的角。
     ///
     /// 该值不归约到 `[0, 1)`。
+    #[must_use]
     pub const fn turns(self) -> f64 {
         self.turns
     }
@@ -133,6 +139,7 @@ impl EarthRotationAngle {
     /// Returns the angle in turns, reduced to `[0, 1)`.
     ///
     /// 返回以周表示的角，归约到 `[0, 1)`。
+    #[must_use]
     pub fn turns_positive(self) -> f64 {
         self.turns.rem_euclid(1.0)
     }
@@ -144,6 +151,7 @@ impl EarthRotationAngle {
     /// 返回以弧度表示的角。
     ///
     /// 该值不归约到 `[0, 2 pi)`。
+    #[must_use]
     pub fn radians(self) -> f64 {
         self.turns * 2.0 * PI
     }
@@ -151,6 +159,7 @@ impl EarthRotationAngle {
     /// Returns the angle in radians, reduced to `[0, 2 pi)`.
     ///
     /// 返回以弧度表示的角，归约到 `[0, 2 pi)`。
+    #[must_use]
     pub fn radians_positive(self) -> f64 {
         self.turns_positive() * 2.0 * PI
     }
@@ -169,6 +178,7 @@ impl EarthRotationAngle {
 /// 该转动是绕第三轴按地球自转角作顺时针转。把它施加于惯性矢量即得地固
 /// 矢量，故在惯性空间固定的矢量会随地球在其下方转动而获得一个负的
 /// 转动。
+#[must_use]
 pub fn rotation_eci_to_ecef(angle: EarthRotationAngle) -> Mat3 {
     let (sin, cos) = angle.radians_positive().sin_cos();
     Mat3::from_rows([cos, sin, 0.0], [-sin, cos, 0.0], [0.0, 0.0, 1.0])
@@ -183,6 +193,7 @@ pub fn rotation_eci_to_ecef(angle: EarthRotationAngle) -> Mat3 {
 /// 返回把地固系中的矢量映射到惯性系的转动。
 ///
 /// 它是 [`rotation_eci_to_ecef`] 的转置，对旋转矩阵而言也是其逆。
+#[must_use]
 pub fn rotation_ecef_to_eci(angle: EarthRotationAngle) -> Mat3 {
     rotation_eci_to_ecef(angle).transpose()
 }

@@ -34,6 +34,7 @@ impl Edge {
     /// Creates an edge.
     ///
     /// 创建一条边。
+    #[must_use]
     pub const fn new(from: usize, to: usize, cost: f64) -> Self {
         Self { from, to, cost }
     }
@@ -46,6 +47,7 @@ impl Edge {
     /// 返回端点互换后的同一条边。
     ///
     /// 两颗卫星之间的链路双向承载业务，故多数拓扑会添加两个方向。
+    #[must_use]
     pub const fn reversed(self) -> Self {
         Self {
             from: self.to,
@@ -115,6 +117,7 @@ impl Topology {
     /// Returns the number of nodes.
     ///
     /// 返回节点的数量。
+    #[must_use]
     pub const fn node_count(&self) -> usize {
         self.node_count
     }
@@ -122,6 +125,7 @@ impl Topology {
     /// Returns the number of edges.
     ///
     /// 返回边的数量。
+    #[must_use]
     pub fn edge_count(&self) -> usize {
         self.edges.len()
     }
@@ -129,6 +133,7 @@ impl Topology {
     /// Returns `true` when there are no edges.
     ///
     /// 当没有边时返回 `true`。
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.edges.is_empty()
     }
@@ -136,6 +141,7 @@ impl Topology {
     /// Returns the edges.
     ///
     /// 返回各条边。
+    #[must_use]
     pub fn edges(&self) -> &[Edge] {
         &self.edges
     }
@@ -198,6 +204,7 @@ impl Topology {
     /// Returns `true` when an edge exists from one node to another.
     ///
     /// 当存在从一节点到另一节点的边时返回 `true`。
+    #[must_use]
     pub fn has_edge(&self, from: usize, to: usize) -> bool {
         self.outgoing.get(from).is_some_and(|positions| {
             positions
@@ -213,6 +220,7 @@ impl Topology {
     /// 返回两节点之间边的代价。
     ///
     /// 不存在该边时返回 `None`。
+    #[must_use]
     pub fn cost(&self, from: usize, to: usize) -> Option<f64> {
         let positions = self.outgoing.get(from)?;
         positions
@@ -274,6 +282,7 @@ impl Topology {
     /// 返回自某节点一跳可达的节点下标。
     ///
     /// 结果按边被添加的次序排列，故对给定的构建序列是确定的。
+    #[must_use]
     pub fn neighbours(&self, node: usize) -> Vec<usize> {
         self.outgoing
             .get(node)
@@ -291,6 +300,7 @@ impl Topology {
     /// Returns the number of edges arriving at a node.
     ///
     /// 返回到达某节点的边数。
+    #[must_use]
     pub fn in_degree(&self, node: usize) -> usize {
         self.edges.iter().filter(|edge| edge.to == node).count()
     }
@@ -303,6 +313,7 @@ impl Topology {
     /// 返回每个节点的邻接。
     ///
     /// 结果每个节点一项，按节点次序排列，各自列出该节点的邻居。
+    #[must_use]
     pub fn adjacency(&self) -> Vec<Vec<usize>> {
         (0..self.node_count)
             .map(|node| self.neighbours(node))
@@ -321,6 +332,7 @@ impl Topology {
     ///
     /// 它回答该拓扑构成多少个独立网络，这是检查星座快照时要看的第一件
     /// 事：已裂成数块的星座仍可在各块内承载业务，但块与块之间不行。
+    #[must_use]
     pub fn connected_components(&self) -> usize {
         if self.node_count == 0 {
             return 0;
@@ -359,6 +371,7 @@ impl Topology {
     /// the edges as undirected.
     ///
     /// 把边视为无向时，当每个节点都能到达其余每个节点，返回 `true`。
+    #[must_use]
     pub fn is_connected(&self) -> bool {
         self.node_count <= 1 || self.connected_components() == 1
     }
@@ -371,6 +384,7 @@ impl Topology {
     /// 返回所有边的代价之和。
     ///
     /// 这是对网络规模的一个粗略度量，用于比较快照而非用于路由。
+    #[must_use]
     pub fn total_cost(&self) -> f64 {
         self.edges.iter().map(|edge| edge.cost).sum()
     }

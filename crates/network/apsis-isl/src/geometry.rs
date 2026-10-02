@@ -21,6 +21,7 @@ use apsis_math::Vec3;
 /// 而言前一种情形是要紧的，因为遮挡天体位于两端之间。
 ///
 /// 任一点非有限时返回 `None`。
+#[must_use]
 pub fn closest_approach_to_centre(first: Vec3, second: Vec3) -> Option<f64> {
     if !first.is_finite() || !second.is_finite() {
         return None;
@@ -57,6 +58,7 @@ pub fn closest_approach_to_centre(first: Vec3, second: Vec3) -> Option<f64> {
 /// 的链路被视为通畅，因为该极限即几何地平线。
 ///
 /// 任一位置非有限或天体半径非正时返回 `None`。
+#[must_use]
 pub fn mutual_visibility(first: Vec3, second: Vec3, body_radius: f64) -> Option<bool> {
     if !body_radius.is_finite() || body_radius <= 0.0 {
         return None;
@@ -83,6 +85,7 @@ pub fn mutual_visibility(first: Vec3, second: Vec3, body_radius: f64) -> Option<
 ///
 /// 任一位置非有限、两者重合或天体半径不可用时返回 `None`。两端回报
 /// 自身位置的单元没有链路，故该情形被拒绝而非以零距离返回。
+#[must_use]
 pub fn link_geometry(first: Vec3, second: Vec3, body_radius: f64) -> Option<LinkGeometry> {
     if !body_radius.is_finite() || body_radius < 0.0 {
         return None;
@@ -132,6 +135,7 @@ pub fn link_geometry(first: Vec3, second: Vec3, body_radius: f64) -> Option<Link
 /// orbit 层当前不提供；拥有该星历的调用方自行提供该方向。
 ///
 /// 方向或视场不可用时返回 `None`。
+#[must_use]
 pub fn sun_blocks_link(
     link: &LinkGeometry,
     sun_direction: Vec3,

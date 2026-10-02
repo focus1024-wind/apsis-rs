@@ -26,6 +26,7 @@ pub const JULIAN_DATE_OFFSET: f64 = 2_400_000.5;
 /// Converts a Julian Date to a Modified Julian Date.
 ///
 /// 把儒略日（Julian Date）转换为修正儒略日（Modified Julian Date）。
+#[must_use]
 pub const fn mjd_from_julian_date(julian_date: f64) -> f64 {
     julian_date - JULIAN_DATE_OFFSET
 }
@@ -33,6 +34,7 @@ pub const fn mjd_from_julian_date(julian_date: f64) -> f64 {
 /// Converts a Modified Julian Date to a Julian Date.
 ///
 /// 把修正儒略日（Modified Julian Date）转换为儒略日（Julian Date）。
+#[must_use]
 pub const fn julian_date_from_mjd(mjd: f64) -> f64 {
     mjd + JULIAN_DATE_OFFSET
 }

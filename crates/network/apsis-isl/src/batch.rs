@@ -38,6 +38,7 @@ use apsis_math::{Vec3, parallel::map_index};
 /// 这提示调用方跳过对角线。
 ///
 /// 测试未定义的点对（位置非有限或天体半径非正）给出 `false`。
+#[must_use]
 pub fn visibility_matrix(positions: &[Vec3], body_radius: f64) -> Vec<bool> {
     let len = positions.len();
     let mut matrix = vec![false; len * len];
@@ -73,6 +74,7 @@ pub fn visibility_matrix(positions: &[Vec3], body_radius: f64) -> Vec<bool> {
 /// 此处的线程收益不大，并随矩阵变小而缩小。单次可见性判定只有几纳秒，故启动
 /// 线程的代价只有大矩阵才回收：在十六核机器上，几百颗卫星已有收益，而几十颗则
 /// 亏损。顺序形式是小壳层的更好选择，而这个存在是为了二次扫描占主导的大壳层。
+#[must_use]
 pub fn visibility_matrix_parallel(positions: &[Vec3], body_radius: f64) -> Vec<bool> {
     let len = positions.len();
     // The pairs are independent, so splitting the flat index space across

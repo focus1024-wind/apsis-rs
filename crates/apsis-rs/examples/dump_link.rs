@@ -142,16 +142,18 @@ fn main() {
             },
         };
 
-        let eirp = budget.eirp().and_then(|power| power.dbw());
-        let carrier = budget.received_power().and_then(|power| power.dbw());
-        let cn0 = budget.carrier_to_noise_density().map(|value| value.db());
-        let cn = budget.carrier_to_noise().map(|value| value.db());
+        let eirp = budget.eirp().and_then(apsis_link::Power::dbw);
+        let carrier = budget.received_power().and_then(apsis_link::Power::dbw);
+        let cn0 = budget
+            .carrier_to_noise_density()
+            .map(apsis_link::Decibel::db);
+        let cn = budget.carrier_to_noise().map(apsis_link::Decibel::db);
         // The energy per bit ratio is reported at a fixed data rate equal to
         // the bandwidth, which makes it the carrier to noise ratio.
         // 每比特能量比在等于带宽的固定数据速率下报告，这使它即为载噪比。
         let ebn0 = budget
             .energy_per_bit_over_noise(bandwidth)
-            .map(|value| value.db());
+            .map(apsis_link::Decibel::db);
 
         let field = |value: Option<f64>| match value {
             Some(value) => format!("{value:.12}"),

@@ -40,6 +40,7 @@ impl Kelvin {
     /// Creates a temperature from a value in kelvin.
     ///
     /// 由开尔文值创建温度。
+    #[must_use]
     pub const fn new(value: f64) -> Self {
         Self(value)
     }
@@ -51,6 +52,7 @@ impl Kelvin {
     /// 由摄氏度值创建温度。
     ///
     /// 使用摄氏标度所定义的精确偏移。
+    #[must_use]
     pub fn from_celsius(celsius: f64) -> Self {
         Self(celsius + apsis_core::constant::ZERO_CELSIUS_IN_KELVIN)
     }
@@ -58,6 +60,7 @@ impl Kelvin {
     /// Returns this temperature in kelvin.
     ///
     /// 返回该温度的开尔文值。
+    #[must_use]
     pub const fn value(self) -> f64 {
         self.0
     }
@@ -65,6 +68,7 @@ impl Kelvin {
     /// Converts this temperature to degrees Celsius.
     ///
     /// 把该温度换算为摄氏度。
+    #[must_use]
     pub fn to_celsius(self) -> f64 {
         self.0 - apsis_core::constant::ZERO_CELSIUS_IN_KELVIN
     }

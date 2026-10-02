@@ -29,9 +29,9 @@ fn celsius_conversion_round_trips() {
 
 #[test]
 fn unit_metadata_is_available() {
+    fn assert_temperature<U: Unit<Dimension = Temperature>>() {}
     assert_eq!(Kelvin::symbol(), "K");
     assert_eq!(Kelvin::factor_to_base(), 1.0);
-    fn assert_temperature<U: Unit<Dimension = Temperature>>() {}
     assert_temperature::<Kelvin>();
 }
 

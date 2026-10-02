@@ -53,6 +53,7 @@ impl LinkGeometry {
     /// 返回该链路的擦地余量，单位为千米。
     ///
     /// 它是两点连线在最接近处越过地表的量度。负值表示该链路被遮挡。
+    #[must_use]
     pub fn surface_clearance(&self, body_radius: f64) -> f64 {
         self.centre_distance_km - body_radius
     }
@@ -60,6 +61,7 @@ impl LinkGeometry {
     /// Returns `true` when the link clears the body.
     ///
     /// 当该链路越过天体时返回 `true`。
+    #[must_use]
     pub fn is_clear(&self, body_radius: f64) -> bool {
         self.centre_distance_km >= body_radius
     }
@@ -102,6 +104,7 @@ impl LinkState {
     /// Returns `true` when the link may carry traffic.
     ///
     /// 当该链路可承载业务时返回 `true`。
+    #[must_use]
     pub const fn is_usable(self) -> bool {
         matches!(self, Self::Available)
     }
@@ -109,6 +112,7 @@ impl LinkState {
     /// Returns a short name for the state.
     ///
     /// 返回该状态的简称。
+    #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
             Self::Available => "available",

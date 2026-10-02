@@ -38,6 +38,7 @@ impl Decibel {
     /// Creates a value from a decibel reading.
     ///
     /// 由分贝读数创建一个取值。
+    #[must_use]
     pub const fn from_db(decibels: f64) -> Self {
         Self(decibels)
     }
@@ -50,6 +51,7 @@ impl Decibel {
     /// 由功率比创建一个取值。
     ///
     /// 比值非正且非有限时返回 `None`，因为那里没有定义对数。
+    #[must_use]
     pub fn from_ratio(ratio: f64) -> Option<Self> {
         if ratio > 0.0 && ratio.is_finite() {
             Some(Self(10.0 * ratio.log10()))
@@ -69,6 +71,7 @@ impl Decibel {
     /// Returns `None` when the ratio is not positive and finite.
     ///
     /// 比值非正或非有限时返回 `None`。
+    #[must_use]
     pub fn from_amplitude_ratio(ratio: f64) -> Option<Self> {
         if ratio > 0.0 && ratio.is_finite() {
             Some(Self(20.0 * ratio.log10()))
@@ -80,6 +83,7 @@ impl Decibel {
     /// Returns the reading in decibels.
     ///
     /// 返回该分贝读数。
+    #[must_use]
     pub const fn db(self) -> f64 {
         self.0
     }
@@ -87,6 +91,7 @@ impl Decibel {
     /// Returns the power ratio this reading represents.
     ///
     /// 返回该读数所表示的功率比。
+    #[must_use]
     pub fn ratio(self) -> f64 {
         10f64.powf(self.0 / 10.0)
     }
@@ -94,6 +99,7 @@ impl Decibel {
     /// Returns the amplitude ratio this reading represents.
     ///
     /// 返回该读数所表示的幅度比。
+    #[must_use]
     pub fn amplitude_ratio(self) -> f64 {
         10f64.powf(self.0 / 20.0)
     }
@@ -107,6 +113,7 @@ impl Decibel {
     ///
     /// 分贝值相加即其所表示的比值相乘，这正是级联增益与损耗的合成
     /// 方式。
+    #[must_use]
     pub const fn plus(self, other: Self) -> Self {
         Self(self.0 + other.0)
     }
@@ -119,6 +126,7 @@ impl Decibel {
     /// 返回两个读数之差。
     ///
     /// 分贝值相减即其所表示的比值相除，这正是从增益中去掉损耗的方式。
+    #[must_use]
     pub const fn minus(self, other: Self) -> Self {
         Self(self.0 - other.0)
     }
@@ -126,6 +134,7 @@ impl Decibel {
     /// Returns this reading negated, which inverts the ratio.
     ///
     /// 返回该读数的相反数，即比值的倒数。
+    #[must_use]
     pub const fn negated(self) -> Self {
         Self(-self.0)
     }
@@ -133,6 +142,7 @@ impl Decibel {
     /// Returns `true` when the reading is finite.
     ///
     /// 当该读数有限时返回 `true`。
+    #[must_use]
     pub const fn is_finite(self) -> bool {
         self.0.is_finite()
     }

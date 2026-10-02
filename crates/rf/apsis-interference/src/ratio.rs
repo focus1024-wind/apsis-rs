@@ -30,6 +30,7 @@ impl Interferer {
     /// Creates an interferer from a power at the receiver input.
     ///
     /// 由接收机输入端的功率创建干扰源。
+    #[must_use]
     pub const fn new(power: Power) -> Self {
         Self { power }
     }
@@ -68,6 +69,7 @@ impl InterferenceSummary {
     /// 返回干扰与载波之比。
     ///
     /// 它是载干比的倒数，是某些规范所用的形式。
+    #[must_use]
     pub fn interference_to_carrier(self) -> Decibel {
         self.carrier_to_interference.negated()
     }
@@ -88,6 +90,7 @@ impl InterferenceSummary {
 /// 相等的干扰源给出单个的两倍功率，即三分贝而非六分贝。
 ///
 /// 任一干扰源的功率无效时返回 `None`。
+#[must_use]
 pub fn total_interference(interferers: &[Interferer]) -> Option<Power> {
     let mut total = 0.0;
     for interferer in interferers {
@@ -115,6 +118,7 @@ pub fn total_interference(interferers: &[Interferer]) -> Option<Power> {
 ///
 /// 载波非正、任一干扰源无效，或总干扰为零（会给出无穷的比）时返回
 /// `None`。
+#[must_use]
 pub fn carrier_to_interference(carrier: Power, interferers: &[Interferer]) -> Option<Decibel> {
     if !carrier.is_valid() || carrier.watts() <= 0.0 {
         return None;
@@ -137,6 +141,7 @@ pub fn carrier_to_interference(carrier: Power, interferers: &[Interferer]) -> Op
 /// 这是为一个占主导的干扰源这一常见情形提供的便利。
 ///
 /// 两个功率之一非正时返回 `None`。
+#[must_use]
 pub fn carrier_to_interference_single(carrier: Power, interferer: Interferer) -> Option<Decibel> {
     carrier_to_interference(carrier, &[interferer])
 }
@@ -173,6 +178,7 @@ pub fn carrier_to_interference_single(carrier: Power, interferer: Interferer) ->
 /// 载干比正是这样合并为载波与噪声加干扰之比的。
 ///
 /// 任一值非有限时返回 `None`。
+#[must_use]
 pub fn combine(first: Decibel, second: Decibel) -> Option<Decibel> {
     if !first.is_finite() || !second.is_finite() {
         return None;
@@ -203,6 +209,7 @@ pub fn combine(first: Decibel, second: Decibel) -> Option<Decibel> {
 /// 它无法把热噪声与竞争载波分开。
 ///
 /// 任一比非有限时返回 `None`。
+#[must_use]
 pub fn carrier_to_noise_plus_interference(
     carrier_to_noise: Decibel,
     carrier_to_interference: Decibel,
@@ -225,6 +232,7 @@ pub fn carrier_to_noise_plus_interference(
 /// 噪声可忽略、可以不计；接近或高于零的值意味着必须计入它。
 ///
 /// 两个功率之一非正时返回 `None`。
+#[must_use]
 pub fn interference_to_noise_ratio(interference: Power, noise: Power) -> Option<Decibel> {
     if !interference.is_valid() || !noise.is_valid() {
         return None;
@@ -270,6 +278,7 @@ pub fn interference_to_noise_ratio(interference: Power, noise: Power) -> Option<
 /// 温度即加到系统温度上会使噪声上升与干扰源相同量的值。
 ///
 /// 功率非正，或带宽非正且非有限时返回 `None`。
+#[must_use]
 pub fn equivalent_noise_temperature(interference: Power, bandwidth: f64) -> Option<f64> {
     if !interference.is_valid() || interference.watts() <= 0.0 {
         return None;
@@ -295,6 +304,7 @@ pub fn equivalent_noise_temperature(interference: Power, bandwidth: f64) -> Opti
 /// 噪声功率传 `None`。
 ///
 /// 载波非正、任一干扰源无效，或总干扰为零时返回 `None`。
+#[must_use]
 pub fn summarise(
     carrier: Power,
     interferers: &[Interferer],
