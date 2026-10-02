@@ -56,6 +56,17 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
         run: cargo doc --workspace --all-features --no-deps
+      - name: Documentation with default features
+        # A downstream reader runs `cargo doc` on the default feature set,
+        # where the facade re-exports nothing, so a link to a re-exported
+        # crate does not resolve. The all-features build above would not
+        # catch that, so it is checked here.
+        # 下游读者会在默认特性集上运行 `cargo doc`，那里门面不重导出任何
+        # 东西，故指向被重导出 crate 的链接无法解析。上面的全特性构建捕获
+        # 不到这一点，故在此检查。
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --workspace --no-deps
       - name: Check the layer rule
         # README.md states that a crate may only depend on layers to its
         # left. Nothing else in the build enforces that, so a reverse

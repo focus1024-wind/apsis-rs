@@ -14,8 +14,8 @@
 //! depend on it directly and enable the feature that matches the layers they
 //! need. Each feature re-exports the crates of one layer and pulls in the
 //! features of the layers below it. For example, the `orbit` feature enables
-//! `physics` and re-exports [`apsis_orbit`], [`apsis_tle`], [`apsis_sgp4`],
-//! [`apsis_kepler`], and [`apsis_ephemeris`].
+//! `physics` and re-exports `apsis_orbit`, `apsis_tle`, `apsis_sgp4`,
+//! `apsis_kepler`, and `apsis_ephemeris`.
 //!
 //! The `full` feature enables every layer, including `sim`. Because `sim`
 //! aggregates all other layers and is only needed by simulation workloads,
@@ -35,8 +35,8 @@
 //!
 //! 本 crate 是名为 `apsis-rs` 的公共门面。下游项目直接依赖它，并启用与其
 //! 所需层相匹配的特性。每个特性重导出某一层的各 crate，并引入其下方各层
-//! 的特性。例如，`orbit` 特性启用 `physics`，并重导出 [`apsis_orbit`]、
-//! [`apsis_tle`]、[`apsis_sgp4`]、[`apsis_kepler`] 与 [`apsis_ephemeris`]。
+//! 的特性。例如，`orbit` 特性启用 `physics`，并重导出 `apsis_orbit`、
+//! `apsis_tle`、`apsis_sgp4`、`apsis_kepler` 与 `apsis_ephemeris`。
 //!
 //! `full` 特性启用每一层，包括 `sim`。因为 `sim` 聚合了其余所有层且只为
 //! 仿真工作负载所需，不运行仿真的项目可以改而启用 `ops`，它启用除 `sim`
