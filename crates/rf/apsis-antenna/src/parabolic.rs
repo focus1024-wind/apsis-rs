@@ -67,9 +67,11 @@ impl ParabolicAperture {
     ///
     /// The relation is
     ///
-    /// ```text
-    /// G = eta (pi D / lambda)^2
-    /// ```
+    /// <div>
+    /// $$
+    /// G = \eta \left(\frac{\pi D}{\lambda}\right)^2
+    /// $$
+    /// </div>
     ///
     /// which follows from the effective area through
     /// [`Gain::from_effective_aperture`]. Returns `None` for an invalid
@@ -79,9 +81,11 @@ impl ParabolicAperture {
     ///
     /// 关系为
     ///
-    /// ```text
-    /// G = eta (pi D / lambda)^2
-    /// ```
+    /// <div>
+    /// $$
+    /// G = \eta \left(\frac{\pi D}{\lambda}\right)^2
+    /// $$
+    /// </div>
     ///
     /// 它由有效面积经 [`Gain::from_effective_aperture`] 得出。孔径或波长
     /// 无效时返回 `None`。

@@ -14,9 +14,11 @@ use core::f64::consts::PI;
 /// can be described by the two numbers a link budget has to hand. In
 /// decibels,
 ///
-/// ```text
-/// G(theta) = G_peak - min(12 (theta / theta_0)^2, G_floor)
-/// ```
+/// <div>
+/// $$
+/// G(\theta) = G_{\text{peak}} - \min\!\left(12\left(\frac{\theta}{\theta_0}\right)^2,\; G_{\text{floor}}\right)
+/// $$
+/// </div>
 ///
 /// where `theta_0` is the half power beam width and `G_floor` is the
 /// sidelobe level to fall to, in decibels below the peak. The squared angle
@@ -40,9 +42,11 @@ use core::f64::consts::PI;
 /// 这是若干干扰评估所用的角平方模型，以半功率波束宽度表达，使任何天线
 /// 都能由链路预算手头的两个数描述。以分贝计，
 ///
-/// ```text
-/// G(theta) = G_peak - min(12 (theta / theta_0)^2, G_floor)
-/// ```
+/// <div>
+/// $$
+/// G(\theta) = G_{\text{peak}} - \min\!\left(12\left(\frac{\theta}{\theta_0}\right)^2,\; G_{\text{floor}}\right)
+/// $$
+/// </div>
 ///
 /// 其中 `theta_0` 是半功率波束宽度，`G_floor` 是所要降到的旁瓣电平，
 /// 相对峰值以分贝计。角平方律来自均匀照射孔径 Airy 图案的首项，直到
@@ -82,15 +86,24 @@ pub fn off_axis_attenuation(
 /// to check whether an Earth station meets the off-axis emission limits that
 /// protect neighbouring satellites. The pattern is piecewise:
 ///
-/// ```text
-/// for  D/lambda >= 100:
-///   G = 29 - 25 log10(theta)            for 1   <= theta < 36 degrees
-///   G = -10                             for 36  <= theta <= 180 degrees
-/// for  D/lambda <  100:
-///   G = 32 - 25 log10(theta)            for 1   <= theta < 48 degrees
-///   G = -10                             for 48  <= theta <= 180 degrees
-///   G = 32 - 25 log10(48)               for theta < 1 degree
-/// ```
+/// <div>
+/// $$
+/// G(\theta) =
+/// \begin{cases}
+/// 29 - 25\log_{10}\theta, & 1^\circ \le \theta < 36^\circ \\
+/// -10, & 36^\circ \le \theta \le 180^\circ
+/// \end{cases}
+/// \quad \text{for } D/\lambda \ge 100
+/// \qquad
+/// G(\theta) =
+/// \begin{cases}
+/// 32 - 25\log_{10}\theta, & 1^\circ \le \theta < 48^\circ \\
+/// -10, & 48^\circ \le \theta \le 180^\circ \\
+/// 32 - 25\log_{10}48, & \theta < 1^\circ
+/// \end{cases}
+/// \quad \text{for } D/\lambda < 100
+/// $$
+/// </div>
 ///
 /// The angle is in radians and the diameter to wavelength ratio decides
 /// which branch applies, because a small antenna has a broader main lobe
@@ -111,15 +124,24 @@ pub fn off_axis_attenuation(
 /// 这是《无线电规则》附录 8 的参考方向图，用于检查地球站是否满足保护
 /// 邻近卫星的偏轴发射限值。该方向图是分段的：
 ///
-/// ```text
-/// for  D/lambda >= 100:
-///   G = 29 - 25 log10(theta)            for 1   <= theta < 36 degrees
-///   G = -10                             for 36  <= theta <= 180 degrees
-/// for  D/lambda <  100:
-///   G = 32 - 25 log10(theta)            for 1   <= theta < 48 degrees
-///   G = -10                             for 48  <= theta <= 180 degrees
-///   G = 32 - 25 log10(48)               for theta < 1 degree
-/// ```
+/// <div>
+/// $$
+/// G(\theta) =
+/// \begin{cases}
+/// 29 - 25\log_{10}\theta, & 1^\circ \le \theta < 36^\circ \\
+/// -10, & 36^\circ \le \theta \le 180^\circ
+/// \end{cases}
+/// \quad \text{for } D/\lambda \ge 100
+/// \qquad
+/// G(\theta) =
+/// \begin{cases}
+/// 32 - 25\log_{10}\theta, & 1^\circ \le \theta < 48^\circ \\
+/// -10, & 48^\circ \le \theta \le 180^\circ \\
+/// 32 - 25\log_{10}48, & \theta < 1^\circ
+/// \end{cases}
+/// \quad \text{for } D/\lambda < 100
+/// $$
+/// </div>
 ///
 /// 角度以弧度计，口径与波长之比决定适用哪一支，因为小天线主瓣更宽，
 /// 故须受控的角度范围也更大。

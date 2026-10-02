@@ -57,9 +57,11 @@ impl Footprint {
     ///
     /// The area is the part of a sphere cut off by a cone,
     ///
-    /// ```text
-    /// A = 2 pi R^2 (1 - cos(central))
-    /// ```
+    /// <div>
+    /// $$
+    /// A = 2 \pi R^2 \left(1 - \cos(\text{central})\right)
+    /// $$
+    /// </div>
     ///
     /// which is exact for a spherical body.
     ///
@@ -67,9 +69,11 @@ impl Footprint {
     ///
     /// 该面积是被圆锥截去的球面部分，
     ///
-    /// ```text
-    /// A = 2 pi R^2 (1 - cos(central))
-    /// ```
+    /// <div>
+    /// $$
+    /// A = 2 \pi R^2 \left(1 - \cos(\text{central})\right)
+    /// $$
+    /// </div>
     ///
     /// 对球形天体这是精确的。
     pub fn area(&self) -> f64 {

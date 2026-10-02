@@ -19,9 +19,11 @@
 //! point, the nadir angle at the satellite, and the central angle at the
 //! centre, and they sum to a right angle:
 //!
-//! ```text
-//! elevation + nadir + central = 90 degrees
-//! ```
+//! <div>
+//! $$
+//! \text{elevation} + \text{nadir} + \text{central} = 90^\circ
+//! $$
+//! </div>
 //!
 //! Source: the relations used here are the standard satellite geometry, as
 //! given for example in Vallado, D. A., *Fundamentals of Astrodynamics and
@@ -55,9 +57,11 @@
 //! 卫星、地面点与地心构成的几何是一个三角形。其三个角是地面点处的仰角、卫星处的
 //! 天底角，以及地心处的中心角，它们相加为直角：
 //!
-//! ```text
-//! elevation + nadir + central = 90 degrees
-//! ```
+//! <div>
+//! $$
+//! \text{elevation} + \text{nadir} + \text{central} = 90^\circ
+//! $$
+//! </div>
 //!
 //! 出处：此处所用的关系是标准的卫星几何，例如见 Vallado, D. A.，*Fundamentals of
 //! Astrodynamics and Applications*，第 4 版，microcosm Press，2013，第 5.3 节。

@@ -146,9 +146,11 @@ pub fn carrier_to_interference_single(carrier: Power, interferer: Interferer) ->
 /// When two independent impairments act together, their effects add as
 /// reciprocal ratios, which in decibels means
 ///
-/// ```text
-/// 1 / R = 1 / R_1 + 1 / R_2
-/// ```
+/// <div>
+/// $$
+/// \frac{1}{R} = \frac{1}{R_1} + \frac{1}{R_2}
+/// $$
+/// </div>
 ///
 /// The result is always below the smaller of the two, so adding a second
 /// impairment can only lower the combined ratio. This is how a carrier to
@@ -161,9 +163,11 @@ pub fn carrier_to_interference_single(carrier: Power, interferer: Interferer) ->
 ///
 /// 当两种独立损伤共同作用时，它们的效果按倒数之比相加，以分贝表示即
 ///
-/// ```text
-/// 1 / R = 1 / R_1 + 1 / R_2
-/// ```
+/// <div>
+/// $$
+/// \frac{1}{R} = \frac{1}{R_1} + \frac{1}{R_2}
+/// $$
+/// </div>
 ///
 /// 结果总低于两者中较小者，故加入第二种损伤只会降低合并之比。载噪比与
 /// 载干比正是这样合并为载波与噪声加干扰之比的。
@@ -237,9 +241,11 @@ pub fn interference_to_noise_ratio(interference: Power, noise: Power) -> Option<
 /// budget as an increase in system noise temperature. In temperature the
 /// relation is
 ///
-/// ```text
-/// T = P / (k B)
-/// ```
+/// <div>
+/// $$
+/// T = \frac{P}{k B}
+/// $$
+/// </div>
 ///
 /// with `P` the interfering power, `k` the Boltzmann constant, and `B` the
 /// receiver noise bandwidth. The temperature is the value that, added to the
@@ -254,9 +260,11 @@ pub fn interference_to_noise_ratio(interference: Power, noise: Power) -> Option<
 /// 接收机当作噪声处理的干扰源可以折算为系统噪声温度的增量计入链路
 /// 预算。在温度上关系为
 ///
-/// ```text
-/// T = P / (k B)
-/// ```
+/// <div>
+/// $$
+/// T = \frac{P}{k B}
+/// $$
+/// </div>
 ///
 /// 其中 `P` 是干扰功率，`k` 是玻尔兹曼常量，`B` 是接收机噪声带宽。该
 /// 温度即加到系统温度上会使噪声上升与干扰源相同量的值。

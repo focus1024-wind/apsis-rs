@@ -29,9 +29,11 @@ pub fn zenith_to_elevation(elevation: f64) -> f64 {
 /// the vertical path length. For a plane parallel atmosphere it is the
 /// cosecant of the elevation,
 ///
-/// ```text
-/// m = 1 / sin(elevation)
-/// ```
+/// <div>
+/// $$
+/// m = \frac{1}{\sin(\text{elevation})}
+/// $$
+/// </div>
 ///
 /// so the value is one at the zenith and grows without bound at the horizon.
 /// The plane parallel assumption fails below about ten degrees elevation,
@@ -49,9 +51,11 @@ pub fn zenith_to_elevation(elevation: f64) -> f64 {
 /// 大气质量是穿过平坦大气的路径长度与垂直路径长度之比。对平面平行
 /// 大气它是仰角的余割，
 ///
-/// ```text
-/// m = 1 / sin(elevation)
-/// ```
+/// <div>
+/// $$
+/// m = \frac{1}{\sin(\text{elevation})}
+/// $$
+/// </div>
 ///
 /// 故在天顶处为一，在地平处无界增长。平面平行假定在约十度仰角以下
 /// 失效，那里地球曲率使路径比该式更短，真实大气质量更小。

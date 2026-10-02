@@ -82,9 +82,11 @@ impl Stage {
 /// The Friis formula weights each stage's contribution by the gain that
 /// precedes it:
 ///
-/// ```text
-/// T = T_1 + T_2 / G_1 + T_3 / (G_1 G_2) + ...
-/// ```
+/// <div>
+/// $$
+/// T = T_1 + \frac{T_2}{G_1} + \frac{T_3}{G_1 G_2} + \cdots
+/// $$
+/// </div>
 ///
 /// The consequence is that the first stage dominates: a noisy second stage
 /// matters much less when the first stage has gain. The total temperature is
@@ -98,9 +100,11 @@ impl Stage {
 ///
 /// Friis 公式按本级之前的增益对每级的贡献加权：
 ///
-/// ```text
-/// T = T_1 + T_2 / G_1 + T_3 / (G_1 G_2) + ...
-/// ```
+/// <div>
+/// $$
+/// T = T_1 + \frac{T_2}{G_1} + \frac{T_3}{G_1 G_2} + \cdots
+/// $$
+/// </div>
 ///
 /// 其结果是第一级占主导：当第一级有增益时，噪声大的第二级影响小得多。
 /// 总温度即整链的温度，故可直接与可用增益比较以求得整链的噪声系数。

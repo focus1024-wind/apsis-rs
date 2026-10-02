@@ -136,14 +136,18 @@ impl Elements {
 /// the element set value and `xke` for the Kepler constant, the reference
 /// implementation evaluates
 ///
-/// ```text
-/// ak   = (xke / no)^(2/3)
-/// d1   = 0.75 j2 (3 cos^2 i - 1) / (sqrt(1 - e^2) (1 - e^2))
-/// del  = d1 / ak^2
-/// adel = ak (1 - del^2 - del (1/3 + 134 del^2 / 81))
-/// del  = d1 / adel^2
-/// n0   = no / (1 + del)
-/// ```
+/// <div>
+/// $$
+/// \begin{aligned}
+/// \text{ak} &= (\text{xke} / \text{no})^{2/3} \\
+/// \text{d1} &= \frac{0.75\, j_2\,(3 \cos^2 i - 1)}{\sqrt{1 - e^2}\,(1 - e^2)} \\
+/// \text{del} &= \text{d1} / \text{ak}^2 \\
+/// \text{adel} &= \text{ak}\left(1 - \text{del}^2 - \text{del}\left(\tfrac{1}{3} + \tfrac{134\,\text{del}^2}{81}\right)\right) \\
+/// \text{del} &= \text{d1} / \text{adel}^2 \\
+/// n_0 &= \text{no} / (1 + \text{del})
+/// \end{aligned}
+/// $$
+/// </div>
 ///
 /// The second evaluation of `del` uses `adel` rather than `ak`, which is
 /// what makes the correction consistent with the semi-major axis implied by
@@ -158,14 +162,18 @@ impl Elements {
 /// 使用。以 `no` 表示根数集给出的值、`xke` 表示开普勒常数，参考实现按下式
 /// 求值：
 ///
-/// ```text
-/// ak   = (xke / no)^(2/3)
-/// d1   = 0.75 j2 (3 cos^2 i - 1) / (sqrt(1 - e^2) (1 - e^2))
-/// del  = d1 / ak^2
-/// adel = ak (1 - del^2 - del (1/3 + 134 del^2 / 81))
-/// del  = d1 / adel^2
-/// n0   = no / (1 + del)
-/// ```
+/// <div>
+/// $$
+/// \begin{aligned}
+/// \text{ak} &= (\text{xke} / \text{no})^{2/3} \\
+/// \text{d1} &= \frac{0.75\, j_2\,(3 \cos^2 i - 1)}{\sqrt{1 - e^2}\,(1 - e^2)} \\
+/// \text{del} &= \text{d1} / \text{ak}^2 \\
+/// \text{adel} &= \text{ak}\left(1 - \text{del}^2 - \text{del}\left(\tfrac{1}{3} + \tfrac{134\,\text{del}^2}{81}\right)\right) \\
+/// \text{del} &= \text{d1} / \text{adel}^2 \\
+/// n_0 &= \text{no} / (1 + \text{del})
+/// \end{aligned}
+/// $$
+/// </div>
 ///
 /// 第二次求 `del` 用的是 `adel` 而非 `ak`，这正是该修正与修正后平运动所隐含
 /// 的半长轴相一致的原因。

@@ -127,6 +127,18 @@ crate cannot infer:
 - [Glossary and formula conventions](docs/design/glossary.md)
 - [The simulation layer](docs/design/sim.md)
 
+The generated API documentation renders mathematical formulas offline. A copy
+of MathJax is vendored under `docs/vendor/mathjax`, `docs/mathjax.html` loads
+it, and `crates/apsis-rs/build.rs` copies it into the documentation root, so
+the generated pages need no network access. Build them with
+`bash scripts/build-docs.sh --workspace --all-features --no-deps`; a plain
+`cargo doc` also works, and the script only makes the copy reliable. A display
+formula is written as `$$ ... $$` inside a `<div>`; the surrounding div keeps
+the markdown layer from rewriting the LaTeX.
+
 ## Licence
 
 GPL-3.0-or-later, see `LICENSE`.
+
+The vendored MathJax under `docs/vendor/mathjax` is Apache-2.0; see the
+`LICENSE` in that directory.

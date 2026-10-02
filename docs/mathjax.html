@@ -1,0 +1,36 @@
+<script>
+// MathJax configuration for the ApsisRS documentation.
+//
+// MathJax is vendored under docs/vendor/mathjax and copied to
+// target/doc/vendor/mathjax by crates/apsis-rs/build.rs, so this page loads
+// it from the local documentation root and never contacts a content delivery
+// network. The root is derived from the static file reference rustdoc already
+// emits, which carries the correct number of "../" for the current page.
+window.MathJax = {
+  tex: {
+    inlineMath: [["$", "$"], ["\\(", "\\)"]],
+    displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+    processEscapes: true,
+    tags: "none"
+  },
+  svg: { fontCache: "local" },
+  options: {
+    enableMenu: false,
+    skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+  }
+};
+(function () {
+  var reference = document.querySelector(
+    'link[href*="static.files"], script[src*="static.files"]'
+  );
+  var prefix = "";
+  if (reference) {
+    var value = reference.getAttribute("href") || reference.getAttribute("src") || "";
+    prefix = value.replace(/static\.files\/.*$/, "");
+  }
+  var script = document.createElement("script");
+  script.src = prefix + "vendor/mathjax/tex-svg-full.js";
+  script.async = true;
+  document.head.appendChild(script);
+})();
+</script>

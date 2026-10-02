@@ -7,16 +7,20 @@
 //! directly below the local horizon, the elevation and the adjacent angle at
 //! the ground point are complementary, so the three angles satisfy
 //!
-//! ```text
-//! elevation + nadir + central = 90 degrees
-//! ```
+//! <div>
+//! $$
+//! \text{elevation} + \text{nadir} + \text{central} = 90^\circ
+//! $$
+//! </div>
 //!
 //! The quantities of interest follow from the law of sines applied to that
 //! triangle:
 //!
-//! ```text
-//! sin(nadir) / body_radius = cos(elevation) / satellite_radius
-//! ```
+//! <div>
+//! $$
+//! \frac{\sin(\text{nadir})}{\text{body\_radius}} = \frac{\cos(\text{elevation})}{\text{satellite\_radius}}
+//! $$
+//! </div>
 //!
 //! where the cosine appears because the angle at the ground point, inside
 //! the triangle, is the complement of the elevation.
@@ -32,15 +36,19 @@
 //! 地心处的中心角。因为地面点正位于当地地平之下，仰角与地面点处的邻角互补，故
 //! 三个角满足
 //!
-//! ```text
-//! elevation + nadir + central = 90 degrees
-//! ```
+//! <div>
+//! $$
+//! \text{elevation} + \text{nadir} + \text{central} = 90^\circ
+//! $$
+//! </div>
 //!
 //! 所关注的各量由正弦定理施加于该三角形得出：
 //!
-//! ```text
-//! sin(nadir) / body_radius = cos(elevation) / satellite_radius
-//! ```
+//! <div>
+//! $$
+//! \frac{\sin(\text{nadir})}{\text{body\_radius}} = \frac{\cos(\text{elevation})}{\text{satellite\_radius}}
+//! $$
+//! </div>
 //!
 //! 其中出现余弦，是因为三角形内地面点处的角是仰角的余角。
 //!
@@ -112,10 +120,12 @@ pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f
 /// The relation is the law of cosines applied to the triangle formed by the
 /// satellite, the ground point, and the centre of the Earth,
 ///
-/// ```text
-/// range^2 = satellite_radius^2 + body_radius^2
-///           - 2 satellite_radius body_radius cos(central)
-/// ```
+/// <div>
+/// $$
+/// \text{range}^2 = \text{satellite\_radius}^2 + \text{body\_radius}^2
+///   - 2\,\text{satellite\_radius}\,\text{body\_radius}\,\cos(\text{central})
+/// $$
+/// </div>
 ///
 /// The law of cosines is used rather than the equivalent form
 /// `Rs sin(central) / cos(elevation)` because the latter is singular at the
@@ -131,10 +141,12 @@ pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f
 ///
 /// 该关系是余弦定理施加于卫星、地面点与地心构成的三角形：
 ///
-/// ```text
-/// range^2 = satellite_radius^2 + body_radius^2
-///           - 2 satellite_radius body_radius cos(central)
-/// ```
+/// <div>
+/// $$
+/// \text{range}^2 = \text{satellite\_radius}^2 + \text{body\_radius}^2
+///   - 2\,\text{satellite\_radius}\,\text{body\_radius}\,\cos(\text{central})
+/// $$
+/// </div>
 ///
 /// 此处用余弦定理而非等价形式 `Rs sin(central) / cos(elevation)`，因为后者在
 /// 天顶处奇异，那里仰角是直角、其余弦为零，尽管那里的距离恰是高度。
@@ -161,10 +173,11 @@ pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
 ///
 /// The relation is
 ///
-/// ```text
-/// tan(elevation) = (cos(central) - body_radius / satellite_radius)
-///                  / sin(central)
-/// ```
+/// <div>
+/// $$
+/// \tan(\text{elevation}) = \frac{\cos(\text{central}) - \text{body\_radius} / \text{satellite\_radius}}{\sin(\text{central})}
+/// $$
+/// </div>
 ///
 /// Returns `None` when the radii are not usable or when the central angle is
 /// not finite.
@@ -176,10 +189,11 @@ pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
 ///
 /// 关系为
 ///
-/// ```text
-/// tan(elevation) = (cos(central) - body_radius / satellite_radius)
-///                  / sin(central)
-/// ```
+/// <div>
+/// $$
+/// \tan(\text{elevation}) = \frac{\cos(\text{central}) - \text{body\_radius} / \text{satellite\_radius}}{\sin(\text{central})}
+/// $$
+/// </div>
 ///
 /// 半径不可用或中心角非有限时返回 `None`。
 pub fn elevation_from_central_angle(

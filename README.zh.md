@@ -107,9 +107,18 @@ cargo run --release -p apsis-rs --features full --example bench_scale
 cargo run --release -p apsis-rs --features full --example bench_parallel
 ```
 
+生成的 API 文档会离线渲染数学公式。`docs/vendor/mathjax` 下内置了一份
+MathJax，`docs/mathjax.html` 负责加载，`crates/apsis-rs/build.rs` 会把它复制到
+文档根，故生成的页面无需任何网络访问。用
+`bash scripts/build-docs.sh --workspace --all-features --no-deps` 构建；直接
+`cargo doc` 也可以，脚本只是使复制可靠。行间公式写作 `<div>` 包裹的
+`$$ ... $$`；外层 div 使 markdown 层不改写其中的 LaTeX。
+
 ## 许可
 
 GPL-3.0-or-later，见 `LICENSE`。
+
+`docs/vendor/mathjax` 下内置的 MathJax 为 Apache-2.0，见该目录内的 `LICENSE`。
 
 ## 术语
 

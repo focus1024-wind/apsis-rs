@@ -43,9 +43,11 @@ const GEOPOTENTIAL_EARTH_RADIUS_KM: f64 = 6_356.766;
 ///
 /// The relation is
 ///
-/// ```text
-/// h_p = R H / (R + H)
-/// ```
+/// <div>
+/// $$
+/// h_p = \frac{R H}{R + H}
+/// $$
+/// </div>
 ///
 /// with `R` the fixed Earth radius of the standard atmosphere and `H` the
 /// geometric height. The geopotential height is always the smaller of the
@@ -55,9 +57,11 @@ const GEOPOTENTIAL_EARTH_RADIUS_KM: f64 = 6_356.766;
 ///
 /// 关系为
 ///
-/// ```text
-/// h_p = R H / (R + H)
-/// ```
+/// <div>
+/// $$
+/// h_p = \frac{R H}{R + H}
+/// $$
+/// </div>
 ///
 /// 其中 `R` 是标准大气固定的地球半径，`H` 是几何高度。势高总是两者中较
 /// 小者。
@@ -167,10 +171,14 @@ pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: 
 ///
 /// The relation is
 ///
-/// ```text
-/// N = 77.6 P_d / T + 72 e / T + 3.75e5 e / T^2
-/// n = 1 + N 1e-6
-/// ```
+/// <div>
+/// $$
+/// \begin{aligned}
+/// N &= \frac{77.6\,P_d}{T} + \frac{72\,e}{T} + \frac{3.75\times10^5\,e}{T^2} \\
+/// n &= 1 + N \times 10^{-6}
+/// \end{aligned}
+/// $$
+/// </div>
 ///
 /// with `P_d` the dry air pressure and `e` the water vapour partial
 /// pressure, both in hectopascals, and `T` the temperature in kelvin. The
@@ -184,10 +192,14 @@ pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: 
 ///
 /// 关系为
 ///
-/// ```text
-/// N = 77.6 P_d / T + 72 e / T + 3.75e5 e / T^2
-/// n = 1 + N 1e-6
-/// ```
+/// <div>
+/// $$
+/// \begin{aligned}
+/// N &= \frac{77.6\,P_d}{T} + \frac{72\,e}{T} + \frac{3.75\times10^5\,e}{T^2} \\
+/// n &= 1 + N \times 10^{-6}
+/// \end{aligned}
+/// $$
+/// </div>
 ///
 /// 其中 `P_d` 是干空气气压，`e` 是水汽分压，两者均以百帕计；`T` 是
 /// 温度，以开尔文计。前两项是非色散折射率，第三项是使水汽产生强烈效应

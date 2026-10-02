@@ -67,12 +67,16 @@ impl Geodetic {
     ///
     /// The closed form is
     ///
-    /// ```text
-    /// N = a / sqrt(1 - e^2 sin^2(lat))
-    /// x = (N + h) cos(lat) cos(lon)
-    /// y = (N + h) cos(lat) sin(lon)
-    /// z = (N (1 - e^2) + h) sin(lat)
-    /// ```
+    /// <div>
+    /// $$
+    /// \begin{aligned}
+    /// N &= \frac{a}{\sqrt{1 - e^2 \sin^2\varphi}} \\
+    /// x &= (N + h) \cos\varphi \cos\lambda \\
+    /// y &= (N + h) \cos\varphi \sin\lambda \\
+    /// z &= \left(N(1 - e^2) + h\right) \sin\varphi
+    /// \end{aligned}
+    /// $$
+    /// </div>
     ///
     /// where `N` is the prime vertical radius of curvature. This form is
     /// exact everywhere, including at the poles, where the cosine factors
@@ -85,12 +89,16 @@ impl Geodetic {
     ///
     /// 闭式解为
     ///
-    /// ```text
-    /// N = a / sqrt(1 - e^2 sin^2(lat))
-    /// x = (N + h) cos(lat) cos(lon)
-    /// y = (N + h) cos(lat) sin(lon)
-    /// z = (N (1 - e^2) + h) sin(lat)
-    /// ```
+    /// <div>
+    /// $$
+    /// \begin{aligned}
+    /// N &= \frac{a}{\sqrt{1 - e^2 \sin^2\varphi}} \\
+    /// x &= (N + h) \cos\varphi \cos\lambda \\
+    /// y &= (N + h) \cos\varphi \sin\lambda \\
+    /// z &= \left(N(1 - e^2) + h\right) \sin\varphi
+    /// \end{aligned}
+    /// $$
+    /// </div>
     ///
     /// 其中 `N` 为卯酉圈曲率半径。该形式处处精确，包括余弦因子为零的极点。
     pub fn to_cartesian(self, ellipsoid: Ellipsoid) -> Vec3 {

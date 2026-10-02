@@ -45,9 +45,11 @@ pub fn range_rate_from_velocity(relative_position: Vec3, relative_velocity: Vec3
 ///
 /// The relation is
 ///
-/// ```text
-/// delta f = -f_0 (v_r / c)
-/// ```
+/// <div>
+/// $$
+/// \Delta f = -f_0 \frac{v_r}{c}
+/// $$
+/// </div>
 ///
 /// where `v_r` is the range rate, positive when receding. The shift is
 /// negative for a receding terminal, so the received frequency is lower than
@@ -66,9 +68,11 @@ pub fn range_rate_from_velocity(relative_position: Vec3, relative_velocity: Vec3
 ///
 /// 关系为
 ///
-/// ```text
-/// delta f = -f_0 (v_r / c)
-/// ```
+/// <div>
+/// $$
+/// \Delta f = -f_0 \frac{v_r}{c}
+/// $$
+/// </div>
 ///
 /// 其中 `v_r` 是距离变化率，远离时为正。远离的终端其频移为负，故接收
 /// 频率低于发射频率。

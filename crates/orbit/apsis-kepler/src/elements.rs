@@ -162,12 +162,16 @@ impl KeplerianElements {
     /// The conversion places the satellite in the perifocal frame, where the
     /// first axis points to perigee and the third along the orbit normal,
     ///
-    /// ```text
-    /// r = p / (1 + e cos nu)
-    /// x = r cos nu,  y = r sin nu,  z = 0
-    /// vx = -sqrt(mu / p) sin nu
-    /// vy =  sqrt(mu / p) (e + cos nu)
-    /// ```
+    /// <div>
+    /// $$
+    /// \begin{aligned}
+    /// r &= \frac{p}{1 + e \cos\nu} \\
+    /// x &= r \cos\nu,\quad y = r \sin\nu,\quad z = 0 \\
+    /// v_x &= -\sqrt{\frac{\mu}{p}}\,\sin\nu \\
+    /// v_y &= \sqrt{\frac{\mu}{p}}\,(e + \cos\nu)
+    /// \end{aligned}
+    /// $$
+    /// </div>
     ///
     /// and then rotates by the argument of perigee, the inclination, and the
     /// right ascension of the ascending node.
@@ -178,12 +182,16 @@ impl KeplerianElements {
     ///
     /// 换算先在近点坐标系中定位卫星，该系第一轴指向近地点、第三轴沿轨道法线，
     ///
-    /// ```text
-    /// r = p / (1 + e cos nu)
-    /// x = r cos nu,  y = r sin nu,  z = 0
-    /// vx = -sqrt(mu / p) sin nu
-    /// vy =  sqrt(mu / p) (e + cos nu)
-    /// ```
+    /// <div>
+    /// $$
+    /// \begin{aligned}
+    /// r &= \frac{p}{1 + e \cos\nu} \\
+    /// x &= r \cos\nu,\quad y = r \sin\nu,\quad z = 0 \\
+    /// v_x &= -\sqrt{\frac{\mu}{p}}\,\sin\nu \\
+    /// v_y &= \sqrt{\frac{\mu}{p}}\,(e + \cos\nu)
+    /// \end{aligned}
+    /// $$
+    /// </div>
     ///
     /// 再依次按近地点幅角、倾角与升交点赤经旋转。
     pub fn to_state(self, parameter: GravityParameter) -> Option<State> {
@@ -415,10 +423,14 @@ pub fn perifocal_to_inertial(
 /// direction is poorly determined. The eccentric anomaly follows from the
 /// radial distance and the radial velocity through
 ///
-/// ```text
-/// cos E = (1 - r / a) / e
-/// sin E = r rdot / (e sqrt(mu a))
-/// ```
+/// <div>
+/// $$
+/// \begin{aligned}
+/// \cos E &= \frac{1 - r / a}{e} \\
+/// \sin E &= \frac{r \dot r}{e \sqrt{\mu a}}
+/// \end{aligned}
+/// $$
+/// </div>
 ///
 /// and the true anomaly follows from the eccentric anomaly. A circular
 /// orbit, where the eccentricity is too small for those expressions, is
@@ -431,10 +443,14 @@ pub fn perifocal_to_inertial(
 /// 以偏近点角为中间量，可在近圆轨道处保持精度，因为此时偏心率矢量很短、方向
 /// 难以确定。偏近点角由径向距离与径向速度经下式求得：
 ///
-/// ```text
-/// cos E = (1 - r / a) / e
-/// sin E = r rdot / (e sqrt(mu a))
-/// ```
+/// <div>
+/// $$
+/// \begin{aligned}
+/// \cos E &= \frac{1 - r / a}{e} \\
+/// \sin E &= \frac{r \dot r}{e \sqrt{\mu a}}
+/// \end{aligned}
+/// $$
+/// </div>
 ///
 /// 真近点角再由偏近点角推出。对偏心率过小而使上述式子失效的圆轨道，改为
 /// 自交点量取夹角处理，这与 [`KeplerianElements::from_state`] 处理近地点幅角

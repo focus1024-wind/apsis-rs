@@ -1,0 +1,12 @@
+[build]
+# Load the documentation header that renders mathematical formulas.
+#
+# rustdoc resolves this path relative to the workspace root, and the header
+# loads the vendored MathJax under docs/vendor/mathjax, so the generated
+# documentation renders math without any network access.
+#
+# 加载渲染数学公式的文档头部。
+#
+# rustdoc 相对工作区根解析该路径，而该头部会加载 docs/vendor/mathjax 下内置的
+# MathJax，故生成的文档在没有任何网络访问的情况下渲染数学。
+rustdocflags = ["--html-in-header", "docs/mathjax.html"]

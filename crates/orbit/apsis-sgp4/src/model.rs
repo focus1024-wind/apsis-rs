@@ -118,9 +118,11 @@ impl GravityModel {
     /// The propagator works in minutes and Earth radii, so the gravitational
     /// parameter is converted by
     ///
-    /// ```text
-    /// xke = 60 / sqrt(radius^3 / mu)
-    /// ```
+    /// <div>
+    /// $$
+    /// \text{xke} = \frac{60}{\sqrt{\text{radius}^3 / \mu}}
+    /// $$
+    /// </div>
     ///
     /// which is the angular rate, in radians per minute, of a circular orbit
     /// of radius one Earth radius.
@@ -129,9 +131,11 @@ impl GravityModel {
     ///
     /// 传播器以分钟与地球半径为单位，故引力参数按下式换算：
     ///
-    /// ```text
-    /// xke = 60 / sqrt(radius^3 / mu)
-    /// ```
+    /// <div>
+    /// $$
+    /// \text{xke} = \frac{60}{\sqrt{\text{radius}^3 / \mu}}
+    /// $$
+    /// </div>
     ///
     /// 它是一个地球半径圆轨道的角速率，单位为弧度每分钟。
     pub fn xke(self) -> f64 {

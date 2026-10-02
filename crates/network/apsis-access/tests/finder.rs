@@ -5,10 +5,14 @@
 //! the elevation is a function of the orbital position alone, so the rise,
 //! peak, and set times have a closed form:
 //!
-//! ```text
-//! theta_c = 90 - mask - asin(Re cos(mask) / Rs)
-//! t = (theta - theta_0) / n
-//! ```
+//! <div>
+//! $$
+//! \begin{aligned}
+//! \theta_c &= 90^\circ - \text{mask} - \arcsin\!\left(\frac{\text{Re} \cos(\text{mask})}{\text{Rs}}\right) \\
+//! t &= \frac{\theta - \theta_0}{n}
+//! \end{aligned}
+//! $$
+//! </div>
 //!
 //! with `theta` the orbital position measured from the station and `n` the
 //! mean motion. The values used below are computed from those expressions.
@@ -18,10 +22,14 @@
 //! 参考用例是自赤道上、遮蔽十度的一座站看 550 km 高度的圆赤道轨道。对该几何，
 //! 仰角只依赖于轨道位置，故升起、峰值与降落时刻有闭式：
 //!
-//! ```text
-//! theta_c = 90 - mask - asin(Re cos(mask) / Rs)
-//! t = (theta - theta_0) / n
-//! ```
+//! <div>
+//! $$
+//! \begin{aligned}
+//! \theta_c &= 90^\circ - \text{mask} - \arcsin\!\left(\frac{\text{Re} \cos(\text{mask})}{\text{Rs}}\right) \\
+//! t &= \frac{\theta - \theta_0}{n}
+//! \end{aligned}
+//! $$
+//! </div>
 //!
 //! 其中 `theta` 是自站量起的轨道位置，`n` 是平运动。下面所用的值即由这些表达式
 //! 计算。

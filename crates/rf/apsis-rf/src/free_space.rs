@@ -33,9 +33,11 @@ pub fn wavelength(frequency: f64) -> Option<f64> {
 /// The ratio is positive, so it represents a loss: the received power is the
 /// transmitted power divided by this ratio. The relation is
 ///
-/// ```text
-/// L = (4 pi d / lambda)^2
-/// ```
+/// <div>
+/// $$
+/// L = \left(\frac{4 \pi d}{\lambda}\right)^2
+/// $$
+/// </div>
 ///
 /// which is the spreading loss of a spherical wave over a distance `d`
 /// combined with the effective aperture of an isotropic receive antenna.
@@ -54,9 +56,11 @@ pub fn wavelength(frequency: f64) -> Option<f64> {
 ///
 /// 该比值为正，故表示一种损耗：接收功率是发射功率除以该比值。关系为
 ///
-/// ```text
-/// L = (4 pi d / lambda)^2
-/// ```
+/// <div>
+/// $$
+/// L = \left(\frac{4 \pi d}{\lambda}\right)^2
+/// $$
+/// </div>
 ///
 /// 它是球面波在距离 `d` 上的扩散损耗与各向同性接收天线有效孔径的
 /// 结合。
@@ -82,9 +86,11 @@ pub fn free_space_path_loss(distance: f64, frequency: f64) -> Option<Decibel> {
 /// gains and divided by the free space path loss, which in decibels is the
 /// sum
 ///
-/// ```text
-/// P_r / P_t = G_t G_r / L
-/// ```
+/// <div>
+/// $$
+/// \frac{P_r}{P_t} = \frac{G_t G_r}{L}
+/// $$
+/// </div>
 ///
 /// The result is the ratio in decibels, so a positive value means the
 /// receive antenna collects more than was transmitted, which happens when
@@ -97,9 +103,11 @@ pub fn free_space_path_loss(distance: f64, frequency: f64) -> Option<Decibel> {
 /// 接收功率是发射功率乘以两个天线增益、再除以自由空间路径损耗，以分贝
 /// 表示即
 ///
-/// ```text
-/// P_r / P_t = G_t G_r / L
-/// ```
+/// <div>
+/// $$
+/// \frac{P_r}{P_t} = \frac{G_t G_r}{L}
+/// $$
+/// </div>
 ///
 /// 结果是分贝比值，故正值意味着接收天线收集到的多于所发射的，这在两个
 /// 增益超过扩散损耗时发生。

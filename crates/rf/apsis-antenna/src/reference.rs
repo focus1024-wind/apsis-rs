@@ -153,11 +153,16 @@ pub fn main_lobe_break_angle(diameter_over_wavelength: f64) -> Option<f64> {
 ///
 /// The angle is in radians. The three regions are
 ///
-/// ```text
-/// G = G_max - 2.5e-3 (D/lambda phi_deg)^2   for 0 <= phi < phi_break
-/// G = head - 25 log10(phi_deg)              for phi_break <= phi < phi_floor
-/// G = -10                                   for phi_floor <= phi <= 180
-/// ```
+/// <div>
+/// $$
+/// G(\phi) =
+/// \begin{cases}
+/// G_{\max} - 2.5\times10^{-3}\left(\frac{D}{\lambda}\,\phi_{\deg}\right)^2, & 0 \le \phi < \phi_{\text{break}} \\
+/// \text{head} - 25\log_{10}\phi_{\deg}, & \phi_{\text{break}} \le \phi < \phi_{\text{floor}} \\
+/// -10, & \phi_{\text{floor}} \le \phi \le 180^\circ
+/// \end{cases}
+/// $$
+/// </div>
 ///
 /// where `phi_break` is the angle returned by [`main_lobe_break_angle`], the
 /// head is 29 for a large aperture and 32 for a small one, and the floor
@@ -175,11 +180,16 @@ pub fn main_lobe_break_angle(diameter_over_wavelength: f64) -> Option<f64> {
 ///
 /// 角度以弧度计。三个区是
 ///
-/// ```text
-/// G = G_max - 2.5e-3 (D/lambda phi_deg)^2   for 0 <= phi < phi_break
-/// G = head - 25 log10(phi_deg)              for phi_break <= phi < phi_floor
-/// G = -10                                   for phi_floor <= phi <= 180
-/// ```
+/// <div>
+/// $$
+/// G(\phi) =
+/// \begin{cases}
+/// G_{\max} - 2.5\times10^{-3}\left(\frac{D}{\lambda}\,\phi_{\deg}\right)^2, & 0 \le \phi < \phi_{\text{break}} \\
+/// \text{head} - 25\log_{10}\phi_{\deg}, & \phi_{\text{break}} \le \phi < \phi_{\text{floor}} \\
+/// -10, & \phi_{\text{floor}} \le \phi \le 180^\circ
+/// \end{cases}
+/// $$
+/// </div>
 ///
 /// 其中 `phi_break` 是 [`main_lobe_break_angle`] 返回的角度，head 对大
 /// 孔径为 29、对小孔径为 32，底限角相应地是 36 或 48 度。

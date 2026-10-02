@@ -53,9 +53,14 @@ jobs:
         # Catches a doc link that no longer resolves, which is how a doc
         # comment drifts away from the code it describes.
         # 捕获不再解析的文档链接，文档注释正是这样与其所述代码渐行渐远。
+        #
+        # RUSTDOCFLAGS takes precedence over the rustdocflags in
+        # .cargo/config.toml, so the MathJax header is named here as well.
+        # RUSTDOCFLAGS 优先于 .cargo/config.toml 中的 rustdocflags，故此处
+        # 也指名 MathJax 头部。
         env:
-          RUSTDOCFLAGS: -D warnings
-        run: cargo doc --workspace --all-features --no-deps
+          RUSTDOCFLAGS: -D warnings --html-in-header docs/mathjax.html
+        run: bash scripts/build-docs.sh --workspace --all-features --no-deps
       - name: Documentation with default features
         # A downstream reader runs `cargo doc` on the default feature set,
         # where the facade re-exports nothing, so a link to a re-exported
@@ -65,8 +70,8 @@ jobs:
         # 东西，故指向被重导出 crate 的链接无法解析。上面的全特性构建捕获
         # 不到这一点，故在此检查。
         env:
-          RUSTDOCFLAGS: -D warnings
-        run: cargo doc --workspace --no-deps
+          RUSTDOCFLAGS: -D warnings --html-in-header docs/mathjax.html
+        run: bash scripts/build-docs.sh --workspace --no-deps
       - name: Check the layer rule
         # README.md states that a crate may only depend on layers to its
         # left. Nothing else in the build enforces that, so a reverse

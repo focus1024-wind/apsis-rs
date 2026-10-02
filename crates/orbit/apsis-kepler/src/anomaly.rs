@@ -68,9 +68,11 @@ pub fn wrap_to_pi(angle: f64) -> f64 {
 ///
 /// The relation follows from the geometry of the auxiliary circle:
 ///
-/// ```text
-/// tan(nu / 2) = sqrt((1 + e) / (1 - e)) tan(E / 2)
-/// ```
+/// <div>
+/// $$
+/// \tan\frac{\nu}{2} = \sqrt{\frac{1 + e}{1 - e}}\,\tan\frac{E}{2}
+/// $$
+/// </div>
 ///
 /// The half angle form is used rather than the direct cosine relation so
 /// that the result is correct in all four quadrants without a quadrant
@@ -80,9 +82,11 @@ pub fn wrap_to_pi(angle: f64) -> f64 {
 ///
 /// 该关系来自辅助圆的几何性质：
 ///
-/// ```text
-/// tan(nu / 2) = sqrt((1 + e) / (1 - e)) tan(E / 2)
-/// ```
+/// <div>
+/// $$
+/// \tan\frac{\nu}{2} = \sqrt{\frac{1 + e}{1 - e}}\,\tan\frac{E}{2}
+/// $$
+/// </div>
 ///
 /// 采用半角形式而非直接的余弦关系，使结果在四个象限中都正确，无需判别象限。
 pub fn true_from_eccentric(eccentric_anomaly: f64, eccentricity: f64) -> f64 {
@@ -108,9 +112,11 @@ pub fn eccentric_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
 ///
 /// This solves Kepler's equation
 ///
-/// ```text
-/// M = E - e sin E
-/// ```
+/// <div>
+/// $$
+/// M = E - e \sin E
+/// $$
+/// </div>
 ///
 /// by Newton's method. The starting guess is the mean anomaly plus a term
 /// proportional to the eccentricity, which keeps the iteration stable for
@@ -121,9 +127,11 @@ pub fn eccentric_from_true(true_anomaly: f64, eccentricity: f64) -> f64 {
 ///
 /// 用 Newton 法求解开普勒方程
 ///
-/// ```text
-/// M = E - e sin E
-/// ```
+/// <div>
+/// $$
+/// M = E - e \sin E
+/// $$
+/// </div>
 ///
 /// 初值取平近点角加上一个正比于偏心率的项，使迭代在偏心率趋近一时保持稳定。
 /// 迭代总会终止，结果是至多固定步数后达到的值。
