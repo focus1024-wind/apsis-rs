@@ -21,11 +21,11 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 license = "GPL-3.0-or-later"
-authors = ["ApsisRS contributors"]
+authors = ["focus1024"]
 repository = "https://github.com/focus1024-wind/apsis-rs"
 readme = "README.md"
 keywords = ["satellite", "orbit", "sgp4", "link-budget", "simulation"]
