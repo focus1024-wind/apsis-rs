@@ -9,7 +9,7 @@
 - 纯 Rust、`std`、零第三方 crate 依赖
 - 领域边界清晰，按层单向依赖
 - 单一 crate `apsis`，每一层是模块，由 crate 根重导出
-- 当前阶段 crate 为 `publish = false`，不执行发布
+- 已具备 crates.io 首发条件
 
 ## 分层
 

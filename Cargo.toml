@@ -26,6 +26,10 @@ edition = "2024"
 rust-version = "1.85"
 license = "GPL-3.0-or-later"
 authors = ["ApsisRS contributors"]
+repository = "https://github.com/focus1024-wind/apsis-rs"
+readme = "README.md"
+keywords = ["satellite", "orbit", "sgp4", "link-budget", "simulation"]
+categories = ["aerospace", "science", "simulation", "mathematics", "network-programming"]
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

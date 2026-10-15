@@ -5,10 +5,16 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 description = "Computational kernels for commercial spaceflight and satellite internet systems."
-# The package waits until the release is prepared. Removing this line is what
-# makes it publishable.
-# 该包在发行准备完成前不发布。删除本行即可使其可发布。
-publish = false
+repository.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+# The documentation is built with every feature. Without this the default
+# feature set is empty, so the rendered API surface would be empty too.
+# 文档以全部特性构建。没有此设置时默认特性集为空，故渲染出的 API 也是空的。
+[package.metadata.docs.rs]
+all-features = true
 
 # Every layer is a module of this crate, so a feature only selects the
 # modules a downstream project needs. A layer feature still enables the

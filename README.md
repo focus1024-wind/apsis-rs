@@ -9,7 +9,7 @@ English | [简体中文](./README.zh.md)
 - Pure Rust, standard library only, no third-party crate dependency
 - Clear domain boundaries with a one-way dependency order between layers
 - One crate, `apsis`; each layer is a module re-exported at the crate root
-- The crate is `publish = false` at this stage, so it is not released
+- The crate is ready for its first crates.io release
 
 ## Layers
 
