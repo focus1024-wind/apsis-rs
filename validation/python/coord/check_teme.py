@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS TEME to Earth-fixed transformation.
 
-Reads the positions written by ``cargo run -p apsis-rs --features physics
+Reads the positions written by ``cargo run --features physics
 --example dump_teme`` and recomputes each one with ERFA, applying the same
 Greenwich mean sidereal time and the same zero polar motion, so that the
 check compares the implementation rather than the choice of inputs.
@@ -23,7 +23,7 @@ otherwise.
 
 交叉核对 ApsisRS 的 TEME 到地固坐标变换。
 
-读取由 ``cargo run -p apsis-rs --features physics --example dump_teme``
+读取由 ``cargo run --features physics --example dump_teme``
 写出的位置，并用 ERFA 逐个重算，施加相同的格林尼治平恒星时与相同的零极移，
 使该检查比较的是实现而非输入的选择。
 
@@ -101,7 +101,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features physics "
+            "generate it with: cargo run --features physics "
             "--example dump_teme > " + str(path),
             file=sys.stderr,
         )

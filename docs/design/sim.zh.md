@@ -2,29 +2,32 @@
 
 [English](./sim.md) | 简体中文
 
-本文件记录仿真层（`sim`）的跨 crate 决策。各 crate 的内部设计见其模块文档。
+本文件记录仿真层（`sim`）的跨层决策。各模块的内部设计见其文档。
 
 ## 组成与依赖
 
 ```text
-apsis-event     事件类型与事件队列
-apsis-sim-engine 离散事件引擎
-apsis-scenario  场景定义与文本加载
-apsis-output    仿真输出记录
-apsis-sim       仿真门面（整合上述四个）
+apsis_event       事件类型与事件队列
+apsis_sim_engine  离散事件引擎
+apsis_scenario    场景定义与文本加载
+apsis_output      仿真输出记录
+apsis_sim         仿真门面（整合上述四个）
 ```
 
 依赖方向：
 
 ```text
-apsis-event -> apsis-sim-engine -> apsis-sim -> apsis-rs
-apsis-scenario -----------------> apsis-sim
-apsis-output -------------------> apsis-sim
+apsis_event -> apsis_sim_engine -> apsis_sim
+apsis_scenario -----------------> apsis_sim
+apsis_output -------------------> apsis_sim
+apsis_scenario -> apsis_resource, apsis_task
+apsis_sim ------> apsis_scheduler, apsis_schedule, apsis_task, apsis_resource
 ```
 
-`apsis-sim` 同时依赖 ops 层（`apsis-scheduler`、`apsis-schedule`、
-`apsis-task`、`apsis-resource`），因为它要规划场景并读取计划。其余 crate
-只依赖 foundation。
+`apsis_sim` 依赖 ops 层，因为它要规划场景并读取计划；`apsis_scenario`
+也需要该层，因为其文本要携带资源与任务类型。`apsis_event`、
+`apsis_output` 与 `apsis_sim_engine` 不引用 `foundation` 之上的层；引擎
+还会使用 `apsis_event`。
 
 ## 事件顺序
 
@@ -35,14 +38,14 @@ apsis-output -------------------> apsis-sim
 - 事件先按时间排序，时间相同则按序号排序，即入队顺序。
 - 处理函数在处理某事件时新调度的事件，排在该时刻已有事件之后。
 
-该顺序由 `apsis-event` 保证，`apsis-sim-engine` 与 `apsis-sim` 直接沿用。
+该顺序由 `apsis_event` 保证，`apsis_sim_engine` 与 `apsis_sim` 直接沿用。
 序列号由队列分配，调用方无法制造两个同号事件。
 
 ## 时间原点
 
 事件时间是从仿真原点起算的秒数，与日历无关；需要日历的场景由上层换算。
 
-场景的 `epoch` 是时钟起点。时间线中的事件时间相对场景原点，`apsis-sim`
+场景的 `epoch` 是时钟起点。时间线中的事件时间相对场景原点，`apsis_sim`
 在投递前加上 `epoch`。若不偏移，引擎会在投递首个事件时把时钟回拨。
 
 时间限制按同一绝对时间轴比较：时间晚于上限的事件留在队列中而不执行，因此
@@ -51,13 +54,13 @@ apsis-output -------------------> apsis-sim
 
 ## 事件限制是累计的
 
-`apsis-sim-engine` 的事件上限是引擎整个生命周期的总数，而非单次 `run`
+`apsis_sim_engine` 的事件上限是引擎整个生命周期的总数，而非单次 `run`
 的数量。达到上限后再次 `run` 不执行任何事件。这样"上限"始终表示一个不会
 被绕过的界，调用方要运行剩余事件需显式提高上限。
 
 ## 时间线语义
 
-`apsis-sim` 把计划展开为时间线上的起止事件：每个已放置任务贡献一个开始
+`apsis_sim` 把计划展开为时间线上的起止事件：每个已放置任务贡献一个开始
 事件和一个结束事件，二者是独立事件，因此引擎能按时间顺序把它们与其他事件
 正确排序，重叠任务的先后也由时钟决定。
 
@@ -66,7 +69,7 @@ apsis-output -------------------> apsis-sim
 
 ## 场景文本格式
 
-`apsis-scenario` 自带一套零依赖的行式文本格式，用于存储与重新加载。
+`apsis_scenario` 自带一套零依赖的行式文本格式，用于存储与重新加载。
 解析分三遍（资源、任务、优先级约束），因此 `require` 可以引用文件中稍后
 定义的资源，`precedence` 可以引用任意顺序定义的任务。每处失败都带行号。
 

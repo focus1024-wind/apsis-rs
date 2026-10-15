@@ -30,13 +30,13 @@ mentions a term the glossary keeps in English where a Chinese name exists.
 Usage:
 
     python3 scripts/check-bilingual.py            # the whole repository
-    python3 scripts/check-bilingual.py crates/orbit
+    python3 scripts/check-bilingual.py crates/apsis/src/orbit
     python3 scripts/check-bilingual.py --quiet     # only the summary line
 
 用法：
 
     python3 scripts/check-bilingual.py            # 整个仓库
-    python3 scripts/check-bilingual.py crates/orbit
+    python3 scripts/check-bilingual.py crates/apsis/src/orbit
     python3 scripts/check-bilingual.py --quiet     # 只打印汇总行
 """
 

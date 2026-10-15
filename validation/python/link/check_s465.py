@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS ITU-R S.465 reference pattern.
 
-Reads the values written by ``cargo run -p apsis-rs --features rf --example
+Reads the values written by ``cargo run --features rf --example
 dump_s465`` and recomputes each one from the equations of the recommendation.
 
 The script needs no network access.
@@ -14,7 +14,7 @@ otherwise.
 
 交叉核对 ApsisRS 的 ITU-R S.465 参考方向图。
 
-读取由 ``cargo run -p apsis-rs --features rf --example dump_s465`` 写出的
+读取由 ``cargo run --features rf --example dump_s465`` 写出的
 值，并从该建议书的各式逐个重算。
 
 本脚本不需要网络访问。
@@ -112,7 +112,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features rf "
+            "generate it with: cargo run --features rf "
             "--example dump_s465 > " + str(path),
             file=sys.stderr,
         )

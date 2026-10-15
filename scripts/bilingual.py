@@ -11,7 +11,7 @@ skipping.
 
 Usage, from the repository root:
 
-    python3 scripts/bilingual.py crates/orbit/apsis-kepler/src/elements.rs
+    python3 scripts/bilingual.py crates/apsis/src/orbit/apsis_kepler/elements.rs
 
 对文件施加一张「英文到双语注释」的替换表。
 
@@ -22,7 +22,7 @@ Usage, from the repository root:
 
 用法（在仓库根下）：
 
-    python3 scripts/bilingual.py crates/orbit/apsis-kepler/src/elements.rs
+    python3 scripts/bilingual.py crates/apsis/src/orbit/apsis_kepler/elements.rs
 """
 
 from __future__ import annotations

@@ -3,13 +3,13 @@
 English | [简体中文](./parallel.zh.md)
 
 This file records how a loop is judged worth threading, which interfaces the
-workspace offers, and what the measurements were. The cross-layer unit and
+crate offers, and what the measurements were. The cross-layer unit and
 coordinate conventions are in [Units and coordinates](units.md), and the
 layering is in [Layer boundaries](layers.md).
 
 ## Why there is no thread pool
 
-The workspace forbids every third-party crate, so a pool such as `rayon` is
+The crate forbids every third-party crate, so a pool such as `rayon` is
 not available. None is needed either: every computation here that is worth
 several cores is a loop over independent items, which the standard
 library's `std::thread::scope` expresses directly.
@@ -20,7 +20,7 @@ so no result is read while a thread is still writing it.
 
 ## The interfaces
 
-### apsis-math: the primitives
+### apsis_math: the primitives
 
 `apsis_math::parallel` provides the entry points every other interface builds
 on:
@@ -41,12 +41,12 @@ scale starting a thread costs more than the work it would save.
 
 ### The batch interfaces of the layers
 
-| Crate | Interface | Scale it suits |
+| Module | Interface | Scale it suits |
 | --- | --- | --- |
-| `apsis-sgp4` | `propagate_minutes_at_parallel` | a long track, tens of thousands of samples or more |
-| `apsis-sgp4` | `propagate_at_parallel` | a whole shell in one call |
-| `apsis-access` | `find_all_parallel` | hundreds of tracks |
-| `apsis-isl` | `visibility_matrix_parallel` | a few hundred satellites or more, see below |
+| `apsis_sgp4` | `propagate_minutes_at_parallel` | a long track, tens of thousands of samples or more |
+| `apsis_sgp4` | `propagate_at_parallel` | a whole shell in one call |
+| `apsis_access` | `find_all_parallel` | hundreds of tracks |
+| `apsis_isl` | `visibility_matrix_parallel` | a few hundred satellites or more, see below |
 
 Each interface has a sequential counterpart of the same name. The two agree
 element for element and in the same order, so a caller may switch freely.
@@ -58,7 +58,7 @@ item** and the **size of the batch**:
 
 - **Worth threading**: the work per item is expensive, at a microsecond or
   more, the items are independent, and the batch reaches hundreds. The
-  typical cases are SGP4 propagation at about 230 ns a sample over millions
+  typical cases are SGP4 propagation at about 235 ns a sample over millions
   of samples, and the access search at about 7 us a track.
 - **Not worth threading**:
   - `Constellation::instantiate`: pure arithmetic, microseconds for a few
@@ -149,7 +149,7 @@ built turns both scans into a read by identifier.
 A task identifier is a small dense integer, so the index is a vector rather
 than a map: an array index is cheaper than hashing a small integer, which
 this repository has now measured twice, once for the adjacency index in
-`apsis-topology` and once here.
+`apsis_topology` and once here.
 
 **Result**: with every task contending for one resource and the capacity the
 binding constraint, planning three thousand two hundred tasks falls from 6.7

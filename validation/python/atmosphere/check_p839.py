@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS rain height against ITU-R P.839-4.
 
-Reads the values written by ``cargo run -p apsis-rs --features rf --example
+Reads the values written by ``cargo run --features rf --example
 dump_p839`` and recomputes each one with the ``itur`` package, which
 implements the recommendation directly.
 
@@ -21,7 +21,7 @@ otherwise.
 
 用 ITU-R P.839-4 交叉核对 ApsisRS 的雨顶高度。
 
-读取由 ``cargo run -p apsis-rs --features rf --example dump_p839`` 写出的
+读取由 ``cargo run --features rf --example dump_p839`` 写出的
 值，并用 ``itur`` 包逐个重算，后者直接实现该建议书。
 
 参考实现在其双线性插值器所覆盖区域之外返回非数（NaN），这发生在两极附近
@@ -71,7 +71,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features rf "
+            "generate it with: cargo run --features rf "
             "--example dump_p839 > " + str(path),
             file=sys.stderr,
         )

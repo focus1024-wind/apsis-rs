@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS geodetic to Earth-fixed conversion.
 
-Reads the grid written by ``cargo run -p apsis-rs --features physics
+Reads the grid written by ``cargo run --features physics
 --example dump_geodesy`` and recomputes each position with astropy, then
 reports the largest difference.
 
@@ -17,7 +17,7 @@ otherwise.
 
 交叉核对 ApsisRS 的大地坐标到地固坐标转换。
 
-读取由 ``cargo run -p apsis-rs --features physics --example dump_geodesy``
+读取由 ``cargo run --features physics --example dump_geodesy``
 写出的网格，并用 astropy 逐个重算位置，然后报告最大差异。
 
 本脚本不需要网络访问。它从命令行给出的文件路径读取输入，缺省为标准位置，
@@ -89,7 +89,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features physics "
+            "generate it with: cargo run --features physics "
             "--example dump_geodesy > " + str(path),
             file=sys.stderr,
         )

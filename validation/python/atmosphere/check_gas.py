@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS gaseous attenuation against ITU-R P.676-12.
 
-Reads the values written by ``cargo run -p apsis-rs --features rf --example
+Reads the values written by ``cargo run --features rf --example
 dump_gas`` and recomputes each one with the ``itur`` package, which
 implements the ITU-R recommendations directly, then reports the largest
 difference in each column.
@@ -20,7 +20,7 @@ otherwise.
 
 用 ITU-R P.676-12 交叉核对 ApsisRS 的气体衰减。
 
-读取由 ``cargo run -p apsis-rs --features rf --example dump_gas`` 写出的
+读取由 ``cargo run --features rf --example dump_gas`` 写出的
 值，并用 ``itur`` 包逐个重算，后者直接实现 ITU-R 各建议书，然后报告每列
 的最大差异。
 
@@ -86,7 +86,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features rf "
+            "generate it with: cargo run --features rf "
             "--example dump_gas > " + str(path),
             file=sys.stderr,
         )

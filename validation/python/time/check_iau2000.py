@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS IAU 2000/2006 Earth orientation against ERFA.
 
-Reads the quantities written by ``cargo run -p apsis-rs --features physics
+Reads the quantities written by ``cargo run --features physics
 --example dump_iau2000`` and recomputes each one with ERFA, which is the
 reference implementation distributed by the International Astronomical Union
 through the SOFA library and its ERFA derivative.
@@ -16,7 +16,7 @@ otherwise.
 
 用 ERFA 交叉核对 ApsisRS 的 IAU 2000/2006 地球定向。
 
-读取由 ``cargo run -p apsis-rs --features physics --example dump_iau2000``
+读取由 ``cargo run --features physics --example dump_iau2000``
 写出的量，并用 ERFA 逐个重算，后者是国际天文学联合会通过 SOFA 库及其
 ERFA 衍生物分发的参考实现。
 
@@ -106,7 +106,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features physics "
+            "generate it with: cargo run --features physics "
             "--example dump_iau2000 > " + str(path),
             file=sys.stderr,
         )

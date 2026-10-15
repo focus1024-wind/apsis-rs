@@ -3,7 +3,7 @@
 # Builds the API documentation with the vendored MathJax in place.
 #
 # `cargo doc` injects the MathJax loader through `.cargo/config.toml` when
-# `RUSTDOCFLAGS` is unset, and `crates/apsis-rs/build.rs` copies the vendored
+# `RUSTDOCFLAGS` is unset, and `crates/apsis/build.rs` copies the vendored
 # file into the documentation root. That build script only reruns when its
 # inputs change, so removing `target/doc` on its own leaves the file missing.
 # This script runs the copy itself, which makes `bash scripts/build-docs.sh`
@@ -16,7 +16,7 @@
 # 构建 API 文档，并使内置的 MathJax 就位。
 #
 # 未设置 `RUSTDOCFLAGS` 时，`cargo doc` 会经 `.cargo/config.toml` 注入 MathJax
-# 加载器，而 `crates/apsis-rs/build.rs` 会把内置文件复制到文档根。该构建脚本
+# 加载器，而 `crates/apsis/build.rs` 会把内置文件复制到文档根。该构建脚本
 # 只在其输入变化时重跑，故仅删除 `target/doc` 而不改输入会使文件缺失。本脚本
 # 自行执行该复制，使 `bash scripts/build-docs.sh` 成为生成可离线渲染数学的
 # 文档的可靠方式。

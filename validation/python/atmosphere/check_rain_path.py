@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS rain path against ITU-R P.618-13.
 
-Reads the values written by ``cargo run -p apsis-rs --features rf --example
+Reads the values written by ``cargo run --features rf --example
 dump_rain_path`` and recomputes each one from the equations of the
 recommendation. The specific attenuation coefficients come from the ``itur``
 implementation of ITU-R P.838-3, and the path geometry and the two reduction
@@ -17,7 +17,7 @@ otherwise.
 
 用 ITU-R P.618-13 交叉核对 ApsisRS 的降雨路径。
 
-读取由 ``cargo run -p apsis-rs --features rf --example dump_rain_path``
+读取由 ``cargo run --features rf --example dump_rain_path``
 写出的值，并从该建议书的各式逐个重算。比衰减系数来自 ITU-R P.838-3 的
 ``itur`` 实现，路径几何与两个缩减因子则抄自建议书 P.618-13。
 
@@ -143,7 +143,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features rf "
+            "generate it with: cargo run --features rf "
             "--example dump_rain_path > " + str(path),
             file=sys.stderr,
         )

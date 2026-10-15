@@ -3,7 +3,7 @@
 This directory holds a copy of MathJax so that the generated documentation
 can render mathematical formulas **offline**, without fetching anything from
 a content delivery network. `docs/mathjax.html` loads the file, and
-`crates/apsis-rs/build.rs` copies it into `target/doc/vendor/mathjax/` when
+`crates/apsis/build.rs` copies it into `target/doc/vendor/mathjax/` when
 the documentation is built.
 
 | Field | Value |

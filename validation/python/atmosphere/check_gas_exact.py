@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS exact slant path against ITU-R P.676-12.
 
-Reads the values written by ``cargo run -p apsis-rs --features rf --example
+Reads the values written by ``cargo run --features rf --example
 dump_gas_exact`` and recomputes each one with the ``itur`` package, which
 implements the exact method of the recommendation directly. The exact method
 integrates the specific attenuation through a layered standard atmosphere and
@@ -17,7 +17,7 @@ otherwise.
 
 用 ITU-R P.676-12 交叉核对 ApsisRS 的精确斜路径。
 
-读取由 ``cargo run -p apsis-rs --features rf --example dump_gas_exact``
+读取由 ``cargo run --features rf --example dump_gas_exact``
 写出的值，并用 ``itur`` 包逐个重算，后者直接实现该建议书的精确方法。精确
 方法在分层标准大气中积分比衰减并追踪折射后的射线，故它是低仰角下宜用的
 形式。
@@ -68,7 +68,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features rf "
+            "generate it with: cargo run --features rf "
             "--example dump_gas_exact > " + str(path),
             file=sys.stderr,
         )

@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS time scale conversions.
 
-Reads the samples written by ``cargo run -p apsis-rs --features physics
+Reads the samples written by ``cargo run --features physics
 --example dump_time`` and recomputes each instant with astropy, then reports
 the largest difference.
 
@@ -30,7 +30,7 @@ otherwise.
 
 交叉核对 ApsisRS 的时标换算。
 
-读取由 ``cargo run -p apsis-rs --features physics --example dump_time`` 写出
+读取由 ``cargo run --features physics --example dump_time`` 写出
 的样本，并用 astropy 逐个重算瞬时，然后报告最大差异。
 
 把某 UTC 瞬时写为浮点日有两种约定。本工作区用带阶跃偏移的线性约化儒略日，
@@ -140,7 +140,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features physics "
+            "generate it with: cargo run --features physics "
             "--example dump_time > " + str(path),
             file=sys.stderr,
         )

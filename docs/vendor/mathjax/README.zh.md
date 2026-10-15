@@ -2,7 +2,7 @@
 
 本目录保存一份 MathJax 副本，使生成的文档能够**离线**渲染数学公式，不向任何
 内容分发网络发起请求。`docs/mathjax.html` 负责加载该文件，构建文档时
-`crates/apsis-rs/build.rs` 会把它复制到 `target/doc/vendor/mathjax/`。
+`crates/apsis/build.rs` 会把它复制到 `target/doc/vendor/mathjax/`。
 
 | 字段 | 值 |
 | --- | --- |

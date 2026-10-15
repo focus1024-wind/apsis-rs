@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS link budget against the link equation.
 
-Reads the scenarios written by ``cargo run -p apsis-rs --features rf
+Reads the scenarios written by ``cargo run --features rf
 --example dump_link`` and recomputes each figure from the link equation in
 plain Python, then reports the largest difference in each column.
 
@@ -20,7 +20,7 @@ otherwise.
 
 用链路方程交叉核对 ApsisRS 的链路预算。
 
-读取由 ``cargo run -p apsis-rs --features rf --example dump_link`` 写出的
+读取由 ``cargo run --features rf --example dump_link`` 写出的
 场景，并用纯 Python 从链路方程逐个重算每个数字，然后报告每列的最大差异。
 
 此处的参考是链路方程本身而非某个库，因为该方程是闭式的且短到可以无歧义地
@@ -106,7 +106,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features rf "
+            "generate it with: cargo run --features rf "
             "--example dump_link > " + str(path),
             file=sys.stderr,
         )

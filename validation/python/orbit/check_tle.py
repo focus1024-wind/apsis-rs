@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS two-line element parser against an independent reader.
 
-Reads the element fields written by ``cargo run -p apsis-rs --features orbit
+Reads the element fields written by ``cargo run --features orbit
 --example dump_tle`` and reparses the same element sets with a column indexed
 reader written from the NORAD format, then compares every field. The
 checksum of each line is recomputed from its definition, so a field placed in
@@ -34,7 +34,7 @@ Exit status is zero when every field agrees and one otherwise.
 
 用一份独立的读取器交叉核对 ApsisRS 的两行根数解析器。
 
-读取由 ``cargo run -p apsis-rs --features orbit --example dump_tle`` 写出的
+读取由 ``cargo run --features orbit --example dump_tle`` 写出的
 根数字段，并用一个依据 NORAD 格式写成的按列索引读取器重新解析同一批根数
 集，然后比较每个字段。每一行的校验和都从其定义重算，故字段放错列或符号
 约定被丢弃会表现为不一致。
@@ -233,7 +233,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features orbit "
+            "generate it with: cargo run --features orbit "
             "--example dump_tle > " + str(path),
             file=sys.stderr,
         )

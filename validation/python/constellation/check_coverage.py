@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS coverage geometry against spherical trigonometry.
 
-Reads the quantities written by ``cargo run -p apsis-rs --features network
+Reads the quantities written by ``cargo run --features network
 --example dump_coverage`` and recomputes each one from the spherical
 triangle relations using only the standard library and numpy. The point is
 that the Python side is written from the geometry, not from the Rust code,
@@ -30,7 +30,7 @@ otherwise.
 
 用球面三角交叉核对 ApsisRS 的覆盖几何。
 
-读取由 ``cargo run -p apsis-rs --features network --example dump_coverage``
+读取由 ``cargo run --features network --example dump_coverage``
 写出的量，并只用标准库与 numpy 从球面三角形关系逐个重算。要点在于 Python
 侧是依据几何而非依据 Rust 代码写成的，故 Rust 公式中的错误会表现为不一致。
 
@@ -246,7 +246,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features network "
+            "generate it with: cargo run --features network "
             "--example dump_coverage > " + str(path),
             file=sys.stderr,
         )

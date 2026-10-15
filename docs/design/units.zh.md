@@ -2,7 +2,7 @@
 
 [English](./units.md) | 简体中文
 
-本文件记录跨层的单位与坐标约定。单个 crate 的内部约定见其模块文档；这里只
+本文件记录跨层的单位与坐标约定。单个模块的内部约定见其文档；这里只
 记录**跨层边界**必须一致的部分，因为边界处的单位不一致是本仓库最容易引入
 也最难发现的错误。
 
@@ -10,20 +10,20 @@
 
 仓库同时使用千米与米，边界在 orbit 层与 physics 层之间：
 
-| 层 / crate | 长度单位 |
+| 层 / 模块 | 长度单位 |
 | --- | --- |
-| `apsis-kepler`、`apsis-sgp4`、`apsis-tle` | 千米 |
-| `apsis-ephemeris` | 千米 |
-| `apsis-maneuver` | 千米 |
-| `apsis-constellation`、`apsis-coverage`、`apsis-access`、`apsis-isl` | 千米 |
-| `apsis-topology`、`apsis-routing`、`apsis-mesh` | 长度仅在 `apsis-isl` 计算，边的 `cost` 是调用方定义的无量纲值 |
-| `apsis-handover` | 不涉及长度；`quality` 为调用方定义，时间用秒 |
-| `apsis-coord`（`Eci`、`Ecef`） | 米 |
-| `apsis-geodesy`（`Geodetic` 高度、椭球半轴、笛卡尔位置） | 米 |
-| `apsis-frames` | 无量纲（角度与旋转） |
-| `apsis-rf`、`apsis-antenna`、`apsis-atmosphere`、`apsis-noise`、`apsis-doppler`、`apsis-interference`、`apsis-link` | 米、赫兹 |
+| `apsis_kepler`、`apsis_sgp4`、`apsis_tle` | 千米 |
+| `apsis_ephemeris` | 千米 |
+| `apsis_maneuver` | 千米 |
+| `apsis_constellation`、`apsis_coverage`、`apsis_access`、`apsis_isl` | 千米 |
+| `apsis_topology`、`apsis_routing`、`apsis_mesh` | 长度仅在 `apsis_isl` 计算，边的 `cost` 是调用方定义的无量纲值 |
+| `apsis_handover` | 不涉及长度；`quality` 为调用方定义，时间用秒 |
+| `apsis_coord`（`Eci`、`Ecef`） | 米 |
+| `apsis_geodesy`（`Geodetic` 高度、椭球半轴、笛卡尔位置） | 米 |
+| `apsis_frames` | 无量纲（角度与旋转） |
+| `apsis_rf`、`apsis_antenna`、`apsis_atmosphere`、`apsis_noise`、`apsis_doppler`、`apsis_interference`、`apsis_link` | 米、赫兹 |
 
-选择千米还是米并非任意：卫星轨道用千米表达更自然（`apsis-sgp4` 输出的量级
+选择千米还是米并非任意：卫星轨道用千米表达更自然（`apsis_sgp4` 输出的量级
 是几千），射频链路用米表达更自然（波长与距离用米，与 ITU-R 建议书一致）。
 代价是边界处必须显式换算。
 
@@ -46,8 +46,8 @@ let ecef = Ecef::new(position_km * 1_000.0);                    // 米
 **所有计算用角度一律为弧度**。纬度、经度、倾角、升交点赤经、近地点幅角、
 真近点角、仰角、方位角、天线方向图角都是弧度。
 
-唯一的例外是两线元素集：`apsis-tle::TwoLineElement` 的原始字段按 TLE 格式
-用度与每日圈数，因为那是文件的编码。`apsis-sgp4` 在初始化时换算为弧度与
+唯一的例外是两线元素集：`apsis_tle::TwoLineElement` 的原始字段按 TLE 格式
+用度与每日圈数，因为那是文件的编码。`apsis_sgp4` 在初始化时换算为弧度与
 弧度每分钟。
 
 ## 时间
@@ -55,9 +55,9 @@ let ecef = Ecef::new(position_km * 1_000.0);                    // 米
 时间统一用秒表示，原点由调用方选择：
 
 - ops 与 sim 层：从场景原点（scenario epoch）起算的秒数。
-- orbit 层：`apsis-sgp4` 用"距元素历元的分钟数"，`apsis-ephemeris` 与
-  其余 crate 用秒。
-- 日历时间：`apsis-time` 的 `Epoch` 存 TAI 儒略日；UTC 换算经 `apsis-leap`
+- orbit 层：`apsis_sgp4` 用"距元素历元的分钟数"，`apsis_ephemeris` 与
+  其余模块 用秒。
+- 日历时间：`apsis_time` 的 `Epoch` 存 TAI 儒略日；UTC 换算经 `apsis_leap`
   的闰秒表。
 
 `Orbit::sample_ephemeris` 是两种时间表示的边界：入参是距元素历元的分钟，
@@ -73,16 +73,16 @@ let ecef = Ecef::new(position_km * 1_000.0);                    // 米
 | 大地坐标 | `apsis_geodesy::Geodetic` | 纬度、经度、大地高 |
 | 地面点 | `apsis_coverage::GroundPoint` | 大地坐标加仰角遮蔽 |
 
-TEME 到 ECEF 需要地球自转角（`apsis-frames::EarthRotationAngle`）加上岁差
-章动；`apsis-coord` 提供变换，`apsis-frames` 提供角。TEME 与 ECI 的差别是
+TEME 到 ECEF 需要地球自转角（`apsis_frames::EarthRotationAngle`）加上岁差
+章动；`apsis_coord` 提供变换，`apsis_frames` 提供角。TEME 与 ECI 的差别是
 分点方程，量级低于千分之一度；`integrate_network` 示例中直接把它当作惯性
 系处理，并注明这是该示例的近似。
 
 ## 其它量
 
-- 引力参数：`apsis-kepler::GravityParameter`，单位 km³/s²。WGS 72 对应
+- 引力参数：`apsis_kepler::GravityParameter`，单位 km³/s²。WGS 72 对应
   SGP4，WGS 84 对应其余用途；选错会使密切半长轴偏约百万分之一。门面
-  `apsis-orbit::Orbit` 把引力参数与传播器绑定，避免这一错误。
+  `apsis_orbit::Orbit` 把引力参数与传播器绑定，避免这一错误。
 - 速度：与长度同层，km/s 或 m/s。
 - 功率用瓦、频率用赫兹、温度用开尔文；分贝为功率比，`dBi` 相对各向同性、
   `dBd` 相对半波偶极子（相差 2.15 dB）。
@@ -95,5 +95,5 @@ TEME 到 ECEF 需要地球自转角（`apsis-frames::EarthRotationAngle`）加�
 - 各层测试覆盖层内换算。
 - `integrate_network` 断言千米与米的边界换算保持半径。
 - `integrate_ops`、`integrate_sim` 覆盖 ops 与 sim 层的时间轴约定。
-- `cargo run --release -p apsis-rs --features full --example bench` 覆盖
+- `cargo run --release --features full --example bench` 覆盖
   各层热点路径，任一层的接口变更导致编译失败都会在此暴露。

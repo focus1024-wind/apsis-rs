@@ -8,40 +8,40 @@ English | [简体中文](./README.zh.md)
 
 - Pure Rust, standard library only, no third-party crate dependency
 - Clear domain boundaries with a one-way dependency order between layers
-- The public facade crate is `apsis-rs`; its library name is `apsis`
-- Every crate is `publish = false` at this stage, so none of them is released
+- One crate, `apsis`; each layer is a module re-exported at the crate root
+- The crate is `publish = false` at this stage, so it is not released
 
 ## Layers
 
 ```text
-foundation -> physics -> orbit -> rf -> network -> ops -> sim -> apsis-rs
+foundation -> physics -> orbit -> rf -> network -> ops -> sim
 ```
 
 The rules:
 
-- Dependencies flow to the left only. A lower layer may use any layer to its
+- References flow to the left only. A lower layer may use any layer to its
   left; a higher layer may not use any layer to its right. So `network` may
-  use `orbit`, but `orbit` may not use `network`. A leftward dependency may
+  use `orbit`, but `orbit` may not use `network`. A leftward reference may
   cross as many layers as it needs, because the layers in between need not
   offer a type that carries the value forward.
-- `apsis-core` in `foundation` is the global baseline that any crate in any
-  layer may use. `apsis-math` is the same, because linear algebra is shared
+- `apsis_core` in `foundation` is the global baseline that any module in any
+  layer may use. `apsis_math` is the same, because linear algebra is shared
   across the layers.
-- Within a layer, that layer's facade crate (`apsis-orbit`, `apsis-rf`,
-  `apsis-sim`) is the integration point.
+- Within a layer, that layer's facade module (`apsis_orbit`, `apsis_rf`,
+  `apsis_sim`) is the integration point.
 
 `scripts/check-layers.sh` enforces these rules and CI runs it.
 
-| Layer | Responsibility | Crates |
+| Layer | Responsibility | Modules |
 | --- | --- | --- |
-| foundation | Base types, units, mathematics, macros | `apsis-core`, `apsis-units`, `apsis-math`, `apsis-macros` |
-| physics | Time, leap seconds, coordinates, datum | `apsis-time`, `apsis-leap`, `apsis-coord`, `apsis-geodesy`, `apsis-frames` |
-| orbit | TLE, SGP4, two-body, ephemeris, maneuvers | `apsis-tle`, `apsis-sgp4`, `apsis-kepler`, `apsis-ephemeris`, `apsis-maneuver`, `apsis-orbit` |
-| rf | Radio frequency, antennas, link budget | `apsis-rf`, `apsis-antenna`, `apsis-doppler`, `apsis-atmosphere`, `apsis-noise`, `apsis-interference`, `apsis-link` |
-| network | Constellations, coverage, access, topology, routing | `apsis-constellation`, `apsis-coverage`, `apsis-access`, `apsis-topology`, `apsis-isl`, `apsis-routing`, `apsis-handover`, `apsis-mesh` |
-| ops | Resources, tasks, scheduling, conflicts, schedules | `apsis-resource`, `apsis-task`, `apsis-scheduler`, `apsis-conflict`, `apsis-schedule` |
-| sim | Simulation engine, scenarios, events, output | `apsis-sim-engine`, `apsis-scenario`, `apsis-event`, `apsis-output`, `apsis-sim` |
-| facade | Public facade | `apsis-rs` |
+| foundation | Base types, units, mathematics, macros | `apsis_core`, `apsis_units`, `apsis_math`, `apsis_macros` |
+| physics | Time, leap seconds, coordinates, datum | `apsis_time`, `apsis_leap`, `apsis_coord`, `apsis_geodesy`, `apsis_frames` |
+| orbit | TLE, SGP4, two-body, ephemeris, maneuvers | `apsis_tle`, `apsis_sgp4`, `apsis_kepler`, `apsis_ephemeris`, `apsis_maneuver`, `apsis_orbit` |
+| rf | Radio frequency, antennas, link budget | `apsis_rf`, `apsis_antenna`, `apsis_doppler`, `apsis_atmosphere`, `apsis_noise`, `apsis_interference`, `apsis_link` |
+| network | Constellations, coverage, access, topology, routing | `apsis_constellation`, `apsis_coverage`, `apsis_access`, `apsis_topology`, `apsis_isl`, `apsis_routing`, `apsis_handover`, `apsis_mesh` |
+| ops | Resources, tasks, scheduling, conflicts, schedules | `apsis_resource`, `apsis_task`, `apsis_scheduler`, `apsis_conflict`, `apsis_schedule` |
+| sim | Simulation engine, scenarios, events, output | `apsis_sim_engine`, `apsis_scenario`, `apsis_event`, `apsis_output`, `apsis_sim` |
+| facade | Crate root re-exports | the crate root, `apsis` |
 
 ## Building
 
@@ -49,14 +49,14 @@ Run every Rust command from the repository root:
 
 ```bash
 cargo check --workspace
-cargo test -p apsis-core -p apsis-units -p apsis-math
+cargo test --workspace --all-features
 ```
 
-The `apsis-rs` facade selects the layers it needs by feature:
+The crate selects the layers it needs by feature:
 
 ```toml
 [dependencies]
-apsis-rs = { path = "...", features = ["orbit"] }
+apsis = { path = "crates/apsis", features = ["orbit"] }
 ```
 
 The features are `foundation`, `physics`, `orbit`, `rf`, `network`, `ops`,
@@ -66,7 +66,7 @@ that does not run simulations.
 
 ## Performance
 
-The three benchmarks are examples of the facade. They run in release mode and
+The three benchmarks are examples of the crate. They run in release mode and
 depend on nothing outside the workspace, so a build is the compiler and
 nothing else. The figures below are one run on an AMD Ryzen 7 8845HS (eight
 cores, sixteen threads); absolute times move with the machine, so compare the
@@ -78,14 +78,14 @@ behind each conclusion are in
 
 | Path | Per call |
 | --- | --- |
-| Hermite ephemeris query | 24 ns |
-| TEME to Earth-fixed rotation | 27 ns |
-| Keplerian elements to a state | 38 ns |
+| Hermite ephemeris query | 27 ns |
+| TEME to Earth-fixed rotation | 24 ns |
+| Keplerian elements to a state | 47 ns |
 | Earth-fixed to geodetic | 50 ns |
-| Link budget C/N0 | 61 ns |
-| SGP4 propagation, thirty minutes from epoch | 249 ns |
-| Access search, 120 samples | 7.5 us |
-| Planning 60 tasks on one resource | 239 us |
+| Link budget C/N0 | 60 ns |
+| SGP4 propagation, thirty minutes from epoch | 265 ns |
+| Access search, 120 samples | 6.4 us |
+| Planning 60 tasks on one resource | 240 us |
 
 An ephemeris query is an order of magnitude cheaper than the propagation it
 stands in for, which is why a densely queried track is tabulated once and then
@@ -95,18 +95,18 @@ interpolated.
 right:
 
 - A day of a constellation at a sixty second step is linear in the satellite
-  count: 24 satellites in 8.7 ms, 2016 in 0.68 s, about 234 ns a sample, an
+  count: 24 satellites in 8.1 ms, 2016 in 0.68 s, about 235 ns a sample, an
   exponent of 0.00.
-- Access search is flat at about 7.3 us a track from 8 to 128 tracks.
+- Access search is flat at about 7 us a track from 8 to 128 tracks.
 - Topology construction is about O(n squared) and greedy planning eases from
   O(n squared) towards O(n); both are limited by their algorithm, and the
   design note says why.
 
 **Threads.** The numerical kernels split by satellite. Propagating 2000
-satellites over a day takes 671 ms on one thread and 85 ms on sixteen, a
-speedup of 7.9x; access search over 256 tracks reaches 5.3x. Efficiency is
-about eighty-five percent at eight threads, one per core; sixteen puts two on
-a core and returns about half of that. Every parallel result equals the serial one,
+satellites over a day takes 669 ms on one thread and 68 ms on sixteen, a
+speedup of 9.9x; access search over 256 tracks reaches 4.9x. Efficiency is
+about ninety-two percent at eight threads, one per core; sixteen puts two on
+a core and lowers it to about sixty percent. Every parallel result equals the serial one,
 so threading buys throughput and never changes a number.
 
 ## Conventions
@@ -121,9 +121,9 @@ so threading buys throughput and never changes a number.
   `docs/design/errors.md`.
 - Every public item carries a documentation comment, and the comment is
   self-contained
-- Tests live in each crate's `tests/` directory, separate from `src/`. They are
-  integration tests and reach the crate only through its public API; no inline
-  `#[cfg(test)]` module is used
+- Tests live in `crates/apsis/tests/`, mirroring the layer and module
+  structure under `src/`. They are integration tests and reach the crate only
+  through its public API, so a re-export missing at the crate root fails here
 - Documentation follows the `X.md` and `X.zh.md` convention, with English in
   `X.md` and Simplified Chinese in `X.zh.md`
 
@@ -132,38 +132,49 @@ so threading buys throughput and never changes a number.
 ```text
 apsis-rs/
 ├── Cargo.toml
-├── crates/          # Rust workspace members
-│   └── apsis-rs/
-│       ├── examples/   # validation dumps and cross-layer checks
-│       └── ...
-├── scripts/         # repository check scripts
-├── validation/      # Python cross-checks
-└── docs/design/     # design notes
+├── crates/
+│   └── apsis/              # the single crate
+│       ├── build.rs
+│       ├── examples/       # validation dumps and cross-layer checks
+│       ├── src/
+│       │   ├── lib.rs      # feature-gated re-exports
+│       │   ├── foundation/ # one directory per layer
+│       │   ├── physics/
+│       │   ├── orbit/
+│       │   ├── rf/
+│       │   ├── network/
+│       │   ├── ops/
+│       │   └── sim/
+│       └── tests/          # integration tests, mirroring the layers
+├── scripts/                # repository check scripts
+├── validation/             # Python cross-checks
+└── docs/design/            # design notes
 ```
 
-Tests live in each crate's `tests/` directory. The cross-layer integration
-checks and the dependency-free benchmarks are examples of the facade:
+Tests live in `crates/apsis/tests/`, in a single integration target named
+`integration`. The cross-layer integration checks and the dependency-free
+benchmarks are examples of the crate:
 
 ```bash
 # Cross-layer integration checks, which CI runs
-cargo run -p apsis-rs --features network --example integrate_network
-cargo run -p apsis-rs --features ops --example integrate_ops
-cargo run -p apsis-rs --features sim --example integrate_sim
+cargo run --features network --example integrate_network
+cargo run --features ops --example integrate_ops
+cargo run --features sim --example integrate_sim
 
 # Hot path benchmark, run in release
-cargo run --release -p apsis-rs --features full --example bench
+cargo run --release --features full --example bench
 
 # Scale sweep: the input grows and the cost per unit of work shows the trend
-cargo run --release -p apsis-rs --features full --example bench_scale
+cargo run --release --features full --example bench_scale
 
 # Parallel sweep: the same work over 1, 2, 4, 8 and 16 threads
-cargo run --release -p apsis-rs --features full --example bench_parallel
+cargo run --release --features full --example bench_parallel
 ```
 
 ## Documentation
 
-The design notes record the cross-crate decisions that a reader of a single
-crate cannot infer:
+The design notes record the cross-layer decisions that a reader of a single
+module cannot infer:
 
 - [Units and coordinates](docs/design/units.md)
 - [Errors and tolerances](docs/design/errors.md)
@@ -175,7 +186,7 @@ crate cannot infer:
 
 The generated API documentation renders mathematical formulas offline. A copy
 of MathJax is vendored under `docs/vendor/mathjax`, `docs/mathjax.html` loads
-it, and `crates/apsis-rs/build.rs` copies it into the documentation root, so
+it, and `crates/apsis/build.rs` copies it into the documentation root, so
 the generated pages need no network access. Build them with
 `bash scripts/build-docs.sh --workspace --all-features --no-deps`; a plain
 `cargo doc` also works, and the script only makes the copy reliable. A display

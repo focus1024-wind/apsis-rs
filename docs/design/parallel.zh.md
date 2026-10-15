@@ -7,8 +7,8 @@
 
 ## 为什么不引入线程池
 
-工作区禁止任何第三方 crate，因此没有 `rayon` 这样的线程池可用。也不需要：
-工作区中值得多核的运算，无一例外都是**逐元素独立**的循环，用标准库的
+本 crate 禁止任何第三方 crate，因此没有 `rayon` 这样的线程池可用。也不需要：
+本 crate 中值得多核的运算，无一例外都是**逐元素独立**的循环，用标准库的
 `std::thread::scope` 就能直接表达。
 
 作用域线程按引用借用数据，调用方无需 `Arc` 即可共享一个切片或一个只读对象；
@@ -16,7 +16,7 @@
 
 ## 接口
 
-### apsis-math：并行原语
+### apsis_math：并行原语
 
 `apsis_math::parallel` 提供两个入口，是所有并行接口的基础：
 
@@ -35,12 +35,12 @@
 
 ### 各层的批处理接口
 
-| crate | 接口 | 适用规模 |
+| 模块 | 接口 | 适用规模 |
 | --- | --- | --- |
-| `apsis-sgp4` | `propagate_minutes_at_parallel` | 长轨道（≥ 数万样本） |
-| `apsis-sgp4` | `propagate_at_parallel` | 整壳一次性传播 |
-| `apsis-access` | `find_all_parallel` | 数百条轨道 |
-| `apsis-isl` | `visibility_matrix_parallel` | 数百颗以上（见下） |
+| `apsis_sgp4` | `propagate_minutes_at_parallel` | 长轨道（≥ 数万样本） |
+| `apsis_sgp4` | `propagate_at_parallel` | 整壳一次性传播 |
+| `apsis_access` | `find_all_parallel` | 数百条轨道 |
+| `apsis_isl` | `visibility_matrix_parallel` | 数百颗以上（见下） |
 
 每个接口都有一个同名的顺序版本，两者结果逐元素相同、顺序相同，调用方可自由
 切换。
@@ -50,7 +50,7 @@
 并非所有批处理都值得并行化。判定依据是**单次工作成本**与**总量**：
 
 - **值得并行**：单次工作昂贵（≥ 微秒），且逐元素独立，规模可达数百次以上。
-  典型是 SGP4 传播（约 230 ns/样本，百万样本量级）与可见性搜索（约 7 μs/轨）。
+  典型是 SGP4 传播（约 235 ns/样本，百万样本量级）与可见性搜索（约 7 μs/轨）。
 - **不值得并行**：
   - `Constellation::instantiate`：纯算术，几百颗星只需微秒，线程开销完全淹没。
   - 调度器：贪心放置本质串行，每次放置改变后续任务的可行区间，不是独立

@@ -1,0 +1,132 @@
+[package]
+name = "apsis"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Computational kernels for commercial spaceflight and satellite internet systems."
+# The package waits until the release is prepared. Removing this line is what
+# makes it publishable.
+# 该包在发行准备完成前不发布。删除本行即可使其可发布。
+publish = false
+
+# Every layer is a module of this crate, so a feature only selects the
+# modules a downstream project needs. A layer feature still enables the
+# features of the layers below it, so enabling `orbit` also enables `physics`
+# and `foundation`.
+# 每一层都是本 crate 的模块，故一个特性只挑选下游项目所需的模块。层特性
+# 仍会启用其下方各层的特性，故启用 `orbit` 也会启用 `physics` 与
+# `foundation`。
+[features]
+default = []
+
+foundation = []
+
+physics = ["foundation"]
+
+orbit = ["physics"]
+
+rf = ["orbit"]
+
+network = ["rf"]
+
+ops = ["network"]
+
+sim = ["ops"]
+
+# Every layer, including `sim`. Enabling `sim` pulls in `ops` and, through
+# it, every lower layer.
+# 每一层，包括 `sim`。启用 `sim` 会引入 `ops`，并经它引入每一个更低的层。
+full = ["sim"]
+
+[lints]
+workspace = true
+
+# Examples that produce validation input. Each needs the layers it reads
+# from, so it is built only when the matching feature is enabled.
+# 产生验证输入的示例。每个都需要它所读取的层，故只在匹配的特性启用时
+# 才被构建。
+
+[[example]]
+name = "dump_geodesy"
+required-features = ["physics"]
+
+[[example]]
+name = "dump_time"
+required-features = ["physics"]
+
+[[example]]
+name = "dump_orbit"
+required-features = ["orbit"]
+
+[[example]]
+name = "dump_link"
+required-features = ["rf"]
+
+[[example]]
+name = "dump_gas"
+required-features = ["rf"]
+
+[[example]]
+name = "dump_rain"
+required-features = ["rf"]
+
+[[example]]
+name = "dump_rain_path"
+required-features = ["rf"]
+
+[[example]]
+name = "dump_s465"
+required-features = ["rf"]
+
+[[example]]
+name = "dump_p839"
+required-features = ["rf"]
+
+[[example]]
+name = "dump_gas_exact"
+required-features = ["rf"]
+
+[[example]]
+name = "integrate_network"
+required-features = ["network"]
+
+[[example]]
+name = "dump_iau2000"
+required-features = ["physics"]
+
+[[example]]
+name = "dump_teme"
+required-features = ["physics"]
+
+[[example]]
+name = "integrate_ops"
+required-features = ["ops"]
+
+[[example]]
+name = "integrate_sim"
+required-features = ["sim"]
+
+[[example]]
+name = "bench"
+required-features = ["full"]
+
+[[example]]
+name = "dump_coverage"
+required-features = ["network"]
+
+[[example]]
+name = "dump_kepler"
+required-features = ["orbit"]
+
+[[example]]
+name = "dump_tle"
+required-features = ["orbit"]
+
+[[example]]
+name = "bench_scale"
+required-features = ["full"]
+
+[[example]]
+name = "bench_parallel"
+required-features = ["full"]

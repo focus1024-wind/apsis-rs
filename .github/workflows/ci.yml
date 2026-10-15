@@ -18,9 +18,9 @@ jobs:
       - name: Format
         run: cargo fmt --all --check
       - name: Check
-        # --all-features matters: the facade crate enables nothing by default,
-        # so without it almost all of its code, and every example, is skipped.
-        # `--all-features` 很重要：门面 crate 默认不启用任何特性，没有它
+        # --all-features matters: the crate enables nothing by default, so
+        # without it almost all of its code, and every example, is skipped.
+        # `--all-features` 很重要：本 crate 默认不启用任何特性，没有它
         # 几乎其全部代码以及每个示例都会被跳过。
         run: cargo check --workspace --all-targets --all-features
       - name: Clippy
@@ -36,9 +36,9 @@ jobs:
         # `cargo test` 不会运行它们，故没有这一步，破坏某层对另一层假设的
         # 改动会无声地通过 CI。
         run: |
-          cargo run -p apsis-rs --features network --example integrate_network
-          cargo run -p apsis-rs --features ops --example integrate_ops
-          cargo run -p apsis-rs --features sim --example integrate_sim
+          cargo run --features network --example integrate_network
+          cargo run --features ops --example integrate_ops
+          cargo run --features sim --example integrate_sim
       - name: Build the benchmarks
         # The benchmarks are not run in CI, because their timings are only
         # meaningful on a quiet machine, but they must still compile so that
@@ -46,9 +46,9 @@ jobs:
         # 基准在 CI 中不运行，因为其计时只在安静的机器上有意义，但它们
         # 仍必须能编译，以免腐坏。
         run: |
-          cargo build -p apsis-rs --features full --example bench
-          cargo build -p apsis-rs --features full --example bench_scale
-          cargo build -p apsis-rs --features full --example bench_parallel
+          cargo build --features full --example bench
+          cargo build --features full --example bench_scale
+          cargo build --features full --example bench_parallel
       - name: Documentation
         # Catches a doc link that no longer resolves, which is how a doc
         # comment drifts away from the code it describes.
@@ -63,28 +63,28 @@ jobs:
         run: bash scripts/build-docs.sh --workspace --all-features --no-deps
       - name: Documentation with default features
         # A downstream reader runs `cargo doc` on the default feature set,
-        # where the facade re-exports nothing, so a link to a re-exported
-        # crate does not resolve. The all-features build above would not
+        # where the crate re-exports nothing, so a link to a re-exported
+        # module does not resolve. The all-features build above would not
         # catch that, so it is checked here.
-        # 下游读者会在默认特性集上运行 `cargo doc`，那里门面不重导出任何
-        # 东西，故指向被重导出 crate 的链接无法解析。上面的全特性构建捕获
+        # 下游读者会在默认特性集上运行 `cargo doc`，那里本 crate 不重导出
+        # 任何东西，故指向被重导出模块的链接无法解析。上面的全特性构建捕获
         # 不到这一点，故在此检查。
         env:
           RUSTDOCFLAGS: -D warnings --html-in-header docs/mathjax.html
         run: bash scripts/build-docs.sh --workspace --no-deps
       - name: Check the layer rule
-        # README.md states that a crate may only depend on layers to its
+        # README.md states that a module may only reference layers to its
         # left. Nothing else in the build enforces that, so a reverse
-        # dependency would otherwise pass CI silently.
-        # README.md 规定一个 crate 只能依赖其左侧的层。构建中没有别的
-        # 东西强制这一点，故反向依赖否则会无声地通过 CI。
+        # reference would otherwise pass CI silently.
+        # README.md 规定一个模块只能引用其左侧的层。构建中没有别的
+        # 东西强制这一点，故反向引用否则会无声地通过 CI。
         run: bash scripts/check-layers.sh
       - name: Verify dependency freedom
         run: |
-          # Every package in the graph must be a workspace crate. `--prefix
+          # Every package in the graph must be the single crate. `--prefix
           # none` prints bare `name version` lines, one per package, which the
           # box drawing prefix of the default format would otherwise hide.
-          # 依赖图中的每个包都必须是工作区 crate。`--prefix none` 打印
+          # 依赖图中的每个包都必须是这个唯一的 crate。`--prefix none` 打印
           # 裸的 `name version` 行，每包一行；否则默认格式的制表前缀会把
           # 它隐藏。
           external=$(cargo tree --workspace --all-features \
@@ -98,4 +98,4 @@ jobs:
             echo "$external" >&2
             exit 1
           fi
-          echo "dependency check passed: workspace crates only"
+          echo "dependency check passed: the crate itself only"

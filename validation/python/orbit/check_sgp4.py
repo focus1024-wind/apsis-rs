@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS SGP4 propagator against the reference library.
 
-Reads the states written by ``cargo run -p apsis-rs --features orbit
+Reads the states written by ``cargo run --features orbit
 --example dump_orbit``, propagates the same element sets with the ``sgp4``
 reference implementation, and reports the largest position and velocity
 difference for each element set.
@@ -16,7 +16,7 @@ otherwise.
 
 用参考库交叉核对 ApsisRS 的 SGP4 传播器。
 
-读取由 ``cargo run -p apsis-rs --features orbit --example dump_orbit`` 写出的
+读取由 ``cargo run --features orbit --example dump_orbit`` 写出的
 状态，用 ``sgp4`` 参考实现传播同一批根数集，并报告每个根数集的最大位置与
 速度差异。
 
@@ -103,7 +103,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features orbit "
+            "generate it with: cargo run --features orbit "
             "--example dump_orbit > " + str(path),
             file=sys.stderr,
         )

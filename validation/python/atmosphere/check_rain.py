@@ -1,6 +1,6 @@
 """Cross-check the ApsisRS rain coefficients against ITU-R P.838-3.
 
-Reads the values written by ``cargo run -p apsis-rs --features rf --example
+Reads the values written by ``cargo run --features rf --example
 dump_rain`` and recomputes each one with the ``itur`` package, which
 implements the recommendation directly.
 
@@ -15,7 +15,7 @@ otherwise.
 
 用 ITU-R P.838-3 交叉核对 ApsisRS 的降雨系数。
 
-读取由 ``cargo run -p apsis-rs --features rf --example dump_rain`` 写出的
+读取由 ``cargo run --features rf --example dump_rain`` 写出的
 值，并用 ``itur`` 包逐个重算，后者直接实现该建议书。
 
 本脚本不需要网络访问。
@@ -61,7 +61,7 @@ def main(argv: list[str]) -> int:
     if not path.exists():
         print(f"missing input file: {path}", file=sys.stderr)
         print(
-            "generate it with: cargo run -p apsis-rs --features rf "
+            "generate it with: cargo run --features rf "
             "--example dump_rain > " + str(path),
             file=sys.stderr,
         )

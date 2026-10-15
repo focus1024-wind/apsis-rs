@@ -2,15 +2,15 @@
 
 English | [简体中文](./errors.zh.md)
 
-This file records how errors are expressed across crates and how numerical
-tolerances are chosen. The error enumeration of a single crate is documented
+This file records how errors are expressed across modules and how numerical
+tolerances are chosen. The error enumeration of a single module is documented
 in its `error.rs`.
 
 ## Expressing an error
 
 ### A domain error
 
-Every crate with a domain specific failure defines **its own** error type,
+Every module with a domain specific failure defines **its own** error type,
 named and shaped consistently:
 
 ```rust
@@ -46,7 +46,7 @@ The conventions:
   category does not break a match downstream. All fifteen `ErrorKind`
   enumerations carry the attribute.
 - **An error enum that carries data is marked too**, including one whose
-  variants wrap a lower error, such as `apsis-orbit`'s
+  variants wrap a lower error, such as `apsis_orbit`'s
   `EphemerisSamplingError`.
 - **A state enum that is not an error is not marked.** A domain state such as
   `TaskState`, `LinkState`, `TimeScale`, `HandoverDecision` or the antenna
@@ -67,19 +67,19 @@ The conventions:
 - **A bare `String` or `Box<dyn Error>` is never a public error.** The first
   cannot be matched and the second loses the category. A private helper may
   pass a `String` as a reason internally, but the public boundary is an enum.
-  The `precedence_floor` in `apsis-scheduler` is an instance: its private
+  The `precedence_floor` in `apsis_scheduler` is an instance: its private
   `String` ends up inside the public `TaskState::Infeasible { reason }`.
 
 ### The general error
 
-`apsis-core::Error` and `ErrorKind` are a general purpose fallback carrying
+`apsis_core::Error` and `ErrorKind` are a general purpose fallback carrying
 a coarse category such as `InvalidInput` or `NotFound`. They are **not** the
 error surface of the layers: no layer uses them, because a coarse category
 loses the distinction a caller needs. `InvalidInput` cannot tell a reversed
 interval from a duplicate identifier.
 
 They are kept for two reasons: to give a function whose failure has no
-interesting structure a ready return type, and to give the workspace one
+interesting structure a ready return type, and to give the crate one
 extensible fallback shape. New code whose failure has a domain meaning should
 define a domain error.
 
@@ -102,12 +102,12 @@ apart and recover, use `Result`.
 ### Convergence of an iteration
 
 An iterative solve, whether of Kepler's equation, a nutation series or a ray
-trace, is governed by a private constant inside its crate:
+trace, is governed by a private constant inside its module:
 
-| Crate | Constant | Value | Meaning |
+| Module | Constant | Value | Meaning |
 | --- | --- | --- | --- |
-| `apsis-kepler` | `TOLERANCE` | `1e-14` | the step of the Newton iteration for the eccentric anomaly |
-| `apsis-sgp4` | `KEPLER_TOLERANCE` | `1e-12` | the residual of the Kepler equation iteration |
+| `apsis_kepler` | `TOLERANCE` | `1e-14` | the step of the Newton iteration for the eccentric anomaly |
+| `apsis_sgp4` | `KEPLER_TOLERANCE` | `1e-12` | the residual of the Kepler equation iteration |
 
 These values trade floating point precision against iteration count: they sit
 close to the machine precision of an `f64` while still guaranteeing that the
@@ -130,7 +130,7 @@ A tolerance sits far above the disagreement actually observed, which is
 usually at the floating point level, and far below the accuracy of the model
 itself. That way it catches a mistyped radius or a missing unit conversion
 without reporting on the last bit of a floating point value. The table in
-`validation/README.zh.md` lists them per script.
+`validation/README.md` lists them per script.
 
 ### Comparing exactly
 
@@ -142,7 +142,7 @@ continuous approximation.
 
 ## expect in library code
 
-The workspace convention is that library code uses no `unwrap`, `expect` or
+The crate convention is that library code uses no `unwrap`, `expect` or
 `panic!`. The **intent** of the rule is that they must not handle a failure
 on external input, which has to become a `Result` or an `Option` the caller
 can act on.
@@ -151,31 +151,32 @@ Allowing no `expect` at all would push the code towards `unwrap`, which is
 worse, or into long hand written branches. So one case is permitted:
 **an `expect` on an internal invariant that a check has already guarded.**
 Such an assertion does not turn untrusted data into a panic; it turns "if
-this were empty it would be a bug in this crate" into a readable failure
+this were empty it would be a bug in this module" into a readable failure
 message.
 
 The test is whether a guard making the branch unreachable sits on the line
 above, or whether the value was just built by this function. All thirteen
-current sites satisfy it:
+current sites satisfy it. The table groups them by module; the `apsis_kepler`
+and `apsis_constellation` rows each cover three sites:
 
 | Site | Invariant | Guard |
 | --- | --- | --- |
-| `apsis-math/src/parallel.rs` | every slot was filled by one thread | the loop assigns each index exactly once |
-| `apsis-schedule/src/schedule.rs` | the placement just pushed exists | the line above |
-| `apsis-scheduler/src/improve.rs` | the value whose `is_none()` was just checked is not none | the `is_none()` branch above |
-| `apsis-scheduler/src/planner.rs` | an identifier in the order is in the task list | the order is built from the task list |
-| `apsis-topology/src/series.rs` | the time is finite | validated on construction |
-| `apsis-handover/src/decision.rs` | the candidate list is not empty | the `validate` call above |
-| `apsis-constellation/src/walker.rs` | the plane count and the satellites per plane are positive | the divisor is validated before |
-| `apsis-kepler/src/elements.rs` | the node, the radius and the angular momentum are non-zero | the `norm() == 0.0` branch just above |
-| `apsis-event/src/queue.rs` | a popped entry has its payload | guaranteed by the construction order of the queue |
+| `apsis_math/parallel.rs` | every slot was filled by one thread | the loop assigns each index exactly once |
+| `apsis_schedule/schedule.rs` | the placement just pushed exists | the line above |
+| `apsis_scheduler/improve.rs` | the value whose `is_none()` was just checked is not none | the `is_none()` branch above |
+| `apsis_scheduler/planner.rs` | an identifier in the order is in the task list | the order is built from the task list |
+| `apsis_topology/series.rs` | the time is finite | validated on construction |
+| `apsis_handover/decision.rs` | the candidate list is not empty | the `validate` call above |
+| `apsis_constellation/walker.rs` | the plane count and the satellites per plane are positive | the divisor is validated before |
+| `apsis_kepler/elements.rs` | the node, the radius and the angular momentum are non-zero | the `norm() == 0.0` branch just above |
+| `apsis_event/queue.rs` | a popped entry has its payload | guaranteed by the construction order of the queue |
 
 Removing a guard means the matching `expect` must become a `Result`; the two
 change together.
 
 ## Checks
 
-- Each crate's tests cover every `kind` of its error, including the path
+- Each module's tests cover every `kind` of its error, including the path
   that constructs it and the path that recovers from it.
 - A cross-check reports through its exit code: zero to pass, one to exceed
   the tolerance, two for a missing input.

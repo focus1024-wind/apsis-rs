@@ -41,67 +41,67 @@ validation/
 
 ## 流程
 
-Rust 侧通过 `apsis-rs` 的 example 导出数据，输出为 CSV（手写格式化，不引 serde）：
+Rust 侧通过本 crate 的 example 导出数据，输出为 CSV（手写格式化，不引 serde）：
 
 ```bash
 # 大地坐标 -> ECEF
-cargo run -p apsis-rs --features physics --example dump_geodesy \
+cargo run --features physics --example dump_geodesy \
     > validation/data/expected/rust_geodetic.csv
 
 # 时间尺度换算
-cargo run -p apsis-rs --features physics --example dump_time \
+cargo run --features physics --example dump_time \
     > validation/data/expected/rust_time.csv
 
 # SGP4/SDP4 传播
-cargo run -p apsis-rs --features orbit --example dump_orbit \
+cargo run --features orbit --example dump_orbit \
     > validation/data/expected/rust_sgp4.csv
 
 # 链路预算
-cargo run -p apsis-rs --features rf --example dump_link \
+cargo run --features rf --example dump_link \
     > validation/data/expected/rust_link.csv
 
 # ITU-R P.676-12 气体吸收
-cargo run -p apsis-rs --features rf --example dump_gas \
+cargo run --features rf --example dump_gas \
     > validation/data/expected/rust_gas.csv
 
 # ITU-R P.838-3 雨衰系数
-cargo run -p apsis-rs --features rf --example dump_rain \
+cargo run --features rf --example dump_rain \
     > validation/data/expected/rust_rain.csv
 
 # ITU-R P.618-13 雨衰斜路径
-cargo run -p apsis-rs --features rf --example dump_rain_path \
+cargo run --features rf --example dump_rain_path \
     > validation/data/expected/rust_rain_path.csv
 
 # ITU-R S.465 参考天线方向图
-cargo run -p apsis-rs --features rf --example dump_s465 \
+cargo run --features rf --example dump_s465 \
     > validation/data/expected/rust_s465.csv
 
 # ITU-R P.839-4 零度等温线高度
-cargo run -p apsis-rs --features rf --example dump_p839 \
+cargo run --features rf --example dump_p839 \
     > validation/data/expected/rust_p839.csv
 
 # ITU-R P.676-12 精确斜路径（分层积分 + 折射率射线追踪）
-cargo run -p apsis-rs --features rf --example dump_gas_exact \
+cargo run --features rf --example dump_gas_exact \
     > validation/data/expected/rust_gas_exact.csv
 
 # IAU 2000/2006 地球定向（岁差、章动、框架偏移、GCRS→ITRF）
-cargo run -p apsis-rs --features physics --example dump_iau2000 \
+cargo run --features physics --example dump_iau2000 \
     > validation/data/expected/rust_iau2000.csv
 
 # TEME → 地固系（SGP4 输出链路）
-cargo run -p apsis-rs --features physics --example dump_teme \
+cargo run --features physics --example dump_teme \
     > validation/data/expected/rust_teme.csv
 
 # 覆盖几何（仰角、星下点角、地心角、斜距、覆盖面积）
-cargo run -p apsis-rs --features network --example dump_coverage \
+cargo run --features network --example dump_coverage \
     > validation/data/expected/rust_coverage.csv
 
 # 二体模型（开普勒要素↔状态矢量，往返转换）
-cargo run -p apsis-rs --features orbit --example dump_kepler \
+cargo run --features orbit --example dump_kepler \
     > validation/data/expected/rust_kepler.csv
 
 # 两线元素集解析（字段、历元展开、模十校验和）
-cargo run -p apsis-rs --features orbit --example dump_tle \
+cargo run --features orbit --example dump_tle \
     > validation/data/expected/rust_tle.csv
 ```
 
@@ -173,7 +173,7 @@ Earth orientation 数据自动下载；本 crate 涉及的换算不需要该数�
 
 - 有参考实现的，直接对拍：地球定向用 `erfa`（IAU SOFA 的派生实现），大气与雨衰用 `itur`；
   链路预算的每一步都是初等运算，`check_link.py` 用 Python 独立重写同一方程。
-- 其余以解析性质断言为主：各 crate 的单元测试验证模型必须满足的性质，例如 3 dB 点、
+- 其余以解析性质断言为主：各模块的集成测试验证模型必须满足的性质，例如 3 dB 点、
   平方律下降、Friis 级联行为、P.838-3 系数在表列频率处的取值。
 
 所有建议书均采用**现行版本**：P.676-12、P.838-3、P.618-13、P.839-4、S.465。

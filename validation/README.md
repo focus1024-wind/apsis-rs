@@ -43,71 +43,71 @@ validation/
 
 ## The flow
 
-The Rust side writes the data through an example of `apsis-rs`, as CSV on
+The Rust side writes the data through an example of the crate, as CSV on
 standard output, formatted by hand without pulling in serde:
 
 ```bash
 # Geodetic -> ECEF
-cargo run -p apsis-rs --features physics --example dump_geodesy \
+cargo run --features physics --example dump_geodesy \
     > validation/data/expected/rust_geodetic.csv
 
 # Time scale conversions
-cargo run -p apsis-rs --features physics --example dump_time \
+cargo run --features physics --example dump_time \
     > validation/data/expected/rust_time.csv
 
 # SGP4 and SDP4 propagation
-cargo run -p apsis-rs --features orbit --example dump_orbit \
+cargo run --features orbit --example dump_orbit \
     > validation/data/expected/rust_sgp4.csv
 
 # Link budget
-cargo run -p apsis-rs --features rf --example dump_link \
+cargo run --features rf --example dump_link \
     > validation/data/expected/rust_link.csv
 
 # ITU-R P.676-12 gaseous absorption
-cargo run -p apsis-rs --features rf --example dump_gas \
+cargo run --features rf --example dump_gas \
     > validation/data/expected/rust_gas.csv
 
 # ITU-R P.838-3 rain attenuation coefficients
-cargo run -p apsis-rs --features rf --example dump_rain \
+cargo run --features rf --example dump_rain \
     > validation/data/expected/rust_rain.csv
 
 # ITU-R P.618-13 rain on a slant path
-cargo run -p apsis-rs --features rf --example dump_rain_path \
+cargo run --features rf --example dump_rain_path \
     > validation/data/expected/rust_rain_path.csv
 
 # ITU-R S.465 reference antenna pattern
-cargo run -p apsis-rs --features rf --example dump_s465 \
+cargo run --features rf --example dump_s465 \
     > validation/data/expected/rust_s465.csv
 
 # ITU-R P.839-4 zero degree isotherm height
-cargo run -p apsis-rs --features rf --example dump_p839 \
+cargo run --features rf --example dump_p839 \
     > validation/data/expected/rust_p839.csv
 
 # ITU-R P.676-12 exact slant path, layered integration with a refractive
 # index ray trace
-cargo run -p apsis-rs --features rf --example dump_gas_exact \
+cargo run --features rf --example dump_gas_exact \
     > validation/data/expected/rust_gas_exact.csv
 
 # IAU 2000/2006 Earth orientation: precession, nutation, frame offsets,
 # GCRS to ITRF
-cargo run -p apsis-rs --features physics --example dump_iau2000 \
+cargo run --features physics --example dump_iau2000 \
     > validation/data/expected/rust_iau2000.csv
 
 # TEME to the Earth-fixed frame, the SGP4 output chain
-cargo run -p apsis-rs --features physics --example dump_teme \
+cargo run --features physics --example dump_teme \
     > validation/data/expected/rust_teme.csv
 
 # Coverage geometry: elevation, nadir angle, central angle, slant range and
 # footprint area
-cargo run -p apsis-rs --features network --example dump_coverage \
+cargo run --features network --example dump_coverage \
     > validation/data/expected/rust_coverage.csv
 
 # The two-body model: elements to a state vector and back
-cargo run -p apsis-rs --features orbit --example dump_kepler \
+cargo run --features orbit --example dump_kepler \
     > validation/data/expected/rust_kepler.csv
 
 # Two-line element parsing: fields, epoch expansion, modulo ten checksum
-cargo run -p apsis-rs --features orbit --example dump_tle \
+cargo run --features orbit --example dump_tle \
     > validation/data/expected/rust_tle.csv
 ```
 
@@ -188,8 +188,8 @@ form expression.
   orientation uses `erfa`, derived from IAU SOFA, and the atmosphere and rain
   use `itur`. Every step of the link budget is elementary arithmetic, and
   `check_link.py` rewrites the same equation independently in Python.
-- The rest are checked by asserting analytic properties: the unit tests of
-  each crate verify what the model must satisfy, such as the 3 dB point, the
+- The rest are checked by asserting analytic properties: the integration tests
+  of each module verify what the model must satisfy, such as the 3 dB point, the
   square law falloff, the behaviour of a Friis cascade, and the value of the
   P.838-3 coefficients at the tabulated frequencies.
 
