@@ -180,3 +180,59 @@ fn the_facade_reexports_the_layer() {
         .expect("propagatable");
     assert!(satellite.propagate_minutes(0.0).is_ok());
 }
+
+#[test]
+fn the_ecef_position_keeps_the_geocentric_radius() {
+    // The rotation between the inertial and Earth-fixed frames is proper, so
+    // the distance from the centre is unchanged.
+    // 惯性系与地固系之间的转动是正交的，故到地心的距离不变。
+    let orbit = orbit(ISS);
+    let teme = orbit
+        .propagate_minutes(0.0)
+        .expect("the state exists")
+        .position;
+    let ecef = orbit
+        .position_ecef_at(orbit.epoch_mjd())
+        .expect("the position transforms");
+    assert!((teme.norm() - ecef.norm()).abs() < 1e-9);
+}
+
+#[test]
+fn the_ecef_position_moves_with_the_earth_during_a_pass() {
+    // Ten minutes of a low Earth orbit covers several thousand kilometres,
+    // so the Earth-fixed position must change substantially even though the
+    // inertial orbit is smooth.
+    // 低轨十分钟覆盖数千千米，故即使惯性轨道平滑，地固位置也必须显著变化。
+    let orbit = orbit(ISS);
+    let start = orbit
+        .position_ecef_at(orbit.epoch_mjd())
+        .expect("the position transforms");
+    let later = orbit
+        .position_ecef_at(orbit.epoch_mjd() + 10.0 / 1_440.0)
+        .expect("the position transforms");
+    assert!((later - start).norm() > 500.0);
+    assert!(later.is_finite());
+}
+
+#[test]
+fn the_ecef_position_round_trips_to_a_geodetic_point() {
+    // A position on a low Earth orbit must map to a latitude and longitude
+    // that are within the physical range, which checks the rotation and the
+    // unit convention together.
+    // 低轨上的位置必须映射到物理范围内的纬度与经度，这同时检查了转动与单位约定。
+    let orbit = orbit(ISS);
+    let ecef = orbit
+        .position_ecef_at(orbit.epoch_mjd())
+        .expect("the position transforms");
+    // The Earth-fixed vector is in kilometers, so scale it to meters for the
+    // geodetic conversion.
+    // 地固矢量以千米计，故换算到米以进行大地转换。
+    let geodetic = apsis::apsis_geodesy::geodetic_from_cartesian(
+        ecef * 1_000.0,
+        apsis::apsis_geodesy::WGS84,
+    )
+    .expect("the point is outside the ellipsoid");
+    assert!(geodetic.latitude.abs() <= core::f64::consts::FRAC_PI_2);
+    assert!(geodetic.longitude.abs() <= core::f64::consts::PI);
+    assert!(geodetic.height > 100_000.0);
+}

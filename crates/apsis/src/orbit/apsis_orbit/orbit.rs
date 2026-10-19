@@ -195,6 +195,44 @@ impl Orbit {
         self.propagate_minutes(minutes).map(|state| state.position)
     }
 
+    /// Returns the Earth-fixed position at a Modified Julian Date on the UTC
+    /// scale.
+    ///
+    /// The SGP4 state is produced in the True Equator Mean Equinox frame, so
+    /// the position is rotated by Greenwich mean sidereal time from the 1982
+    /// expression, which is the sidereal time the element sets are fitted
+    /// against. Velocity is not returned: converting it would also require
+    /// the Earth rotation term, and a caller that needs it should transform a
+    /// full state with the rotation and the angular velocity together.
+    ///
+    /// The UTC value is used as UT1, an approximation below one second of
+    /// time, and polar motion is taken as zero, an approximation below a
+    /// tenth of an arcsecond. Both are stated here so that a caller who needs
+    /// a more precise ground position knows to apply its own transformation.
+    ///
+    /// Returns an error when the state cannot be propagated.
+    ///
+    /// 返回 UTC 标度上某修正儒略日（Modified Julian Date）处的地固位置。
+    ///
+    /// SGP4 状态产生于真赤道平春分点坐标系，故位置按 1982 表达式给出的格林尼治
+    /// 平恒星时转动，这正是根数集拟合所用的恒星时。此处不返回速度：换算它还需
+    /// 地球自转项，需要速度的调用方应把转动与角速度一并施加于完整状态。
+    ///
+    /// UTC 值被用作 UT1，误差小于一秒时间；极移取零，误差小于十分之一角秒。
+    /// 二者在此说明，使需要更精确地面位置的调用方知道应自行施加变换。
+    ///
+    /// 状态不可传播时返回错误。
+    pub fn position_ecef_at(&self, utc_mjd: f64) -> Result<Vec3, PropagationError> {
+        let state = self.propagate_at(utc_mjd)?;
+        let julian_date = crate::apsis_time::julian_date_from_mjd(utc_mjd);
+        let rotation = crate::apsis_frames::iau2000::teme_to_terrestrial_matrix(
+            julian_date,
+            0.0,
+            crate::apsis_frames::iau2000::PolarMotion::NONE,
+        );
+        Ok(rotation * state.position)
+    }
+
     /// Samples the orbit into an ephemeris over a range of minutes.
     ///
     /// The propagation is the expensive part of a track, so a table built
