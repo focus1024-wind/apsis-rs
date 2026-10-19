@@ -168,3 +168,57 @@ fn a_zero_temperature_is_handled_without_dividing_by_zero() {
     // 该表达式除以温度，故零会给出无穷值。该函数改而返回真空的折射指数。
     assert_eq!(radio_refractive_index(1_013.25, 10.0, 0.0), 1.0);
 }
+
+/// The specific gas constant of dry air, in J/(kg K).
+///
+/// 干空气比气体常数，单位为 J/(kg K)。
+const R_DRY_AIR: f64 = 287.052_874;
+
+#[test]
+fn the_troposphere_density_matches_the_barometric_formula() {
+    // The density is pressure over the gas constant times temperature. The
+    // pressure is re-derived from the barometric formula at the geopotential
+    // height the P.835 profile actually uses, so the check is independent of
+    // the pressure function.
+    // 密度为气压除以气体常数与温度之积。气压由气压公式在该高度对应的势高处重新
+    // 导出，故校验独立于气压函数。
+    for geometric_km in [0.0_f64, 1.0, 5.0, 10.0] {
+        let geopotential = geopotential_height(geometric_km);
+        let temperature = 288.15 - 6.5 * geopotential;
+        let pressure_hpa = 1_013.25 * (288.15 / temperature).powf(-34.163_2 / 6.5);
+        let expected = pressure_hpa * 100.0 / (R_DRY_AIR * temperature);
+        let actual = standard_pressure(geometric_km) * 100.0
+            / (R_DRY_AIR * standard_temperature(geometric_km));
+        assert!(
+            (actual - expected).abs() < 1e-6,
+            "height {geometric_km}: {actual} against {expected}"
+        );
+    }
+}
+
+#[test]
+fn the_stratosphere_density_matches_the_isothermal_formula() {
+    // Between 11 and 20 km of geopotential height the temperature is
+    // constant, so the pressure falls exponentially with the scale height
+    // R T / g.
+    // 在势高 11 至 20 km 之间温度恒定，故气压以标高 R T / g 指数下降。
+    for geometric_km in [12.0_f64, 15.0, 18.0] {
+        let geopotential = geopotential_height(geometric_km);
+        let temperature = 216.65;
+        let pressure_hpa = 226.322_6
+            * (-34.163_2 * (geopotential - 11.0) / temperature).exp();
+        let expected = pressure_hpa * 100.0 / (R_DRY_AIR * temperature);
+        let actual = standard_pressure(geometric_km) * 100.0
+            / (R_DRY_AIR * standard_temperature(geometric_km));
+        assert!(
+            (actual - expected).abs() < 1e-6,
+            "height {geometric_km}: {actual} against {expected}"
+        );
+    }
+}
+
+#[test]
+fn the_sea_level_density_is_the_isa_reference_value() {
+    let density = standard_pressure(0.0) * 100.0 / (R_DRY_AIR * standard_temperature(0.0));
+    assert!((density - 1.2250).abs() < 1e-4, "{density}");
+}
