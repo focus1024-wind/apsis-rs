@@ -51,11 +51,13 @@ fn budget(
 /// 由定义方程返回路径损耗、EIRP、载波功率、C/N0、C/N 与 Eb/N0。
 fn closed_form(budget: &LinkBudget, data_rate: f64) -> [f64; 6] {
     let wavelength = SPEED_OF_LIGHT / budget.geometry.frequency;
-    let path_loss = 20.0 * (4.0 * core::f64::consts::PI * budget.geometry.distance / wavelength).log10();
+    let path_loss =
+        20.0 * (4.0 * core::f64::consts::PI * budget.geometry.distance / wavelength).log10();
     let eirp = 10.0 * budget.transmit_power.watts().log10()
         + budget.transmit_gain.dbi().expect("gain")
         - budget.transmit_loss.db();
-    let carrier = eirp - path_loss + budget.receive_gain.dbi().expect("gain") - budget.receive_loss.db();
+    let carrier =
+        eirp - path_loss + budget.receive_gain.dbi().expect("gain") - budget.receive_loss.db();
     let noise_density = 10.0 * (BOLTZMANN * budget.system_temperature.kelvin()).log10();
     let c_n0 = carrier - noise_density;
     let c_n = c_n0 - 10.0 * budget.bandwidth.log10();
@@ -68,10 +70,17 @@ fn check(name: &str, budget: &LinkBudget, data_rate: f64) {
     let actual = [
         budget.geometry.path_loss().expect("path").db(),
         budget.eirp().expect("eirp").dbw().expect("positive"),
-        budget.received_power().expect("carrier").dbw().expect("positive"),
+        budget
+            .received_power()
+            .expect("carrier")
+            .dbw()
+            .expect("positive"),
         budget.carrier_to_noise_density().expect("c/n0").db(),
         budget.carrier_to_noise().expect("c/n").db(),
-        budget.energy_per_bit_over_noise(data_rate).expect("eb/n0").db(),
+        budget
+            .energy_per_bit_over_noise(data_rate)
+            .expect("eb/n0")
+            .db(),
     ];
     let labels = ["path loss", "EIRP", "carrier", "C/N0", "C/N", "Eb/N0"];
     for index in 0..actual.len() {
@@ -88,7 +97,17 @@ fn check(name: &str, budget: &LinkBudget, data_rate: f64) {
 
 #[test]
 fn ku_band_downlink_matches_the_closed_form() {
-    let budget = budget(10.0, 30.0, 1.0, 35.0, 0.5, 150.0, 36.0e6, 38_000_000.0, 12.0e9);
+    let budget = budget(
+        10.0,
+        30.0,
+        1.0,
+        35.0,
+        0.5,
+        150.0,
+        36.0e6,
+        38_000_000.0,
+        12.0e9,
+    );
     check("Ku downlink", &budget, 10.0e6);
 }
 
@@ -106,8 +125,28 @@ fn deep_space_x_band_matches_the_closed_form() {
 
 #[test]
 fn every_decade_of_distance_adds_twenty_decibels_of_loss() {
-    let near = budget(10.0, 30.0, 0.0, 35.0, 0.0, 150.0, 1.0e6, 1_000_000.0, 12.0e9);
-    let far = budget(10.0, 30.0, 0.0, 35.0, 0.0, 150.0, 1.0e6, 10_000_000.0, 12.0e9);
+    let near = budget(
+        10.0,
+        30.0,
+        0.0,
+        35.0,
+        0.0,
+        150.0,
+        1.0e6,
+        1_000_000.0,
+        12.0e9,
+    );
+    let far = budget(
+        10.0,
+        30.0,
+        0.0,
+        35.0,
+        0.0,
+        150.0,
+        1.0e6,
+        10_000_000.0,
+        12.0e9,
+    );
     let near_loss = near.geometry.path_loss().expect("path").db();
     let far_loss = far.geometry.path_loss().expect("path").db();
     assert!((far_loss - near_loss - 20.0).abs() < TOLERANCE_DB);
@@ -116,7 +155,17 @@ fn every_decade_of_distance_adds_twenty_decibels_of_loss() {
 #[test]
 fn every_decade_of_frequency_adds_twenty_decibels_of_loss() {
     let low = budget(10.0, 30.0, 0.0, 35.0, 0.0, 150.0, 1.0e6, 1_000_000.0, 1.0e9);
-    let high = budget(10.0, 30.0, 0.0, 35.0, 0.0, 150.0, 1.0e6, 1_000_000.0, 10.0e9);
+    let high = budget(
+        10.0,
+        30.0,
+        0.0,
+        35.0,
+        0.0,
+        150.0,
+        1.0e6,
+        1_000_000.0,
+        10.0e9,
+    );
     let low_loss = low.geometry.path_loss().expect("path").db();
     let high_loss = high.geometry.path_loss().expect("path").db();
     assert!((high_loss - low_loss - 20.0).abs() < TOLERANCE_DB);

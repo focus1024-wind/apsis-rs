@@ -205,8 +205,7 @@ fn the_stratosphere_density_matches_the_isothermal_formula() {
     for geometric_km in [12.0_f64, 15.0, 18.0] {
         let geopotential = geopotential_height(geometric_km);
         let temperature = 216.65;
-        let pressure_hpa = 226.322_6
-            * (-34.163_2 * (geopotential - 11.0) / temperature).exp();
+        let pressure_hpa = 226.322_6 * (-34.163_2 * (geopotential - 11.0) / temperature).exp();
         let expected = pressure_hpa * 100.0 / (R_DRY_AIR * temperature);
         let actual = standard_pressure(geometric_km) * 100.0
             / (R_DRY_AIR * standard_temperature(geometric_km));

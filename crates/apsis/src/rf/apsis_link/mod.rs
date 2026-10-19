@@ -76,11 +76,13 @@
 #![deny(missing_docs)]
 
 mod budget;
+mod mission;
 
 pub use budget::{
     LinkBudget, LinkGeometry, LinkMargin, carrier_to_noise_density, gain_to_temperature,
     link_margin,
 };
+pub use mission::{LinkParameters, LinkResult, link_budget};
 
 pub use crate::apsis_antenna::{
     ElementPattern, ParabolicAperture, Pattern, beam_width, mask_gain, off_axis_attenuation,

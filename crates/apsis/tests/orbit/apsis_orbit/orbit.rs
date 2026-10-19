@@ -227,11 +227,9 @@ fn the_ecef_position_round_trips_to_a_geodetic_point() {
     // The Earth-fixed vector is in kilometers, so scale it to meters for the
     // geodetic conversion.
     // 地固矢量以千米计，故换算到米以进行大地转换。
-    let geodetic = apsis::apsis_geodesy::geodetic_from_cartesian(
-        ecef * 1_000.0,
-        apsis::apsis_geodesy::WGS84,
-    )
-    .expect("the point is outside the ellipsoid");
+    let geodetic =
+        apsis::apsis_geodesy::geodetic_from_cartesian(ecef * 1_000.0, apsis::apsis_geodesy::WGS84)
+            .expect("the point is outside the ellipsoid");
     assert!(geodetic.latitude.abs() <= core::f64::consts::FRAC_PI_2);
     assert!(geodetic.longitude.abs() <= core::f64::consts::PI);
     assert!(geodetic.height > 100_000.0);

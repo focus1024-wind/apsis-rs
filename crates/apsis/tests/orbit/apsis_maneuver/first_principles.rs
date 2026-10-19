@@ -56,9 +56,7 @@ fn check(from: f64, to: f64) {
         expected[2]
     );
     assert!((transfer.transfer_semi_major_axis - expected[3]).abs() < 1e-12);
-    assert!(
-        (transfer.total_delta_v() - expected[0].abs() - expected[1].abs()).abs() < 1e-12
-    );
+    assert!((transfer.total_delta_v() - expected[0].abs() - expected[1].abs()).abs() < 1e-12);
 }
 
 #[test]
@@ -83,7 +81,12 @@ fn a_descent_has_negative_burns_and_a_positive_cost() {
     assert!(transfer.second_burn < 0.0);
     assert!(transfer.total_delta_v() > 0.0);
     assert!(!transfer.is_raising());
-    assert!((transfer.first_burn_magnitude() + transfer.second_burn_magnitude() - transfer.total_delta_v()).abs() < 1e-12);
+    assert!(
+        (transfer.first_burn_magnitude() + transfer.second_burn_magnitude()
+            - transfer.total_delta_v())
+        .abs()
+            < 1e-12
+    );
 }
 
 #[test]

@@ -1,5 +1,6 @@
 mod apsis_antenna;
 mod apsis_atmosphere;
+mod apsis_aviator;
 mod apsis_doppler;
 mod apsis_interference;
 mod apsis_link;

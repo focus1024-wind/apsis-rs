@@ -36,8 +36,8 @@ The rules:
 | --- | --- | --- |
 | foundation | Base types, units, mathematics, macros | `apsis_core`, `apsis_units`, `apsis_math`, `apsis_macros` |
 | physics | Time, leap seconds, coordinates, datum | `apsis_time`, `apsis_leap`, `apsis_coord`, `apsis_geodesy`, `apsis_frames` |
-| orbit | TLE, SGP4, two-body, ephemeris, maneuvers | `apsis_tle`, `apsis_sgp4`, `apsis_kepler`, `apsis_ephemeris`, `apsis_maneuver`, `apsis_orbit` |
-| rf | Radio frequency, antennas, link budget | `apsis_rf`, `apsis_antenna`, `apsis_doppler`, `apsis_atmosphere`, `apsis_noise`, `apsis_interference`, `apsis_link` |
+| orbit | TLE, SGP4, two-body, ephemeris, maneuvers, mission sequences, EOIR optics | `apsis_tle`, `apsis_sgp4`, `apsis_kepler`, `apsis_ephemeris`, `apsis_maneuver`, `apsis_orbit`, `apsis_mission`, `apsis_eoir` |
+| rf | Radio frequency, antennas, atmosphere, aircraft performance, link budget | `apsis_rf`, `apsis_antenna`, `apsis_doppler`, `apsis_atmosphere`, `apsis_aviator`, `apsis_noise`, `apsis_interference`, `apsis_link` |
 | network | Constellations, coverage, access, topology, routing | `apsis_constellation`, `apsis_coverage`, `apsis_access`, `apsis_topology`, `apsis_isl`, `apsis_routing`, `apsis_handover`, `apsis_mesh` |
 | ops | Resources, tasks, scheduling, conflicts, schedules | `apsis_resource`, `apsis_task`, `apsis_scheduler`, `apsis_conflict`, `apsis_schedule` |
 | sim | Simulation engine, scenarios, events, output | `apsis_sim_engine`, `apsis_scenario`, `apsis_event`, `apsis_output`, `apsis_sim` |

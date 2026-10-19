@@ -5,6 +5,7 @@
 
 pub mod apsis_antenna;
 pub mod apsis_atmosphere;
+pub mod apsis_aviator;
 pub mod apsis_doppler;
 pub mod apsis_interference;
 pub mod apsis_link;
