@@ -395,3 +395,37 @@ fn the_satellite_type_is_copyable() {
     fn assert_copy<T: Copy>() {}
     assert_copy::<Satellite>();
 }
+
+#[test]
+fn the_walker_phasing_matches_the_definition() {
+    // The definition places the j-th satellite in the i-th plane at
+    // RAAN = i * 360 / p and mean anomaly = j * 360 / (t / p) + i * f * 360 / t.
+    // 定义把第 i 个轨道面的第 j 颗卫星放在
+    // RAAN = i * 360 / p，平近点角 = j * 360 / (t / p) + i * f * 360 / t。
+    let pattern = WalkerPattern {
+        total_satellites: 24,
+        planes: 3,
+        phase_factor: 1,
+        inclination: 53.0_f64.to_radians(),
+        semi_major_axis: 6_878.137,
+    };
+    let constellation = Constellation::walker(pattern, 0.0).expect("valid");
+    let per_plane = pattern.satellites_per_plane().expect("valid");
+    for plane in 0..pattern.planes {
+        for (index, satellite) in constellation.plane(plane).iter().enumerate() {
+            let expected_raan = plane as f64 * 2.0 * PI / pattern.planes as f64;
+            let expected_mean = index as f64 * 2.0 * PI / per_plane as f64
+                + plane as f64 * pattern.phase_offset().expect("valid");
+            let actual_mean = satellite.elements.mean_anomaly().rem_euclid(2.0 * PI);
+            let expected_mean = expected_mean.rem_euclid(2.0 * PI);
+            assert!(
+                (satellite.elements.right_ascension - expected_raan).abs() < 1e-9,
+                "plane {plane} RAAN"
+            );
+            assert!(
+                (actual_mean - expected_mean).abs() < 1e-9,
+                "plane {plane} satellite {index}: {actual_mean} against {expected_mean}"
+            );
+        }
+    }
+}

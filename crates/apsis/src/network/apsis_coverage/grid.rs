@@ -254,7 +254,7 @@ pub struct CoverageResult {
 ///
 /// 由按时间排序的样本计算网格覆盖与重访间隔。
 ///
-/// 样本为空、时间非递增或含不可用值时返回错误。
+/// 样本为空、时间递减或含不可用值时返回错误；同一时刻可有多个样本。
 pub fn grid_coverage(grid: &CoverageGrid, samples: &[CoverageSample]) -> Result<CoverageResult> {
     if samples.is_empty() {
         return Err(Error::with_message(
@@ -269,10 +269,13 @@ pub fn grid_coverage(grid: &CoverageGrid, samples: &[CoverageSample]) -> Result<
                 "sample must be finite and usable",
             ));
         }
-        if index > 0 && sample.seconds <= samples[index - 1].seconds {
+        // Equal times are allowed, because a constellation supplies one
+        // sample per satellite at the same instant.
+        // 允许相同时间，因为星座会在同一时刻为每颗卫星提供一个样本。
+        if index > 0 && sample.seconds < samples[index - 1].seconds {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "samples must be in increasing time order",
+                "samples must be in non-decreasing time order",
             ));
         }
     }
