@@ -92,7 +92,11 @@ pub use crate::physics::apsis_time;
 mod orbit;
 
 #[cfg(feature = "orbit")]
+#[cfg(feature = "orbit")]
+pub use crate::orbit::apsis_cat;
+#[cfg(feature = "orbit")]
 pub use crate::orbit::apsis_eoir;
+#[cfg(feature = "orbit")]
 pub use crate::orbit::apsis_ephemeris;
 
 #[cfg(feature = "orbit")]
@@ -100,6 +104,7 @@ pub use crate::orbit::apsis_kepler;
 
 #[cfg(feature = "orbit")]
 pub use crate::orbit::apsis_maneuver;
+#[cfg(feature = "orbit")]
 pub use crate::orbit::apsis_mission;
 
 #[cfg(feature = "orbit")]
@@ -121,6 +126,7 @@ pub use crate::rf::apsis_antenna;
 
 #[cfg(feature = "rf")]
 pub use crate::rf::apsis_atmosphere;
+#[cfg(feature = "rf")]
 pub use crate::rf::apsis_aviator;
 
 #[cfg(feature = "rf")]

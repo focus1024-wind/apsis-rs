@@ -1,3 +1,4 @@
+mod apsis_cat;
 mod apsis_eoir;
 mod apsis_ephemeris;
 mod apsis_kepler;

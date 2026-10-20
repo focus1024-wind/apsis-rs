@@ -3,6 +3,7 @@
 //!
 //! 轨道层：TLE 解析、SGP4/SDP4、二体传播、星历采样与机动。
 
+pub mod apsis_cat;
 pub mod apsis_eoir;
 pub mod apsis_ephemeris;
 pub mod apsis_kepler;
