@@ -429,3 +429,29 @@ fn the_walker_phasing_matches_the_definition() {
         }
     }
 }
+
+#[test]
+fn plane_outlines_sample_each_plane_on_its_circular_orbit() {
+    let constellation = Constellation::walker(broadband_pattern(), 60_000.0).expect("valid");
+    let outlines = constellation.plane_outlines(72);
+    assert_eq!(outlines.len(), 3);
+    let radius = broadband_pattern().semi_major_axis;
+    let vertical = radius * broadband_pattern().inclination.sin();
+    for (plane, outline) in outlines.iter().enumerate() {
+        assert_eq!(outline.plane, plane);
+        assert_eq!(outline.points.len(), 73);
+        for point in &outline.points {
+            assert!(
+                (point.norm() - radius).abs() < 1e-8,
+                "plane {plane} radius {}",
+                point.norm()
+            );
+            assert!(
+                point.z.abs() <= vertical + 1e-8,
+                "plane {plane} z {} exceeds the inclination bound {vertical}",
+                point.z
+            );
+        }
+    }
+    assert!(constellation.plane_outlines(0).is_empty());
+}

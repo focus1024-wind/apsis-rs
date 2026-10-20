@@ -66,7 +66,7 @@ mod error;
 mod walker;
 
 pub use error::{ConstellationError, ConstellationErrorKind};
-pub use walker::{Constellation, Satellite, WalkerPattern};
+pub use walker::{Constellation, PlaneOutline, Satellite, WalkerPattern};
 
 pub use crate::apsis_kepler::{GravityParameter, KeplerianElements};
 pub use crate::apsis_sgp4::GravityModel;

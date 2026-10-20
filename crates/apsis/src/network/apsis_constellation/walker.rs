@@ -3,7 +3,8 @@
 //! Walker 星座构型及其实例化。
 
 use crate::apsis_constellation::error::{ConstellationError, ConstellationErrorKind};
-use crate::apsis_kepler::KeplerianElements;
+use crate::apsis_kepler::{GravityParameter, KeplerianElements};
+use crate::apsis_math::Vec3;
 use core::f64::consts::PI;
 
 /// A Walker delta pattern.
@@ -257,6 +258,28 @@ pub struct Satellite {
     pub elements: KeplerianElements,
 }
 
+/// One orbital plane sampled as Earth-fixed Cartesian points.
+///
+/// The points are produced from the first satellite of the plane, at the
+/// constellation reference time. They are intended for visualization of the
+/// plane, not for precise ground-track work.
+///
+/// 一个以地固笛卡尔点采样的轨道面。
+///
+/// 点由该轨道面的第一颗卫星在星座参考时刻产生，用于轨道面可视化，而不是
+/// 精确的地面轨迹计算。
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlaneOutline {
+    /// The plane index.
+    ///
+    /// 轨道面序号。
+    pub plane: usize,
+    /// The sampled points, in meters in the Earth-fixed frame.
+    ///
+    /// 采样点，单位为米，位于地固系。
+    pub points: Vec<Vec3>,
+}
+
 /// A constellation instantiated at a reference time.
 ///
 /// The elements are the ones at the reference time passed to the
@@ -400,6 +423,65 @@ impl Constellation {
             pattern: None,
             reference_mjd,
         })
+    }
+
+    /// Samples each orbital plane as Earth-fixed Cartesian points.
+    ///
+    /// The first satellite of each plane supplies the elements. The sample
+    /// starts at that satellite's mean anomaly and sweeps one full orbit, so
+    /// `samples` intervals produce `samples + 1` points with the first and
+    /// last point coincident. A value of zero returns no outlines.
+    ///
+    /// The inertial positions are rotated to the Earth-fixed frame with the
+    /// Greenwich sidereal rotation at the constellation reference time. Polar
+    /// motion is neglected. This is enough for drawing a plane ring, but it is
+    /// not a substitute for a full frame chain when precise coordinates are
+    /// needed.
+    ///
+    /// 把每个轨道面采样为地固笛卡尔点。
+    ///
+    /// 每个轨道面由其中第一颗卫星提供根数。采样从该卫星的平近点角开始，扫过
+    /// 一整圈，因此 `samples` 个间隔产生 `samples + 1` 个点，首尾点重合。传入
+    /// 零则不返回任何轮廓。
+    ///
+    /// 惯性位置按星座参考时刻的格林尼治恒星时转动到地固系，忽略极移。这足以
+    /// 绘制轨道面环，但当需要精确坐标时不能替代完整的坐标链。
+    #[must_use]
+    pub fn plane_outlines(&self, samples: usize) -> Vec<PlaneOutline> {
+        if samples == 0 {
+            return Vec::new();
+        }
+        let julian_date = crate::apsis_time::julian_date_from_mjd(self.reference_mjd);
+        let rotation = crate::apsis_frames::iau2000::teme_to_terrestrial_matrix(
+            julian_date,
+            0.0,
+            crate::apsis_frames::iau2000::PolarMotion::NONE,
+        );
+        let mut outlines = Vec::with_capacity(self.plane_count());
+        for plane in 0..self.plane_count() {
+            let Some(satellite) = self
+                .satellites
+                .iter()
+                .find(|satellite| satellite.plane == plane)
+            else {
+                continue;
+            };
+            let elements = satellite.elements;
+            let start = elements.mean_anomaly();
+            let mut points = Vec::with_capacity(samples + 1);
+            for index in 0..=samples {
+                let anomaly = start + core::f64::consts::TAU * index as f64 / samples as f64;
+                let Some(state) = elements
+                    .with_mean_anomaly(anomaly)
+                    .to_state(GravityParameter::WGS84)
+                else {
+                    break;
+                };
+                points.push(rotation * state.position);
+            }
+            outlines.push(PlaneOutline { plane, points });
+        }
+        outlines
     }
 
     /// Returns the satellites in the constellation.
