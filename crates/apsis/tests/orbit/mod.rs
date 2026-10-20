@@ -6,5 +6,6 @@ mod apsis_maneuver;
 mod apsis_mission;
 mod apsis_orbit;
 mod apsis_seet;
+mod apsis_sensor;
 mod apsis_sgp4;
 mod apsis_tle;
