@@ -10,5 +10,6 @@ pub mod apsis_kepler;
 pub mod apsis_maneuver;
 pub mod apsis_mission;
 pub mod apsis_orbit;
+pub mod apsis_seet;
 pub mod apsis_sgp4;
 pub mod apsis_tle;

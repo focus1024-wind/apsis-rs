@@ -111,6 +111,8 @@ pub use crate::orbit::apsis_mission;
 pub use crate::orbit::apsis_orbit;
 
 #[cfg(feature = "orbit")]
+pub use crate::orbit::apsis_seet;
+#[cfg(feature = "orbit")]
 pub use crate::orbit::apsis_sgp4;
 
 #[cfg(feature = "orbit")]
