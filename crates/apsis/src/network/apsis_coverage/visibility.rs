@@ -258,6 +258,53 @@ pub fn local_up(ground: &GroundPoint) -> Vec3 {
     )
 }
 
+/// Returns the azimuth of a satellite as seen from a station.
+///
+/// The azimuth is measured clockwise from north through east, in radians in
+/// `0..2*pi`. The local east and north directions are the usual ellipsoid
+/// tangent directions at the station's geodetic latitude and longitude.
+///
+/// Returns `None` when either position is not usable or the line of sight is
+/// zero.
+///
+/// 返回自某站看某卫星的方位角。
+///
+/// 方位角自北向东顺时针度量，单位为弧度，范围为 `0..2*pi`。当地东、北方向是
+/// 测站大地纬度与经度处的常用椭球切向。
+///
+/// 任一位置不可用或视线为零时返回 `None`。
+#[must_use]
+pub fn azimuth_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f64> {
+    if !satellite_ecef_km.is_finite() || !ground.is_valid() {
+        return None;
+    }
+    let station = ground.ecef();
+    let line_of_sight = satellite_ecef_km - station;
+    if line_of_sight.norm() == 0.0 {
+        return None;
+    }
+    let latitude = ground.position.latitude;
+    let longitude = ground.position.longitude;
+    let (sin_latitude, cos_latitude) = latitude.sin_cos();
+    let (sin_longitude, cos_longitude) = longitude.sin_cos();
+    let east = Vec3::new(-sin_longitude, cos_longitude, 0.0);
+    let north = Vec3::new(
+        -sin_latitude * cos_longitude,
+        -sin_latitude * sin_longitude,
+        cos_latitude,
+    );
+    let east_component = line_of_sight.dot(east);
+    let north_component = line_of_sight.dot(north);
+    if east_component == 0.0 && north_component == 0.0 {
+        return None;
+    }
+    Some(
+        east_component
+            .atan2(north_component)
+            .rem_euclid(core::f64::consts::TAU),
+    )
+}
+
 /// Returns the elevation of a satellite as seen from a station, in radians.
 ///
 /// This is the same as [`elevation_angle`], named for symmetry with the

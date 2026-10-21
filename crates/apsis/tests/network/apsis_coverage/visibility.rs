@@ -3,8 +3,8 @@
 //! 自地面站的视线与可见性的测试。
 
 use apsis::apsis_coverage::{
-    GroundPoint, Sensor, central_angle_to_station, elevation_angle, line_of_sight, local_up,
-    sub_satellite_point, visible_from, visible_from_geodetic,
+    GroundPoint, Sensor, azimuth_angle, central_angle_to_station, elevation_angle, line_of_sight,
+    local_up, sub_satellite_point, visible_from, visible_from_geodetic,
 };
 use apsis::apsis_geodesy::{Geodetic, WGS84};
 use apsis::apsis_math::Vec3;
@@ -303,4 +303,15 @@ fn the_sensor_and_ground_point_validity_is_reported() {
     assert!(GroundPoint::new(Geodetic::new(0.9, 0.9, 0.0), 0.1).is_valid());
     assert!(!GroundPoint::new(Geodetic::new(0.0, 0.0, 0.0), 2.0).is_valid());
     assert!(!GroundPoint::new(Geodetic::new(0.0, 0.0, f64::NAN), 0.1).is_valid());
+}
+
+#[test]
+fn azimuth_is_measured_clockwise_from_north() {
+    let station = equatorial_station();
+    let north = Geodetic::new(1.0_f64.to_radians(), 0.0, 0.0).to_cartesian(WGS84);
+    let east = Geodetic::new(0.0, 1.0_f64.to_radians(), 0.0).to_cartesian(WGS84);
+    let north_azimuth = azimuth_angle(north, &station).expect("north");
+    let east_azimuth = azimuth_angle(east, &station).expect("east");
+    assert!(north_azimuth.abs() < 1e-9 || (north_azimuth - 2.0 * PI).abs() < 1e-9);
+    assert!((east_azimuth - FRAC_PI_2).abs() < 1e-9);
 }

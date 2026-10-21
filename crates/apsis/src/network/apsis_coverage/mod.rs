@@ -83,8 +83,9 @@ pub use footprint::{
 pub use geometry::{earth_central_angle, elevation_from_central_angle, nadir_angle, slant_range};
 pub use grid::{CoverageGrid, CoverageResult, CoverageSample, grid_coverage};
 pub use visibility::{
-    GroundPoint, Sensor, SubSatellitePoint, central_angle_to_station, elevation_angle,
-    line_of_sight, local_up, sub_satellite_point, visible_from, visible_from_geodetic,
+    GroundPoint, Sensor, SubSatellitePoint, azimuth_angle, central_angle_to_station,
+    elevation_angle, line_of_sight, local_up, sub_satellite_point, visible_from,
+    visible_from_geodetic,
 };
 
 pub use crate::apsis_geodesy::{Ellipsoid, Geodetic, WGS84};
