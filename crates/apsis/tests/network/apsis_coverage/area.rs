@@ -2,7 +2,9 @@
 //!
 //! 区域目标覆盖测试。
 
-use apsis::apsis_coverage::{CoverageGrid, CoverageSample, GeoPolygon, WGS84, area_coverage};
+use apsis::apsis_coverage::{
+    CoverageGrid, CoverageSample, GeoPolygon, WGS84, area_access, area_coverage,
+};
 use apsis::apsis_geodesy::Geodetic;
 
 fn small_polygon() -> GeoPolygon {
@@ -42,4 +44,20 @@ fn a_polygon_without_grid_points_is_rejected() {
     let center = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84);
     let samples = [CoverageSample::new(0.0, center, 0.0)];
     assert!(area_coverage(&grid, &polygon, &samples).is_err());
+}
+
+#[test]
+fn area_access_reports_visible_intervals() {
+    let polygon = GeoPolygon::from_degrees(&[(-0.5, -0.5), (-0.5, 0.5), (0.5, 0.5), (0.5, -0.5)])
+        .expect("valid polygon");
+    let grid = CoverageGrid::from_degrees(-2.0, 2.0, -2.0, 2.0, 1.0, 1.0).expect("valid grid");
+    let center = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84);
+    let samples = [
+        CoverageSample::new(0.0, center, 0.0),
+        CoverageSample::new(60.0, center, 0.0),
+        CoverageSample::new(120.0, center, 0.0),
+    ];
+    let result = area_access(&grid, &polygon, &samples).expect("access");
+    assert_eq!(result.intervals, vec![(0.0, 120.0)]);
+    assert!((result.fraction - 1.0).abs() < 1e-12);
 }

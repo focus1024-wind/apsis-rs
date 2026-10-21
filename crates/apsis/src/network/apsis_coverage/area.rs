@@ -275,3 +275,111 @@ pub fn area_coverage(
         inside,
     })
 }
+
+/// The intervals during which any part of an area target is visible.
+///
+/// 区域目标任一部分可见的区间。
+#[derive(Debug, Clone, PartialEq)]
+pub struct AreaAccessResult {
+    /// Visible intervals as `(start, end)` seconds.
+    ///
+    /// 可见区间，单位为秒，形式为 `(开始, 结束)`。
+    pub intervals: Vec<(f64, f64)>,
+    /// Total visible duration, in seconds.
+    ///
+    /// 总可见时长，单位为秒。
+    pub total_seconds: f64,
+    /// Fraction of the sampled span that is visible.
+    ///
+    /// 采样跨度中的可见比例。
+    pub fraction: f64,
+}
+
+/// Determines when at least one point inside a polygon is visible.
+///
+/// A sample makes the area visible when its footprint covers at least one
+/// grid point inside the polygon. This is an area-level access test, not an
+/// access test for a specific point.
+///
+/// 判定多边形内至少一点可见的时刻。
+///
+/// 当某样本的覆盖区覆盖多边形内至少一个网格点时，区域即视为可见。这是区域级
+/// 的可见性判定，而不是针对某个具体点的可见性。
+pub fn area_access(
+    grid: &CoverageGrid,
+    polygon: &GeoPolygon,
+    samples: &[CoverageSample],
+) -> Result<AreaAccessResult> {
+    if samples.is_empty() {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "at least one sample is required",
+        ));
+    }
+    let rows = grid.rows();
+    let columns = grid.columns();
+    let mut inside = Vec::new();
+    for row in 0..rows {
+        for column in 0..columns {
+            let (latitude, longitude) = grid.point(row, column);
+            if polygon.contains(latitude, longitude) {
+                inside.push(grid.unit_vector(row, column));
+            }
+        }
+    }
+    if inside.is_empty() {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "the polygon contains no grid points",
+        ));
+    }
+    let mut intervals = Vec::new();
+    let mut start: Option<f64> = None;
+    let mut last = 0.0;
+    for (index, sample) in samples.iter().enumerate() {
+        if !sample.is_valid() {
+            return Err(Error::with_message(
+                ErrorKind::InvalidInput,
+                "sample must be finite and usable",
+            ));
+        }
+        if index > 0 && sample.seconds < samples[index - 1].seconds {
+            return Err(Error::with_message(
+                ErrorKind::InvalidInput,
+                "samples must be in non-decreasing time order",
+            ));
+        }
+        let subpoint = sample
+            .position_ecef_km
+            .normalize()
+            .ok_or_else(|| Error::with_message(ErrorKind::Undefined, "position is zero"))?;
+        let limit = sample.central_angle_rad.cos();
+        let visible = inside
+            .iter()
+            .any(|unit| subpoint.dot(*unit) >= limit - 1e-12);
+        if visible {
+            if start.is_none() {
+                start = Some(sample.seconds);
+            }
+            last = sample.seconds;
+        } else if let Some(begin) = start.take() {
+            intervals.push((begin, sample.seconds));
+        }
+    }
+    if let Some(begin) = start {
+        intervals.push((begin, last));
+    }
+    let total: f64 = intervals
+        .iter()
+        .map(|(begin, end)| (end - begin).max(0.0))
+        .sum();
+    let span = samples
+        .last()
+        .map(|sample| sample.seconds - samples[0].seconds)
+        .unwrap_or(0.0);
+    Ok(AreaAccessResult {
+        intervals,
+        total_seconds: total,
+        fraction: if span > 0.0 { total / span } else { 0.0 },
+    })
+}

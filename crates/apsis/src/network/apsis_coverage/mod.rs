@@ -75,7 +75,7 @@ mod geometry;
 mod grid;
 mod visibility;
 
-pub use area::{AreaCoverageResult, GeoPolygon, area_coverage};
+pub use area::{AreaAccessResult, AreaCoverageResult, GeoPolygon, area_access, area_coverage};
 pub use footprint::{
     Footprint, central_angle_between, footprint, footprint_area, footprint_central_angle,
     footprint_edge_elevation, footprint_fraction, point_in_footprint,
