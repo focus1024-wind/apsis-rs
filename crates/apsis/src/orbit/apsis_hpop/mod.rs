@@ -27,6 +27,8 @@ pub struct J2Model {
     pub mu: f64,
     /// Second zonal harmonic.
     pub j2: f64,
+    /// Fourth zonal harmonic; zero disables the J4 term.
+    pub j4: f64,
     /// Equatorial radius, in kilometers.
     pub equatorial_radius_km: f64,
 }
@@ -36,6 +38,7 @@ impl Default for J2Model {
         Self {
             mu: 398_600.441_8,
             j2: 1.082_626_683e-3,
+            j4: 0.0,
             equatorial_radius_km: 6_378.137,
         }
     }
@@ -56,7 +59,18 @@ fn acceleration(position: Vec3, model: J2Model) -> Vec3 {
         factor * position.y * (common - 1.0),
         factor * position.z * (common - 3.0),
     );
-    two_body + j2
+    let j4 = if model.j4 == 0.0 {
+        Vec3::new(0.0, 0.0, 0.0)
+    } else {
+        let z4 = z2 * z2;
+        let factor = 0.625 * model.j4 * model.mu * model.equatorial_radius_km.powi(4) / radius.powi(7);
+        Vec3::new(
+            factor * position.x * (3.0 - 30.0 * z2 / r2 + 35.0 * z4 / (r2 * r2)),
+            factor * position.y * (3.0 - 30.0 * z2 / r2 + 35.0 * z4 / (r2 * r2)),
+            factor * position.z * (15.0 - 70.0 * z2 / r2 + 63.0 * z4 / (r2 * r2)),
+        )
+    };
+    two_body + j2 + j4
 }
 
 /// Propagates an initial inertial state under two-body plus J2 acceleration.
@@ -154,6 +168,25 @@ mod tests {
             assert!((state.position.norm() - 7_000.0).abs() < 1e-6);
             assert!((state.velocity.norm() - (398_600.441_8_f64 / 7_000.0).sqrt()).abs() < 1e-9);
         }
+    }
+
+    #[test]
+    fn j4_perturbation_is_finite_and_changes_the_state() {
+        let position = Vec3::new(0.0, 6_778.137, 0.0);
+        let velocity = Vec3::new(7.660, 0.0, 0.0);
+        let without = propagate_j2(position, velocity, 600.0, 60.0, J2Model::default()).expect("J2");
+        let with = propagate_j2(
+            position,
+            velocity,
+            600.0,
+            60.0,
+            J2Model { j4: -1.620_000e-6, ..J2Model::default() },
+        )
+        .expect("J2+J4");
+        let last_without = without.last().expect("state");
+        let last_with = with.last().expect("state");
+        assert!(last_with.position.norm().is_finite());
+        assert!((last_with.position - last_without.position).norm() > 1.0e-12);
     }
 
     #[test]
