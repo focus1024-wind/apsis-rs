@@ -6,6 +6,7 @@
 pub mod apsis_cat;
 pub mod apsis_eoir;
 pub mod apsis_ephemeris;
+pub mod apsis_hpop;
 pub mod apsis_kepler;
 pub mod apsis_maneuver;
 pub mod apsis_mission;

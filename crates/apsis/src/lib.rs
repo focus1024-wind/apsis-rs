@@ -100,6 +100,8 @@ pub use crate::orbit::apsis_eoir;
 pub use crate::orbit::apsis_ephemeris;
 
 #[cfg(feature = "orbit")]
+pub use crate::orbit::apsis_hpop;
+#[cfg(feature = "orbit")]
 pub use crate::orbit::apsis_kepler;
 
 #[cfg(feature = "orbit")]
