@@ -22,6 +22,8 @@ fn a_single_sample_covers_the_points_within_its_footprint() {
     assert_eq!(result.total_points, 25);
     assert_eq!(result.covered_points, 5);
     assert!((result.fraction - 5.0 / 25.0).abs() < 1e-12);
+    assert_eq!(result.counts.iter().filter(|count| **count > 0).count(), 5);
+    assert_eq!(result.counts.iter().copied().max(), Some(1));
 }
 
 #[test]
@@ -54,6 +56,7 @@ fn the_gap_between_two_coverages_is_measured_in_time() {
     assert!((result.mean_gap_seconds - 100.0).abs() < 1e-12);
     assert_eq!(result.gap_count, 1);
     assert!((result.min_gap_seconds - 100.0).abs() < 1e-12);
+    assert_eq!(result.counts[0], 2);
 }
 
 #[test]

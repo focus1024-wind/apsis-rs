@@ -180,6 +180,10 @@ pub struct AreaCoverageResult {
     ///
     /// 全网格的行主序标志；仅被覆盖的内部点为真。
     pub covered: Vec<bool>,
+    /// Number of samples that covered each inside point, in row-major order.
+    ///
+    /// 每个内部点被采样覆盖的次数，按行主序排列。
+    pub counts: Vec<u32>,
     /// Row-major flags marking the grid points inside the polygon.
     ///
     /// 标记多边形内网格点的行主序标志。
@@ -240,6 +244,7 @@ pub fn area_coverage(
         ));
     }
     let mut covered = vec![false; total];
+    let mut counts = vec![0_u32; total];
     let mut previous_covered = vec![false; total];
     let mut last_cover: Vec<Option<f64>> = vec![None; total];
     let mut gaps: Vec<f64> = Vec::new();
@@ -256,6 +261,7 @@ pub fn area_coverage(
             let is_covered = subpoint.dot(units[index]) >= limit - 1e-12;
             if is_covered {
                 covered[index] = true;
+                counts[index] = counts[index].saturating_add(1);
                 if !previous_covered[index] {
                     if let Some(previous) = last_cover[index] {
                         gaps.push(sample.seconds - previous);
@@ -284,6 +290,7 @@ pub fn area_coverage(
         gap_count: gaps.len(),
         min_gap_seconds: min_gap,
         covered,
+        counts,
         inside,
     })
 }

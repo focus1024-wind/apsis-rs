@@ -253,6 +253,10 @@ pub struct CoverageResult {
     ///
     /// 每个网格点的行主序覆盖标志。
     pub covered: Vec<bool>,
+    /// Number of samples that covered each grid point, in row-major order.
+    ///
+    /// 每个网格点被采样覆盖的次数，按行主序排列。
+    pub counts: Vec<u32>,
 }
 
 /// Computes grid coverage and revisit gaps from time-ordered samples.
@@ -295,6 +299,7 @@ pub fn grid_coverage(grid: &CoverageGrid, samples: &[CoverageSample]) -> Result<
         .map(|(row, column)| grid.unit_vector(row, column))
         .collect();
     let mut covered = vec![false; total];
+    let mut counts = vec![0_u32; total];
     let mut previous_covered = vec![false; total];
     let mut last_cover: Vec<Option<f64>> = vec![None; total];
     let mut gaps: Vec<f64> = Vec::new();
@@ -308,6 +313,7 @@ pub fn grid_coverage(grid: &CoverageGrid, samples: &[CoverageSample]) -> Result<
             let is_covered = subpoint.dot(units[index]) >= limit - 1e-12;
             if is_covered {
                 covered[index] = true;
+                counts[index] = counts[index].saturating_add(1);
                 if !previous_covered[index] {
                     if let Some(previous) = last_cover[index] {
                         gaps.push(sample.seconds - previous);
@@ -340,5 +346,6 @@ pub fn grid_coverage(grid: &CoverageGrid, samples: &[CoverageSample]) -> Result<
         gap_count: gaps.len(),
         min_gap_seconds: min_gap,
         covered,
+        counts,
     })
 }
