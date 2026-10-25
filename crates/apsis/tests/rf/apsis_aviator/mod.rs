@@ -91,3 +91,21 @@ fn turn_performance_is_consistent() {
     assert!((turn.turn_time_s * turn.turn_rate_rad_s - core::f64::consts::TAU).abs() < 1e-12);
     assert!(apsis::apsis_aviator::turn_performance(100.0, 0.5).is_err());
 }
+
+#[test]
+fn a_climb_segment_integrates_time_distance_and_fuel() {
+    let aircraft = Aircraft {
+        mass_kg: 10_000.0,
+        wing_area_m2: 30.0,
+        zero_lift_drag: 0.025,
+        oswald_efficiency: 0.8,
+        aspect_ratio: 8.0,
+        max_thrust_n: 60_000.0,
+        tsfc_kg_per_n_s: 2.0e-5,
+    };
+    let climb = apsis::apsis_aviator::climb_segment(&aircraft, 0.0, 2_000.0, 120.0, 60_000.0, 500.0).expect("climb");
+    assert!(climb.time_s > 0.0);
+    assert!(climb.horizontal_distance_m > 0.0);
+    assert!(climb.fuel_kg > 0.0);
+    assert!((climb.average_climb_rate_m_s * climb.time_s - 2_000.0).abs() < 1e-9);
+}

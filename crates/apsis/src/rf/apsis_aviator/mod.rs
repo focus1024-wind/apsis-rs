@@ -315,6 +315,103 @@ pub fn turn_performance(speed_m_s: f64, load_factor: f64) -> Result<TurnPerforma
     })
 }
 
+
+/// Result of a stepped climb or descent segment.
+///
+/// 分段爬升或下降结果。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ClimbSegment {
+    /// Start altitude, in meters.
+    pub start_altitude_m: f64,
+    /// End altitude, in meters.
+    pub end_altitude_m: f64,
+    /// Elapsed time, in seconds.
+    pub time_s: f64,
+    /// Horizontal distance, in meters.
+    pub horizontal_distance_m: f64,
+    /// Fuel burned, in kilograms.
+    pub fuel_kg: f64,
+    /// Average vertical rate, in meters per second.
+    pub average_climb_rate_m_s: f64,
+}
+
+/// Integrates a climb or descent in constant-altitude steps.
+///
+/// Each step evaluates [`level_flight`] at the current altitude and uses its
+/// climb rate and fuel flow. The segment is rejected when the requested
+/// direction cannot be sustained by the available thrust, or when the inputs
+/// are not usable.
+///
+/// 以等高步长积分爬升或下降。
+///
+/// 每步在当前高度调用 [`level_flight`]，使用其爬升率与燃油流量。若可用推力
+/// 无法维持所需方向，或输入不可用，则返回错误。
+pub fn climb_segment(
+    aircraft: &Aircraft,
+    start_altitude_m: f64,
+    end_altitude_m: f64,
+    speed_m_s: f64,
+    thrust_available_n: f64,
+    step_m: f64,
+) -> Result<ClimbSegment> {
+    if !start_altitude_m.is_finite()
+        || !end_altitude_m.is_finite()
+        || !step_m.is_finite()
+        || step_m <= 0.0
+    {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "altitudes and step must be finite, and step must be positive",
+        ));
+    }
+    // Validate through a level-flight call even for a zero-length segment.
+    level_flight(aircraft, start_altitude_m, speed_m_s, thrust_available_n)?;
+    if (end_altitude_m - start_altitude_m).abs() < 1e-9 {
+        return Ok(ClimbSegment {
+            start_altitude_m,
+            end_altitude_m,
+            time_s: 0.0,
+            horizontal_distance_m: 0.0,
+            fuel_kg: 0.0,
+            average_climb_rate_m_s: 0.0,
+        });
+    }
+    let direction = (end_altitude_m - start_altitude_m).signum();
+    let mut altitude = start_altitude_m;
+    let mut time_s = 0.0;
+    let mut distance_m = 0.0;
+    let mut fuel_kg = 0.0;
+    while (end_altitude_m - altitude).abs() > 1e-9 {
+        let step = ((end_altitude_m - altitude).abs()).min(step_m) * direction;
+        let flight = level_flight(aircraft, altitude, speed_m_s, thrust_available_n)?;
+        if direction > 0.0 && flight.climb_rate_m_s <= 0.0 {
+            return Err(Error::with_message(
+                ErrorKind::InvalidInput,
+                "available thrust cannot sustain the climb",
+            ));
+        }
+        if direction < 0.0 && flight.climb_rate_m_s >= 0.0 {
+            return Err(Error::with_message(
+                ErrorKind::InvalidInput,
+                "available thrust cannot sustain the descent",
+            ));
+        }
+        let dt = step / flight.climb_rate_m_s;
+        time_s += dt;
+        distance_m += speed_m_s * dt;
+        fuel_kg += flight.fuel_flow_kg_s * dt;
+        altitude += step;
+    }
+    Ok(ClimbSegment {
+        start_altitude_m,
+        end_altitude_m,
+        time_s,
+        horizontal_distance_m: distance_m,
+        fuel_kg,
+        average_climb_rate_m_s: (end_altitude_m - start_altitude_m) / time_s,
+    })
+}
+
 /// Computes level-flight performance at an altitude, speed, and thrust.
 ///
 /// Returns an error when the aircraft parameters, altitude, speed, or thrust
