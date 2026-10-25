@@ -153,6 +153,72 @@ pub fn radar_search(parameters: RadarSearchParameters) -> Result<RadarSearchResu
     })
 }
 
+
+/// Required SNR for a target detection probability using Albersheim's equation.
+///
+/// `pd` is the single-pulse detection probability, `pfa` the false-alarm
+/// probability, and `pulses` the number of non-coherently integrated pulses.
+/// The result is in decibels. Albersheim's equation is an engineering
+/// approximation, accurate to a few tenths of a decibel over the usual radar
+/// ranges.
+///
+/// 使用 Albersheim 方程计算达到给定检测概率所需的 SNR。
+///
+/// `pd` 为单脉冲检测概率，`pfa` 为虚警概率，`pulses` 为非相干积累脉冲数。
+/// 结果单位为分贝。Albersheim 方程是工程近似，在常用雷达范围内误差约零点几
+/// 分贝。
+pub fn albersheim_required_snr_db(pd: f64, pfa: f64, pulses: f64) -> Result<f64> {
+    if !pd.is_finite()
+        || !pfa.is_finite()
+        || !pulses.is_finite()
+        || pd <= 0.0
+        || pd >= 1.0
+        || pfa <= 0.0
+        || pfa >= 0.5
+        || pulses < 1.0
+    {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "detection probability must be in (0,1), false alarm in (0,0.5), pulses >= 1",
+        ));
+    }
+    let a = (0.62 / pfa).ln();
+    let b = (pd / (1.0 - pd)).ln();
+    let n_term = 6.2 + 4.54 / (pulses + 0.44).sqrt();
+    Ok(-5.0 * pulses.log10()
+        + n_term * (a + 0.12 * a * b + 1.7 * b).max(f64::MIN_POSITIVE).log10())
+}
+
+/// Estimates detection probability for an integrated SNR.
+///
+/// Solves Albersheim's equation by bisection. Returns a value in `(0,1)`.
+///
+/// 根据积累后的 SNR 估算检测概率。
+///
+/// 用二分法反解 Albersheim 方程，返回 `(0,1)` 内的值。
+pub fn detection_probability(snr_db: f64, pfa: f64, pulses: f64) -> Result<f64> {
+    if !snr_db.is_finite() {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "SNR must be finite",
+        ));
+    }
+    // Validate the fixed parameters once.
+    albersheim_required_snr_db(0.5, pfa, pulses)?;
+    let mut low = 1.0e-9;
+    let mut high = 1.0 - 1.0e-9;
+    for _ in 0..80 {
+        let middle = 0.5 * (low + high);
+        let required = albersheim_required_snr_db(middle, pfa, pulses)?;
+        if required <= snr_db {
+            low = middle;
+        } else {
+            high = middle;
+        }
+    }
+    Ok(0.5 * (low + high))
+}
+
 /// Computes a monostatic radar budget.
 ///
 /// The radar equation is
@@ -281,6 +347,23 @@ mod tests {
         let near = radar_budget(parameters()).expect("near");
         let far = radar_budget(RadarParameters { range_m: 200_000.0, ..parameters() }).expect("far");
         assert!((near.snr_db - far.snr_db - 12.041).abs() < 0.01);
+    }
+
+    #[test]
+    fn detection_probability_increases_with_snr() {
+        let low = detection_probability(5.0, 1.0e-6, 10.0).expect("low");
+        let high = detection_probability(20.0, 1.0e-6, 10.0).expect("high");
+        assert!(low > 0.0 && low < 1.0);
+        assert!(high > low);
+        assert!(high > 0.5);
+    }
+
+    #[test]
+    fn albersheim_equation_is_monotonic() {
+        let easy = albersheim_required_snr_db(0.9, 1.0e-4, 10.0).expect("easy");
+        let hard = albersheim_required_snr_db(0.99, 1.0e-8, 10.0).expect("hard");
+        assert!(hard > easy);
+        assert!(albersheim_required_snr_db(0.9, 0.0, 10.0).is_err());
     }
 
     #[test]
