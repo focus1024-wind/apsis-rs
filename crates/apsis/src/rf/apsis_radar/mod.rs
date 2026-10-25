@@ -225,6 +225,25 @@ pub fn detection_probability(snr_db: f64, pfa: f64, pulses: f64) -> Result<f64> 
     Ok(0.5 * (low + high))
 }
 
+
+/// Returns the cumulative detection probability over several independent scans.
+///
+/// `1 - (1 - pd)^scans`. Returns an error when `pd` is outside `0..=1` or
+/// `scans` is negative or not finite.
+///
+/// 返回多次独立扫描的累计发现概率。
+///
+/// 即 `1 - (1 - pd)^scans`。`pd` 超出 `0..=1`，或扫描次数为负/非有限时返回错误。
+pub fn cumulative_detection_probability(pd: f64, scans: f64) -> Result<f64> {
+    if !pd.is_finite() || !(0.0..=1.0).contains(&pd) || !scans.is_finite() || scans < 0.0 {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "detection probability must be in 0..=1 and scans must be non-negative",
+        ));
+    }
+    Ok(1.0 - (1.0 - pd).powf(scans))
+}
+
 /// Computes a monostatic radar budget.
 ///
 /// The radar equation is
@@ -390,6 +409,15 @@ mod tests {
         let hard = albersheim_required_snr_db(0.99, 1.0e-8, 10.0).expect("hard");
         assert!(hard > easy);
         assert!(albersheim_required_snr_db(0.9, 0.0, 10.0).is_err());
+    }
+
+    #[test]
+    fn cumulative_detection_probability_saturates() {
+        let once = cumulative_detection_probability(0.5, 1.0).expect("once");
+        let twice = cumulative_detection_probability(0.5, 2.0).expect("twice");
+        assert!((once - 0.5).abs() < 1e-12);
+        assert!((twice - 0.75).abs() < 1e-12);
+        assert!(cumulative_detection_probability(0.5, -1.0).is_err());
     }
 
     #[test]
