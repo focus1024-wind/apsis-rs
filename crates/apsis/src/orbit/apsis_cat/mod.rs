@@ -153,6 +153,50 @@ pub fn relative_state(primary: StateSample, secondary: StateSample) -> Result<Re
     })
 }
 
+/// Estimates collision probability with an isotropic two-dimensional Gaussian.
+///
+/// The miss vector is assumed to lie in the encounter plane with a circular
+/// covariance of standard deviation `sigma_km`. The hard-body radius supplies
+/// the combined object size. This is the small-target approximation commonly
+/// used when no full covariance or relative-velocity direction is available;
+/// it is not a substitute for a covariance-based probability calculation.
+///
+/// Returns an error when an input is negative or non-finite, or when the
+/// standard deviation is not positive.
+///
+/// 用各向同性二维高斯估计碰撞概率。
+///
+/// 假定交会平面内的脱靶向量具有标准差为 `sigma_km` 的圆对称协方差，硬体半径
+/// 给出组合目标尺寸。没有完整协方差或相对速度方向时，这是常用的小目标近似；
+/// 不能替代基于协方差的概率计算。
+///
+/// 输入为负或非有限，或标准差不为正时返回错误。
+pub fn isotropic_collision_probability(
+    miss_distance_km: f64,
+    hard_body_radius_km: f64,
+    sigma_km: f64,
+) -> Result<f64> {
+    if !miss_distance_km.is_finite()
+        || !hard_body_radius_km.is_finite()
+        || !sigma_km.is_finite()
+        || miss_distance_km < 0.0
+        || hard_body_radius_km < 0.0
+        || sigma_km <= 0.0
+    {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "miss distance and radius must be non-negative, sigma must be positive",
+        ));
+    }
+    if hard_body_radius_km == 0.0 {
+        return Ok(0.0);
+    }
+    let variance = sigma_km * sigma_km;
+    let radial = 1.0 - (-(hard_body_radius_km * hard_body_radius_km) / (2.0 * variance)).exp();
+    let miss = (-(miss_distance_km * miss_distance_km) / (2.0 * variance)).exp();
+    Ok((radial * miss).clamp(0.0, 1.0))
+}
+
 /// Finds the closest approach of two histories sampled on the same grid.
 ///
 /// Both slices must have the same length, at least two samples, identical

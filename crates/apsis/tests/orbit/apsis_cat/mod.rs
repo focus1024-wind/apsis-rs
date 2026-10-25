@@ -2,7 +2,7 @@
 //!
 //! 交会分析的验证测试。
 
-use apsis::apsis_cat::{StateSample, closest_approach, relative_state};
+use apsis::apsis_cat::{StateSample, closest_approach, isotropic_collision_probability, relative_state};
 use apsis::apsis_kepler::{GravityParameter, KeplerianElements};
 use apsis::apsis_math::Vec3;
 
@@ -139,4 +139,17 @@ fn mismatched_or_non_uniform_grids_are_rejected() {
     let end = StateSample::new(30.0, sample.position_km, sample.velocity_km_s);
     let grid = [sample, later, end];
     assert!(closest_approach(&grid, &grid).is_err());
+}
+
+
+#[test]
+fn isotropic_collision_probability_is_bounded_and_decreases_with_miss() {
+    let head_on = isotropic_collision_probability(0.0, 0.01, 1.0).expect("probability");
+    let offset = isotropic_collision_probability(1.0, 0.01, 1.0).expect("probability");
+    assert!((0.0..=1.0).contains(&head_on));
+    assert!((0.0..=1.0).contains(&offset));
+    assert!(head_on > offset);
+    assert_eq!(isotropic_collision_probability(0.0, 0.0, 1.0).expect("probability"), 0.0);
+    assert!(isotropic_collision_probability(0.0, 0.01, 0.0).is_err());
+    assert!(isotropic_collision_probability(-1.0, 0.01, 1.0).is_err());
 }
