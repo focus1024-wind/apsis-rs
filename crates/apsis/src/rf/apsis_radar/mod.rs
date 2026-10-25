@@ -34,6 +34,8 @@ pub struct RadarParameters {
     pub antenna_beamwidth_deg: f64,
     /// Antenna pointing error from the target line of sight, in degrees.
     pub pointing_error_deg: f64,
+    /// Clutter radar cross section in the same resolution cell, in square meters.
+    pub clutter_rcs_m2: f64,
 }
 
 /// Radar budget results.
@@ -45,6 +47,10 @@ pub struct RadarResult {
     pub wavelength_m: f64,
     /// Received target power, in watts.
     pub received_power_w: f64,
+    /// Received clutter power, in watts.
+    pub clutter_power_w: f64,
+    /// Signal-to-clutter ratio, in decibels; `None` when clutter is zero.
+    pub signal_to_clutter_db: Option<f64>,
     /// Receiver noise power, in watts.
     pub noise_power_w: f64,
     /// Single-pulse signal-to-noise ratio, in decibels.
@@ -253,6 +259,7 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         parameters.integrated_pulses,
         parameters.antenna_beamwidth_deg,
         parameters.pointing_error_deg,
+        parameters.clutter_rcs_m2,
     ];
     if finite.iter().any(|value| !value.is_finite())
         || parameters.frequency_hz <= 0.0
@@ -264,6 +271,7 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         || parameters.integrated_pulses < 1.0
         || parameters.antenna_beamwidth_deg <= 0.0
         || parameters.pointing_error_deg < 0.0
+        || parameters.clutter_rcs_m2 < 0.0
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
@@ -284,6 +292,12 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         * parameters.target_rcs_m2;
     let received_power_w = numerator
         / ((4.0 * core::f64::consts::PI).powi(3) * parameters.range_m.powi(4) * loss);
+    let clutter_power_w = received_power_w * parameters.clutter_rcs_m2 / parameters.target_rcs_m2;
+    let signal_to_clutter_db = if parameters.clutter_rcs_m2 > 0.0 {
+        Some(10.0 * (parameters.target_rcs_m2 / parameters.clutter_rcs_m2).log10())
+    } else {
+        None
+    };
     let noise_power_w =
         BOLTZMANN * parameters.system_temperature_k * parameters.bandwidth_hz;
     let single_pulse_snr_db = 10.0 * (received_power_w / noise_power_w).log10();
@@ -299,6 +313,8 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
     Ok(RadarResult {
         wavelength_m,
         received_power_w,
+        clutter_power_w,
+        signal_to_clutter_db,
         noise_power_w,
         pattern_loss_db,
         effective_gain_dbi,
@@ -328,6 +344,7 @@ mod tests {
             integrated_pulses: 1.0,
             antenna_beamwidth_deg: 2.0,
             pointing_error_deg: 0.0,
+            clutter_rcs_m2: 0.0,
         }
     }
 
@@ -347,6 +364,15 @@ mod tests {
         let near = radar_budget(parameters()).expect("near");
         let far = radar_budget(RadarParameters { range_m: 200_000.0, ..parameters() }).expect("far");
         assert!((near.snr_db - far.snr_db - 12.041).abs() < 0.01);
+    }
+
+    #[test]
+    fn clutter_reduces_the_signal_to_clutter_ratio() {
+        let clear = radar_budget(parameters()).expect("clear");
+        assert_eq!(clear.signal_to_clutter_db, None);
+        let cluttered = radar_budget(RadarParameters { clutter_rcs_m2: 10.0, ..parameters() }).expect("clutter");
+        assert!((cluttered.signal_to_clutter_db.expect("ratio") + 10.0).abs() < 1e-9);
+        assert!((cluttered.clutter_power_w / cluttered.received_power_w - 10.0).abs() < 1e-12);
     }
 
     #[test]
