@@ -266,6 +266,55 @@ pub struct LevelFlight {
     pub lift_to_drag: f64,
 }
 
+
+/// Result of a steady level-turn calculation.
+///
+/// 稳定水平转弯计算结果。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TurnPerformance {
+    /// Load factor, in g.
+    pub load_factor: f64,
+    /// Bank angle, in degrees.
+    pub bank_angle_deg: f64,
+    /// Turn rate, in radians per second.
+    pub turn_rate_rad_s: f64,
+    /// Turn radius, in meters.
+    pub turn_radius_m: f64,
+    /// Time for a full 360-degree turn, in seconds.
+    pub turn_time_s: f64,
+}
+
+/// Computes steady level-turn performance at a true airspeed.
+///
+/// The load factor must be at least one; the bank angle follows from
+/// `n = 1 / cos(bank)`. Returns an error for non-finite or out-of-range input.
+///
+/// 计算某真空速下的稳定水平转弯性能。
+///
+/// 过载须至少为 1；坡度由 `n = 1 / cos(bank)` 得出。输入非有限或越界时返回错误。
+pub fn turn_performance(speed_m_s: f64, load_factor: f64) -> Result<TurnPerformance> {
+    if !speed_m_s.is_finite()
+        || speed_m_s <= 0.0
+        || !load_factor.is_finite()
+        || load_factor < 1.0
+    {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "speed must be positive and load factor must be at least one",
+        ));
+    }
+    let lateral = (load_factor * load_factor - 1.0).sqrt();
+    let turn_rate_rad_s = STANDARD_GRAVITY * lateral / speed_m_s;
+    let turn_radius_m = speed_m_s * speed_m_s / (STANDARD_GRAVITY * lateral);
+    Ok(TurnPerformance {
+        load_factor,
+        bank_angle_deg: (1.0 / load_factor).acos().to_degrees(),
+        turn_rate_rad_s,
+        turn_radius_m,
+        turn_time_s: core::f64::consts::TAU / turn_rate_rad_s,
+    })
+}
+
 /// Computes level-flight performance at an altitude, speed, and thrust.
 ///
 /// Returns an error when the aircraft parameters, altitude, speed, or thrust

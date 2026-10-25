@@ -82,3 +82,12 @@ fn invalid_inputs_are_rejected() {
     assert!(level_flight(&aircraft, 0.0, 0.0, 1_000.0).is_err());
     assert!(breguet_cruise(&aircraft, 250.0, 15.0, 10_000.0, 10_000.0).is_err());
 }
+
+#[test]
+fn turn_performance_is_consistent() {
+    let turn = apsis::apsis_aviator::turn_performance(100.0, 4.0).expect("turn");
+    assert!(turn.turn_rate_rad_s > 0.0);
+    assert!(turn.turn_radius_m > 0.0);
+    assert!((turn.turn_time_s * turn.turn_rate_rad_s - core::f64::consts::TAU).abs() < 1e-12);
+    assert!(apsis::apsis_aviator::turn_performance(100.0, 0.5).is_err());
+}
