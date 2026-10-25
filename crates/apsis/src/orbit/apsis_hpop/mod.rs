@@ -18,6 +18,42 @@ pub struct HpopState {
     pub velocity: Vec3,
 }
 
+/// Exponential-atmosphere drag parameters.
+///
+/// 指数大气阻力参数。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DragModel {
+    /// Drag coefficient, dimensionless.
+    pub drag_coefficient: f64,
+    /// Cross-sectional area, in square meters.
+    pub area_m2: f64,
+    /// Spacecraft mass, in kilograms.
+    pub mass_kg: f64,
+    /// Reference atmospheric density, in kilograms per cubic meter.
+    pub reference_density_kg_m3: f64,
+    /// Altitude of the reference density, in kilometers.
+    pub reference_altitude_km: f64,
+    /// Exponential scale height, in kilometers.
+    pub scale_height_km: f64,
+}
+
+impl DragModel {
+    /// Returns a representative LEO drag model: 1 m^2, 100 kg, Cd 2.2.
+    ///
+    /// 返回代表性 LEO 阻力模型：1 m^2、100 kg、Cd 2.2。
+    #[must_use]
+    pub fn wgs84_defaults() -> Self {
+        Self {
+            drag_coefficient: 2.2,
+            area_m2: 1.0,
+            mass_kg: 100.0,
+            reference_density_kg_m3: 2.0e-11,
+            reference_altitude_km: 350.0,
+            scale_height_km: 50.0,
+        }
+    }
+}
+
 /// Force-model parameters for J2 propagation.
 ///
 /// J2 传播的力模型参数。
@@ -31,6 +67,8 @@ pub struct J2Model {
     pub j4: f64,
     /// Equatorial radius, in kilometers.
     pub equatorial_radius_km: f64,
+    /// Optional exponential-atmosphere drag.
+    pub drag: Option<DragModel>,
 }
 
 impl Default for J2Model {
@@ -40,11 +78,12 @@ impl Default for J2Model {
             j2: 1.082_626_683e-3,
             j4: 0.0,
             equatorial_radius_km: 6_378.137,
+            drag: None,
         }
     }
 }
 
-fn acceleration(position: Vec3, model: J2Model) -> Vec3 {
+fn acceleration(position: Vec3, velocity: Vec3, model: J2Model) -> Vec3 {
     let radius = position.norm();
     if radius == 0.0 {
         return Vec3::new(0.0, 0.0, 0.0);
@@ -70,7 +109,35 @@ fn acceleration(position: Vec3, model: J2Model) -> Vec3 {
             factor * position.z * (15.0 - 70.0 * z2 / r2 + 63.0 * z4 / (r2 * r2)),
         )
     };
-    two_body + j2 + j4
+    let drag = if let Some(drag) = model.drag {
+        if drag.mass_kg > 0.0 && drag.area_m2 > 0.0 {
+            let altitude = radius - model.equatorial_radius_km;
+            let density = drag.reference_density_kg_m3
+                * (-(altitude - drag.reference_altitude_km) / drag.scale_height_km).exp();
+            let earth_rate = 7.292_115_9e-5;
+            let atmosphere = Vec3::new(-earth_rate * position.y, earth_rate * position.x, 0.0);
+            let relative = velocity - atmosphere;
+            let speed = relative.norm();
+            if speed > 0.0 && density.is_finite() {
+                let acceleration_m_s2 = 0.5
+                    * density
+                    * speed
+                    * speed
+                    * drag.drag_coefficient
+                    * drag.area_m2
+                    / drag.mass_kg;
+                relative.normalize().unwrap_or(Vec3::new(0.0, 0.0, 0.0))
+                    * (-acceleration_m_s2 / 1_000.0)
+            } else {
+                Vec3::new(0.0, 0.0, 0.0)
+            }
+        } else {
+            Vec3::new(0.0, 0.0, 0.0)
+        }
+    } else {
+        Vec3::new(0.0, 0.0, 0.0)
+    };
+    two_body + j2 + j4 + drag
 }
 
 /// Propagates an initial inertial state under two-body plus J2 acceleration.
@@ -108,6 +175,25 @@ pub fn propagate_j2(
             "force model must have positive finite mu and radius",
         ));
     }
+    if let Some(drag) = model.drag {
+        if !drag.drag_coefficient.is_finite()
+            || drag.drag_coefficient <= 0.0
+            || !drag.area_m2.is_finite()
+            || drag.area_m2 <= 0.0
+            || !drag.mass_kg.is_finite()
+            || drag.mass_kg <= 0.0
+            || !drag.reference_density_kg_m3.is_finite()
+            || drag.reference_density_kg_m3 < 0.0
+            || !drag.reference_altitude_km.is_finite()
+            || !drag.scale_height_km.is_finite()
+            || drag.scale_height_km <= 0.0
+        {
+            return Err(Error::with_message(
+                ErrorKind::InvalidInput,
+                "drag model must have positive finite parameters and a non-negative density",
+            ));
+        }
+    }
     let mut states = Vec::new();
     let mut position = initial_position;
     let mut velocity = initial_velocity;
@@ -125,17 +211,17 @@ pub fn propagate_j2(
 }
 
 fn rk4(position: Vec3, velocity: Vec3, dt: f64, model: J2Model) -> (Vec3, Vec3) {
-    let k1_v = acceleration(position, model);
+    let k1_v = acceleration(position, velocity, model);
     let k1_r = velocity;
 
     let k2_r = velocity + k1_v * (dt / 2.0);
-    let k2_v = acceleration(position + k1_r * (dt / 2.0), model);
+    let k2_v = acceleration(position + k1_r * (dt / 2.0), velocity + k2_r * (dt / 2.0), model);
 
     let k3_r = velocity + k2_v * (dt / 2.0);
-    let k3_v = acceleration(position + k2_r * (dt / 2.0), model);
+    let k3_v = acceleration(position + k2_r * (dt / 2.0), velocity + k3_r * (dt / 2.0), model);
 
     let k4_r = velocity + k3_v * dt;
-    let k4_v = acceleration(position + k3_r * dt, model);
+    let k4_v = acceleration(position + k3_r * dt, velocity + k4_r * dt, model);
 
     let next_position = position + (k1_r + k2_r * 2.0 + k3_r * 2.0 + k4_r) * (dt / 6.0);
     let next_velocity = velocity + (k1_v + k2_v * 2.0 + k3_v * 2.0 + k4_v) * (dt / 6.0);
@@ -198,6 +284,41 @@ mod tests {
         let h0 = initial.position.cross(initial.velocity).normalize().expect("normal");
         let h1 = final_state.position.cross(final_state.velocity).normalize().expect("normal");
         assert!((h0.dot(h1) - 1.0).abs() > 1e-12);
+    }
+
+    #[test]
+    fn drag_removes_energy_and_changes_the_state() {
+        let radius = 6_778.137_f64;
+        let speed = (398_600.441_8 / radius).sqrt();
+        let position = Vec3::new(radius, 0.0, 0.0);
+        let velocity = Vec3::new(0.0, speed, 0.0);
+        let without = propagate_j2(position, velocity, 600.0, 60.0, J2Model::default()).expect("J2");
+        let with = propagate_j2(
+            position,
+            velocity,
+            600.0,
+            60.0,
+            J2Model { drag: Some(DragModel::wgs84_defaults()), ..J2Model::default() },
+        )
+        .expect("J2+drag");
+        let last_without = without.last().expect("state");
+        let last_with = with.last().expect("state");
+        assert!((last_with.position - last_without.position).norm() > 1.0e-9);
+        assert!(last_with.velocity.norm() < last_without.velocity.norm() + 1.0e-12);
+    }
+
+    #[test]
+    fn an_invalid_drag_model_is_rejected() {
+        let (position, velocity) = circular_state();
+        let drag = DragModel { mass_kg: 0.0, ..DragModel::wgs84_defaults() };
+        assert!(propagate_j2(
+            position,
+            velocity,
+            60.0,
+            10.0,
+            J2Model { drag: Some(drag), ..J2Model::default() },
+        )
+        .is_err());
     }
 
     #[test]
