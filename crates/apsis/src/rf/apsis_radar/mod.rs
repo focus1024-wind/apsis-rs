@@ -28,6 +28,8 @@ pub struct RadarParameters {
     pub system_temperature_k: f64,
     /// Required signal-to-noise ratio, in decibels.
     pub required_snr_db: f64,
+    /// Number of pulses integrated non-coherently.
+    pub integrated_pulses: f64,
 }
 
 /// Radar budget results.
@@ -41,7 +43,11 @@ pub struct RadarResult {
     pub received_power_w: f64,
     /// Receiver noise power, in watts.
     pub noise_power_w: f64,
-    /// Signal-to-noise ratio, in decibels.
+    /// Single-pulse signal-to-noise ratio, in decibels.
+    pub single_pulse_snr_db: f64,
+    /// Integration gain, in decibels.
+    pub integration_gain_db: f64,
+    /// Integrated signal-to-noise ratio, in decibels.
     pub snr_db: f64,
     /// Maximum detection range for the required SNR, in meters.
     pub max_range_m: f64,
@@ -80,6 +86,7 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         parameters.bandwidth_hz,
         parameters.system_temperature_k,
         parameters.required_snr_db,
+        parameters.integrated_pulses,
     ];
     if finite.iter().any(|value| !value.is_finite())
         || parameters.frequency_hz <= 0.0
@@ -88,6 +95,7 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         || parameters.range_m <= 0.0
         || parameters.bandwidth_hz <= 0.0
         || parameters.system_temperature_k <= 0.0
+        || parameters.integrated_pulses < 1.0
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
@@ -107,9 +115,11 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         / ((4.0 * core::f64::consts::PI).powi(3) * parameters.range_m.powi(4) * loss);
     let noise_power_w =
         BOLTZMANN * parameters.system_temperature_k * parameters.bandwidth_hz;
-    let snr_db = 10.0 * (received_power_w / noise_power_w).log10();
+    let single_pulse_snr_db = 10.0 * (received_power_w / noise_power_w).log10();
+    let integration_gain_db = 10.0 * parameters.integrated_pulses.log10();
+    let snr_db = single_pulse_snr_db + integration_gain_db;
     let required_snr = 10.0_f64.powf(parameters.required_snr_db / 10.0);
-    let max_range_m = (numerator
+    let max_range_m = (numerator * parameters.integrated_pulses
         / ((4.0 * core::f64::consts::PI).powi(3)
             * loss
             * noise_power_w
@@ -119,6 +129,8 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         wavelength_m,
         received_power_w,
         noise_power_w,
+        single_pulse_snr_db,
+        integration_gain_db,
         snr_db,
         max_range_m,
         max_range_km: max_range_m / 1_000.0,
@@ -140,6 +152,7 @@ mod tests {
             bandwidth_hz: 1.0e6,
             system_temperature_k: 500.0,
             required_snr_db: 13.0,
+            integrated_pulses: 1.0,
         }
     }
 
@@ -166,5 +179,16 @@ mod tests {
         assert!(radar_budget(RadarParameters { frequency_hz: 0.0, ..parameters() }).is_err());
         assert!(radar_budget(RadarParameters { target_rcs_m2: -1.0, ..parameters() }).is_err());
         assert!(radar_budget(RadarParameters { range_m: f64::NAN, ..parameters() }).is_err());
+        assert!(radar_budget(RadarParameters { integrated_pulses: 0.5, ..parameters() }).is_err());
+    }
+
+    #[test]
+    fn pulse_integration_raises_snr_and_range() {
+        let single = radar_budget(parameters()).expect("single pulse");
+        let integrated = radar_budget(RadarParameters { integrated_pulses: 100.0, ..parameters() }).expect("integrated");
+        assert!((integrated.integration_gain_db - 20.0).abs() < 1e-9);
+        assert!((integrated.snr_db - single.single_pulse_snr_db - 20.0).abs() < 1e-9);
+        let ratio = integrated.max_range_km / single.max_range_km;
+        assert!((ratio - 100.0_f64.powf(0.25)).abs() < 1e-9);
     }
 }
