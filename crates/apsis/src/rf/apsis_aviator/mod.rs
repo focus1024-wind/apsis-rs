@@ -316,6 +316,70 @@ pub fn turn_performance(speed_m_s: f64, load_factor: f64) -> Result<TurnPerforma
 }
 
 
+/// A complete climb-cruise-descent mission profile.
+///
+/// 完整爬升-巡航-下降任务剖面。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MissionProfile {
+    /// Climb segment.
+    pub climb: ClimbSegment,
+    /// Descent segment.
+    pub descent: ClimbSegment,
+    /// Cruise time, in seconds.
+    pub cruise_time_s: f64,
+    /// Cruise fuel, in kilograms.
+    pub cruise_fuel_kg: f64,
+    /// Total time, in seconds.
+    pub total_time_s: f64,
+    /// Total fuel, in kilograms.
+    pub total_fuel_kg: f64,
+    /// Total horizontal distance, in meters.
+    pub total_distance_m: f64,
+}
+
+/// Computes a climb-cruise-descent mission profile.
+///
+/// 计算爬升-巡航-下降任务剖面。
+#[allow(clippy::too_many_arguments)]
+pub fn mission_profile(
+    aircraft: &Aircraft,
+    start_altitude_m: f64,
+    cruise_altitude_m: f64,
+    end_altitude_m: f64,
+    cruise_distance_m: f64,
+    speed_m_s: f64,
+    climb_thrust_n: f64,
+    descent_thrust_n: f64,
+    step_m: f64,
+) -> Result<MissionProfile> {
+    if !cruise_distance_m.is_finite() || cruise_distance_m < 0.0 {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "cruise distance must be non-negative and finite",
+        ));
+    }
+    if start_altitude_m > cruise_altitude_m + 1e-9 || end_altitude_m > cruise_altitude_m + 1e-9 {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "start and end altitudes must not exceed cruise altitude",
+        ));
+    }
+    let climb = climb_segment(aircraft, start_altitude_m, cruise_altitude_m, speed_m_s, climb_thrust_n, step_m)?;
+    let descent = climb_segment(aircraft, cruise_altitude_m, end_altitude_m, speed_m_s, descent_thrust_n, step_m)?;
+    let cruise_flight = level_flight(aircraft, cruise_altitude_m, speed_m_s, climb_thrust_n)?;
+    let cruise_time_s = cruise_distance_m / speed_m_s;
+    let cruise_fuel_kg = cruise_flight.thrust_required_n * aircraft.tsfc_kg_per_n_s * cruise_time_s;
+    Ok(MissionProfile {
+        climb,
+        descent,
+        cruise_time_s,
+        cruise_fuel_kg,
+        total_time_s: climb.time_s + cruise_time_s + descent.time_s,
+        total_fuel_kg: climb.fuel_kg + cruise_fuel_kg + descent.fuel_kg,
+        total_distance_m: climb.horizontal_distance_m + cruise_distance_m + descent.horizontal_distance_m,
+    })
+}
+
 /// Result of a stepped climb or descent segment.
 ///
 /// 分段爬升或下降结果。
