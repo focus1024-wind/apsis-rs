@@ -146,6 +146,7 @@ pub use crate::rf::apsis_link;
 
 #[cfg(feature = "rf")]
 pub use crate::rf::apsis_noise;
+pub use crate::rf::apsis_radar;
 
 #[cfg(feature = "rf")]
 pub use crate::rf::apsis_rf;

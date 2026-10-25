@@ -10,4 +10,5 @@ pub mod apsis_doppler;
 pub mod apsis_interference;
 pub mod apsis_link;
 pub mod apsis_noise;
+pub mod apsis_radar;
 pub mod apsis_rf;
