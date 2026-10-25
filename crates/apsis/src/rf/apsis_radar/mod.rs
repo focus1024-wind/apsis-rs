@@ -30,6 +30,10 @@ pub struct RadarParameters {
     pub required_snr_db: f64,
     /// Number of pulses integrated non-coherently.
     pub integrated_pulses: f64,
+    /// One-way half-power beamwidth, in degrees.
+    pub antenna_beamwidth_deg: f64,
+    /// Antenna pointing error from the target line of sight, in degrees.
+    pub pointing_error_deg: f64,
 }
 
 /// Radar budget results.
@@ -45,6 +49,10 @@ pub struct RadarResult {
     pub noise_power_w: f64,
     /// Single-pulse signal-to-noise ratio, in decibels.
     pub single_pulse_snr_db: f64,
+    /// One-way antenna pattern loss, in decibels.
+    pub pattern_loss_db: f64,
+    /// Effective antenna gain after pointing loss, in dBi.
+    pub effective_gain_dbi: f64,
     /// Integration gain, in decibels.
     pub integration_gain_db: f64,
     /// Integrated signal-to-noise ratio, in decibels.
@@ -87,6 +95,8 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         parameters.system_temperature_k,
         parameters.required_snr_db,
         parameters.integrated_pulses,
+        parameters.antenna_beamwidth_deg,
+        parameters.pointing_error_deg,
     ];
     if finite.iter().any(|value| !value.is_finite())
         || parameters.frequency_hz <= 0.0
@@ -96,6 +106,8 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         || parameters.bandwidth_hz <= 0.0
         || parameters.system_temperature_k <= 0.0
         || parameters.integrated_pulses < 1.0
+        || parameters.antenna_beamwidth_deg <= 0.0
+        || parameters.pointing_error_deg < 0.0
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
@@ -103,7 +115,10 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         ));
     }
     let wavelength_m = SPEED_OF_LIGHT / parameters.frequency_hz;
-    let gain = 10.0_f64.powf(parameters.antenna_gain_dbi / 10.0);
+    let pattern_loss_db = 12.0
+        * (parameters.pointing_error_deg / parameters.antenna_beamwidth_deg).powi(2);
+    let effective_gain_dbi = parameters.antenna_gain_dbi - pattern_loss_db;
+    let gain = 10.0_f64.powf(effective_gain_dbi / 10.0);
     let loss = 10.0_f64.powf(parameters.system_loss_db / 10.0);
     let numerator = parameters.transmit_power_w
         * gain
@@ -129,6 +144,8 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         wavelength_m,
         received_power_w,
         noise_power_w,
+        pattern_loss_db,
+        effective_gain_dbi,
         single_pulse_snr_db,
         integration_gain_db,
         snr_db,
@@ -153,6 +170,8 @@ mod tests {
             system_temperature_k: 500.0,
             required_snr_db: 13.0,
             integrated_pulses: 1.0,
+            antenna_beamwidth_deg: 2.0,
+            pointing_error_deg: 0.0,
         }
     }
 
@@ -180,6 +199,17 @@ mod tests {
         assert!(radar_budget(RadarParameters { target_rcs_m2: -1.0, ..parameters() }).is_err());
         assert!(radar_budget(RadarParameters { range_m: f64::NAN, ..parameters() }).is_err());
         assert!(radar_budget(RadarParameters { integrated_pulses: 0.5, ..parameters() }).is_err());
+        assert!(radar_budget(RadarParameters { antenna_beamwidth_deg: 0.0, ..parameters() }).is_err());
+    }
+
+    #[test]
+    fn pointing_error_reduces_gain_and_range() {
+        let on_axis = radar_budget(parameters()).expect("on axis");
+        let off_axis = radar_budget(RadarParameters { pointing_error_deg: 2.0, ..parameters() }).expect("off axis");
+        assert!((off_axis.pattern_loss_db - 12.0).abs() < 1e-9);
+        assert!((off_axis.effective_gain_dbi - (parameters().antenna_gain_dbi - 12.0)).abs() < 1e-9);
+        let ratio = off_axis.max_range_km / on_axis.max_range_km;
+        assert!((ratio - 10.0_f64.powf(-24.0 / 40.0)).abs() < 1e-9);
     }
 
     #[test]
