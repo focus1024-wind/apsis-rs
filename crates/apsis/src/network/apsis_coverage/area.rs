@@ -168,6 +168,14 @@ pub struct AreaCoverageResult {
     ///
     /// 内部点所观测间隔的平均值，单位为秒。
     pub mean_gap_seconds: f64,
+    /// Number of observed gaps between successive coverages.
+    ///
+    /// 相邻两次覆盖之间观测到的间隙数量。
+    pub gap_count: usize,
+    /// Shortest observed gap, in seconds; zero when no gap was observed.
+    ///
+    /// 最短观测间隙，单位为秒；没有间隙时为零。
+    pub min_gap_seconds: f64,
     /// Row-major flags for the full grid; true only for covered inside points.
     ///
     /// 全网格的行主序标志；仅被覆盖的内部点为真。
@@ -265,12 +273,16 @@ pub fn area_coverage(
     } else {
         gaps.iter().sum::<f64>() / gaps.len() as f64
     };
+    let min_gap = gaps.iter().copied().fold(f64::INFINITY, f64::min);
+    let min_gap = if min_gap.is_finite() { min_gap } else { 0.0 };
     Ok(AreaCoverageResult {
         covered_points,
         total_points: inside_points,
         fraction: covered_points as f64 / inside_points as f64,
         max_gap_seconds: max_gap,
         mean_gap_seconds: mean_gap,
+        gap_count: gaps.len(),
+        min_gap_seconds: min_gap,
         covered,
         inside,
     })

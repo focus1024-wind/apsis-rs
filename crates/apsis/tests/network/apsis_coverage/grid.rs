@@ -52,6 +52,8 @@ fn the_gap_between_two_coverages_is_measured_in_time() {
     let result = grid_coverage(&grid, &samples).expect("coverage");
     assert!((result.max_gap_seconds - 100.0).abs() < 1e-12);
     assert!((result.mean_gap_seconds - 100.0).abs() < 1e-12);
+    assert_eq!(result.gap_count, 1);
+    assert!((result.min_gap_seconds - 100.0).abs() < 1e-12);
 }
 
 #[test]
@@ -67,6 +69,8 @@ fn the_mean_gap_averages_the_observed_gaps() {
     let result = grid_coverage(&grid, &samples).expect("coverage");
     assert!((result.max_gap_seconds - 110.0).abs() < 1e-12);
     assert!((result.mean_gap_seconds - 105.0).abs() < 1e-12);
+    assert_eq!(result.gap_count, 2);
+    assert!((result.min_gap_seconds - 100.0).abs() < 1e-12);
 }
 
 #[test]
