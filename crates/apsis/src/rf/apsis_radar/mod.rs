@@ -63,6 +63,96 @@ pub struct RadarResult {
     pub max_range_km: f64,
 }
 
+
+/// Radar search-volume parameters.
+///
+/// 雷达搜索空域参数。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RadarSearchParameters {
+    /// Azimuth search span, in degrees.
+    pub azimuth_span_deg: f64,
+    /// Elevation search span, in degrees.
+    pub elevation_span_deg: f64,
+    /// Elevation of the search-volume centre, in degrees.
+    pub elevation_center_deg: f64,
+    /// One-way half-power beamwidth, in degrees.
+    pub beamwidth_deg: f64,
+    /// Dwell time per beam position, in seconds.
+    pub dwell_time_s: f64,
+}
+
+/// Radar search-volume results.
+///
+/// 雷达搜索空域结果。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RadarSearchResult {
+    /// Beam solid angle, in steradians.
+    pub beam_solid_angle_sr: f64,
+    /// Search-volume solid angle, in steradians.
+    pub search_solid_angle_sr: f64,
+    /// Number of beam positions in the search volume.
+    pub beam_positions: f64,
+    /// Time to cover the search volume once, in seconds.
+    pub frame_time_s: f64,
+    /// Revisit rate, in hertz.
+    pub revisit_rate_hz: f64,
+    /// Solid angle searched per second, in steradians per second.
+    pub search_rate_sr_s: f64,
+}
+
+/// Computes the beam count, frame time, and revisit rate for a search volume.
+///
+/// The search volume is the spherical rectangle between the elevation limits,
+/// and the beam solid angle is approximated by the square of the beamwidth.
+///
+/// 计算搜索空域的波束数量、帧时间与重访率。
+///
+/// 搜索空域取仰角上下限之间的球面矩形，波束立体角用波束宽度平方近似。
+pub fn radar_search(parameters: RadarSearchParameters) -> Result<RadarSearchResult> {
+    let values = [
+        parameters.azimuth_span_deg,
+        parameters.elevation_span_deg,
+        parameters.elevation_center_deg,
+        parameters.beamwidth_deg,
+        parameters.dwell_time_s,
+    ];
+    if values.iter().any(|value| !value.is_finite())
+        || parameters.azimuth_span_deg <= 0.0
+        || parameters.elevation_span_deg <= 0.0
+        || parameters.beamwidth_deg <= 0.0
+        || parameters.dwell_time_s <= 0.0
+        || !(-90.0..=90.0).contains(&parameters.elevation_center_deg)
+    {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "search parameters must be finite and positive",
+        ));
+    }
+    let half_span = (parameters.elevation_span_deg / 2.0).to_radians();
+    let center = parameters.elevation_center_deg.to_radians();
+    let low = (center - half_span).max(-core::f64::consts::FRAC_PI_2);
+    let high = (center + half_span).min(core::f64::consts::FRAC_PI_2);
+    if high <= low {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "elevation span is outside the valid range",
+        ));
+    }
+    let azimuth = parameters.azimuth_span_deg.to_radians();
+    let beam_solid_angle_sr = parameters.beamwidth_deg.to_radians().powi(2);
+    let search_solid_angle_sr = azimuth * (high.sin() - low.sin());
+    let beam_positions = (search_solid_angle_sr / beam_solid_angle_sr).ceil();
+    let frame_time_s = beam_positions * parameters.dwell_time_s;
+    Ok(RadarSearchResult {
+        beam_solid_angle_sr,
+        search_solid_angle_sr,
+        beam_positions,
+        frame_time_s,
+        revisit_rate_hz: 1.0 / frame_time_s,
+        search_rate_sr_s: search_solid_angle_sr / frame_time_s,
+    })
+}
+
 /// Computes a monostatic radar budget.
 ///
 /// The radar equation is
@@ -194,12 +284,53 @@ mod tests {
     }
 
     #[test]
+    fn search_mode_reports_beams_and_frame_time() {
+        let result = radar_search(RadarSearchParameters {
+            azimuth_span_deg: 360.0,
+            elevation_span_deg: 10.0,
+            elevation_center_deg: 20.0,
+            beamwidth_deg: 2.0,
+            dwell_time_s: 0.01,
+        }).expect("search");
+        assert!(result.beam_positions > 1.0);
+        assert!(result.frame_time_s > 0.0);
+        assert!((result.frame_time_s - result.beam_positions * 0.01).abs() < 1e-9);
+        assert!((result.revisit_rate_hz * result.frame_time_s - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn a_narrower_beam_needs_more_positions() {
+        let wide = radar_search(RadarSearchParameters {
+            azimuth_span_deg: 360.0,
+            elevation_span_deg: 10.0,
+            elevation_center_deg: 20.0,
+            beamwidth_deg: 4.0,
+            dwell_time_s: 0.01,
+        }).expect("wide");
+        let narrow = radar_search(RadarSearchParameters {
+            azimuth_span_deg: 360.0,
+            elevation_span_deg: 10.0,
+            elevation_center_deg: 20.0,
+            beamwidth_deg: 2.0,
+            dwell_time_s: 0.01,
+        }).expect("narrow");
+        assert!(narrow.beam_positions > wide.beam_positions * 3.5);
+    }
+
+    #[test]
     fn invalid_parameters_are_rejected() {
         assert!(radar_budget(RadarParameters { frequency_hz: 0.0, ..parameters() }).is_err());
         assert!(radar_budget(RadarParameters { target_rcs_m2: -1.0, ..parameters() }).is_err());
         assert!(radar_budget(RadarParameters { range_m: f64::NAN, ..parameters() }).is_err());
         assert!(radar_budget(RadarParameters { integrated_pulses: 0.5, ..parameters() }).is_err());
         assert!(radar_budget(RadarParameters { antenna_beamwidth_deg: 0.0, ..parameters() }).is_err());
+        assert!(radar_search(RadarSearchParameters {
+            azimuth_span_deg: 0.0,
+            elevation_span_deg: 10.0,
+            elevation_center_deg: 20.0,
+            beamwidth_deg: 2.0,
+            dwell_time_s: 0.01,
+        }).is_err());
     }
 
     #[test]
