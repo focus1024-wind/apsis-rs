@@ -85,3 +85,39 @@ pub use reference::{
     PEAK_GAIN_OFFSET_DB, diameter_over_wavelength_from_peak_gain, main_lobe_break_angle,
     reference_beam_width, reference_pattern_decibel, reference_pattern_gain, reference_peak_gain,
 };
+
+/// Returns the Gaussian main-lobe pointing loss in decibels.
+///
+/// The approximation is `12 (theta / theta_3dB)^2`, the usual single-lobe
+/// Gaussian fit for a reflector antenna. Angles are in radians. Returns
+/// `None` when an argument is not finite, the beam width is not positive,
+/// or the off-axis angle is negative.
+///
+/// 返回高斯主瓣指向损耗，单位为分贝。
+///
+/// 近似为 `12 (theta / theta_3dB)^2`，即反射面天线常用单瓣高斯拟合。角度
+/// 单位为弧度。参数非有限、波束宽度非正或偏轴角为负时返回 `None`。
+#[must_use]
+pub fn gaussian_pattern_loss_db(off_axis_radians: f64, beamwidth_radians: f64) -> Option<f64> {
+    if !off_axis_radians.is_finite()
+        || !beamwidth_radians.is_finite()
+        || off_axis_radians < 0.0
+        || beamwidth_radians <= 0.0
+    {
+        return None;
+    }
+    Some(12.0 * (off_axis_radians / beamwidth_radians).powi(2))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn gaussian_pointing_loss_has_the_expected_shape() {
+        assert!((gaussian_pattern_loss_db(0.0, 0.1).expect("valid") - 0.0).abs() < 1e-12);
+        assert!((gaussian_pattern_loss_db(0.1, 0.1).expect("valid") - 12.0).abs() < 1e-12);
+        assert!(gaussian_pattern_loss_db(-1.0, 0.1).is_none());
+        assert!(gaussian_pattern_loss_db(0.1, 0.0).is_none());
+    }
+}
