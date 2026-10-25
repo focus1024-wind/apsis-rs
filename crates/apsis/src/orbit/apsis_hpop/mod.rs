@@ -140,6 +140,108 @@ fn acceleration(position: Vec3, velocity: Vec3, model: J2Model) -> Vec3 {
     two_body + j2 + j4 + drag
 }
 
+
+/// A 6x6 state covariance matrix in position-then-velocity order.
+///
+/// 按位置后速度顺序排列的 6x6 状态协方差矩阵。
+pub type Covariance6 = [[f64; 6]; 6];
+
+/// State and covariance at the end of a propagation.
+///
+/// 传播结束时的状态与协方差。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct HpopCovariance {
+    /// Final inertial state.
+    pub state: HpopState,
+    /// Final covariance matrix.
+    pub covariance: Covariance6,
+}
+
+/// Propagates a 6x6 state covariance with a finite-difference state transition matrix.
+///
+/// The nominal trajectory is propagated with [`propagate_j2`]. Each initial
+/// state component is then perturbed by a small amount and propagated over
+/// the same interval; the resulting differences form the state transition
+/// matrix, which maps the initial covariance to the final covariance. This is
+/// a global finite-difference linearization, suitable for short arcs and for
+/// engineering estimates rather than for operational covariance realism.
+///
+/// 用有限差分状态转移矩阵传播 6x6 状态协方差。
+///
+/// 标称轨迹由 [`propagate_j2`] 得到。随后对每个初始状态分量施加小扰动，并在
+/// 同一区间内传播；差值构成状态转移矩阵，把初始协方差映射到终端协方差。这是
+/// 全局有限差分线性化，适用于短弧段与工程估计，不用于业务级协方差真实性。
+pub fn propagate_j2_covariance(
+    initial_position: Vec3,
+    initial_velocity: Vec3,
+    duration_seconds: f64,
+    step_seconds: f64,
+    model: J2Model,
+    initial_covariance: Covariance6,
+) -> Result<HpopCovariance> {
+    for row in initial_covariance {
+        if row.iter().any(|value| !value.is_finite()) {
+            return Err(Error::with_message(
+                ErrorKind::InvalidInput,
+                "initial covariance must be finite",
+            ));
+        }
+    }
+    let nominal = propagate_j2(
+        initial_position,
+        initial_velocity,
+        duration_seconds,
+        step_seconds,
+        model,
+    )?;
+    let final_state = *nominal.last().expect("propagation returns at least one state");
+    let mut transition = [[0.0_f64; 6]; 6];
+    let perturbations = [1.0e-3, 1.0e-3, 1.0e-3, 1.0e-6, 1.0e-6, 1.0e-6];
+    for column in 0..6 {
+        let epsilon = perturbations[column];
+        let mut position = initial_position;
+        let mut velocity = initial_velocity;
+        if column < 3 {
+            if column == 0 { position.x += epsilon; }
+            if column == 1 { position.y += epsilon; }
+            if column == 2 { position.z += epsilon; }
+        } else {
+            if column == 3 { velocity.x += epsilon; }
+            if column == 4 { velocity.y += epsilon; }
+            if column == 5 { velocity.z += epsilon; }
+        }
+        let perturbed = propagate_j2(position, velocity, duration_seconds, step_seconds, model)?;
+        let end = *perturbed.last().expect("propagation returns at least one state");
+        let delta = [
+            end.position.x - final_state.position.x,
+            end.position.y - final_state.position.y,
+            end.position.z - final_state.position.z,
+            end.velocity.x - final_state.velocity.x,
+            end.velocity.y - final_state.velocity.y,
+            end.velocity.z - final_state.velocity.z,
+        ];
+        for row in 0..6 {
+            transition[row][column] = delta[row] / epsilon;
+        }
+    }
+    let mut covariance = [[0.0_f64; 6]; 6];
+    for row in 0..6 {
+        for column in 0..6 {
+            let mut sum = 0.0;
+            for i in 0..6 {
+                for j in 0..6 {
+                    sum += transition[row][i] * initial_covariance[i][j] * transition[column][j];
+                }
+            }
+            covariance[row][column] = sum;
+        }
+    }
+    Ok(HpopCovariance {
+        state: final_state,
+        covariance,
+    })
+}
+
 /// Propagates an initial inertial state under two-body plus J2 acceleration.
 ///
 /// Uses classical fourth-order Runge-Kutta with the requested fixed step.
@@ -319,6 +421,29 @@ mod tests {
             J2Model { drag: Some(drag), ..J2Model::default() },
         )
         .is_err());
+    }
+
+    #[test]
+    fn covariance_propagation_is_finite_and_grows() {
+        let (position, velocity) = circular_state();
+        let mut covariance = [[0.0_f64; 6]; 6];
+        for index in 0..3 {
+            covariance[index][index] = 1.0e-6;
+        }
+        for index in 3..6 {
+            covariance[index][index] = 1.0e-10;
+        }
+        let result = propagate_j2_covariance(position, velocity, 600.0, 60.0, J2Model::default(), covariance).expect("covariance");
+        assert!(result.covariance.iter().flatten().all(|value| value.is_finite()));
+        assert!(result.covariance[0][0] > 1.0e-6);
+        assert!(result.covariance[0][0].is_finite());
+    }
+
+    #[test]
+    fn zero_covariance_stays_zero() {
+        let (position, velocity) = circular_state();
+        let result = propagate_j2_covariance(position, velocity, 600.0, 60.0, J2Model::default(), [[0.0; 6]; 6]).expect("covariance");
+        assert!(result.covariance.iter().flatten().all(|value| *value == 0.0));
     }
 
     #[test]
