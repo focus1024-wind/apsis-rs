@@ -157,6 +157,104 @@ pub struct HpopCovariance {
     pub covariance: Covariance6,
 }
 
+
+/// Principal axes of a position covariance ellipsoid.
+///
+/// 位置协方差椭球的三个主轴。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CovarianceEllipsoid {
+    /// Semi-axis lengths, in kilometers, ordered largest to smallest.
+    pub semi_axes_km: [f64; 3],
+    /// Eigenvectors as columns, ordered to match `semi_axes_km`.
+    pub rotation: [[f64; 3]; 3],
+}
+
+/// Computes the position covariance ellipsoid at a requested sigma scale.
+///
+/// Only the upper-left 3x3 position block is used. The symmetric matrix is
+/// diagonalized with Jacobi rotations. Negative eigenvalues from numerical
+/// roundoff are clamped to zero. Returns an error for non-finite input or a
+/// non-positive scale.
+///
+/// 计算指定 sigma 倍数下的位置协方差椭球。
+///
+/// 只使用左上角 3x3 位置块。对称矩阵用 Jacobi 旋转对角化，数值舍入造成的
+/// 负特征值截断为零。输入非有限或倍率非正时返回错误。
+pub fn position_covariance_ellipsoid(
+    covariance: &Covariance6,
+    sigma_scale: f64,
+) -> Result<CovarianceEllipsoid> {
+    if !sigma_scale.is_finite() || sigma_scale <= 0.0 {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "sigma scale must be positive and finite",
+        ));
+    }
+    let mut matrix = [[0.0_f64; 3]; 3];
+    for row in 0..3 {
+        for column in 0..3 {
+            if !covariance[row][column].is_finite() {
+                return Err(Error::with_message(
+                    ErrorKind::InvalidInput,
+                    "covariance must be finite",
+                ));
+            }
+            matrix[row][column] = covariance[row][column];
+        }
+    }
+    let mut vectors = [[0.0_f64; 3]; 3];
+    for (index, vector) in vectors.iter_mut().enumerate() {
+        vector[index] = 1.0;
+    }
+    for _ in 0..32 {
+        let mut p = 0;
+        let mut q = 1;
+        let mut largest = matrix[0][1].abs();
+        for (row, column) in [(0, 2), (1, 2)] {
+            if matrix[row][column].abs() > largest {
+                largest = matrix[row][column].abs();
+                p = row;
+                q = column;
+            }
+        }
+        if largest < 1e-15 {
+            break;
+        }
+        let angle = 0.5 * (2.0 * matrix[p][q]).atan2(matrix[q][q] - matrix[p][p]);
+        let (sin, cos) = angle.sin_cos();
+        let app = matrix[p][p];
+        let aqq = matrix[q][q];
+        let apq = matrix[p][q];
+        matrix[p][p] = cos * cos * app - 2.0 * sin * cos * apq + sin * sin * aqq;
+        matrix[q][q] = sin * sin * app + 2.0 * sin * cos * apq + cos * cos * aqq;
+        matrix[p][q] = 0.0;
+        matrix[q][p] = 0.0;
+        for index in 0..3 {
+            if index != p && index != q {
+                let aip = matrix[index][p];
+                let aiq = matrix[index][q];
+                matrix[index][p] = cos * aip - sin * aiq;
+                matrix[p][index] = matrix[index][p];
+                matrix[index][q] = sin * aip + cos * aiq;
+                matrix[q][index] = matrix[index][q];
+            }
+            let vip = vectors[index][p];
+            let viq = vectors[index][q];
+            vectors[index][p] = cos * vip - sin * viq;
+            vectors[index][q] = sin * vip + cos * viq;
+        }
+    }
+    let mut order = [0usize, 1, 2];
+    order.sort_by(|left, right| matrix[*right][*right].total_cmp(&matrix[*left][*left]));
+    let values = order.map(|index| matrix[index][index].max(0.0).sqrt() * sigma_scale);
+    let rotation = [
+        [vectors[0][order[0]], vectors[0][order[1]], vectors[0][order[2]]],
+        [vectors[1][order[0]], vectors[1][order[1]], vectors[1][order[2]]],
+        [vectors[2][order[0]], vectors[2][order[1]], vectors[2][order[2]]],
+    ];
+    Ok(CovarianceEllipsoid { semi_axes_km: values, rotation })
+}
+
 /// Propagates a 6x6 state covariance with a finite-difference state transition matrix.
 ///
 /// The nominal trajectory is propagated with [`propagate_j2`]. Each initial
@@ -444,6 +542,19 @@ mod tests {
         let (position, velocity) = circular_state();
         let result = propagate_j2_covariance(position, velocity, 600.0, 60.0, J2Model::default(), [[0.0; 6]; 6]).expect("covariance");
         assert!(result.covariance.iter().flatten().all(|value| *value == 0.0));
+    }
+
+    #[test]
+    fn covariance_ellipsoid_uses_diagonal_axes() {
+        let mut covariance = [[0.0_f64; 6]; 6];
+        covariance[0][0] = 9.0;
+        covariance[1][1] = 4.0;
+        covariance[2][2] = 1.0;
+        let ellipsoid = position_covariance_ellipsoid(&covariance, 3.0).expect("ellipsoid");
+        assert!((ellipsoid.semi_axes_km[0] - 9.0).abs() < 1e-12);
+        assert!((ellipsoid.semi_axes_km[1] - 6.0).abs() < 1e-12);
+        assert!((ellipsoid.semi_axes_km[2] - 3.0).abs() < 1e-12);
+        assert!(position_covariance_ellipsoid(&covariance, 0.0).is_err());
     }
 
     #[test]
