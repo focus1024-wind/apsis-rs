@@ -153,3 +153,24 @@ fn isotropic_collision_probability_is_bounded_and_decreases_with_miss() {
     assert!(isotropic_collision_probability(0.0, 0.01, 0.0).is_err());
     assert!(isotropic_collision_probability(-1.0, 0.01, 1.0).is_err());
 }
+
+#[test]
+fn anisotropic_probability_matches_the_isotropic_case() {
+    let miss = Vec3::new(0.0, 0.0, 0.0);
+    let sigma = Vec3::new(1.0, 1.0, 1.0);
+    let velocity = Vec3::new(0.0, 7.5, 0.0);
+    let anisotropic = apsis::apsis_cat::anisotropic_collision_probability(miss, sigma, velocity, 0.01).expect("anisotropic");
+    let isotropic = isotropic_collision_probability(0.0, 0.01, 1.0).expect("isotropic");
+    assert!((anisotropic - isotropic).abs() / isotropic < 0.01);
+}
+
+#[test]
+fn anisotropic_probability_responds_to_the_large_axis() {
+    let miss = Vec3::new(0.0, 1.0, 0.0);
+    let velocity = Vec3::new(0.0, 7.5, 0.0);
+    let tight = apsis::apsis_cat::anisotropic_collision_probability(miss, Vec3::new(0.5, 0.5, 0.5), velocity, 0.01).expect("tight");
+    let wide = apsis::apsis_cat::anisotropic_collision_probability(miss, Vec3::new(5.0, 5.0, 5.0), velocity, 0.01).expect("wide");
+    assert!((wide - tight).abs() > 1e-9);
+    assert!(apsis::apsis_cat::anisotropic_collision_probability(miss, Vec3::ZERO, velocity, 0.01).is_err());
+    assert!(apsis::apsis_cat::anisotropic_collision_probability(miss, Vec3::new(1.0, 1.0, 1.0), Vec3::ZERO, 0.01).is_err());
+}

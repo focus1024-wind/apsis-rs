@@ -84,6 +84,12 @@ pub struct RelativeState {
     ///
     /// 横向间距，单位为千米，沿轨道法线为正。
     pub cross_track_km: f64,
+    /// Radial relative velocity, in kilometers per second.
+    pub radial_velocity_km_s: f64,
+    /// Along-track relative velocity, in kilometers per second.
+    pub along_track_velocity_km_s: f64,
+    /// Cross-track relative velocity, in kilometers per second.
+    pub cross_track_velocity_km_s: f64,
 }
 
 /// The closest approach of two sampled histories.
@@ -115,6 +121,8 @@ pub struct ClosestApproach {
     ///
     /// 最接近时刻的横向间距，单位为千米。
     pub cross_track_km: f64,
+    /// RIC relative velocity at closest approach, in kilometers per second.
+    pub relative_velocity_ric_km_s: Vec3,
 }
 
 /// Returns the relative geometry of two samples in the primary's RIC frame.
@@ -150,7 +158,105 @@ pub fn relative_state(primary: StateSample, secondary: StateSample) -> Result<Re
         radial_km: offset.dot(radial),
         along_track_km: offset.dot(along),
         cross_track_km: offset.dot(normal),
+        radial_velocity_km_s: relative_velocity.dot(radial),
+        along_track_velocity_km_s: relative_velocity.dot(along),
+        cross_track_velocity_km_s: relative_velocity.dot(normal),
     })
+}
+
+
+/// Estimates collision probability with a diagonal RIC covariance.
+///
+/// The miss vector and relative velocity are expressed in the primary's RIC
+/// frame. The relative velocity defines the encounter plane; the covariance
+/// `diag(sigma_r^2, sigma_a^2, sigma_c^2)` is projected into that plane and
+/// integrated numerically over the hard-body disk. This is still an
+/// approximation because the covariance is assumed constant through TCA and
+/// the target is treated as a disk.
+///
+/// Returns an error for non-finite or non-positive inputs.
+///
+/// 用 RIC 对角协方差估计碰撞概率。
+///
+/// 脱靶向量与相对速度在主目标 RIC 系中给出。相对速度定义交会平面；协方差
+/// `diag(sigma_r^2, sigma_a^2, sigma_c^2)` 投影到该平面，并在硬体圆盘上数值
+/// 积分。由于协方差假定在 TCA 附近不变、目标按圆盘处理，这仍是近似。
+///
+/// 输入非有限或非正时返回错误。
+pub fn anisotropic_collision_probability(
+    miss_ric_km: Vec3,
+    sigma_ric_km: Vec3,
+    relative_velocity_ric_km_s: Vec3,
+    hard_body_radius_km: f64,
+) -> Result<f64> {
+    let valid = miss_ric_km.is_finite()
+        && sigma_ric_km.is_finite()
+        && relative_velocity_ric_km_s.is_finite()
+        && hard_body_radius_km.is_finite()
+        && sigma_ric_km.x > 0.0
+        && sigma_ric_km.y > 0.0
+        && sigma_ric_km.z > 0.0
+        && hard_body_radius_km >= 0.0;
+    if !valid {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            "miss, sigma, and velocity must be finite; sigma must be positive",
+        ));
+    }
+    if hard_body_radius_km == 0.0 {
+        return Ok(0.0);
+    }
+    let normal = relative_velocity_ric_km_s.normalize().ok_or_else(|| {
+        Error::with_message(ErrorKind::Undefined, "relative velocity is zero")
+    })?;
+    let reference = if normal.z.abs() < 0.9 {
+        Vec3::new(0.0, 0.0, 1.0)
+    } else {
+        Vec3::new(0.0, 1.0, 0.0)
+    };
+    let u = normal.cross(reference).normalize().ok_or_else(|| {
+        Error::with_message(ErrorKind::Undefined, "encounter basis is undefined")
+    })?;
+    let w = normal.cross(u);
+    let d1 = miss_ric_km.dot(u);
+    let d2 = miss_ric_km.dot(w);
+    let variance = Vec3::new(
+        sigma_ric_km.x * sigma_ric_km.x,
+        sigma_ric_km.y * sigma_ric_km.y,
+        sigma_ric_km.z * sigma_ric_km.z,
+    );
+    let cuu = u.x * u.x * variance.x + u.y * u.y * variance.y + u.z * u.z * variance.z;
+    let cww = w.x * w.x * variance.x + w.y * w.y * variance.y + w.z * w.z * variance.z;
+    let cuw = u.x * w.x * variance.x + u.y * w.y * variance.y + u.z * w.z * variance.z;
+    let determinant = cuu * cww - cuw * cuw;
+    if !(determinant > 0.0) {
+        return Err(Error::with_message(
+            ErrorKind::Undefined,
+            "projected covariance is singular",
+        ));
+    }
+    let inv00 = cww / determinant;
+    let inv11 = cuu / determinant;
+    let inv01 = -cuw / determinant;
+    let radial_steps = 64usize;
+    let angular_steps = 128usize;
+    let dr = hard_body_radius_km / radial_steps as f64;
+    let dtheta = core::f64::consts::TAU / angular_steps as f64;
+    let mut sum = 0.0;
+    for ir in 0..radial_steps {
+        let rho = (ir as f64 + 0.5) * dr;
+        for it in 0..angular_steps {
+            let theta = (it as f64 + 0.5) * dtheta;
+            let x = rho * theta.cos();
+            let y = rho * theta.sin();
+            let dx = x - d1;
+            let dy = y - d2;
+            let exponent = -0.5 * (inv00 * dx * dx + 2.0 * inv01 * dx * dy + inv11 * dy * dy);
+            sum += exponent.exp() * rho;
+        }
+    }
+    let probability = sum * dr * dtheta / (core::f64::consts::TAU * determinant.sqrt());
+    Ok(probability.clamp(0.0, 1.0))
 }
 
 /// Estimates collision probability with an isotropic two-dimensional Gaussian.
@@ -332,5 +438,10 @@ pub fn closest_approach(
         radial_km: relative.radial_km,
         along_track_km: relative.along_track_km,
         cross_track_km: relative.cross_track_km,
+        relative_velocity_ric_km_s: Vec3::new(
+            relative.radial_velocity_km_s,
+            relative.along_track_velocity_km_s,
+            relative.cross_track_velocity_km_s,
+        ),
     })
 }
