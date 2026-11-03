@@ -323,6 +323,14 @@ impl AccessFinder {
                         samples[0].seconds
                     } else {
                         self.refine_crossing(samples, index, true, &mut elevation_at)
+                            .ok_or_else(|| {
+                                AccessError::new(AccessErrorKind::InvalidPosition).with_detail(
+                                    format!(
+                                        "the elevation function failed while refining the rise near {} s",
+                                        samples[index].seconds
+                                    ),
+                                )
+                            })?
                     });
                 }
                 if elevations[index] > peak {
@@ -331,7 +339,14 @@ impl AccessFinder {
                     peak_position = samples[index].position_ecef_km;
                 }
             } else if let Some(rise_seconds) = rise.take() {
-                let set_seconds = self.refine_crossing(samples, index, false, &mut elevation_at);
+                let set_seconds = self
+                    .refine_crossing(samples, index, false, &mut elevation_at)
+                    .ok_or_else(|| {
+                        AccessError::new(AccessErrorKind::InvalidPosition).with_detail(format!(
+                            "the elevation function failed while refining the set near {} s",
+                            samples[index].seconds
+                        ))
+                    })?;
                 passes.push(Pass {
                     rise_seconds,
                     set_seconds,
@@ -385,7 +400,7 @@ impl AccessFinder {
         index: usize,
         rising: bool,
         elevation_at: &mut F,
-    ) -> f64
+    ) -> Option<f64>
     where
         F: FnMut(f64) -> Option<f64>,
     {
@@ -394,24 +409,28 @@ impl AccessFinder {
         let mut high = samples[index].seconds;
 
         // The elevation difference from the mask, with the sign arranged so
-        // that the function is negative at `low` and positive at `high`.
+        // that the function is negative at `low` and positive at `high`. A
+        // failure of the elevation function is propagated instead of being
+        // replaced by the mask, which would make the difference zero and
+        // report a crossing at an arbitrary time.
         // 相对遮蔽的仰角差，其符号被安排为使该函数在 `low` 处为负、在
-        // `high` 处为正。
+        // `high` 处为正。仰角函数失败时向上传播，而不是用遮蔽值替代；后者会使
+        // 差值为零并在任意时刻报告一次穿越。
         let sign = if rising { 1.0 } else { -1.0 };
-        let mut difference = |seconds: f64| {
-            let elevation = elevation_at(seconds).unwrap_or(mask);
-            sign * (elevation - mask)
+        let mut difference = |seconds: f64| -> Option<f64> {
+            let elevation = elevation_at(seconds)?;
+            Some(sign * (elevation - mask))
         };
 
-        let mut low_value = difference(low);
+        let mut low_value = difference(low)?;
         for _ in 0..64 {
             if high - low <= self.crossing_tolerance_seconds {
                 break;
             }
             let middle = f64::midpoint(low, high);
-            let value = difference(middle);
+            let value = difference(middle)?;
             if value == 0.0 {
-                return middle;
+                return Some(middle);
             }
             if (value > 0.0) == (low_value > 0.0) {
                 low = middle;
@@ -420,7 +439,7 @@ impl AccessFinder {
                 high = middle;
             }
         }
-        f64::midpoint(low, high)
+        Some(f64::midpoint(low, high))
     }
 
     /// Finds the access windows over an interval, calling a propagator for

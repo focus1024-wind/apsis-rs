@@ -19,6 +19,11 @@ const SPEED_OF_LIGHT: f64 = 299_792_458.0;
 const BOLTZMANN: f64 = 1.380_649e-23;
 const TOLERANCE_DB: f64 = 1e-9;
 
+// The helper mirrors the fields of a link budget; grouping them in a struct
+// would only move the same list into every test that builds one.
+// 该辅助函数对应链路预算的各字段；打包成结构体只会把同一列表搬进每个构造预算的
+// 测试里。
+#[allow(clippy::too_many_arguments)]
 fn budget(
     power_dbw: f64,
     tx_gain_dbi: f64,

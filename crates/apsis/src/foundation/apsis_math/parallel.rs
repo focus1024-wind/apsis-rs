@@ -134,6 +134,10 @@ where
             if first >= len {
                 break;
             }
+            // The end of the chunk is made opaque to the optimizer so that
+            // it cannot prove the iteration counts and fold the loop back
+            // into a serial one.
+            // 使分块终点对优化器不透明，以免它证明迭代次数后把循环折回串行。
             let last = hint::black_box((first + chunk).min(len));
             let operation = &operation;
             scope.spawn(move || {

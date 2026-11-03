@@ -331,7 +331,7 @@ fn base_alpha(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) 
 ///
 /// The polarisation is an angle in radians between the electric field and
 /// the horizontal, so zero is horizontal and a right angle is vertical. The
-/// elevation is in radians.
+/// elevation is in radians, and the frequency is in hertz.
 ///
 /// The result is a pair of the coefficient `k` and the exponent `alpha` of
 /// the relation `gamma = k R^alpha`, with the rain rate in millimeters per
@@ -434,9 +434,11 @@ pub fn specific_rain_attenuation(
 /// Returns the total rain attenuation along a slant path.
 ///
 /// The rain rate is the value exceeded for the percentage of time of
-/// interest, in millimeters per hour. The station height above sea level and
-/// the rain layer height are in kilometers; pass [`DEFAULT_RAIN_HEIGHT_KM`]
-/// for the latter when no local value is available.
+/// interest, in millimeters per hour. The frequency is in hertz, the
+/// polarisation and elevation are in radians, the latitude is in degrees,
+/// and the station height above sea level and the rain layer height are in
+/// kilometers; pass [`DEFAULT_RAIN_HEIGHT_KM`] for the latter when no local
+/// value is available.
 ///
 /// The method is the one of Recommendation P.618. The slant path length
 /// follows from the rain height, the station height, and the elevation, with
@@ -447,24 +449,24 @@ pub fn specific_rain_attenuation(
 /// latitude through the angle at which the path crosses the rain layer.
 ///
 /// Returns `None` when the rain rate, frequency, or elevation is not usable,
-/// when the station is above the rain layer, or when the elevation is at or
-/// below the horizon.
+/// or when the elevation is at or below the horizon. A station at or above
+/// the rain layer has an empty rain path, so its attenuation is zero.
 ///
 /// Source: ITU-R Recommendation P.618-13, equations 1 through 10.
 ///
 /// 返回沿斜路径的总降雨衰减。
 ///
-/// 降雨率是在所关注时间百分比上被超过的值，以毫米每小时计。站的海拔
-/// 高度与雨层高度以千米计；没有本地值时，后者传
-/// [`DEFAULT_RAIN_HEIGHT_KM`]。
+/// 降雨率是在所关注时间百分比上被超过的值，以毫米每小时计。频率以赫兹计，
+/// 极化与仰角以弧度计，纬度以度计，站的海拔高度与雨层高度以千米计；没有本地
+/// 值时，后者传 [`DEFAULT_RAIN_HEIGHT_KM`]。
 ///
 /// 方法即建议书 P.618 所述。斜路径长度由雨顶高度、站高与仰角得出，
 /// 并作地球曲率修正。随后两个缩减因子计入降雨的不均匀性：一个水平
 /// 因子，取决于比衰减、频率以及路径的水平投影；一个垂直因子，通过
 /// 路径穿越雨层的角度取决于纬度。
 ///
-/// 降雨率、频率或仰角不可用，站高于雨层，或仰角在地平及其以下时返回
-/// `None`。
+/// 降雨率、频率或仰角不可用，或仰角在地平及其以下时返回 `None`。站位于
+/// 雨层处或其上时雨路径为空，故衰减为零。
 ///
 /// 出处：ITU-R 建议书 P.618-13，式 1 至式 10。
 #[must_use]

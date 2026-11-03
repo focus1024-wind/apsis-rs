@@ -158,25 +158,18 @@ pub struct SubSatellitePoint {
 /// Returns the sub-satellite point for a position in the Earth-fixed frame.
 ///
 /// The satellite position is in kilometers. The sub-satellite point is the
-/// intersection of the line from the centre of the Earth through the
-/// satellite with the ellipsoid, which is the geodetic position of the
-/// satellite with its height set to zero at the same latitude and longitude.
-///
-/// This is the geocentric projection, not the point at which the ellipsoid
-/// normal through the satellite meets the surface. The difference is at most
-/// about twenty kilometers for a low Earth satellite, and the geocentric
-/// form is the one the footprint geometry uses.
+/// geodetic position of the satellite with its height set to zero, so it lies
+/// on the ellipsoid normal through the satellite rather than on the line from
+/// the centre of the Earth. The two projections differ by up to about twenty
+/// kilometers for a low Earth satellite.
 ///
 /// Returns `None` when the position is not finite or lies on the polar axis,
 /// where no longitude is defined.
 ///
 /// 返回地固系中某位置的星下点。
 ///
-/// 卫星位置单位为千米。星下点是从地心过卫星的直线与椭球的交点，即把
-/// 卫星高度置零而纬经度不变所得的大地位置。
-///
-/// 这是地心投影，而非过卫星的椭球法线与地表相交的点。对低轨卫星两者
-/// 相差至多约二十千米，而覆盖区几何用的是地心形式。
+/// 卫星位置单位为千米。星下点是把卫星高度置零所得的大地位置，故它位于过卫星
+/// 的椭球法线上，而不是地心与卫星连线上。对低轨卫星两种投影可相差约二十千米。
 ///
 /// 位置非有限，或位于未定义经度的极轴上时返回 `None`。
 #[must_use]

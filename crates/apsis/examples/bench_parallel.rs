@@ -177,7 +177,7 @@ fn track(satellite: &Satellite, samples: usize, epoch_mjd: f64) -> Vec<OrbitSamp
                 .expect("the track propagates");
             let angle =
                 EarthRotationAngle::from_ut1_days(epoch_mjd - 51_544.5 + seconds / 86_400.0);
-            let fixed = Eci::new(state.position).to_ecef(angle).vector();
+            let fixed = Eci::new(state.position * 1_000.0).to_ecef(angle).vector() / 1_000.0;
             OrbitSample::new(seconds, fixed)
         })
         .collect()

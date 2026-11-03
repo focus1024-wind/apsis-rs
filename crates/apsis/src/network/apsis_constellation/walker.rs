@@ -274,9 +274,9 @@ pub struct PlaneOutline {
     ///
     /// 轨道面序号。
     pub plane: usize,
-    /// The sampled points, in meters in the Earth-fixed frame.
+    /// The sampled points, in kilometers in the Earth-fixed frame.
     ///
-    /// 采样点，单位为米，位于地固系。
+    /// 采样点，单位为千米，位于地固系。
     pub points: Vec<Vec3>,
 }
 
@@ -438,6 +438,11 @@ impl Constellation {
     /// not a substitute for a full frame chain when precise coordinates are
     /// needed.
     ///
+    /// A plane with no satellite, or whose elements cannot be converted at a
+    /// sampled anomaly, is omitted rather than returned as a truncated ring.
+    /// A constellation built by this module has validated elements, so the
+    /// second case cannot occur for one.
+    ///
     /// 把每个轨道面采样为地固笛卡尔点。
     ///
     /// 每个轨道面由其中第一颗卫星提供根数。采样从该卫星的平近点角开始，扫过
@@ -446,6 +451,10 @@ impl Constellation {
     ///
     /// 惯性位置按星座参考时刻的格林尼治恒星时转动到地固系，忽略极移。这足以
     /// 绘制轨道面环，但当需要精确坐标时不能替代完整的坐标链。
+    ///
+    /// 没有卫星的轨道面，或在某个采样平近点角处无法转换根数的轨道面会被略去，
+    /// 而不是返回一个被截断的环。本模块构建的星座根数均已校验，故第二种情形
+    /// 不会发生。
     #[must_use]
     pub fn plane_outlines(&self, samples: usize) -> Vec<PlaneOutline> {
         if samples == 0 {
@@ -469,17 +478,21 @@ impl Constellation {
             let elements = satellite.elements;
             let start = elements.mean_anomaly();
             let mut points = Vec::with_capacity(samples + 1);
+            let mut complete = true;
             for index in 0..=samples {
                 let anomaly = start + core::f64::consts::TAU * index as f64 / samples as f64;
                 let Some(state) = elements
                     .with_mean_anomaly(anomaly)
                     .to_state(GravityParameter::WGS84)
                 else {
+                    complete = false;
                     break;
                 };
                 points.push(rotation * state.position);
             }
-            outlines.push(PlaneOutline { plane, points });
+            if complete {
+                outlines.push(PlaneOutline { plane, points });
+            }
         }
         outlines
     }

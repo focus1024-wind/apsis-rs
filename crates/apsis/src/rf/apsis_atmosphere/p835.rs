@@ -78,16 +78,19 @@ pub fn geopotential_height(geometric_height_km: f64) -> f64 {
 /// 100 km the recommendation does not define a global profile and this
 /// function returns the value at 100 km.
 ///
-/// The geometric height is in kilometers.
+/// The geometric height is in kilometers. Non-finite input yields `NaN`.
 ///
 /// 返回参考大气的温度，单位为开尔文。
 ///
 /// 该廓线在势高度 84.852 km 以下分段线性，其后由延伸至 100 km 的两段定义。
 /// 100 km 以上该建议书不定义全球廓线，本函数返回 100 km 处的值。
 ///
-/// 几何高度单位为千米。
+/// 几何高度单位为千米。输入非有限时返回 `NaN`。
 #[must_use]
 pub fn standard_temperature(geometric_height_km: f64) -> f64 {
+    if !geometric_height_km.is_finite() {
+        return f64::NAN;
+    }
     let height = geopotential_height(geometric_height_km);
     if height <= 11.0 {
         288.15 - 6.5 * height
@@ -119,15 +122,21 @@ pub fn standard_temperature(geometric_height_km: f64) -> f64 {
 /// follows from the hydrostatic relation applied to each temperature
 /// segment.
 ///
-/// The geometric height is in kilometers.
+/// The geometric height is in kilometers. Above 100 km the profile is not
+/// defined and the function returns a negligible pressure; non-finite input
+/// yields `NaN`.
 ///
 /// 返回参考大气的气压，单位为百帕。
 ///
 /// 该廓线是分段的，在各分段边界处连续，由静力关系施加于每个温度分段得出。
 ///
-/// 几何高度单位为千米。
+/// 几何高度单位为千米。100 km 以上该建议书不定义廓线，函数返回可忽略的气压；
+/// 输入非有限时返回 `NaN`。
 #[must_use]
 pub fn standard_pressure(geometric_height_km: f64) -> f64 {
+    if !geometric_height_km.is_finite() {
+        return f64::NAN;
+    }
     let height = geopotential_height(geometric_height_km);
     if height <= 11.0 {
         1_013.25 * (288.15 / (288.15 - 6.5 * height)).powf(-34.163_2 / 6.5)
@@ -210,14 +219,16 @@ pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: 
 /// 的偶极项。
 ///
 /// 出处：ITU-R 建议书 P.453，它给出湿空气折射率的这一表达式。
+///
+/// 温度非有限或非正时返回 `NaN`，因为该式在那里没有定义。
 #[must_use]
 pub fn radio_refractive_index(
     dry_pressure_hpa: f64,
     vapour_pressure_hpa: f64,
     temperature_k: f64,
 ) -> f64 {
-    if temperature_k == 0.0 {
-        return 1.0;
+    if !temperature_k.is_finite() || temperature_k <= 0.0 {
+        return f64::NAN;
     }
     let refractivity = 77.6 * dry_pressure_hpa / temperature_k
         + 72.0 * vapour_pressure_hpa / temperature_k

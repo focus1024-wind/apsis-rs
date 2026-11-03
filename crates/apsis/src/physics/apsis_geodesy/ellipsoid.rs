@@ -28,12 +28,17 @@ impl Ellipsoid {
     /// Creates an ellipsoid from its semi-major axis and inverse
     /// flattening.
     ///
-    /// Lengths are in meters. The inverse flattening must be positive and
-    /// finite; a value of infinity describes a sphere.
+    /// Lengths are in meters. The semi-major axis must be positive and the
+    /// inverse flattening must be positive; positive infinity for the inverse
+    /// flattening describes a sphere. The values are stored as given, so the
+    /// caller must supply usable ones; [`Ellipsoid::is_valid`] reports whether
+    /// they are.
     ///
     /// 由半长轴与逆扁率创建椭球。
     ///
-    /// 长度单位为米。逆扁率必须为正且有限；取无穷大则描述一个球。
+    /// 长度单位为米。半长轴必须为正，逆扁率必须为正；逆扁率取正无穷时描述一个
+    /// 球。各值按原样保存，故调用方须提供可用值；[`Ellipsoid::is_valid`] 报告
+    /// 它们是否可用。
     #[must_use]
     pub const fn new(semi_major_axis: f64, inverse_flattening: f64) -> Self {
         Self {
@@ -56,6 +61,22 @@ impl Ellipsoid {
     #[must_use]
     pub const fn inverse_flattening(self) -> f64 {
         self.inverse_flattening
+    }
+
+    /// Returns `true` when the ellipsoid parameters are usable.
+    ///
+    /// The semi-major axis must be positive and finite, and the inverse
+    /// flattening must be positive; positive infinity is accepted because it
+    /// describes a sphere.
+    ///
+    /// 当椭球参数可用时返回 `true`。
+    ///
+    /// 半长轴须为正且有限，逆扁率须为正；接受正无穷，因为它描述一个球。
+    #[must_use]
+    pub fn is_valid(self) -> bool {
+        self.semi_major_axis.is_finite()
+            && self.semi_major_axis > 0.0
+            && self.inverse_flattening > 0.0
     }
 
     /// Returns the flattening.

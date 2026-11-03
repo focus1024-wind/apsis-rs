@@ -40,7 +40,7 @@ fn multiple_intervals_produce_multiple_chain_windows() {
 #[test]
 fn a_link_without_availability_empties_the_chain() {
     let links = vec![vec![interval(0.0, 10.0)], Vec::new()];
-    assert!(intersect_intervals(&links).expect("valid").is_empty());
+    assert_eq!(intersect_intervals(&links).expect("valid"), Vec::new());
 }
 
 #[test]

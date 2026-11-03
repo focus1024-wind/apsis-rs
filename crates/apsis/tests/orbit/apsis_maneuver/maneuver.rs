@@ -459,3 +459,17 @@ fn an_error_displays_its_kind() {
         hohmann_transfer(7_000.0, 7_000.0, GravityParameter::WGS84).expect_err("degenerate");
     assert!(error.to_string().contains("radii"), "{error}");
 }
+
+#[test]
+fn a_burn_that_escapes_is_refused_by_the_elements_route() {
+    let parameter = GravityParameter::WGS84;
+    let elements = circular(7_000.0);
+    let state = elements.to_state(parameter).expect("valid");
+    let direction = state.velocity.normalize().expect("non-zero");
+    let burn = FiniteBurn::along(direction, 1.0e-2, 600.0).expect("usable");
+
+    let error = burn
+        .apply_to_elements(elements, parameter, 500)
+        .expect_err("the post-burn state is not elliptical");
+    assert_eq!(error.kind(), ManeuverErrorKind::InvalidState);
+}

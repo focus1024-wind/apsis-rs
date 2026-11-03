@@ -5,7 +5,7 @@
 use apsis::apsis_kepler::GravityParameter;
 use apsis::apsis_maneuver::{FiniteBurn, hohmann_transfer};
 use apsis::apsis_orbit::{EphemerisSamplingError, GravityModel, ManeuverApplicationError, Orbit};
-use apsis::apsis_tle::TwoLineElement;
+use apsis::apsis_tle::{TwoLineElement, line_checksum};
 
 /// A satellite in a low Earth orbit, used as the source of the track.
 ///
@@ -18,6 +18,21 @@ const ISS: &str = concat!(
 fn orbit() -> Orbit {
     let element = TwoLineElement::parse(ISS).expect("the sample parses");
     Orbit::from_element(&element, GravityModel::WGS72).expect("the orbit propagates")
+}
+
+/// An orbit whose radius at the epoch is below the Earth, so sampling fails
+/// on the first state.
+///
+/// 一颗在历元处半径低于地球的轨道，故采样在第一个状态处失败。
+fn decayed_orbit() -> Orbit {
+    let first = "1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927";
+    let second = "2 25544  51.6416 247.4627 0006703 130.5360 325.0288 17.50000000    0";
+    let body: String = second.chars().take(68).collect();
+    let padded = format!("{body:<68}");
+    let line = format!("{padded}{}", line_checksum(&padded));
+    let text = format!("{first}\r\n{line}\r\n");
+    let element = TwoLineElement::parse(&text).expect("the decayed sample parses");
+    Orbit::from_element(&element, GravityModel::WGS72).expect("the orbit initialises")
 }
 
 #[test]
@@ -93,13 +108,13 @@ fn a_bad_grid_is_refused() {
 
 #[test]
 fn a_propagation_failure_is_reported() {
-    let orbit = orbit();
-    // Far enough ahead that the drag term brings the satellite down, which
-    // is a decay failure rather than a silent bad sample.
-    // 足够远，使阻力项把卫星带下来，即衰减失败而非无声的坏样本。
-    let result = orbit.sample_ephemeris(0.0, 60.0 * 24.0 * 365.0, 60.0 * 24.0);
+    let orbit = decayed_orbit();
+    // The satellite is already below the surface at the epoch, so the first
+    // sample fails with a decay rather than a silent bad sample.
+    // 卫星在历元处已在地表以下，故第一个样本以衰减失败，而非无声的坏样本。
+    let result = orbit.sample_ephemeris(0.0, 10.0, 1.0);
     assert!(
-        matches!(result, Err(EphemerisSamplingError::Propagation(_)) | Ok(_)),
+        matches!(result, Err(EphemerisSamplingError::Propagation(_))),
         "the result is {result:?}"
     );
 }

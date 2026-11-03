@@ -104,7 +104,10 @@ fn position_ecef_km(satellite: &Satellite, seconds: f64) -> Vec3 {
     let state = satellite
         .propagate_minutes(seconds / 60.0)
         .expect("the sample orbit propagates");
-    let inertial = Eci::new(state.position);
+    // The orbit layer works in kilometers and the coordinate layer in
+    // meters, so the conversion happens at this boundary.
+    // 轨道层以千米工作，坐标层以米工作，故在此边界处换算。
+    let inertial = Eci::new(state.position * 1_000.0);
     // The Earth rotation angle needs the UT1 time. The difference between
     // UT1 and TAI is under a second, which is under 0.005 degrees of
     // rotation, so the TAI epoch is used here.
@@ -112,7 +115,7 @@ fn position_ecef_km(satellite: &Satellite, seconds: f64) -> Vec3 {
     // 故此处使用 TAI 历元。
     let days_since_j2000 = (epoch_mjd() + seconds / 86_400.0) - 51_544.5;
     let angle = EarthRotationAngle::from_ut1_days(days_since_j2000);
-    inertial.to_ecef(angle).vector()
+    inertial.to_ecef(angle).vector() / 1_000.0
 }
 
 fn main() {

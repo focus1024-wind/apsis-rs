@@ -75,13 +75,13 @@ impl CoverageGrid {
         {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "grid limits must be finite and ordered",
+                "lat_min, lat_max, lon_min, and lon_max must be finite and ordered; latitudes are in radians within -pi/2..=pi/2",
             ));
         }
         if !lat_step.is_finite() || lat_step <= 0.0 || !lon_step.is_finite() || lon_step <= 0.0 {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "grid steps must be positive and finite",
+                "lat_step and lon_step must be positive and finite, in radians",
             ));
         }
         Ok(Self {
@@ -278,7 +278,7 @@ pub fn grid_coverage(grid: &CoverageGrid, samples: &[CoverageSample]) -> Result<
         if !sample.is_valid() {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "sample must be finite and usable",
+                "the sample must have finite seconds, a finite non-zero position_ecef_km, and central_angle_rad within 0..=pi",
             ));
         }
         // Equal times are allowed, because a constellation supplies one

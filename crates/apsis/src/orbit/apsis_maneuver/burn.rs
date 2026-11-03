@@ -271,7 +271,12 @@ impl FiniteBurn {
             ManeuverError::new(ManeuverErrorKind::InvalidState)
                 .with_detail("the elements are not a valid elliptical orbit")
         })?;
-        self.apply(state, parameter, steps)
+        let outcome = self.apply(state, parameter, steps)?;
+        if outcome.elements(parameter).is_none() {
+            return Err(ManeuverError::new(ManeuverErrorKind::InvalidState)
+                .with_detail("the post-burn state is not an elliptical orbit"));
+        }
+        Ok(outcome)
     }
 }
 

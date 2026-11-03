@@ -95,7 +95,7 @@ pub fn atmosphere(altitude_meters: f64) -> Result<AtmosphereState> {
     if !altitude_meters.is_finite() || !(0.0..=MAX_ALTITUDE_METERS).contains(&altitude_meters) {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "altitude must be finite and within 0..=20000 meters".to_string(),
+            "altitude_meters must be finite and within 0..=20000 m".to_string(),
         ));
     }
     let altitude_km = altitude_meters / 1_000.0;
@@ -104,7 +104,7 @@ pub fn atmosphere(altitude_meters: f64) -> Result<AtmosphereState> {
     if temperature_kelvin <= 0.0 || pressure_pascals <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "standard atmosphere is not defined at this altitude".to_string(),
+            "the standard atmosphere is not defined at altitude_meters".to_string(),
         ));
     }
     let density_kg_m3 = pressure_pascals / (DRY_AIR_GAS_CONSTANT * temperature_kelvin);
@@ -266,21 +266,30 @@ pub struct LevelFlight {
     pub lift_to_drag: f64,
 }
 
-
 /// Result of a steady level-turn calculation.
 ///
 /// 稳定水平转弯计算结果。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TurnPerformance {
     /// Load factor, in g.
+    ///
+    /// 过载，单位为 g。
     pub load_factor: f64,
     /// Bank angle, in degrees.
+    ///
+    /// 坡度，单位为度。
     pub bank_angle_deg: f64,
     /// Turn rate, in radians per second.
+    ///
+    /// 转弯角速率，单位为弧度每秒。
     pub turn_rate_rad_s: f64,
     /// Turn radius, in meters.
+    ///
+    /// 转弯半径，单位为米。
     pub turn_radius_m: f64,
     /// Time for a full 360-degree turn, in seconds.
+    ///
+    /// 转一整圈的时间，单位为秒。
     pub turn_time_s: f64,
 }
 
@@ -293,14 +302,10 @@ pub struct TurnPerformance {
 ///
 /// 过载须至少为 1；坡度由 `n = 1 / cos(bank)` 得出。输入非有限或越界时返回错误。
 pub fn turn_performance(speed_m_s: f64, load_factor: f64) -> Result<TurnPerformance> {
-    if !speed_m_s.is_finite()
-        || speed_m_s <= 0.0
-        || !load_factor.is_finite()
-        || load_factor < 1.0
-    {
+    if !speed_m_s.is_finite() || speed_m_s <= 0.0 || !load_factor.is_finite() || load_factor < 1.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "speed must be positive and load factor must be at least one",
+            "speed_m_s must be positive and finite; load_factor must be at least 1, got speed_m_s={speed_m_s} and load_factor={load_factor}",
         ));
     }
     let lateral = (load_factor * load_factor - 1.0).sqrt();
@@ -315,31 +320,50 @@ pub fn turn_performance(speed_m_s: f64, load_factor: f64) -> Result<TurnPerforma
     })
 }
 
-
 /// A complete climb-cruise-descent mission profile.
 ///
 /// 完整爬升-巡航-下降任务剖面。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct MissionProfile {
     /// Climb segment.
+    ///
+    /// 爬升段。
     pub climb: ClimbSegment,
     /// Descent segment.
+    ///
+    /// 下降段。
     pub descent: ClimbSegment,
     /// Cruise time, in seconds.
+    ///
+    /// 巡航时间，单位为秒。
     pub cruise_time_s: f64,
     /// Cruise fuel, in kilograms.
+    ///
+    /// 巡航燃油，单位为千克。
     pub cruise_fuel_kg: f64,
     /// Total time, in seconds.
+    ///
+    /// 总时间，单位为秒。
     pub total_time_s: f64,
     /// Total fuel, in kilograms.
+    ///
+    /// 总燃油，单位为千克。
     pub total_fuel_kg: f64,
     /// Total horizontal distance, in meters.
+    ///
+    /// 总水平距离，单位为米。
     pub total_distance_m: f64,
 }
 
 /// Computes a climb-cruise-descent mission profile.
 ///
 /// 计算爬升-巡航-下降任务剖面。
+// The arguments are the aircraft and the eight numbers that define one
+// climb-cruise-descent profile. A struct would move the same values into a
+// builder without making the profile easier to read, and the function is the
+// only place that consumes the whole set.
+// 参数是一架航空器与定义一个爬升-巡航-下降剖面的八个数。结构体只会把同样的
+// 值搬进构建器，并不会让剖面更易读，而该函数是唯一消费整组值的地方。
 #[allow(clippy::too_many_arguments)]
 pub fn mission_profile(
     aircraft: &Aircraft,
@@ -355,17 +379,31 @@ pub fn mission_profile(
     if !cruise_distance_m.is_finite() || cruise_distance_m < 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "cruise distance must be non-negative and finite",
+            "cruise_distance_m must be non-negative and finite, in meters",
         ));
     }
     if start_altitude_m > cruise_altitude_m + 1e-9 || end_altitude_m > cruise_altitude_m + 1e-9 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "start and end altitudes must not exceed cruise altitude",
+            "start_altitude_m and end_altitude_m must not exceed cruise_altitude_m, in meters",
         ));
     }
-    let climb = climb_segment(aircraft, start_altitude_m, cruise_altitude_m, speed_m_s, climb_thrust_n, step_m)?;
-    let descent = climb_segment(aircraft, cruise_altitude_m, end_altitude_m, speed_m_s, descent_thrust_n, step_m)?;
+    let climb = climb_segment(
+        aircraft,
+        start_altitude_m,
+        cruise_altitude_m,
+        speed_m_s,
+        climb_thrust_n,
+        step_m,
+    )?;
+    let descent = climb_segment(
+        aircraft,
+        cruise_altitude_m,
+        end_altitude_m,
+        speed_m_s,
+        descent_thrust_n,
+        step_m,
+    )?;
     let cruise_flight = level_flight(aircraft, cruise_altitude_m, speed_m_s, climb_thrust_n)?;
     let cruise_time_s = cruise_distance_m / speed_m_s;
     let cruise_fuel_kg = cruise_flight.thrust_required_n * aircraft.tsfc_kg_per_n_s * cruise_time_s;
@@ -376,7 +414,9 @@ pub fn mission_profile(
         cruise_fuel_kg,
         total_time_s: climb.time_s + cruise_time_s + descent.time_s,
         total_fuel_kg: climb.fuel_kg + cruise_fuel_kg + descent.fuel_kg,
-        total_distance_m: climb.horizontal_distance_m + cruise_distance_m + descent.horizontal_distance_m,
+        total_distance_m: climb.horizontal_distance_m
+            + cruise_distance_m
+            + descent.horizontal_distance_m,
     })
 }
 
@@ -386,16 +426,28 @@ pub fn mission_profile(
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ClimbSegment {
     /// Start altitude, in meters.
+    ///
+    /// 起始高度，单位为米。
     pub start_altitude_m: f64,
     /// End altitude, in meters.
+    ///
+    /// 结束高度，单位为米。
     pub end_altitude_m: f64,
     /// Elapsed time, in seconds.
+    ///
+    /// 耗时，单位为秒。
     pub time_s: f64,
     /// Horizontal distance, in meters.
+    ///
+    /// 水平距离，单位为米。
     pub horizontal_distance_m: f64,
     /// Fuel burned, in kilograms.
+    ///
+    /// 消耗的燃油，单位为千克。
     pub fuel_kg: f64,
     /// Average vertical rate, in meters per second.
+    ///
+    /// 平均垂直速率，单位为米每秒。
     pub average_climb_rate_m_s: f64,
 }
 
@@ -425,10 +477,11 @@ pub fn climb_segment(
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "altitudes and step must be finite, and step must be positive",
+            "start_altitude_m and end_altitude_m must be finite and step_m must be positive, in meters",
         ));
     }
     // Validate through a level-flight call even for a zero-length segment.
+    // 即使段长为零，也通过一次平飞调用做校验。
     level_flight(aircraft, start_altitude_m, speed_m_s, thrust_available_n)?;
     if (end_altitude_m - start_altitude_m).abs() < 1e-9 {
         return Ok(ClimbSegment {
@@ -451,13 +504,13 @@ pub fn climb_segment(
         if direction > 0.0 && flight.climb_rate_m_s <= 0.0 {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "available thrust cannot sustain the climb",
+                "thrust_available_n cannot sustain the climb at this altitude, in newtons",
             ));
         }
         if direction < 0.0 && flight.climb_rate_m_s >= 0.0 {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "available thrust cannot sustain the descent",
+                "thrust_available_n cannot sustain the descent at this altitude, in newtons",
             ));
         }
         let dt = step / flight.climb_rate_m_s;
@@ -493,19 +546,19 @@ pub fn level_flight(
     if !aircraft.is_valid() {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "aircraft parameters must be positive and finite".to_string(),
+            "Aircraft parameters (mass_kg, wing_area_m2, zero_lift_drag, oswald_efficiency, aspect_ratio, max_thrust_n, tsfc_kg_per_n_s) must be positive and finite".to_string(),
         ));
     }
     if !speed_m_s.is_finite() || speed_m_s <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "speed must be positive and finite".to_string(),
+            "speed_m_s must be positive and finite, in meters per second".to_string(),
         ));
     }
     if !thrust_available_n.is_finite() || thrust_available_n < 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "thrust must be finite and non-negative".to_string(),
+            "thrust_available_n must be finite and non-negative, in newtons".to_string(),
         ));
     }
     let atmosphere = atmosphere(altitude_meters)?;
@@ -515,7 +568,7 @@ pub fn level_flight(
     if denominator <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "dynamic pressure is not usable".to_string(),
+            "dynamic pressure is not usable: density_kg_m3 or speed_m_s is zero".to_string(),
         ));
     }
     let lift_coefficient = weight / denominator;
@@ -582,25 +635,25 @@ pub fn breguet_cruise(
     if !aircraft.is_valid() {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "aircraft parameters must be positive and finite".to_string(),
+            "Aircraft parameters (mass_kg, wing_area_m2, zero_lift_drag, oswald_efficiency, aspect_ratio, max_thrust_n, tsfc_kg_per_n_s) must be positive and finite".to_string(),
         ));
     }
     if aircraft.tsfc_kg_per_n_s <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "thrust-specific fuel consumption must be positive".to_string(),
+            "tsfc_kg_per_n_s must be positive, in kilograms per newton second".to_string(),
         ));
     }
     if !speed_m_s.is_finite() || speed_m_s <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "speed must be positive and finite".to_string(),
+            "speed_m_s must be positive and finite, in meters per second".to_string(),
         ));
     }
     if !lift_to_drag.is_finite() || lift_to_drag <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "lift-to-drag ratio must be positive and finite".to_string(),
+            "lift_to_drag must be positive and finite".to_string(),
         ));
     }
     if !start_mass_kg.is_finite()
@@ -610,7 +663,7 @@ pub fn breguet_cruise(
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "masses must be finite with 0 < end mass < start mass".to_string(),
+            "start_mass_kg and end_mass_kg must be finite with 0 < end_mass_kg < start_mass_kg, in kilograms".to_string(),
         ));
     }
     let endurance_seconds = lift_to_drag / (STANDARD_GRAVITY * aircraft.tsfc_kg_per_n_s)

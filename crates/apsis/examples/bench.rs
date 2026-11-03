@@ -168,7 +168,7 @@ fn main() {
     // ---- Earth-fixed rotation --------------------------------------------
     // ---- 地固转动 -------------------------------------------------
     let angle = EarthRotationAngle::from_ut1_days(EPOCH_MJD - 51_544.5);
-    let eci = Eci::new(apsis::apsis_math::Vec3::new(7_000.0, 0.0, 0.0));
+    let eci = Eci::new(apsis::apsis_math::Vec3::new(7_000_000.0, 0.0, 0.0));
     let nanos = measure(ITERATIONS, || eci.to_ecef(black_box(angle)).vector());
     report("TEME to Earth-fixed rotation", nanos, ITERATIONS);
 
@@ -193,7 +193,7 @@ fn main() {
             .propagate_minutes(seconds / 60.0)
             .expect("propagates");
         let angle = EarthRotationAngle::from_ut1_days(EPOCH_MJD - 51_544.5 + seconds / 86_400.0);
-        let fixed = Eci::new(state.position).to_ecef(angle).vector();
+        let fixed = Eci::new(state.position * 1_000.0).to_ecef(angle).vector() / 1_000.0;
         samples.push(OrbitSample::new(seconds, fixed));
     }
     let finder = AccessFinder {

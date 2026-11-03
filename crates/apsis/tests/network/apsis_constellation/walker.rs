@@ -453,5 +453,5 @@ fn plane_outlines_sample_each_plane_on_its_circular_orbit() {
             );
         }
     }
-    assert!(constellation.plane_outlines(0).is_empty());
+    assert_eq!(constellation.plane_outlines(0), Vec::new());
 }

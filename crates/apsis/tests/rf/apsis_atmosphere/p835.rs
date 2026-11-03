@@ -83,16 +83,22 @@ fn the_temperature_profile_has_the_tabulated_segments() {
 
 #[test]
 fn the_temperature_is_continuous_across_every_segment() {
-    for boundary in [11.0_f64, 20.0, 32.0, 47.0, 51.0, 71.0, 84.852] {
-        // The boundaries are in geopotential height, so a geometric height
-        // just either side is used.
-        // 各边界以势高给出，故用恰好在其两侧的几何高度。
-        let below = standard_temperature(boundary - 0.01);
-        let above = standard_temperature(boundary + 0.01);
+    // The profile is sampled on a geometric grid fine enough that a segment
+    // boundary cannot hide between two samples. The largest slope is 6.5 K
+    // per kilometer, so a quarter kilometer step cannot change the value by
+    // more than 1.7 K.
+    // 廓线在足够细的几何高度网格上采样，使分段边界无法藏在两个样本之间。
+    // 最大斜率为每千米 6.5 K，故四分之一千米的步长不会使值改变超过 1.7 K。
+    let step = 0.25;
+    let mut height = 0.0;
+    while height < 100.0 {
+        let below = standard_temperature(height);
+        let above = standard_temperature(height + step);
         assert!(
-            (below - above).abs() < 0.2,
-            "boundary {boundary}: {below} against {above}"
+            (below - above).abs() < 3.0,
+            "height {height}: {below} against {above}"
         );
+        height += step;
     }
 }
 
@@ -108,14 +114,20 @@ fn the_pressure_falls_with_height() {
 
 #[test]
 fn the_pressure_is_continuous_across_the_segments() {
-    for boundary in [11.0_f64, 20.0, 32.0, 47.0, 51.0, 71.0, 84.852] {
-        let below = standard_pressure(boundary - 0.01);
-        let above = standard_pressure(boundary + 0.01);
+    // As for the temperature, the grid is geometric and finer than any
+    // change the profile can make over one step.
+    // 与温度相同，网格按几何高度取，且比廓线在一步内能作出的变化更细。
+    let step = 0.25;
+    let mut height = 0.0;
+    while height < 100.0 {
+        let below = standard_pressure(height);
+        let above = standard_pressure(height + step);
         let relative = (below - above).abs() / below;
         assert!(
-            relative < 0.01,
-            "boundary {boundary}: {below} against {above}, relative {relative}"
+            relative < 0.1,
+            "height {height}: {below} against {above}, relative {relative}"
         );
+        height += step;
     }
 }
 
@@ -162,11 +174,21 @@ fn the_radio_refractive_index_grows_with_humidity() {
 }
 
 #[test]
-fn a_zero_temperature_is_handled_without_dividing_by_zero() {
-    // The expression divides by the temperature, so a zero would give an
-    // infinite value. The function returns the index of vacuum instead.
-    // 该表达式除以温度，故零会给出无穷值。该函数改而返回真空的折射指数。
-    assert_eq!(radio_refractive_index(1_013.25, 10.0, 0.0), 1.0);
+fn a_non_positive_temperature_is_reported_as_nan() {
+    // The expression divides by the temperature, so zero or a negative value
+    // has no result. The function reports that with `NaN` rather than
+    // inventing the index of vacuum.
+    // 该表达式除以温度，故零或负值没有结果。函数以 `NaN` 报告，而不是臆造
+    // 真空的折射指数。
+    assert!(radio_refractive_index(1_013.25, 10.0, 0.0).is_nan());
+    assert!(radio_refractive_index(1_013.25, 10.0, -1.0).is_nan());
+    assert!(radio_refractive_index(1_013.25, 10.0, f64::NAN).is_nan());
+}
+
+#[test]
+fn a_non_finite_height_is_reported_as_nan() {
+    assert!(standard_temperature(f64::NAN).is_nan());
+    assert!(standard_pressure(f64::INFINITY).is_nan());
 }
 
 /// The specific gas constant of dry air, in J/(kg K).

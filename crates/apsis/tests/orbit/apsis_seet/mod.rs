@@ -86,7 +86,7 @@ fn eclipse_geometry_matches_the_cylinder() {
 fn a_leo_orbit_spends_a_plausible_fraction_in_eclipse() {
     let mut positions = Vec::new();
     for index in 0..72 {
-        let angle = core::f64::consts::TAU * index as f64 / 72.0;
+        let angle = core::f64::consts::TAU * f64::from(index) / 72.0;
         positions.push(Vec3::new(7_000.0 * angle.cos(), 7_000.0 * angle.sin(), 0.0));
     }
     let fraction = eclipse_fraction(&positions, Vec3::new(1.0, 0.0, 0.0)).expect("valid");

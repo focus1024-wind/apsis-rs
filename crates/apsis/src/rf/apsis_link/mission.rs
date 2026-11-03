@@ -146,6 +146,12 @@ pub struct LinkResult {
 /// 参数不可用，或链路链无法给出数字（功率、增益或温度非正）时返回错误。
 pub fn link_budget(distance_meters: f64, parameters: &LinkParameters) -> Result<LinkResult> {
     validate(distance_meters, parameters)?;
+    let receive_gain = Gain::from_dbi(parameters.receive_gain_dbi).ok_or_else(|| {
+        Error::with_message(
+            ErrorKind::InvalidInput,
+            "receive gain is not a finite dBi value".to_string(),
+        )
+    })?;
     let budget = LinkBudget {
         transmit_power: Power::from_watts(parameters.transmit_power_watts),
         transmit_gain: Gain::from_dbi(parameters.transmit_gain_dbi).ok_or_else(|| {
@@ -155,12 +161,7 @@ pub fn link_budget(distance_meters: f64, parameters: &LinkParameters) -> Result<
             )
         })?,
         transmit_loss: Decibel::from_db(parameters.transmit_loss_db),
-        receive_gain: Gain::from_dbi(parameters.receive_gain_dbi).ok_or_else(|| {
-            Error::with_message(
-                ErrorKind::InvalidInput,
-                "receive gain is not a finite dBi value".to_string(),
-            )
-        })?,
+        receive_gain,
         receive_loss: Decibel::from_db(parameters.receive_loss_db),
         system_temperature: NoiseTemperature::from_kelvin(parameters.system_temperature_kelvin),
         bandwidth: parameters.bandwidth_hz,
@@ -203,7 +204,7 @@ pub fn link_budget(distance_meters: f64, parameters: &LinkParameters) -> Result<
         })?;
     let margin = link_margin(ebno, Decibel::from_db(parameters.required_ebno_db));
     let gain_to_temperature = gain_to_temperature(
-        Gain::from_dbi(parameters.receive_gain_dbi).expect("validated"),
+        receive_gain,
         NoiseTemperature::from_kelvin(parameters.system_temperature_kelvin),
     )
     .ok_or_else(|| Error::with_message(ErrorKind::InvalidInput, "G/T is undefined".to_string()))?;
@@ -233,31 +234,31 @@ fn validate(distance_meters: f64, parameters: &LinkParameters) -> Result<()> {
     if !distance_meters.is_finite() || distance_meters <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "distance must be a positive finite number of meters".to_string(),
+            "distance_meters must be positive and finite, in meters".to_string(),
         ));
     }
     if !parameters.frequency_hz.is_finite() || parameters.frequency_hz <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "frequency must be a positive finite number of hertz".to_string(),
+            "frequency_hz must be positive and finite, in hertz".to_string(),
         ));
     }
     if !parameters.transmit_power_watts.is_finite() || parameters.transmit_power_watts <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "transmit power must be a positive finite number of watts".to_string(),
+            "transmit_power_watts must be positive and finite, in watts".to_string(),
         ));
     }
     if !parameters.transmit_loss_db.is_finite() || !parameters.receive_loss_db.is_finite() {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "losses must be finite decibel values".to_string(),
+            "transmit_loss_db and receive_loss_db must be finite, in decibels".to_string(),
         ));
     }
     if parameters.transmit_loss_db < 0.0 || parameters.receive_loss_db < 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "losses must be entered as positive decibel values".to_string(),
+            "transmit_loss_db and receive_loss_db must be non-negative, in decibels".to_string(),
         ));
     }
     if !parameters.system_temperature_kelvin.is_finite()
@@ -265,25 +266,25 @@ fn validate(distance_meters: f64, parameters: &LinkParameters) -> Result<()> {
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "system temperature must be a positive finite number of kelvin".to_string(),
+            "system_temperature_kelvin must be positive and finite, in kelvin".to_string(),
         ));
     }
     if !parameters.bandwidth_hz.is_finite() || parameters.bandwidth_hz <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "bandwidth must be a positive finite number of hertz".to_string(),
+            "bandwidth_hz must be positive and finite, in hertz".to_string(),
         ));
     }
     if !parameters.data_rate_bps.is_finite() || parameters.data_rate_bps <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "data rate must be a positive finite number of bits per second".to_string(),
+            "data_rate_bps must be positive and finite, in bits per second".to_string(),
         ));
     }
     if !parameters.required_ebno_db.is_finite() {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "required Eb/N0 must be a finite decibel value".to_string(),
+            "required_ebno_db must be finite, in decibels".to_string(),
         ));
     }
     Ok(())

@@ -18,12 +18,12 @@
 //! in it.
 //!
 //! The two are related by a rotation of [`EarthRotationAngle`] about the
-//! common third axis. This module models the Earth's rotation with the Earth
-//! Rotation Angle, which is a function of UT1 only. It does not apply
-//! precession or nutation, because an angle accurate to a few hundredths of
-//! a degree is sufficient for pointing and coverage work and the full model
-//! needs the orientation of the celestial pole, which is a separate
-//! computation.
+//! common third axis. The simple rotation at this level uses the Earth
+//! Rotation Angle, which is a function of UT1 only; it does not apply
+//! precession or nutation, which is sufficient for work that needs a few
+//! hundredths of a degree. The [`iau2000`] submodule provides the full IAU
+//! 2000/2006 chain, including the frame bias, precession, nutation, and polar
+//! motion, when the orientation of the celestial pole matters.
 //!
 //! Source: the Earth Rotation Angle expression is from the International
 //! Astronomical Union, as given in the *IERS Conventions (2010)*, equation
@@ -54,10 +54,10 @@
 //! 转动坐标系是地心地固（ECEF）系。其第三轴是地球自转轴，第一轴随本初
 //! 子午线，故固定于地面的点在其中具有恒定坐标。
 //!
-//! 二者由绕公共第三轴转动 [`EarthRotationAngle`] 相联系。本模块用地球
-//! 自转角为地球自转建模，它仅是 UT1 的函数。它不施加岁差或章动，因为精确
-//! 到百分之几度的角对指向与覆盖工作已足够，而完整模型需要天极的取向，那是
-//! 另一项单独的计算。
+//! 二者由绕公共第三轴转动 [`EarthRotationAngle`] 相联系。本层较简单的转动
+//! 只用地球自转角，它仅是 UT1 的函数，不施加岁差或章动；这对只需要百分之几
+//! 度精度的计算已足够。需要天极取向时，[`iau2000`] 子模块给出完整的 IAU
+//! 2000/2006 链，包括坐标架偏差、岁差、章动与极移。
 //!
 //! 出处：地球自转角表达式来自国际天文学联合会，如 *IERS Conventions
 //! （2010）* 式 8.32 所给出。

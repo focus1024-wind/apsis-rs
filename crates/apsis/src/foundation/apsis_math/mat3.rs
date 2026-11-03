@@ -310,19 +310,6 @@ impl Mat3 {
         .all(|entry| entry.is_finite())
     }
 
-    /// Returns a copy of this matrix with one entry replaced.
-    ///
-    /// 返回把某一个元素替换后的矩阵副本。
-    const fn with_entry(self, row: usize, column: usize, value: f64) -> Self {
-        let mut entries = [
-            [self.m00, self.m01, self.m02],
-            [self.m10, self.m11, self.m12],
-            [self.m20, self.m21, self.m22],
-        ];
-        entries[row][column] = value;
-        Self::from_rows_raw(entries[0], entries[1], entries[2])
-    }
-
     /// Const constructor used by the associated constants.
     ///
     /// 供各关联常量使用的 const 构造函数。
@@ -345,21 +332,33 @@ impl Mul for Mat3 {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
-        let mut column = 0;
-        let mut result = Self::ZERO;
-        while column < 3 {
-            let mut row = 0;
-            while row < 3 {
-                let sum = match (self.row(row), rhs.column(column)) {
-                    (Some(lhs), Some(rhs)) => lhs.dot(rhs),
-                    _ => 0.0,
-                };
-                result = result.with_entry(row, column, sum);
-                row += 1;
-            }
-            column += 1;
-        }
-        result
+        let lhs_rows = [
+            Vec3::new(self.m00, self.m01, self.m02),
+            Vec3::new(self.m10, self.m11, self.m12),
+            Vec3::new(self.m20, self.m21, self.m22),
+        ];
+        let rhs_columns = [
+            Vec3::new(rhs.m00, rhs.m10, rhs.m20),
+            Vec3::new(rhs.m01, rhs.m11, rhs.m21),
+            Vec3::new(rhs.m02, rhs.m12, rhs.m22),
+        ];
+        Self::from_rows(
+            [
+                lhs_rows[0].dot(rhs_columns[0]),
+                lhs_rows[0].dot(rhs_columns[1]),
+                lhs_rows[0].dot(rhs_columns[2]),
+            ],
+            [
+                lhs_rows[1].dot(rhs_columns[0]),
+                lhs_rows[1].dot(rhs_columns[1]),
+                lhs_rows[1].dot(rhs_columns[2]),
+            ],
+            [
+                lhs_rows[2].dot(rhs_columns[0]),
+                lhs_rows[2].dot(rhs_columns[1]),
+                lhs_rows[2].dot(rhs_columns[2]),
+            ],
+        )
     }
 }
 

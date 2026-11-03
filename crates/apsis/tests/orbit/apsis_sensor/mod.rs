@@ -3,7 +3,9 @@
 //! 传感器视场的验证测试。
 
 use apsis::apsis_math::Vec3;
-use apsis::apsis_sensor::{ground_footprint_angle, observe_cone, observe_rectangular};
+use apsis::apsis_sensor::{
+    RectangularField, ground_footprint_angle, observe_cone, observe_rectangular,
+};
 
 const TOLERANCE: f64 = 1e-9;
 
@@ -74,31 +76,31 @@ fn the_range_limits_are_inclusive() {
 fn a_rectangular_field_uses_horizontal_and_vertical_angles() {
     let inside = Vec3::new(0.2, 0.1, 1.0);
     let outside_horizontal = Vec3::new(1.0, 0.0, 1.0);
-    let observation = observe_rectangular(
-        Vec3::ZERO,
-        Vec3::Z,
-        Vec3::Y,
-        inside,
-        15.0_f64.to_radians(),
-        10.0_f64.to_radians(),
-        0.0,
-        f64::INFINITY,
-    )
+    let observation = observe_rectangular(RectangularField {
+        origin_km: Vec3::ZERO,
+        boresight: Vec3::Z,
+        up: Vec3::Y,
+        target_km: inside,
+        half_horizontal_rad: 15.0_f64.to_radians(),
+        half_vertical_rad: 10.0_f64.to_radians(),
+        minimum_range_km: 0.0,
+        maximum_range_km: f64::INFINITY,
+    })
     .expect("valid");
     assert!(observation.visible, "{observation:?}");
     assert!(observation.horizontal_rad.unwrap().abs() < 15.0_f64.to_radians());
     assert!(observation.vertical_rad.unwrap().abs() < 10.0_f64.to_radians());
     assert!(
-        !observe_rectangular(
-            Vec3::ZERO,
-            Vec3::Z,
-            Vec3::Y,
-            outside_horizontal,
-            15.0_f64.to_radians(),
-            10.0_f64.to_radians(),
-            0.0,
-            f64::INFINITY
-        )
+        !observe_rectangular(RectangularField {
+            origin_km: Vec3::ZERO,
+            boresight: Vec3::Z,
+            up: Vec3::Y,
+            target_km: outside_horizontal,
+            half_horizontal_rad: 15.0_f64.to_radians(),
+            half_vertical_rad: 10.0_f64.to_radians(),
+            minimum_range_km: 0.0,
+            maximum_range_km: f64::INFINITY,
+        })
         .expect("valid")
         .visible
     );
@@ -106,16 +108,16 @@ fn a_rectangular_field_uses_horizontal_and_vertical_angles() {
 
 #[test]
 fn a_target_behind_the_rectangular_sensor_is_not_visible() {
-    let observation = observe_rectangular(
-        Vec3::ZERO,
-        Vec3::Z,
-        Vec3::Y,
-        Vec3::new(0.0, 0.0, -1.0),
-        30.0_f64.to_radians(),
-        30.0_f64.to_radians(),
-        0.0,
-        f64::INFINITY,
-    )
+    let observation = observe_rectangular(RectangularField {
+        origin_km: Vec3::ZERO,
+        boresight: Vec3::Z,
+        up: Vec3::Y,
+        target_km: Vec3::new(0.0, 0.0, -1.0),
+        half_horizontal_rad: 30.0_f64.to_radians(),
+        half_vertical_rad: 30.0_f64.to_radians(),
+        minimum_range_km: 0.0,
+        maximum_range_km: f64::INFINITY,
+    })
     .expect("valid");
     assert!(!observation.visible);
     assert!(!observation.within_field);
@@ -142,7 +144,17 @@ fn invalid_geometry_is_rejected() {
     assert!(observe_cone(Vec3::ZERO, Vec3::ZERO, Vec3::X, 0.1, 0.0, 1.0).is_err());
     assert!(observe_cone(Vec3::ZERO, Vec3::X, Vec3::ZERO, 0.1, 0.0, 1.0).is_err());
     assert!(
-        observe_rectangular(Vec3::ZERO, Vec3::Z, Vec3::Z, Vec3::X, 0.1, 0.1, 0.0, 1.0).is_err()
+        observe_rectangular(RectangularField {
+            origin_km: Vec3::ZERO,
+            boresight: Vec3::Z,
+            up: Vec3::Z,
+            target_km: Vec3::X,
+            half_horizontal_rad: 0.1,
+            half_vertical_rad: 0.1,
+            minimum_range_km: 0.0,
+            maximum_range_km: 1.0,
+        })
+        .is_err()
     );
     assert!(ground_footprint_angle(-1.0, 0.1).is_err());
 }

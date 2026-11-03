@@ -80,13 +80,13 @@ pub fn observe_cone(
     if !origin_km.is_finite() || !target_km.is_finite() {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "positions must be finite",
+            "origin_km and target_km must be finite, in kilometers",
         ));
     }
     if !half_angle_rad.is_finite() || !(0.0..=core::f64::consts::PI).contains(&half_angle_rad) {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "half angle must be within 0..=pi",
+            "half_angle_rad must be finite and within 0..=pi, in radians",
         ));
     }
     if !minimum_range_km.is_finite()
@@ -96,18 +96,21 @@ pub fn observe_cone(
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "range limits must satisfy 0 <= min <= max",
+            "minimum_range_km and maximum_range_km must satisfy 0 <= min <= max, in kilometers",
         ));
     }
     let boresight = boresight.normalize().ok_or_else(|| {
-        Error::with_message(ErrorKind::InvalidInput, "boresight must be non-zero")
+        Error::with_message(
+            ErrorKind::InvalidInput,
+            "boresight must be a non-zero finite vector",
+        )
     })?;
     let offset = target_km - origin_km;
     let range = offset.norm();
     if range == 0.0 {
         return Err(Error::with_message(
             ErrorKind::Undefined,
-            "target coincides with the sensor",
+            "range_km is zero: the target coincides with the sensor",
         ));
     }
     let direction = offset * (1.0 / range);
@@ -125,6 +128,45 @@ pub fn observe_cone(
     })
 }
 
+/// The pose and limits of a rectangular sensor field.
+///
+/// 矩形传感器视场的位姿与限制。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RectangularField {
+    /// Sensor origin in the Earth-fixed frame, in kilometers.
+    ///
+    /// 传感器原点，地固系，单位为千米。
+    pub origin_km: Vec3,
+    /// Boresight direction; normalized when used.
+    ///
+    /// 视轴方向；使用时归一化。
+    pub boresight: Vec3,
+    /// Up direction that defines the field frame; normalized when used.
+    ///
+    /// 定义视场坐标系的上方向；使用时归一化。
+    pub up: Vec3,
+    /// Target position in the Earth-fixed frame, in kilometers.
+    ///
+    /// 目标位置，地固系，单位为千米。
+    pub target_km: Vec3,
+    /// Horizontal half angle, in radians.
+    ///
+    /// 水平半角，单位为弧度。
+    pub half_horizontal_rad: f64,
+    /// Vertical half angle, in radians.
+    ///
+    /// 垂直半角，单位为弧度。
+    pub half_vertical_rad: f64,
+    /// Minimum accepted range, in kilometers.
+    ///
+    /// 可接受的最小距离，单位为千米。
+    pub minimum_range_km: f64,
+    /// Maximum accepted range, in kilometers; may be infinite.
+    ///
+    /// 可接受的最大距离，单位为千米；可为无穷。
+    pub maximum_range_km: f64,
+}
+
 /// Observes a target with a rectangular field of view.
 ///
 /// The horizontal and vertical angles are measured from the boresight in
@@ -136,16 +178,9 @@ pub fn observe_cone(
 ///
 /// 水平与垂直角在由视轴与上方向定义的坐标系中自视轴量起。位于传感器平面
 /// 之后的目标绝不在视场内。几何、上方向或限制不可用时返回错误。
-pub fn observe_rectangular(
-    origin_km: Vec3,
-    boresight: Vec3,
-    up: Vec3,
-    target_km: Vec3,
-    half_horizontal_rad: f64,
-    half_vertical_rad: f64,
-    minimum_range_km: f64,
-    maximum_range_km: f64,
-) -> Result<SensorObservation> {
+pub fn observe_rectangular(field: RectangularField) -> Result<SensorObservation> {
+    let half_horizontal_rad = field.half_horizontal_rad;
+    let half_vertical_rad = field.half_vertical_rad;
     if !half_horizontal_rad.is_finite()
         || !(0.0..=core::f64::consts::FRAC_PI_2).contains(&half_horizontal_rad)
         || !half_vertical_rad.is_finite()
@@ -153,28 +188,37 @@ pub fn observe_rectangular(
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "rectangular half angles must be within 0..=pi/2",
+            "half_horizontal_rad and half_vertical_rad must be within 0..=pi/2, in radians",
         ));
     }
-    let axis = boresight.normalize().ok_or_else(|| {
-        Error::with_message(ErrorKind::InvalidInput, "boresight must be non-zero")
+    let axis = field.boresight.normalize().ok_or_else(|| {
+        Error::with_message(
+            ErrorKind::InvalidInput,
+            "boresight must be a non-zero finite vector",
+        )
     })?;
-    let up = up.normalize().ok_or_else(|| {
-        Error::with_message(ErrorKind::InvalidInput, "up vector must be non-zero")
+    let up = field.up.normalize().ok_or_else(|| {
+        Error::with_message(
+            ErrorKind::InvalidInput,
+            "up must be a non-zero finite vector",
+        )
     })?;
     let right = axis.cross(up).normalize().ok_or_else(|| {
-        Error::with_message(ErrorKind::Undefined, "up is parallel to the boresight")
+        Error::with_message(
+            ErrorKind::Undefined,
+            "up is parallel to the boresight, so the field frame is undefined",
+        )
     })?;
     let vertical = right.cross(axis);
     let base = observe_cone(
-        origin_km,
+        field.origin_km,
         axis,
-        target_km,
+        field.target_km,
         0.0,
-        minimum_range_km,
-        maximum_range_km,
+        field.minimum_range_km,
+        field.maximum_range_km,
     )?;
-    let offset = target_km - origin_km;
+    let offset = field.target_km - field.origin_km;
     let range = offset.norm();
     let direction = offset * (1.0 / range);
     let forward = direction.dot(axis);
@@ -222,7 +266,7 @@ pub fn ground_footprint_angle(altitude_km: f64, half_angle_rad: f64) -> Result<f
     if !altitude_km.is_finite() || altitude_km < 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "altitude must be finite and non-negative",
+            "altitude_km must be finite and non-negative, in kilometers",
         ));
     }
     if !half_angle_rad.is_finite()
@@ -230,7 +274,7 @@ pub fn ground_footprint_angle(altitude_km: f64, half_angle_rad: f64) -> Result<f
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "half angle must be within 0..=pi/2",
+            "half_angle_rad must be within 0..=pi/2, in radians",
         ));
     }
     let radius = EARTH_RADIUS_KM + altitude_km;

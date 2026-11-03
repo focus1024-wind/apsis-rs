@@ -51,11 +51,15 @@ impl Power {
 
     /// Creates a power level from a value in watts.
     ///
-    /// A power may be zero, which represents no power, but not negative.
+    /// The value is stored as given, so the caller must pass zero or a
+    /// positive number. The constructor is `const` so that the reference
+    /// constants above can be defined from it, which is why it does not
+    /// validate.
     ///
     /// 以瓦特值创建功率电平。
     ///
-    /// 功率可以为零，表示没有功率，但不可为负。
+    /// 该值按原样保存，故调用方须传零或正数。构造函数为 `const`，以便上面的
+    /// 参考常量由它定义，因此它不做校验。
     #[must_use]
     pub const fn from_watts(watts: f64) -> Self {
         Self(watts)
@@ -71,12 +75,14 @@ impl Power {
 
     /// Creates a power level from a value in decibel watts.
     ///
-    /// A zero or negative reading cannot be expressed as a finite power, so
-    /// no validation is needed.
+    /// Returns `None` when the reading is not finite. Every finite reading
+    /// maps to a positive power; a very negative reading maps to a very small
+    /// one, so -204 dBW is about 4e-21 W rather than an error.
     ///
     /// 以分贝瓦值创建功率电平。
     ///
-    /// 零或负的读数无法表示为有限功率，故无需校验。
+    /// 读数非有限时返回 `None`。每个有限读数都映射为正功率；很负的读数映射为
+    /// 很小的功率，故 -204 dBW 约为 4e-21 W，而不是错误。
     #[must_use]
     pub fn from_dbw(decibel_watts: f64) -> Option<Self> {
         if !decibel_watts.is_finite() {

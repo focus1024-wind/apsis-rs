@@ -19,9 +19,9 @@
 //!
 //! Source: the composition follows the IAU SOFA library and its ERFA
 //! derivative. The bias and precession are `eraPmat06`, the nutation matrix
-//! is `eraNumat`, the rotation angle is `eraEra00`, the sidereal time for
-//! the equinox-based composition is `eraGmst06`, and the polar motion is
-//! `eraPom00`, composed by `eraC2t00b`.
+//! is `eraNumat`, the sidereal time for the equinox-based composition is
+//! `eraGmst06`, and the polar motion is `eraPom00`, composed by `eraC2t06a`.
+//! The CIO-based `eraC2tcio` chain is not implemented.
 //!
 //! 天球到地球坐标系的变换。
 //!
@@ -38,7 +38,8 @@
 //!
 //! 出处：该合成遵循 IAU SOFA 库及其 ERFA 衍生物。偏差与岁差是 `eraPmat06`，
 //! 章动矩阵是 `eraNumat`，自转角是 `eraEra00`，基于春分点合成的恒星时是
-//! `eraGmst06`，极移是 `eraPom00`，由 `eraC2t00b` 合成。
+//! `eraGmst06`，极移是 `eraPom00`，由 `eraC2t06a` 合成。基于天球中间原点
+//! 的 `eraC2tcio` 链未实现。
 
 use super::nutation::nutation_2000a_with_2006_adjustment;
 use super::precession::{frame_to_mean_of_date, mean_obliquity, rotation_z};
@@ -375,10 +376,10 @@ pub fn celestial_to_terrestrial_matrix(
     let t = (tt_julian_date - 2_451_545.0) / 36_525.0;
     let bias_precession_nutation = bias_precession_nutation_matrix(t);
     let sidereal = greenwich_apparent_sidereal_time(ut1_julian_date, tt_julian_date);
-    // The composition is the one `eraC2tcio` produces: the bias, precession,
+    // The composition is the one `eraC2t06a` produces: the bias, precession,
     // and nutation first, then the Earth rotation, then the polar motion,
     // with each new rotation composed on the left of the accumulator.
-    // 该合成即 `eraC2tcio` 所产生者：先是偏差、岁差与章动，然后是地球
+    // 该合成即 `eraC2t06a` 所产生者：先是偏差、岁差与章动，然后是地球
     // 自转，再是极移，每个新转动都合成到累加器的左侧。
     polar_motion.matrix() * rotation_z(sidereal) * bias_precession_nutation
 }

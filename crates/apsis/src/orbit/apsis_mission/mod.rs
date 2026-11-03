@@ -77,8 +77,8 @@ pub fn plan_hohmann_with(
     to_radius_km: f64,
     parameter: GravityParameter,
 ) -> Result<HohmannPlan> {
-    let transfer =
-        hohmann_transfer(from_radius_km, to_radius_km, parameter).map_err(maneuver_error)?;
+    let transfer = hohmann_transfer(from_radius_km, to_radius_km, parameter)
+        .map_err(|error| maneuver_error(&error))?;
     Ok(HohmannPlan {
         from_radius_km: transfer.from_radius,
         to_radius_km: transfer.to_radius,
@@ -245,7 +245,7 @@ impl MissionSequence {
     ///
     /// 变化为零或非有限时返回错误。
     pub fn impulse(mut self, delta_v_km_s: Vec3) -> Result<Self> {
-        Impulse::new(delta_v_km_s).map_err(maneuver_error)?;
+        Impulse::new(delta_v_km_s).map_err(|error| maneuver_error(&error))?;
         self.segments.push(Segment::Impulse { delta_v_km_s });
         Ok(self)
     }
@@ -293,7 +293,8 @@ impl MissionSequence {
                             "intermediate elements are not a valid elliptic orbit".to_string(),
                         )
                     })?;
-                    let impulse = Impulse::new(delta_v_km_s).map_err(maneuver_error)?;
+                    let impulse =
+                        Impulse::new(delta_v_km_s).map_err(|error| maneuver_error(&error))?;
                     let changed = State {
                         position: state.position,
                         velocity: impulse.apply_to_velocity(state.velocity),
@@ -332,6 +333,6 @@ impl MissionSequence {
     }
 }
 
-fn maneuver_error(error: ManeuverError) -> Error {
+fn maneuver_error(error: &ManeuverError) -> Error {
     Error::with_message(ErrorKind::InvalidInput, error.to_string())
 }

@@ -2,7 +2,9 @@
 //!
 //! 交会分析的验证测试。
 
-use apsis::apsis_cat::{StateSample, closest_approach, isotropic_collision_probability, relative_state};
+use apsis::apsis_cat::{
+    StateSample, closest_approach, isotropic_collision_probability, relative_state,
+};
 use apsis::apsis_kepler::{GravityParameter, KeplerianElements};
 use apsis::apsis_math::Vec3;
 
@@ -26,7 +28,7 @@ fn a_linear_relative_motion_reaches_its_closest_at_the_expected_time() {
     let mut first = Vec::new();
     let mut second = Vec::new();
     for index in 0..=10 {
-        let seconds = 10.0 * index as f64;
+        let seconds = 10.0 * f64::from(index);
         let relative_position = Vec3::new(10.0 - 0.2 * seconds, 5.0, 0.0);
         let relative_velocity = Vec3::new(-0.2, 0.0, 0.0);
         first.push(StateSample::new(
@@ -66,8 +68,8 @@ fn crossing_circular_orbits_meet_at_the_node() {
     let period = base.period(GravityParameter::WGS84);
     let steps = 120;
     for index in 0..=steps {
-        let seconds = period * index as f64 / steps as f64;
-        let mean = core::f64::consts::TAU * index as f64 / steps as f64;
+        let seconds = period * f64::from(index) / f64::from(steps);
+        let mean = core::f64::consts::TAU * f64::from(index) / f64::from(steps);
         let a = base
             .with_mean_anomaly(mean)
             .to_state(GravityParameter::WGS84)
@@ -81,9 +83,11 @@ fn crossing_circular_orbits_meet_at_the_node() {
     }
     let result = closest_approach(&first, &second).expect("valid grid");
     // At the node both positions coincide.
+    // 在交点处两个位置重合。
     assert!(result.tca_seconds < 1e-6 || (period - result.tca_seconds).abs() < 1.0);
     assert!(result.distance_km < 1e-6, "{}", result.distance_km);
     // The two circular velocities are perpendicular at the node.
+    // 两条圆轨道速度在交点处互相垂直。
     let speed = (398_600.5 / 7_000.0_f64).sqrt();
     assert!((result.relative_speed_km_s - speed * 2.0_f64.sqrt()).abs() < 1e-6);
 }
@@ -97,8 +101,8 @@ fn separated_phases_on_one_circular_orbit_keep_a_constant_chord() {
     let period = base.period(GravityParameter::WGS84);
     let steps = 90;
     for index in 0..=steps {
-        let seconds = period * index as f64 / steps as f64;
-        let mean = core::f64::consts::TAU * index as f64 / steps as f64;
+        let seconds = period * f64::from(index) / f64::from(steps);
+        let mean = core::f64::consts::TAU * f64::from(index) / f64::from(steps);
         let a = base
             .with_true_anomaly(mean)
             .to_state(GravityParameter::WGS84)
@@ -141,7 +145,6 @@ fn mismatched_or_non_uniform_grids_are_rejected() {
     assert!(closest_approach(&grid, &grid).is_err());
 }
 
-
 #[test]
 fn isotropic_collision_probability_is_bounded_and_decreases_with_miss() {
     let head_on = isotropic_collision_probability(0.0, 0.01, 1.0).expect("probability");
@@ -149,7 +152,10 @@ fn isotropic_collision_probability_is_bounded_and_decreases_with_miss() {
     assert!((0.0..=1.0).contains(&head_on));
     assert!((0.0..=1.0).contains(&offset));
     assert!(head_on > offset);
-    assert_eq!(isotropic_collision_probability(0.0, 0.0, 1.0).expect("probability"), 0.0);
+    assert_eq!(
+        isotropic_collision_probability(0.0, 0.0, 1.0).expect("probability"),
+        0.0
+    );
     assert!(isotropic_collision_probability(0.0, 0.01, 0.0).is_err());
     assert!(isotropic_collision_probability(-1.0, 0.01, 1.0).is_err());
 }
@@ -159,7 +165,9 @@ fn anisotropic_probability_matches_the_isotropic_case() {
     let miss = Vec3::new(0.0, 0.0, 0.0);
     let sigma = Vec3::new(1.0, 1.0, 1.0);
     let velocity = Vec3::new(0.0, 7.5, 0.0);
-    let anisotropic = apsis::apsis_cat::anisotropic_collision_probability(miss, sigma, velocity, 0.01).expect("anisotropic");
+    let anisotropic =
+        apsis::apsis_cat::anisotropic_collision_probability(miss, sigma, velocity, 0.01)
+            .expect("anisotropic");
     let isotropic = isotropic_collision_probability(0.0, 0.01, 1.0).expect("isotropic");
     assert!((anisotropic - isotropic).abs() / isotropic < 0.01);
 }
@@ -168,9 +176,32 @@ fn anisotropic_probability_matches_the_isotropic_case() {
 fn anisotropic_probability_responds_to_the_large_axis() {
     let miss = Vec3::new(0.0, 1.0, 0.0);
     let velocity = Vec3::new(0.0, 7.5, 0.0);
-    let tight = apsis::apsis_cat::anisotropic_collision_probability(miss, Vec3::new(0.5, 0.5, 0.5), velocity, 0.01).expect("tight");
-    let wide = apsis::apsis_cat::anisotropic_collision_probability(miss, Vec3::new(5.0, 5.0, 5.0), velocity, 0.01).expect("wide");
+    let tight = apsis::apsis_cat::anisotropic_collision_probability(
+        miss,
+        Vec3::new(0.5, 0.5, 0.5),
+        velocity,
+        0.01,
+    )
+    .expect("tight");
+    let wide = apsis::apsis_cat::anisotropic_collision_probability(
+        miss,
+        Vec3::new(5.0, 5.0, 5.0),
+        velocity,
+        0.01,
+    )
+    .expect("wide");
     assert!((wide - tight).abs() > 1e-9);
-    assert!(apsis::apsis_cat::anisotropic_collision_probability(miss, Vec3::ZERO, velocity, 0.01).is_err());
-    assert!(apsis::apsis_cat::anisotropic_collision_probability(miss, Vec3::new(1.0, 1.0, 1.0), Vec3::ZERO, 0.01).is_err());
+    assert!(
+        apsis::apsis_cat::anisotropic_collision_probability(miss, Vec3::ZERO, velocity, 0.01)
+            .is_err()
+    );
+    assert!(
+        apsis::apsis_cat::anisotropic_collision_probability(
+            miss,
+            Vec3::new(1.0, 1.0, 1.0),
+            Vec3::ZERO,
+            0.01
+        )
+        .is_err()
+    );
 }

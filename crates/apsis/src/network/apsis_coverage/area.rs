@@ -320,10 +320,17 @@ pub struct AreaAccessResult {
 /// grid point inside the polygon. This is an area-level access test, not an
 /// access test for a specific point.
 ///
+/// The reported intervals are aligned to the samples: an interval runs from
+/// the first to the last sample at which the area was visible, and a run of a
+/// single sample has zero duration and is omitted.
+///
 /// 判定多边形内至少一点可见的时刻。
 ///
 /// 当某样本的覆盖区覆盖多边形内至少一个网格点时，区域即视为可见。这是区域级
 /// 的可见性判定，而不是针对某个具体点的可见性。
+///
+/// 所报告的区间与样本对齐：区间从可见的第一个样本延伸到最后一个可见样本；只含
+/// 单个样本的可见段时长为零，被略去。
 pub fn area_access(
     grid: &CoverageGrid,
     polygon: &GeoPolygon,
@@ -354,7 +361,7 @@ pub fn area_access(
     }
     let mut intervals = Vec::new();
     let mut start: Option<f64> = None;
-    let mut last = 0.0;
+    let mut last_visible = 0.0;
     for (index, sample) in samples.iter().enumerate() {
         if !sample.is_valid() {
             return Err(Error::with_message(
@@ -380,13 +387,20 @@ pub fn area_access(
             if start.is_none() {
                 start = Some(sample.seconds);
             }
-            last = sample.seconds;
+            last_visible = sample.seconds;
         } else if let Some(begin) = start.take() {
-            intervals.push((begin, sample.seconds));
+            // Both ends of the interval are sample times, so a visible run
+            // that consists of one sample has zero duration and is omitted.
+            // 区间两端都取样本时刻，故只含一个样本的可见段时长为零，被略去。
+            if last_visible > begin {
+                intervals.push((begin, last_visible));
+            }
         }
     }
     if let Some(begin) = start {
-        intervals.push((begin, last));
+        if last_visible > begin {
+            intervals.push((begin, last_visible));
+        }
     }
     let total: f64 = intervals
         .iter()
@@ -394,8 +408,7 @@ pub fn area_access(
         .sum();
     let span = samples
         .last()
-        .map(|sample| sample.seconds - samples[0].seconds)
-        .unwrap_or(0.0);
+        .map_or(0.0, |sample| sample.seconds - samples[0].seconds);
     Ok(AreaAccessResult {
         intervals,
         total_seconds: total,

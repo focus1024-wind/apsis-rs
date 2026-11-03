@@ -270,8 +270,11 @@ fn sidereal_time_advances_by_about_a_turn_per_day() {
     // time, which is 0.9856 degrees.
     // 格林尼治视恒星时每天必须增加一整圈再加上一小量。该小量约为 3.94 分钟时间，
     // 即 0.9856 度。
-    let first = greenwich_apparent_sidereal_time(60_000.0, 60_000.0);
-    let second = greenwich_apparent_sidereal_time(60_001.0, 60_001.0);
+    // The functions take Julian dates, so the test starts from a Julian
+    // date rather than from the Modified Julian Date 60 000.
+    // 这些函数接收儒略日，故测试从儒略日开始，而不是从修正儒略日 60 000 开始。
+    let first = greenwich_apparent_sidereal_time(2_460_000.5, 2_460_000.5);
+    let second = greenwich_apparent_sidereal_time(2_460_001.5, 2_460_001.5);
     let advance = (second - first).rem_euclid(2.0 * PI);
     let degrees = advance.to_degrees();
     assert!(
@@ -317,7 +320,9 @@ fn the_polar_motion_shifts_the_earth_fixed_frame() {
     // Applying a polar motion must change the terrestrial position of a
     // fixed inertial direction.
     // 施加极移必须改变某固定惯性方向的地球位置。
-    let tt = 60_000.0;
+    // Julian date corresponding to Modified Julian Date 60 000.
+    // 修正儒略日 60 000 所对应的儒略日。
+    let tt = 60_000.0 + 2_400_000.5;
     let without = celestial_to_terrestrial_matrix(tt, tt, PolarMotion::NONE);
     let with = celestial_to_terrestrial_matrix(
         tt,

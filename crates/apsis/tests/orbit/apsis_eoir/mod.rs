@@ -18,7 +18,7 @@ fn the_planck_peak_follows_wien_displacement() {
         let mut best = low;
         let mut best_value = 0.0;
         for step in 0..20_000 {
-            let wavelength = low + (high - low) * step as f64 / 19_999.0;
+            let wavelength = low + (high - low) * f64::from(step) / 19_999.0;
             let value = planck_radiance(wavelength, temperature).expect("valid");
             if value > best_value {
                 best_value = value;

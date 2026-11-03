@@ -72,7 +72,8 @@ impl SpectralBand {
         {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "band limits must satisfy 0 < min < max".to_string(),
+                "min_micrometres and max_micrometres must satisfy 0 < min < max, in micrometres"
+                    .to_string(),
             ));
         }
         Ok(Self {
@@ -150,13 +151,13 @@ pub fn planck_radiance(wavelength_micrometres: f64, temperature_kelvin: f64) -> 
     if !wavelength_micrometres.is_finite() || wavelength_micrometres <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "wavelength must be positive and finite".to_string(),
+            "wavelength_micrometres must be positive and finite, in micrometres".to_string(),
         ));
     }
     if !temperature_kelvin.is_finite() || temperature_kelvin <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "temperature must be positive and finite".to_string(),
+            "temperature_kelvin must be positive and finite, in kelvin".to_string(),
         ));
     }
     let wavelength = wavelength_micrometres * 1e-6;
@@ -181,13 +182,13 @@ pub fn planck_radiance(wavelength_micrometres: f64, temperature_kelvin: f64) -> 
 /// 积分在 512 个区间上使用辛普森法则，对 0.1 微米以上的任何波段都能把光滑的
 /// 普朗克曲线解析到远低于百分之一的误差。结果单位为瓦特每平方米球面度。
 pub fn band_radiance(band: SpectralBand, temperature_kelvin: f64) -> Result<f64> {
+    const INTERVALS: usize = 512;
     if !temperature_kelvin.is_finite() || temperature_kelvin <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "temperature must be positive and finite".to_string(),
+            "temperature_kelvin must be positive and finite, in kelvin".to_string(),
         ));
     }
-    const INTERVALS: usize = 512;
     let start = band.min_micrometres;
     let end = band.max_micrometres;
     let step = (end - start) / INTERVALS as f64;
@@ -214,7 +215,7 @@ pub fn total_radiance(temperature_kelvin: f64) -> Result<f64> {
     if !temperature_kelvin.is_finite() || temperature_kelvin <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "temperature must be positive and finite".to_string(),
+            "temperature_kelvin must be positive and finite, in kelvin".to_string(),
         ));
     }
     Ok(STEFAN_BOLTZMANN * temperature_kelvin.powi(4) / core::f64::consts::PI)
@@ -283,7 +284,7 @@ impl EoirSensor {
         {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "sensor geometry must be positive and finite".to_string(),
+                "aperture_m, focal_length_m, and pixel_pitch_m must be positive and finite, in meters, and the pixel counts must be non-zero".to_string(),
             ));
         }
         Ok(Self {
@@ -313,7 +314,7 @@ impl EoirSensor {
     /// 返回水平视场，单位为弧度。
     #[must_use]
     pub fn fov_radians(self) -> f64 {
-        2.0 * (self.horizontal_pixels as f64 * self.pixel_pitch_m / (2.0 * self.focal_length_m))
+        2.0 * (f64::from(self.horizontal_pixels) * self.pixel_pitch_m / (2.0 * self.focal_length_m))
             .atan()
     }
 
@@ -336,7 +337,7 @@ impl EoirSensor {
         if !wavelength_micrometres.is_finite() || wavelength_micrometres <= 0.0 {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "wavelength must be positive and finite".to_string(),
+                "wavelength_micrometres must be positive and finite, in micrometres".to_string(),
             ));
         }
         Ok(1.22 * wavelength_micrometres * 1e-6 / self.aperture_m)
@@ -357,7 +358,7 @@ impl EoirSensor {
         if !range_m.is_finite() || range_m <= 0.0 {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "range must be positive and finite".to_string(),
+                "range_m must be positive and finite, in meters".to_string(),
             ));
         }
         Ok(self.ifov_radians() * range_m)
@@ -434,6 +435,11 @@ pub struct EoirAnalysis {
 /// 分析一次 EOIR 观测。
 ///
 /// 传感器、波段、距离、温度、发射率、目标尺寸或像元要求不可用时返回错误。
+// The eight inputs are the sensor, the band, the observation geometry, and the
+// radiometric quantities of one analysis. A parameter struct would not remove
+// the coupling: the same eight values would still be built at every call site.
+// 八个输入分属传感器、波段、观测几何与一次分析的辐射量。参数结构体不会消除
+// 这种耦合：同样的八个值仍要在每个调用点组装。
 #[allow(clippy::too_many_arguments)]
 pub fn analyze(
     sensor: EoirSensor,
@@ -448,25 +454,25 @@ pub fn analyze(
     if !range_m.is_finite() || range_m <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "range must be positive and finite".to_string(),
+            "range_m must be positive and finite, in meters".to_string(),
         ));
     }
     if !target_size_m.is_finite() || target_size_m <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "target size must be positive and finite".to_string(),
+            "target_size_m must be positive and finite, in meters".to_string(),
         ));
     }
     if !emissivity.is_finite() || !(0.0..=1.0).contains(&emissivity) {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "emissivity must be within 0..=1".to_string(),
+            "emissivity must be finite and within 0..=1".to_string(),
         ));
     }
     if !required_pixels.is_finite() || required_pixels <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "required pixels must be positive and finite".to_string(),
+            "required_pixels must be positive and finite".to_string(),
         ));
     }
     let gsd = sensor.gsd_m(range_m)?;

@@ -3,8 +3,8 @@
 //! 地球自转角与坐标架转动的测试。
 
 use apsis::apsis_frames::{
-    ERA_RATE_TURNS_PER_DAY, EarthRotationAngle, rotation_ecef_to_eci, rotation_eci_to_ecef,
-    ut1_days_from_j2000,
+    ERA_J2000_TURNS, ERA_RATE_TURNS_PER_DAY, EarthRotationAngle, rotation_ecef_to_eci,
+    rotation_eci_to_ecef, ut1_days_from_j2000,
 };
 use apsis::apsis_math::Vec3;
 use core::f64::consts::PI;
@@ -159,4 +159,11 @@ fn identity_angle_leaves_inertial_vectors_unchanged() {
     assert!((rotation * vector - vector).norm() < EPS);
     assert!(rotation.is_rotation(1e-12));
     assert!((rotation.determinant() - 1.0).abs() < EPS);
+}
+
+#[test]
+fn the_epoch_constant_matches_the_angle_at_j2000() {
+    let angle = EarthRotationAngle::from_ut1_days(0.0).turns();
+    assert!((angle - ERA_J2000_TURNS).abs() < 1e-15);
+    assert!((ERA_J2000_TURNS - 0.779_057_273_264_0).abs() < 1e-15);
 }

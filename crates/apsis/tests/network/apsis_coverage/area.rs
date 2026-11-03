@@ -6,6 +6,7 @@ use apsis::apsis_coverage::{
     CoverageGrid, CoverageSample, GeoPolygon, WGS84, area_access, area_coverage,
 };
 use apsis::apsis_geodesy::Geodetic;
+use apsis::apsis_math::Vec3;
 
 fn small_polygon() -> GeoPolygon {
     GeoPolygon::from_degrees(&[(-0.5, -0.5), (-0.5, 0.5), (0.5, 0.5), (0.5, -0.5)])
@@ -27,7 +28,7 @@ fn area_coverage_counts_only_points_inside_the_polygon() {
     let polygon = GeoPolygon::from_degrees(&[(-0.5, -0.5), (-0.5, 0.5), (0.5, 0.5), (0.5, -0.5)])
         .expect("valid polygon");
     let grid = CoverageGrid::from_degrees(-2.0, 2.0, -2.0, 2.0, 1.0, 1.0).expect("valid grid");
-    let center = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84);
+    let center = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84) / 1_000.0;
     let samples = [CoverageSample::new(0.0, center, 0.0)];
     let result = area_coverage(&grid, &polygon, &samples).expect("coverage");
     assert_eq!(result.total_points, 1);
@@ -41,7 +42,7 @@ fn a_polygon_without_grid_points_is_rejected() {
     let polygon =
         GeoPolygon::from_degrees(&[(80.0, 0.0), (80.0, 1.0), (81.0, 1.0)]).expect("valid polygon");
     let grid = CoverageGrid::from_degrees(-2.0, 2.0, -2.0, 2.0, 1.0, 1.0).expect("valid grid");
-    let center = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84);
+    let center = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84) / 1_000.0;
     let samples = [CoverageSample::new(0.0, center, 0.0)];
     assert!(area_coverage(&grid, &polygon, &samples).is_err());
 }
@@ -51,7 +52,7 @@ fn area_access_reports_visible_intervals() {
     let polygon = GeoPolygon::from_degrees(&[(-0.5, -0.5), (-0.5, 0.5), (0.5, 0.5), (0.5, -0.5)])
         .expect("valid polygon");
     let grid = CoverageGrid::from_degrees(-2.0, 2.0, -2.0, 2.0, 1.0, 1.0).expect("valid grid");
-    let center = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84);
+    let center = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84) / 1_000.0;
     let samples = [
         CoverageSample::new(0.0, center, 0.0),
         CoverageSample::new(60.0, center, 0.0),
@@ -60,4 +61,29 @@ fn area_access_reports_visible_intervals() {
     let result = area_access(&grid, &polygon, &samples).expect("access");
     assert_eq!(result.intervals, vec![(0.0, 120.0)]);
     assert!((result.fraction - 1.0).abs() < 1e-12);
+}
+
+#[test]
+fn area_access_intervals_end_at_the_last_visible_sample() {
+    let polygon = GeoPolygon::from_degrees(&[(-0.5, -0.5), (-0.5, 0.5), (0.5, 0.5), (0.5, -0.5)])
+        .expect("valid polygon");
+    let grid = CoverageGrid::from_degrees(-2.0, 2.0, -2.0, 2.0, 1.0, 1.0).expect("valid grid");
+    let center = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84) / 1_000.0;
+    // A position on the equator ninety degrees east is outside the footprint,
+    // so the two visible runs are separated by one invisible sample.
+    // 赤道上向东九十度的位置位于覆盖区外，故两段可见被一个不可见样本隔开。
+    let outside = Vec3::new(0.0, 7_000.0, 0.0);
+    let samples = [
+        CoverageSample::new(0.0, center, 0.0),
+        CoverageSample::new(10.0, center, 0.0),
+        CoverageSample::new(20.0, outside, 0.0),
+        CoverageSample::new(30.0, center, 0.0),
+        CoverageSample::new(40.0, center, 0.0),
+    ];
+
+    let result = area_access(&grid, &polygon, &samples).expect("access");
+
+    assert_eq!(result.intervals, vec![(0.0, 10.0), (30.0, 40.0)]);
+    assert!((result.total_seconds - 20.0).abs() < 1e-12);
+    assert!((result.fraction - 0.5).abs() < 1e-12);
 }

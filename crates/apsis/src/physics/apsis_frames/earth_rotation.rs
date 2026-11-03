@@ -8,15 +8,15 @@ use core::f64::consts::PI;
 
 /// The Earth Rotation Angle at the J2000.0 epoch, in turns.
 ///
-/// The epoch value is zero by the definition of the angle: the International
-/// Astronomical Union defines the Earth Rotation Angle to be zero at
-/// 2000-01-01T12:00:00 UT1.
+/// The epoch value is the constant term of the IAU 2000 expression: at
+/// 2000-01-01T12:00:00 UT1 the angle is 0.779 057 273 2640 turns, about
+/// 280.46 degrees, not zero.
 ///
 /// J2000.0 历元处的地球自转角，以周计。
 ///
-/// 按该角的定义，历元值就是零：国际天文学联合会把 2000-01-01T12:00:00 UT1
-/// 处的地球自转角定义为零。
-pub const ERA_J2000_TURNS: f64 = 0.0;
+/// 该历元值是 IAU 2000 表达式的常数项：在 2000-01-01T12:00:00 UT1 处该角为
+/// 0.779 057 273 2640 周，约 280.46 度，而不是零。
+pub const ERA_J2000_TURNS: f64 = 0.779_057_273_264_0;
 
 /// The rate of change of the Earth Rotation Angle, in turns per day of UT1.
 ///
@@ -103,7 +103,7 @@ impl EarthRotationAngle {
     /// epoch.
     ///
     /// The expression is linear: `theta = 0.779 057 273 2640 + 1.002 737
-    /// 909 350 795 * d`, where `d` is the interval in days. The constant
+    /// 811 911 3546 * d`, where `d` is the interval in days. The constant
     /// term of `0.779 057` turns is the angle at the epoch itself, which is
     /// about 280.46 degrees.
     ///
@@ -111,7 +111,7 @@ impl EarthRotationAngle {
     ///
     /// 返回自 J2000.0 历元起的若干 UT1 天对应的角。
     ///
-    /// 该式为线性：`theta = 0.779 057 273 2640 + 1.002 737 909 350 795 * d`，
+    /// 该式为线性：`theta = 0.779 057 273 2640 + 1.002 737 811 911 3546 * d`，
     /// 其中 `d` 是以天计的间隔。`0.779 057` 周的常数项是历元本身的角，
     /// 约为 280.46 度。
     ///

@@ -227,17 +227,20 @@ pub fn eclipse_fraction(positions_km: &[Vec3], sun_direction: Vec3) -> Result<f6
 ///
 /// The absorbed flux is the absorptivity times the sum of the direct solar
 /// flux, the albedo-reflected solar flux, and the Earth infrared flux. The
-/// plate radiates from both sides with the given emissivity, so the balance
-/// is `alpha * flux = epsilon * sigma * T^4`. The model assumes a plate
+/// model treats the plate as a single-sided radiator with the given
+/// emissivity, so the balance is `alpha * flux = epsilon * sigma * T^4`. A
+/// plate that radiates from both sides would carry half the absorbed flux
+/// per side and settle about 19 percent cooler. The model assumes a plate
 /// normal to the Sun, no conduction, and no view-factor geometry.
 ///
 /// Returns an error when a value is not finite or outside its range.
 ///
 /// 返回平板平衡温度，单位为开尔文。
 ///
-/// 吸收通量为吸收率乘以直射太阳通量、反照太阳通量与地球红外通量之和。平板
-/// 两面以给定发射率辐射，故平衡为 `alpha * flux = epsilon * sigma * T^4`。
-/// 模型假设平板正对太阳、无传导、无视角因子几何。
+/// 吸收通量为吸收率乘以直射太阳通量、反照太阳通量与地球红外通量之和。模型把
+/// 平板视为单面辐射体，发射率由参数给出，故平衡为
+/// `alpha * flux = epsilon * sigma * T^4`。若平板两面都辐射，每面只承担一半的
+/// 吸收通量，平衡温度约低 19%。模型假设平板正对太阳、无传导、无视角因子几何。
 ///
 /// 某值非有限或超出范围时返回错误。
 pub fn equilibrium_temperature(

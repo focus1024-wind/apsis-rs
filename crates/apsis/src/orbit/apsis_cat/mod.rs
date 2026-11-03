@@ -85,10 +85,16 @@ pub struct RelativeState {
     /// 横向间距，单位为千米，沿轨道法线为正。
     pub cross_track_km: f64,
     /// Radial relative velocity, in kilometers per second.
+    ///
+    /// 径向相对速度，单位为千米每秒。
     pub radial_velocity_km_s: f64,
     /// Along-track relative velocity, in kilometers per second.
+    ///
+    /// 沿迹相对速度，单位为千米每秒。
     pub along_track_velocity_km_s: f64,
     /// Cross-track relative velocity, in kilometers per second.
+    ///
+    /// 横向相对速度，单位为千米每秒。
     pub cross_track_velocity_km_s: f64,
 }
 
@@ -122,6 +128,8 @@ pub struct ClosestApproach {
     /// 最接近时刻的横向间距，单位为千米。
     pub cross_track_km: f64,
     /// RIC relative velocity at closest approach, in kilometers per second.
+    ///
+    /// 最接近时刻的 RIC 相对速度，单位为千米每秒。
     pub relative_velocity_ric_km_s: Vec3,
 }
 
@@ -164,7 +172,6 @@ pub fn relative_state(primary: StateSample, secondary: StateSample) -> Result<Re
     })
 }
 
-
 /// Estimates collision probability with a diagonal RIC covariance.
 ///
 /// The miss vector and relative velocity are expressed in the primary's RIC
@@ -206,17 +213,18 @@ pub fn anisotropic_collision_probability(
     if hard_body_radius_km == 0.0 {
         return Ok(0.0);
     }
-    let normal = relative_velocity_ric_km_s.normalize().ok_or_else(|| {
-        Error::with_message(ErrorKind::Undefined, "relative velocity is zero")
-    })?;
+    let normal = relative_velocity_ric_km_s
+        .normalize()
+        .ok_or_else(|| Error::with_message(ErrorKind::Undefined, "relative velocity is zero"))?;
     let reference = if normal.z.abs() < 0.9 {
         Vec3::new(0.0, 0.0, 1.0)
     } else {
         Vec3::new(0.0, 1.0, 0.0)
     };
-    let u = normal.cross(reference).normalize().ok_or_else(|| {
-        Error::with_message(ErrorKind::Undefined, "encounter basis is undefined")
-    })?;
+    let u = normal
+        .cross(reference)
+        .normalize()
+        .ok_or_else(|| Error::with_message(ErrorKind::Undefined, "encounter basis is undefined"))?;
     let w = normal.cross(u);
     let d1 = miss_ric_km.dot(u);
     let d2 = miss_ric_km.dot(w);
@@ -229,7 +237,7 @@ pub fn anisotropic_collision_probability(
     let cww = w.x * w.x * variance.x + w.y * w.y * variance.y + w.z * w.z * variance.z;
     let cuw = u.x * w.x * variance.x + u.y * w.y * variance.y + u.z * w.z * variance.z;
     let determinant = cuu * cww - cuw * cuw;
-    if !(determinant > 0.0) {
+    if !determinant.is_finite() || determinant <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::Undefined,
             "projected covariance is singular",

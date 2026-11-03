@@ -103,7 +103,9 @@ fn a_climb_segment_integrates_time_distance_and_fuel() {
         max_thrust_n: 60_000.0,
         tsfc_kg_per_n_s: 2.0e-5,
     };
-    let climb = apsis::apsis_aviator::climb_segment(&aircraft, 0.0, 2_000.0, 120.0, 60_000.0, 500.0).expect("climb");
+    let climb =
+        apsis::apsis_aviator::climb_segment(&aircraft, 0.0, 2_000.0, 120.0, 60_000.0, 500.0)
+            .expect("climb");
     assert!(climb.time_s > 0.0);
     assert!(climb.horizontal_distance_m > 0.0);
     assert!(climb.fuel_kg > 0.0);
@@ -121,7 +123,10 @@ fn mission_profile_combines_all_segments() {
         max_thrust_n: 60_000.0,
         tsfc_kg_per_n_s: 2.0e-5,
     };
-    let mission = apsis::apsis_aviator::mission_profile(&aircraft, 0.0, 2_000.0, 0.0, 100_000.0, 120.0, 60_000.0, 0.0, 500.0).expect("mission");
+    let mission = apsis::apsis_aviator::mission_profile(
+        &aircraft, 0.0, 2_000.0, 0.0, 100_000.0, 120.0, 60_000.0, 0.0, 500.0,
+    )
+    .expect("mission");
     assert!(mission.total_time_s > mission.cruise_time_s);
     assert!(mission.total_fuel_kg > 0.0);
     assert!(mission.total_distance_m >= 100_000.0);

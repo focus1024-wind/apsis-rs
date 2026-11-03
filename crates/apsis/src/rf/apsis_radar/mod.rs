@@ -11,30 +11,56 @@ use crate::apsis_core::{Error, ErrorKind, Result};
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RadarParameters {
     /// Carrier frequency, in hertz.
+    ///
+    /// 载波频率，单位为赫兹。
     pub frequency_hz: f64,
     /// Peak transmit power, in watts.
+    ///
+    /// 峰值发射功率，单位为瓦特。
     pub transmit_power_w: f64,
     /// Antenna gain, in decibels relative to isotropic.
+    ///
+    /// 天线增益，单位为各向同性分贝。
     pub antenna_gain_dbi: f64,
     /// Radar cross section, in square meters.
+    ///
+    /// 雷达截面积，单位为平方米。
     pub target_rcs_m2: f64,
     /// Target range, in meters.
+    ///
+    /// 目标距离，单位为米。
     pub range_m: f64,
     /// System loss, in decibels.
+    ///
+    /// 系统损耗，单位为分贝。
     pub system_loss_db: f64,
     /// Receiver bandwidth, in hertz.
+    ///
+    /// 接收机带宽，单位为赫兹。
     pub bandwidth_hz: f64,
     /// System noise temperature, in kelvin.
+    ///
+    /// 系统噪声温度，单位为开尔文。
     pub system_temperature_k: f64,
     /// Required signal-to-noise ratio, in decibels.
+    ///
+    /// 要求的信噪比，单位为分贝。
     pub required_snr_db: f64,
     /// Number of pulses integrated non-coherently.
+    ///
+    /// 非相干积累的脉冲数。
     pub integrated_pulses: f64,
     /// One-way half-power beamwidth, in degrees.
+    ///
+    /// 单程半功率波束宽度，单位为度。
     pub antenna_beamwidth_deg: f64,
     /// Antenna pointing error from the target line of sight, in degrees.
+    ///
+    /// 天线指向相对目标视线的误差，单位为度。
     pub pointing_error_deg: f64,
     /// Clutter radar cross section in the same resolution cell, in square meters.
+    ///
+    /// 同一分辨单元内的杂波雷达截面积，单位为平方米。
     pub clutter_rcs_m2: f64,
 }
 
@@ -44,31 +70,54 @@ pub struct RadarParameters {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RadarResult {
     /// Wavelength, in meters.
+    ///
+    /// 波长，单位为米。
     pub wavelength_m: f64,
     /// Received target power, in watts.
+    ///
+    /// 接收到的目标功率，单位为瓦特。
     pub received_power_w: f64,
     /// Received clutter power, in watts.
+    ///
+    /// 接收到的杂波功率，单位为瓦特。
     pub clutter_power_w: f64,
     /// Signal-to-clutter ratio, in decibels; `None` when clutter is zero.
+    ///
+    /// 信杂比，单位为分贝；杂波为零时为 `None`。
     pub signal_to_clutter_db: Option<f64>,
     /// Receiver noise power, in watts.
+    ///
+    /// 接收机噪声功率，单位为瓦特。
     pub noise_power_w: f64,
     /// Single-pulse signal-to-noise ratio, in decibels.
+    ///
+    /// 单脉冲信噪比，单位为分贝。
     pub single_pulse_snr_db: f64,
     /// One-way antenna pattern loss, in decibels.
+    ///
+    /// 单程天线方向图损耗，单位为分贝。
     pub pattern_loss_db: f64,
     /// Effective antenna gain after pointing loss, in dBi.
+    ///
+    /// 扣除指向损耗后的有效天线增益，单位为 dBi。
     pub effective_gain_dbi: f64,
     /// Integration gain, in decibels.
+    ///
+    /// 积累增益，单位为分贝。
     pub integration_gain_db: f64,
     /// Integrated signal-to-noise ratio, in decibels.
+    ///
+    /// 积累后的信噪比，单位为分贝。
     pub snr_db: f64,
     /// Maximum detection range for the required SNR, in meters.
+    ///
+    /// 满足要求信噪比的最大探测距离，单位为米。
     pub max_range_m: f64,
     /// Maximum detection range for the required SNR, in kilometers.
+    ///
+    /// 满足要求信噪比的最大探测距离，单位为千米。
     pub max_range_km: f64,
 }
-
 
 /// Radar search-volume parameters.
 ///
@@ -76,14 +125,24 @@ pub struct RadarResult {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RadarSearchParameters {
     /// Azimuth search span, in degrees.
+    ///
+    /// 方位搜索范围，单位为度。
     pub azimuth_span_deg: f64,
     /// Elevation search span, in degrees.
+    ///
+    /// 仰角搜索范围，单位为度。
     pub elevation_span_deg: f64,
     /// Elevation of the search-volume centre, in degrees.
+    ///
+    /// 搜索空域中心的仰角，单位为度。
     pub elevation_center_deg: f64,
     /// One-way half-power beamwidth, in degrees.
+    ///
+    /// 单程半功率波束宽度，单位为度。
     pub beamwidth_deg: f64,
     /// Dwell time per beam position, in seconds.
+    ///
+    /// 每个波束位置的驻留时间，单位为秒。
     pub dwell_time_s: f64,
 }
 
@@ -93,16 +152,28 @@ pub struct RadarSearchParameters {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RadarSearchResult {
     /// Beam solid angle, in steradians.
+    ///
+    /// 波束立体角，单位为球面度。
     pub beam_solid_angle_sr: f64,
     /// Search-volume solid angle, in steradians.
+    ///
+    /// 搜索空域立体角，单位为球面度。
     pub search_solid_angle_sr: f64,
     /// Number of beam positions in the search volume.
+    ///
+    /// 搜索空域内的波束位置数。
     pub beam_positions: f64,
     /// Time to cover the search volume once, in seconds.
+    ///
+    /// 扫过搜索空域一次的时间，单位为秒。
     pub frame_time_s: f64,
     /// Revisit rate, in hertz.
+    ///
+    /// 重访率，单位为赫兹。
     pub revisit_rate_hz: f64,
     /// Solid angle searched per second, in steradians per second.
+    ///
+    /// 每秒搜索的立体角，单位为球面度每秒。
     pub search_rate_sr_s: f64,
 }
 
@@ -115,25 +186,28 @@ pub struct RadarSearchResult {
 ///
 /// 搜索空域取仰角上下限之间的球面矩形，波束立体角用波束宽度平方近似。
 pub fn radar_search(parameters: RadarSearchParameters) -> Result<RadarSearchResult> {
-    let values = [
-        parameters.azimuth_span_deg,
+    require_positive("azimuth_span_deg", "degrees", parameters.azimuth_span_deg)?;
+    require_positive(
+        "elevation_span_deg",
+        "degrees",
         parameters.elevation_span_deg,
+    )?;
+    require_finite(
+        "elevation_center_deg",
+        "degrees",
         parameters.elevation_center_deg,
-        parameters.beamwidth_deg,
-        parameters.dwell_time_s,
-    ];
-    if values.iter().any(|value| !value.is_finite())
-        || parameters.azimuth_span_deg <= 0.0
-        || parameters.elevation_span_deg <= 0.0
-        || parameters.beamwidth_deg <= 0.0
-        || parameters.dwell_time_s <= 0.0
-        || !(-90.0..=90.0).contains(&parameters.elevation_center_deg)
-    {
+    )?;
+    if !(-90.0..=90.0).contains(&parameters.elevation_center_deg) {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "search parameters must be finite and positive",
+            format!(
+                "elevation_center_deg must be within -90..=90 (degrees), got {}",
+                parameters.elevation_center_deg
+            ),
         ));
     }
+    require_positive("beamwidth_deg", "degrees", parameters.beamwidth_deg)?;
+    require_positive("dwell_time_s", "s", parameters.dwell_time_s)?;
     let half_span = (parameters.elevation_span_deg / 2.0).to_radians();
     let center = parameters.elevation_center_deg.to_radians();
     let low = (center - half_span).max(-core::f64::consts::FRAC_PI_2);
@@ -158,7 +232,6 @@ pub fn radar_search(parameters: RadarSearchParameters) -> Result<RadarSearchResu
         search_rate_sr_s: search_solid_angle_sr / frame_time_s,
     })
 }
-
 
 /// Required SNR for a target detection probability using Albersheim's equation.
 ///
@@ -191,8 +264,10 @@ pub fn albersheim_required_snr_db(pd: f64, pfa: f64, pulses: f64) -> Result<f64>
     let a = (0.62 / pfa).ln();
     let b = (pd / (1.0 - pd)).ln();
     let n_term = 6.2 + 4.54 / (pulses + 0.44).sqrt();
-    Ok(-5.0 * pulses.log10()
-        + n_term * (a + 0.12 * a * b + 1.7 * b).max(f64::MIN_POSITIVE).log10())
+    Ok(
+        -5.0 * pulses.log10()
+            + n_term * (a + 0.12 * a * b + 1.7 * b).max(f64::MIN_POSITIVE).log10(),
+    )
 }
 
 /// Estimates detection probability for an integrated SNR.
@@ -210,11 +285,12 @@ pub fn detection_probability(snr_db: f64, pfa: f64, pulses: f64) -> Result<f64> 
         ));
     }
     // Validate the fixed parameters once.
+    // 一次性校验固定参数。
     albersheim_required_snr_db(0.5, pfa, pulses)?;
     let mut low = 1.0e-9;
     let mut high = 1.0 - 1.0e-9;
     for _ in 0..80 {
-        let middle = 0.5 * (low + high);
+        let middle = f64::midpoint(low, high);
         let required = albersheim_required_snr_db(middle, pfa, pulses)?;
         if required <= snr_db {
             low = middle;
@@ -222,9 +298,8 @@ pub fn detection_probability(snr_db: f64, pfa: f64, pulses: f64) -> Result<f64> 
             high = middle;
         }
     }
-    Ok(0.5 * (low + high))
+    Ok(f64::midpoint(low, high))
 }
-
 
 /// Returns the cumulative detection probability over several independent scans.
 ///
@@ -242,6 +317,59 @@ pub fn cumulative_detection_probability(pd: f64, scans: f64) -> Result<f64> {
         ));
     }
     Ok(1.0 - (1.0 - pd).powf(scans))
+}
+
+/// Returns an error naming a field and its unit when a value is not finite.
+///
+/// 当某值非有限时返回一个指明字段与单位的错误。
+fn require_finite(name: &str, unit: &str, value: f64) -> Result<()> {
+    if !value.is_finite() {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            format!("{name} must be finite ({unit}), got {value}"),
+        ));
+    }
+    Ok(())
+}
+
+/// Returns an error naming a field and its unit when a value is not positive.
+///
+/// 当某值非正时返回一个指明字段与单位的错误。
+fn require_positive(name: &str, unit: &str, value: f64) -> Result<()> {
+    if !value.is_finite() || value <= 0.0 {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            format!("{name} must be positive and finite ({unit}), got {value}"),
+        ));
+    }
+    Ok(())
+}
+
+/// Returns an error naming a field and its unit when a value is negative.
+///
+/// 当某值为负时返回一个指明字段与单位的错误。
+fn require_non_negative(name: &str, unit: &str, value: f64) -> Result<()> {
+    if !value.is_finite() || value < 0.0 {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            format!("{name} must be non-negative and finite ({unit}), got {value}"),
+        ));
+    }
+    Ok(())
+}
+
+/// Returns an error naming a field and its unit when a value is below a
+/// minimum.
+///
+/// 当某值低于最小值时返回一个指明字段与单位的错误。
+fn require_at_least(name: &str, unit: &str, value: f64, minimum: f64) -> Result<()> {
+    if !value.is_finite() || value < minimum {
+        return Err(Error::with_message(
+            ErrorKind::InvalidInput,
+            format!("{name} must be at least {minimum} and finite ({unit}), got {value}"),
+        ));
+    }
+    Ok(())
 }
 
 /// Computes a monostatic radar budget.
@@ -265,41 +393,35 @@ pub fn cumulative_detection_probability(pd: f64, scans: f64) -> Result<f64> {
 ///
 /// 噪声功率为 `k T B`。最大距离由同一方程在要求 SNR 下反解得到。
 pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
-    let finite = [
-        parameters.frequency_hz,
-        parameters.transmit_power_w,
-        parameters.antenna_gain_dbi,
-        parameters.target_rcs_m2,
-        parameters.range_m,
-        parameters.system_loss_db,
-        parameters.bandwidth_hz,
-        parameters.system_temperature_k,
-        parameters.required_snr_db,
+    require_positive("frequency_hz", "Hz", parameters.frequency_hz)?;
+    require_positive("transmit_power_w", "W", parameters.transmit_power_w)?;
+    require_finite("antenna_gain_dbi", "dBi", parameters.antenna_gain_dbi)?;
+    require_positive("target_rcs_m2", "m^2", parameters.target_rcs_m2)?;
+    require_positive("range_m", "m", parameters.range_m)?;
+    require_finite("system_loss_db", "dB", parameters.system_loss_db)?;
+    require_positive("bandwidth_hz", "Hz", parameters.bandwidth_hz)?;
+    require_positive("system_temperature_k", "K", parameters.system_temperature_k)?;
+    require_finite("required_snr_db", "dB", parameters.required_snr_db)?;
+    require_at_least(
+        "integrated_pulses",
+        "pulses",
         parameters.integrated_pulses,
+        1.0,
+    )?;
+    require_positive(
+        "antenna_beamwidth_deg",
+        "degrees",
         parameters.antenna_beamwidth_deg,
+    )?;
+    require_non_negative(
+        "pointing_error_deg",
+        "degrees",
         parameters.pointing_error_deg,
-        parameters.clutter_rcs_m2,
-    ];
-    if finite.iter().any(|value| !value.is_finite())
-        || parameters.frequency_hz <= 0.0
-        || parameters.transmit_power_w <= 0.0
-        || parameters.target_rcs_m2 <= 0.0
-        || parameters.range_m <= 0.0
-        || parameters.bandwidth_hz <= 0.0
-        || parameters.system_temperature_k <= 0.0
-        || parameters.integrated_pulses < 1.0
-        || parameters.antenna_beamwidth_deg <= 0.0
-        || parameters.pointing_error_deg < 0.0
-        || parameters.clutter_rcs_m2 < 0.0
-    {
-        return Err(Error::with_message(
-            ErrorKind::InvalidInput,
-            "radar parameters must be finite and positive",
-        ));
-    }
+    )?;
+    require_non_negative("clutter_rcs_m2", "m^2", parameters.clutter_rcs_m2)?;
     let wavelength_m = SPEED_OF_LIGHT / parameters.frequency_hz;
-    let pattern_loss_db = 12.0
-        * (parameters.pointing_error_deg / parameters.antenna_beamwidth_deg).powi(2);
+    let pattern_loss_db =
+        12.0 * (parameters.pointing_error_deg / parameters.antenna_beamwidth_deg).powi(2);
     let effective_gain_dbi = parameters.antenna_gain_dbi - pattern_loss_db;
     let gain = 10.0_f64.powf(effective_gain_dbi / 10.0);
     let loss = 10.0_f64.powf(parameters.system_loss_db / 10.0);
@@ -309,25 +431,21 @@ pub fn radar_budget(parameters: RadarParameters) -> Result<RadarResult> {
         * wavelength_m
         * wavelength_m
         * parameters.target_rcs_m2;
-    let received_power_w = numerator
-        / ((4.0 * core::f64::consts::PI).powi(3) * parameters.range_m.powi(4) * loss);
+    let received_power_w =
+        numerator / ((4.0 * core::f64::consts::PI).powi(3) * parameters.range_m.powi(4) * loss);
     let clutter_power_w = received_power_w * parameters.clutter_rcs_m2 / parameters.target_rcs_m2;
     let signal_to_clutter_db = if parameters.clutter_rcs_m2 > 0.0 {
         Some(10.0 * (parameters.target_rcs_m2 / parameters.clutter_rcs_m2).log10())
     } else {
         None
     };
-    let noise_power_w =
-        BOLTZMANN * parameters.system_temperature_k * parameters.bandwidth_hz;
+    let noise_power_w = BOLTZMANN * parameters.system_temperature_k * parameters.bandwidth_hz;
     let single_pulse_snr_db = 10.0 * (received_power_w / noise_power_w).log10();
     let integration_gain_db = 10.0 * parameters.integrated_pulses.log10();
     let snr_db = single_pulse_snr_db + integration_gain_db;
     let required_snr = 10.0_f64.powf(parameters.required_snr_db / 10.0);
     let max_range_m = (numerator * parameters.integrated_pulses
-        / ((4.0 * core::f64::consts::PI).powi(3)
-            * loss
-            * noise_power_w
-            * required_snr))
+        / ((4.0 * core::f64::consts::PI).powi(3) * loss * noise_power_w * required_snr))
         .powf(0.25);
     Ok(RadarResult {
         wavelength_m,
@@ -381,7 +499,11 @@ mod tests {
     #[test]
     fn snr_falls_by_twelve_db_when_range_doubles() {
         let near = radar_budget(parameters()).expect("near");
-        let far = radar_budget(RadarParameters { range_m: 200_000.0, ..parameters() }).expect("far");
+        let far = radar_budget(RadarParameters {
+            range_m: 200_000.0,
+            ..parameters()
+        })
+        .expect("far");
         assert!((near.snr_db - far.snr_db - 12.041).abs() < 0.01);
     }
 
@@ -389,7 +511,11 @@ mod tests {
     fn clutter_reduces_the_signal_to_clutter_ratio() {
         let clear = radar_budget(parameters()).expect("clear");
         assert_eq!(clear.signal_to_clutter_db, None);
-        let cluttered = radar_budget(RadarParameters { clutter_rcs_m2: 10.0, ..parameters() }).expect("clutter");
+        let cluttered = radar_budget(RadarParameters {
+            clutter_rcs_m2: 10.0,
+            ..parameters()
+        })
+        .expect("clutter");
         assert!((cluttered.signal_to_clutter_db.expect("ratio") + 10.0).abs() < 1e-9);
         assert!((cluttered.clutter_power_w / cluttered.received_power_w - 10.0).abs() < 1e-12);
     }
@@ -428,7 +554,8 @@ mod tests {
             elevation_center_deg: 20.0,
             beamwidth_deg: 2.0,
             dwell_time_s: 0.01,
-        }).expect("search");
+        })
+        .expect("search");
         assert!(result.beam_positions > 1.0);
         assert!(result.frame_time_s > 0.0);
         assert!((result.frame_time_s - result.beam_positions * 0.01).abs() < 1e-9);
@@ -443,39 +570,80 @@ mod tests {
             elevation_center_deg: 20.0,
             beamwidth_deg: 4.0,
             dwell_time_s: 0.01,
-        }).expect("wide");
+        })
+        .expect("wide");
         let narrow = radar_search(RadarSearchParameters {
             azimuth_span_deg: 360.0,
             elevation_span_deg: 10.0,
             elevation_center_deg: 20.0,
             beamwidth_deg: 2.0,
             dwell_time_s: 0.01,
-        }).expect("narrow");
+        })
+        .expect("narrow");
         assert!(narrow.beam_positions > wide.beam_positions * 3.5);
     }
 
     #[test]
     fn invalid_parameters_are_rejected() {
-        assert!(radar_budget(RadarParameters { frequency_hz: 0.0, ..parameters() }).is_err());
-        assert!(radar_budget(RadarParameters { target_rcs_m2: -1.0, ..parameters() }).is_err());
-        assert!(radar_budget(RadarParameters { range_m: f64::NAN, ..parameters() }).is_err());
-        assert!(radar_budget(RadarParameters { integrated_pulses: 0.5, ..parameters() }).is_err());
-        assert!(radar_budget(RadarParameters { antenna_beamwidth_deg: 0.0, ..parameters() }).is_err());
-        assert!(radar_search(RadarSearchParameters {
-            azimuth_span_deg: 0.0,
-            elevation_span_deg: 10.0,
-            elevation_center_deg: 20.0,
-            beamwidth_deg: 2.0,
-            dwell_time_s: 0.01,
-        }).is_err());
+        assert!(
+            radar_budget(RadarParameters {
+                frequency_hz: 0.0,
+                ..parameters()
+            })
+            .is_err()
+        );
+        assert!(
+            radar_budget(RadarParameters {
+                target_rcs_m2: -1.0,
+                ..parameters()
+            })
+            .is_err()
+        );
+        assert!(
+            radar_budget(RadarParameters {
+                range_m: f64::NAN,
+                ..parameters()
+            })
+            .is_err()
+        );
+        assert!(
+            radar_budget(RadarParameters {
+                integrated_pulses: 0.5,
+                ..parameters()
+            })
+            .is_err()
+        );
+        assert!(
+            radar_budget(RadarParameters {
+                antenna_beamwidth_deg: 0.0,
+                ..parameters()
+            })
+            .is_err()
+        );
+        assert!(
+            radar_search(RadarSearchParameters {
+                azimuth_span_deg: 0.0,
+                elevation_span_deg: 10.0,
+                elevation_center_deg: 20.0,
+                beamwidth_deg: 2.0,
+                dwell_time_s: 0.01,
+            })
+            .is_err()
+        );
     }
 
     #[test]
     fn pointing_error_reduces_gain_and_range() {
         let on_axis = radar_budget(parameters()).expect("on axis");
-        let off_axis = radar_budget(RadarParameters { pointing_error_deg: 2.0, ..parameters() }).expect("off axis");
+        let off_axis = radar_budget(RadarParameters {
+            pointing_error_deg: 2.0,
+            ..parameters()
+        })
+        .expect("off axis");
         assert!((off_axis.pattern_loss_db - 12.0).abs() < 1e-9);
-        assert!((off_axis.effective_gain_dbi - (parameters().antenna_gain_dbi - 12.0)).abs() < 1e-9);
+        assert!(
+            (off_axis.effective_gain_dbi - (parameters().antenna_gain_dbi - 12.0)).abs() < 1e-9
+        );
         let ratio = off_axis.max_range_km / on_axis.max_range_km;
         assert!((ratio - 10.0_f64.powf(-24.0 / 40.0)).abs() < 1e-9);
     }
@@ -483,7 +651,11 @@ mod tests {
     #[test]
     fn pulse_integration_raises_snr_and_range() {
         let single = radar_budget(parameters()).expect("single pulse");
-        let integrated = radar_budget(RadarParameters { integrated_pulses: 100.0, ..parameters() }).expect("integrated");
+        let integrated = radar_budget(RadarParameters {
+            integrated_pulses: 100.0,
+            ..parameters()
+        })
+        .expect("integrated");
         assert!((integrated.integration_gain_db - 20.0).abs() < 1e-9);
         assert!((integrated.snr_db - single.single_pulse_snr_db - 20.0).abs() < 1e-9);
         let ratio = integrated.max_range_km / single.max_range_km;

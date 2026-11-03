@@ -68,17 +68,13 @@ impl Pass {
         self.peak_seconds - self.rise_seconds
     }
 
-    /// Returns the elevation at a time within the pass, when the caller can
-    /// supply it.
+    /// Returns true when a time lies within the pass.
     ///
-    /// The pass stores only the peak, so this helper reports the stored
-    /// values at the three defining times and defers to the caller's
-    /// elevation function otherwise.
+    /// The interval is closed: the rise and set times are both included.
     ///
-    /// 返回过境内某时刻的仰角，当调用方能提供它时。
+    /// 当某时刻位于该过境之内时返回真。
     ///
-    /// 过境只保存峰值，故该辅助函数在三个界定时刻报告所存的值，其余
-    /// 情形交由调用方的仰角函数。
+    /// 区间为闭区间：升起与降落时刻都包含在内。
     #[must_use]
     pub fn contains(&self, seconds: f64) -> bool {
         seconds >= self.rise_seconds && seconds <= self.set_seconds

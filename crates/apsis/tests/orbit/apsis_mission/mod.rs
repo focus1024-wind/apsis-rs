@@ -66,6 +66,7 @@ fn a_hohmann_sequence_reaches_the_target_circular_orbit() {
         .run()
         .expect("runs");
     // At apoapsis the radius is the target radius.
+    // 在远地点处半径即目标半径。
     assert!((first.final_state.position.norm() - to).abs() < 1e-6);
     let second_direction = first.final_state.velocity.normalize().expect("direction");
     let second = MissionSequence::new(first.final_elements, GravityParameter::WGS84)

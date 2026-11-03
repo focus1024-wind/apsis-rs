@@ -111,7 +111,7 @@ fn an_impulse_changes_only_the_velocity() {
     let impulse = Impulse::along(velocity, 0.1).expect("valid");
     assert!((impulse.magnitude() - 0.1).abs() < 1e-12);
     let changed = impulse.apply_to_velocity(velocity);
-    assert!((changed - velocity).norm() - 0.1 < 1e-12);
+    assert!(((changed - velocity).norm() - 0.1).abs() < 1e-12);
     assert!(changed.norm() > velocity.norm());
 }
 
