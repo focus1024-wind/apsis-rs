@@ -91,10 +91,10 @@ fn a_task_that_does_not_fit_is_deferred() {
     let result = Planner::new().schedule(&tasks, &resources);
     assert!(!result.is_complete());
     assert_eq!(result.deferred(), vec![TaskId::new(0)]);
-    assert_eq!(
+    assert!(matches!(
         result.outcome_of(TaskId::new(0)).expect("reported").state,
-        TaskState::Deferred
-    );
+        TaskState::Deferred { .. }
+    ));
     assert!(result.schedule.is_empty());
 }
 
@@ -498,4 +498,19 @@ fn the_infeasible_task_list_excludes_the_merely_deferred() {
     ];
     let infeasible = infeasible_tasks(&tasks, &resources);
     assert_eq!(infeasible, vec![TaskId::new(1), TaskId::new(2)]);
+}
+
+#[test]
+fn a_task_without_requirements_is_placed_at_the_schedule_origin() {
+    let resources = ResourceSet::from_resources(vec![resource(0, 1.0)]).expect("one");
+    let tasks = [Task::new(TaskId::new(0), 60.0)];
+
+    let result = Planner::new().schedule(&tasks, &resources);
+
+    assert_eq!(result.scheduled(), vec![TaskId::new(0)]);
+    let placement = result
+        .schedule
+        .placement_of(TaskId::new(0))
+        .expect("placed at the origin");
+    assert_eq!(placement.start, 0.0);
 }

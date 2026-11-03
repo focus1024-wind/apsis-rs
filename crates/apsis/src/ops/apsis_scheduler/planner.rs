@@ -112,7 +112,7 @@ impl SchedulingResult {
     pub fn deferred(&self) -> Vec<TaskId> {
         self.outcomes
             .iter()
-            .filter(|outcome| outcome.state == TaskState::Deferred)
+            .filter(|outcome| matches!(outcome.state, TaskState::Deferred { .. }))
             .map(|outcome| outcome.task)
             .collect()
     }
@@ -440,12 +440,17 @@ impl Planner {
             let earliest = match Self::precedence_floor(id, tasks, precedence, &schedule, &states) {
                 Ok(floor) => floor,
                 Err(reason) => {
-                    set_state(&mut states, id, TaskState::Deferred);
+                    set_state(
+                        &mut states,
+                        id,
+                        TaskState::Deferred {
+                            reason: reason.clone(),
+                        },
+                    );
                     outcomes.push(PlanOutcome {
                         task: id,
-                        state: TaskState::Deferred,
+                        state: TaskState::Deferred { reason },
                     });
-                    let _ = reason;
                     deferred.push(id);
                     continue;
                 }
@@ -489,10 +494,20 @@ impl Planner {
                     }
                 }
             } else {
-                set_state(&mut states, id, TaskState::Deferred);
+                let reason = format!(
+                    "no feasible start for the task in its window; window runs from {} to {}",
+                    task.earliest_start, task.latest_end
+                );
+                set_state(
+                    &mut states,
+                    id,
+                    TaskState::Deferred {
+                        reason: reason.clone(),
+                    },
+                );
                 outcomes.push(PlanOutcome {
                     task: id,
-                    state: TaskState::Deferred,
+                    state: TaskState::Deferred { reason },
                 });
                 deferred.push(id);
             }

@@ -93,13 +93,23 @@ impl Session {
         // 时间线相对于场景原点，故历元被加到每个事件时间上。若无该偏移，
         // 引擎在投递第一个事件时会把时钟往回移。
         let epoch = scenario.epoch();
+        let mut recorder = Recorder::new();
         for (time, activity) in simulation.timeline() {
-            engine.schedule(epoch + time, *activity);
+            let scheduled_at = epoch + time;
+            if engine.schedule(scheduled_at, *activity).is_none() {
+                // The engine refuses a negative or non-finite time. Such an
+                // activity cannot be run, so it is recorded as a warning
+                // rather than disappearing from the run.
+                // 引擎拒绝负或非有限的时刻。这样的活动无法运行，故记为警告，
+                // 而不是从运行中无声消失。
+                recorder.warn(
+                    scheduled_at,
+                    "activity dropped: its time is not finite and non-negative",
+                    scheduled_at,
+                );
+            }
         }
-        Self {
-            engine,
-            recorder: Recorder::new(),
-        }
+        Self { engine, recorder }
     }
 
     /// Returns the engine, for a caller that needs its state between calls.

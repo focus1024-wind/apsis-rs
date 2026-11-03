@@ -338,13 +338,19 @@ fn epoch_field(line: &str, first: usize, last: usize, line_number: usize) -> Res
     };
 
     // The field is a two digit year followed by three digits of day of year
-    // and then a fraction of that day.
-    // 该字段为两位数年份，后接三位年日与该日的小数部分。
-    if text.len() < 5 {
+    // and then a fraction of that day. The split is done on characters rather
+    // than on bytes so that a malformed non-ASCII field is reported as an
+    // invalid field instead of panicking inside a string slice.
+    // 该字段为两位数年份，后接三位年日与该日的小数部分。切分按字符而非字节
+    // 进行，使含非 ASCII 字符的畸形字段报为无效字段，而不是在字符串切片处
+    // panic。
+    let characters: Vec<char> = text.chars().collect();
+    if characters.len() < 5 {
         return Err(invalid(format!("epoch {text:?} is too short")));
     }
-    let (year_digits, rest) = text.split_at(2);
-    let (day_digits, fraction_digits) = rest.split_at(3);
+    let year_digits: String = characters[..2].iter().collect();
+    let day_digits: String = characters[2..5].iter().collect();
+    let fraction_digits: String = characters[5..].iter().collect();
     if !year_digits.chars().all(|c| c.is_ascii_digit())
         || !day_digits.chars().all(|c| c.is_ascii_digit())
     {
@@ -371,7 +377,9 @@ fn epoch_field(line: &str, first: usize, last: usize, line_number: usize) -> Res
         // the parse would see two decimal points.
         // 该字段显式写出小数点，故小数部分以点开头。构造数值前先去掉它，否则
         // 解析会遇到两个小数点。
-        let digits = fraction_digits.strip_prefix('.').unwrap_or(fraction_digits);
+        let digits = fraction_digits
+            .strip_prefix('.')
+            .unwrap_or(&fraction_digits);
         format!("0.{digits}")
             .parse::<f64>()
             .map_err(|_| invalid(format!("day fraction {fraction_digits:?}")))?

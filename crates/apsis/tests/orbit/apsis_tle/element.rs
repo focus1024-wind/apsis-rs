@@ -180,3 +180,18 @@ fn a_negative_satellite_number_is_rejected() {
     assert_eq!(error.kind(), ElementErrorKind::InvalidField);
     assert_eq!(error.columns(), Some((3, 7)));
 }
+
+#[test]
+fn a_non_ascii_epoch_is_reported_instead_of_panicking() {
+    // The second year digit is replaced with a two byte character, so a byte
+    // slice at that column would fall inside the character. The checksum is
+    // repaired, so the parser reaches the epoch field.
+    // 年份的第二位被换成两字节字符，故按字节在该列切片会落在字符内部。校验和
+    // 已修复，故解析器会到达历元字段。
+    let text = mutate(ISS, 0, 19, 'é');
+
+    let error = TwoLineElement::parse(&text).expect_err("epoch is not numeric");
+    assert_eq!(error.kind(), ElementErrorKind::InvalidField);
+    assert_eq!(error.line(), 1);
+    assert_eq!(error.columns(), Some((19, 32)));
+}

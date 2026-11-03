@@ -283,12 +283,16 @@ fn relocate_pair(
     if waiting_start.is_none() {
         // Nothing changed, so restore the blocker.
         // 没有任何改变，故恢复阻塞者。
-        let _ = schedule.place(blocker, blocker_start);
+        if schedule.place(blocker, blocker_start).is_err() {
+            debug_assert!(false, "restoring the blocker must not fail");
+        }
         return false;
     }
     let waiting_start = waiting_start.expect("checked above");
     if schedule.place(waiting, waiting_start).is_err() {
-        let _ = schedule.place(blocker, blocker_start);
+        if schedule.place(blocker, blocker_start).is_err() {
+            debug_assert!(false, "restoring the blocker must not fail");
+        }
         return false;
     }
 
@@ -305,15 +309,23 @@ fn relocate_pair(
         // 搜索已判定该放置可行，故此处的失败只可能源于阻塞者已被
         // 放置，而它并未被放置。恢复原安排并报告失败，以免留下
         // 半完成的移动。
-        let _ = schedule.unplace(waiting.id);
-        let _ = schedule.place(blocker, blocker_start);
+        if schedule.unplace(waiting.id).is_err() {
+            debug_assert!(false, "unplacing the waiting task must not fail");
+        }
+        if schedule.place(blocker, blocker_start).is_err() {
+            debug_assert!(false, "restoring the blocker must not fail");
+        }
         false
     } else {
         // The blocker has nowhere to go, so the move is abandoned and
         // the original arrangement restored.
         // 阻塞者无处可去，故放弃该次移动并恢复原安排。
-        let _ = schedule.unplace(waiting.id);
-        let _ = schedule.place(blocker, blocker_start);
+        if schedule.unplace(waiting.id).is_err() {
+            debug_assert!(false, "unplacing the waiting task must not fail");
+        }
+        if schedule.place(blocker, blocker_start).is_err() {
+            debug_assert!(false, "restoring the blocker must not fail");
+        }
         false
     }
 }

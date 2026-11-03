@@ -272,21 +272,25 @@ impl<T> Engine<T> {
                 }
             }
 
-            let Some(event) = self.queue.pop() else {
+            // The time limit is checked on the next event before taking it,
+            // so the event stays in the queue with its original sequence
+            // number. Re-scheduling a popped event would give it a new
+            // sequence and change the order among events at the same instant.
+            // 时限在取出下一个事件之前检查，故该事件以原序号留在队列中。
+            // 把已取出的事件重新调度会赋予新序号，并改变同一瞬时事件之间的
+            // 次序。
+            let Some(next_time) = self.queue.next_time() else {
                 break StopReason::QueueEmpty;
             };
-
-            // The time limit leaves the event in the queue rather than
-            // discarding it, so the caller can inspect what remained. The
-            // event was already popped, so it is put back.
-            // 时限把事件留在队列中而非丢弃，使调用方能检查剩余了哪些。
-            // 该事件已被弹出，故将其放回。
             if let Some(limit) = self.time_limit {
-                if event.time > limit {
-                    self.queue.schedule(event.time, event.payload);
+                if next_time > limit {
                     break StopReason::TimeLimit;
                 }
             }
+
+            let Some(event) = self.queue.pop() else {
+                break StopReason::QueueEmpty;
+            };
 
             self.now = event.time;
             self.executed = self.executed.wrapping_add(1);

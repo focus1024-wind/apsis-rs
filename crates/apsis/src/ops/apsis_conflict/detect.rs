@@ -3,7 +3,7 @@
 //! 冲突检测本身。
 
 use crate::apsis_conflict::conflict::{Conflict, ConflictKind, ConflictReport};
-use crate::apsis_resource::{ResourceId, ResourceSet};
+use crate::apsis_resource::ResourceSet;
 use crate::apsis_schedule::Schedule;
 use crate::apsis_task::{Task, TaskId};
 
@@ -88,15 +88,12 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
     for placement in schedule.placements() {
         let task = tasks.iter().find(|task| task.id == placement.task);
         let Some(task) = task else {
-            conflicts.push(
-                Conflict::new(
-                    ConflictKind::Requirement,
-                    placement.task,
-                    placement.start,
-                    "the task is not in the task list",
-                )
-                .with_resource(ResourceId::new(0)),
-            );
+            conflicts.push(Conflict::new(
+                ConflictKind::Requirement,
+                placement.task,
+                placement.start,
+                "the task is not in the task list",
+            ));
             continue;
         };
 

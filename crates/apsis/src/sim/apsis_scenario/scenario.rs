@@ -132,16 +132,19 @@ impl Scenario {
 
     /// Sets the time the simulation clock starts at.
     ///
-    /// Returns the scenario unchanged in value but not in type; the caller
-    /// uses the returned value. The epoch must be finite and non-negative.
+    /// A negative or non-finite epoch is ignored and the previous value is
+    /// kept, so that a builder chain cannot install an unusable clock. Use
+    /// [`Scenario::set_epoch`] when the error should be reported.
     ///
     /// 设置仿真时钟的起始时刻。
     ///
-    /// 返回的场景值不变而类型改变；调用方使用返回的值。历元必须有限
-    /// 且非负。
+    /// 负或非有限的历元被忽略并保留原值，使构建器链无法装入不可用的时钟。
+    /// 需要报告错误时改用 [`Scenario::set_epoch`]。
     #[must_use]
     pub fn with_epoch(mut self, epoch: f64) -> Self {
-        self.epoch = epoch;
+        if epoch.is_finite() && epoch >= 0.0 {
+            self.epoch = epoch;
+        }
         self
     }
 

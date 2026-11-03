@@ -83,8 +83,17 @@ pub fn earliest_feasible_start(
     }
     if task.requirements.is_empty() {
         // A task with no requirements can start as soon as its window opens.
-        // 无需求的任务可在其窗口开启时即开始。
-        return Some(task.earliest_start);
+        // A task with neither requirements nor a window has no finite opening
+        // time, so the schedule origin is used: returning the negative
+        // infinity stored on the task would make `Schedule::place` reject it.
+        // 无需求的任务可在其窗口开启时即开始。既无需求又无窗口的任务没有有限
+        // 的开启时刻，故使用计划原点：返回任务上存的负无穷会使
+        // `Schedule::place` 拒绝它。
+        return Some(if task.earliest_start.is_finite() {
+            task.earliest_start
+        } else {
+            0.0
+        });
     }
     let latest_start = task.latest_end - task.duration;
 

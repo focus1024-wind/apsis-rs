@@ -226,7 +226,9 @@ fn task_states_report_their_placement() {
     assert_eq!(scheduled.end(60.0), Some(160.0));
     assert_eq!(scheduled.name(), "scheduled");
 
-    let deferred = TaskState::Deferred;
+    let deferred = TaskState::Deferred {
+        reason: "no start".to_string(),
+    };
     assert!(!deferred.is_scheduled());
     assert_eq!(deferred.name(), "deferred");
 

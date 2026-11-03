@@ -471,7 +471,12 @@ pub enum TaskState {
     ///
     /// 调度器报告此状态而非静默丢弃任务，使操作者能看出放弃了什么以及
     /// 为什么。
-    Deferred,
+    Deferred {
+        /// Why the scheduler left the task out.
+        ///
+        /// 调度器排除该任务的原因。
+        reason: String,
+    },
     /// The task cannot be scheduled at all.
     ///
     /// A task is infeasible when its window is too short, when it demands
@@ -525,7 +530,7 @@ impl TaskState {
         match self {
             Self::Pending => "pending",
             Self::Scheduled { .. } => "scheduled",
-            Self::Deferred => "deferred",
+            Self::Deferred { .. } => "deferred",
             Self::Infeasible { .. } => "infeasible",
         }
     }
