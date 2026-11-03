@@ -380,13 +380,13 @@ impl KeplerianElements {
     /// Returns the mean anomaly, which is the linear measure of time along
     /// the orbit.
     ///
-    /// This is the same value as [`KeplerianElements::mean_anomaly`], named
-    /// for symmetry with [`KeplerianElements::with_mean_anomaly`].
+    /// This is the same value as [`KeplerianElements::mean_anomaly_rad`], named
+    /// for symmetry with [`KeplerianElements::with_mean_anomaly_rad`].
     ///
     /// 返回平近点角，即沿轨道的时间线性度量。
     ///
-    /// 其值与 [`KeplerianElements::mean_anomaly`] 相同，此处命名是为了与
-    /// [`KeplerianElements::with_mean_anomaly`] 对称。
+    /// 其值与 [`KeplerianElements::mean_anomaly_rad`] 相同，此处命名是为了与
+    /// [`KeplerianElements::with_mean_anomaly_rad`] 对称。
     #[must_use]
     pub fn to_mean_anomaly_rad(self) -> f64 {
         mean_from_eccentric(self.eccentric_anomaly_rad(), self.eccentricity)
