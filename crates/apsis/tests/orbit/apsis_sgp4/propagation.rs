@@ -8,11 +8,9 @@
 //! closed form expressions and should differ only by floating point
 //! rounding.
 //!
-//! The deep space states were regenerated after the epoch long period
-//! reference was added to the propagator, so they are regression baselines
-//! for that correction rather than an independent reference. The independent
-//! cross-check is `validation/python/orbit/check_sgp4.py`, which compares the
-//! output of `dump_orbit` with the `sgp4` library.
+//! All four element sets, including the two deep space ones, are checked
+//! against the same library by `validation/python/orbit/check_sgp4.py`,
+//! which compares the output of `dump_orbit` with the reference.
 //!
 //! 传播器对照参考实现的测试。
 //!
@@ -20,9 +18,8 @@
 //! 各根数集是随该库分发的历史测试用例。与参考相符到远低于一微米的传播被视为
 //! 正确，因为两种实现求相同的闭式表达式，应只差浮点舍入。
 //!
-//! 深空状态在传播器加入历元长周期参考值后重新生成，故它们是该修正的回归基线，
-//! 而不是独立参考。独立交叉核对见 `validation/python/orbit/check_sgp4.py`，它把
-//! `dump_orbit` 的输出与 `sgp4` 库比较。
+//! 四个根数集（含两个深空集）都由 `validation/python/orbit/check_sgp4.py` 与
+//! 同一参考库核对，该脚本把 `dump_orbit` 的输出与 `sgp4` 库比较。
 
 use apsis::apsis_sgp4::{GravityModel, PropagationErrorKind, Satellite, State};
 use apsis::apsis_tle::TwoLineElement;
@@ -79,16 +76,16 @@ fn satellite(text: &str) -> Satellite {
 
 fn assert_matches_reference(state: State, position: [f64; 3], velocity: [f64; 3]) {
     let position_error = [
-        state.position.x - position[0],
-        state.position.y - position[1],
-        state.position.z - position[2],
+        state.position_km.x - position[0],
+        state.position_km.y - position[1],
+        state.position_km.z - position[2],
     ]
     .iter()
     .fold(0.0_f64, |worst, value| worst.max(value.abs()));
     let velocity_error = [
-        state.velocity.x - velocity[0],
-        state.velocity.y - velocity[1],
-        state.velocity.z - velocity[2],
+        state.velocity_km_s.x - velocity[0],
+        state.velocity_km_s.y - velocity[1],
+        state.velocity_km_s.z - velocity[2],
     ]
     .iter()
     .fold(0.0_f64, |worst, value| worst.max(value.abs()));
@@ -96,12 +93,12 @@ fn assert_matches_reference(state: State, position: [f64; 3], velocity: [f64; 3]
     assert!(
         position_error < POSITION_TOLERANCE,
         "position error {position_error} km, got {}",
-        state.position
+        state.position_km
     );
     assert!(
         velocity_error < VELOCITY_TOLERANCE,
         "velocity error {velocity_error} km/s, got {}",
-        state.velocity
+        state.velocity_km_s
     );
 }
 
@@ -182,7 +179,7 @@ fn deep_space_satellite_uses_the_deep_space_branch() {
 }
 
 #[test]
-fn deep_space_at_epoch_matches_the_recorded_reference() {
+fn deep_space_at_epoch_matches_the_reference() {
     // MJD 53_962.36, about 12 hours after the element epoch.
     // MJD 53_962.36，约在根数历元之后 12 小时。
     let state = satellite(DEEP_SPACE)
@@ -190,44 +187,44 @@ fn deep_space_at_epoch_matches_the_recorded_reference() {
         .expect("epoch state");
     assert_matches_reference(
         state,
-        [12_047.358_207, -21_278.677_307, -11_877.811_805],
-        [0.646_233_273_9, 1.670_816_520_3, 3.331_607_264_6],
+        [12_020.677_224_927, -21_305.501_479_237, -11_902.993_493_655],
+        [0.646_341_708_451, 1.668_868_685_981, 3.329_292_846_315],
     );
 }
 
 #[test]
-fn deep_space_after_one_week_matches_the_recorded_reference() {
+fn deep_space_after_one_week_matches_the_reference() {
     let state = satellite(DEEP_SPACE)
         .propagate_minutes(10_080.0)
         .expect("state exists");
     assert_matches_reference(
         state,
-        [12_524.642_030, -16_327.414_873, -3_688.645_240],
-        [-0.159_195_971_8, 2.914_202_954_2, 3.820_979_819_1],
+        [12_501.446_941_807, -16_359.501_943_154, -3_718.626_893_065],
+        [-0.155_492_271_223, 2.911_308_113_855, 3.819_401_898_806],
     );
 }
 
 #[test]
-fn transfer_orbit_at_epoch_matches_the_recorded_reference() {
+fn transfer_orbit_at_epoch_matches_the_reference() {
     let state = satellite(TRANSFER)
         .propagate_minutes(0.0)
         .expect("epoch state");
     assert_matches_reference(
         state,
-        [-20_811.153_871, -10_076.603_138, 1_131.999_125],
-        [-1.752_177_576_1, -4.624_502_273_7, 0.570_034_883_9],
+        [-20_728.381_133_505, -10_167.792_006_995, 1_151.382_245_235],
+        [-1.744_013_319_342, -4.632_866_113_051, 0.570_823_646_148],
     );
 }
 
 #[test]
-fn transfer_orbit_after_one_week_matches_the_recorded_reference() {
+fn transfer_orbit_after_one_week_matches_the_reference() {
     let state = satellite(TRANSFER)
         .propagate_minutes(10_080.0)
         .expect("state exists");
     assert_matches_reference(
         state,
-        [-14_527.078_714, -62_784.700_307, 7_869.279_076],
-        [0.950_098_368_5, -1.302_400_467_3, 0.165_475_866_5],
+        [-14_421.942_143_755, -62_862.455_417_683, 7_869.371_785_647],
+        [0.946_839_675_888, -1.301_129_854_934, 0.164_515_795_189],
     );
 }
 
@@ -317,7 +314,7 @@ fn a_zero_mean_motion_is_rejected() {
     // 测试从已解析的集合构建一个，而非编辑文本。
     let element = TwoLineElement::parse(ISS).expect("parses");
     let mut elements = apsis::apsis_sgp4::Elements::from_tle(&element).expect("epoch is covered");
-    elements.mean_motion = 0.0;
+    elements.mean_motion_rad_per_min = 0.0;
     let error = Satellite::try_from_elements(&elements, GravityModel::WGS72)
         .expect_err("zero mean motion is not propagatable");
     assert_eq!(error.kind(), PropagationErrorKind::InvalidElements);
@@ -337,7 +334,7 @@ fn an_eccentricity_of_one_is_rejected() {
 fn non_finite_elements_are_rejected() {
     let element = TwoLineElement::parse(ISS).expect("parses");
     let mut elements = apsis::apsis_sgp4::Elements::from_tle(&element).expect("epoch is covered");
-    elements.inclination = f64::NAN;
+    elements.inclination_rad = f64::NAN;
     let error = Satellite::try_from_elements(&elements, GravityModel::WGS72)
         .expect_err("a non-finite inclination is not propagatable");
     assert_eq!(error.kind(), PropagationErrorKind::InvalidElements);
@@ -346,8 +343,8 @@ fn non_finite_elements_are_rejected() {
 #[test]
 fn state_accessors_report_radius_and_speed() {
     let state = satellite(ISS).propagate_minutes(0.0).expect("epoch state");
-    assert!((state.altitude_radius() - state.position.norm()).abs() < 1e-12);
-    assert!((state.speed() - state.velocity.norm()).abs() < 1e-12);
+    assert!((state.altitude_radius() - state.position_km.norm()).abs() < 1e-12);
+    assert!((state.speed() - state.velocity_km_s.norm()).abs() < 1e-12);
     // A low Earth satellite moves at about 7.7 km/s.
     // 低轨卫星约以 7.7 km/s 运动。
     assert!(state.speed() > 7.0 && state.speed() < 8.0);

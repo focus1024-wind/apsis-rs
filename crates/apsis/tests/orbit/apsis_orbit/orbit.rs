@@ -52,9 +52,11 @@ fn position_and_radius_accessors_agree_with_the_state() {
     let state = orbit.propagate_minutes(120.0).expect("state exists");
     assert_eq!(
         orbit.position_at(120.0).expect("state exists"),
-        state.position
+        state.position_km
     );
-    assert!((orbit.radius_at(120.0).expect("state exists") - state.position.norm()).abs() < 1e-12);
+    assert!(
+        (orbit.radius_at(120.0).expect("state exists") - state.position_km.norm()).abs() < 1e-12
+    );
 }
 
 #[test]
@@ -63,13 +65,13 @@ fn propagate_at_uses_the_element_epoch() {
     let epoch = orbit.epoch_mjd();
     let at_epoch = orbit.propagate_at(epoch).expect("state exists");
     let at_zero = orbit.propagate_minutes(0.0).expect("state exists");
-    assert!((at_epoch.position - at_zero.position).norm() < 1e-6);
+    assert!((at_epoch.position_km - at_zero.position_km).norm() < 1e-6);
 
     // One day later is 1440 minutes.
     // 一天后是 1440 分钟。
     let next_day = orbit.propagate_at(epoch + 1.0).expect("state exists");
     let one_day = orbit.propagate_minutes(1440.0).expect("state exists");
-    assert!((next_day.position - one_day.position).norm() < 1e-3);
+    assert!((next_day.position_km - one_day.position_km).norm() < 1e-3);
 }
 
 #[test]
@@ -87,9 +89,9 @@ fn osculating_elements_describe_a_low_earth_orbit() {
     // 影响很小，而偏心率不同于编目的 0.0006703。该差异是预期的：根数集保存的是平
     // 根数，而密切偏心率包含二体模型不复现的短周期变化。
     assert!(
-        (elements.semi_major_axis - 6_725.542).abs() < 0.01,
+        (elements.semi_major_axis_km - 6_725.542).abs() < 0.01,
         "semi-major axis {}",
-        elements.semi_major_axis
+        elements.semi_major_axis_km
     );
     assert!(
         (elements.eccentricity - 0.000_832_1).abs() < 1e-6,
@@ -97,9 +99,9 @@ fn osculating_elements_describe_a_low_earth_orbit() {
         elements.eccentricity
     );
     assert!(
-        (elements.inclination - 51.6217_f64.to_radians()).abs() < 1e-4,
+        (elements.inclination_rad - 51.6217_f64.to_radians()).abs() < 1e-4,
         "inclination {}",
-        elements.inclination.to_degrees()
+        elements.inclination_rad.to_degrees()
     );
 }
 
@@ -111,8 +113,8 @@ fn osculating_elements_reproduce_the_state() {
     let rebuilt = elements
         .to_state(orbit.gravity_parameter())
         .expect("elements are valid");
-    assert!((rebuilt.position - state.position).norm() < 1e-6);
-    assert!((rebuilt.velocity - state.velocity).norm() < 1e-9);
+    assert!((rebuilt.position_km - state.position_km).norm() < 1e-6);
+    assert!((rebuilt.velocity_km_s - state.velocity_km_s).norm() < 1e-9);
 }
 
 #[test]
@@ -137,19 +139,19 @@ fn osculating_elements_work_for_a_deep_space_orbit() {
     // 编目的平值为偏心率 0.6546925、倾角 64.1526 度。密切值接近但不相同，理由同低轨
     // 测试中所述。
     assert!(
-        (elements.eccentricity - 0.655_108_3).abs() < 1e-6,
+        (elements.eccentricity - 0.655_871_3).abs() < 1e-6,
         "eccentricity {}",
         elements.eccentricity
     );
     assert!(
-        (elements.inclination - 64.154_3_f64.to_radians()).abs() < 1e-4,
+        (elements.inclination_rad - 64.1696_f64.to_radians()).abs() < 1e-4,
         "inclination {}",
-        elements.inclination.to_degrees()
+        elements.inclination_rad.to_degrees()
     );
     assert!(
-        (elements.semi_major_axis - 26_543.982).abs() < 0.01,
+        (elements.semi_major_axis_km - 26_543.982).abs() < 0.01,
         "semi-major axis {}",
-        elements.semi_major_axis
+        elements.semi_major_axis_km
     );
 }
 
@@ -190,7 +192,7 @@ fn the_ecef_position_keeps_the_geocentric_radius() {
     let teme = orbit
         .propagate_minutes(0.0)
         .expect("the state exists")
-        .position;
+        .position_km;
     let ecef = orbit
         .position_ecef_at(orbit.epoch_mjd())
         .expect("the position transforms");
@@ -216,7 +218,7 @@ fn the_ecef_position_moves_with_the_earth_during_a_pass() {
 
 #[test]
 fn the_ecef_position_round_trips_to_a_geodetic_point() {
-    // A position on a low Earth orbit must map to a latitude and longitude
+    // A position on a low Earth orbit must map to a latitude_rad and longitude_rad
     // that are within the physical range, which checks the rotation and the
     // unit convention together.
     // 低轨上的位置必须映射到物理范围内的纬度与经度，这同时检查了转动与单位约定。
@@ -230,7 +232,7 @@ fn the_ecef_position_round_trips_to_a_geodetic_point() {
     let geodetic =
         apsis::apsis_geodesy::geodetic_from_cartesian(ecef * 1_000.0, apsis::apsis_geodesy::WGS84)
             .expect("the point is outside the ellipsoid");
-    assert!(geodetic.latitude.abs() <= core::f64::consts::FRAC_PI_2);
-    assert!(geodetic.longitude.abs() <= core::f64::consts::PI);
-    assert!(geodetic.height > 100_000.0);
+    assert!(geodetic.latitude_rad.abs() <= core::f64::consts::FRAC_PI_2);
+    assert!(geodetic.longitude_rad.abs() <= core::f64::consts::PI);
+    assert!(geodetic.height_m > 100_000.0);
 }

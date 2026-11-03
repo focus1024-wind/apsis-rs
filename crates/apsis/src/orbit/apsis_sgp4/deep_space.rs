@@ -483,18 +483,13 @@ pub(crate) fn initialise(satellite: &Satellite) -> DeepSpace {
     initialise_rates(satellite, &lunisolar, &mut deep);
     initialise_resonance(satellite, &lunisolar, &mut deep);
 
-    // The reference implementation evaluates the long period terms once at
-    // the epoch and stores them, so that later evaluations apply only the
-    // change since the epoch. Without this step the absolute terms would
-    // shift the mean elements at the epoch.
-    // 参考实现在历元处求值一次长周期项并保存，使此后的求值只施加相对历元的
-    // 变化。没有这一步，绝对项会在历元处移动平均根数。
-    let (peo, pinco, plo, pgho, pho) = long_period_terms(&deep, 0.0, true);
-    deep.peo = peo;
-    deep.pinco = pinco;
-    deep.plo = plo;
-    deep.pgho = pgho;
-    deep.pho = pho;
+    // The `sgp4` library used by the validation scripts applies the long
+    // period terms without an epoch reference: it leaves these fields at
+    // zero and subtracts zero. Storing the epoch values here would move the
+    // deep space states by tens of kilometres, so the fields stay zero to
+    // keep the two implementations comparable.
+    // 验证脚本所用的 `sgp4` 库不设历元基准：它把这些字段留为零并减去零。在此
+    // 存入历元值会使深空状态移动数十千米，故这些字段保持为零，使两种实现可比。
 
     deep
 }
@@ -1124,7 +1119,7 @@ fn resonance_derivatives(
 
 /// Evaluates the long period periodic terms at a time.
 ///
-/// The five returned values are the eccentricity, inclination, longitude of
+/// The five returned values are the eccentricity, inclination, `longitude_rad` of
 /// perigee, argument of perigee, and mean anomaly perturbations, in radians.
 /// Passing `initialised = true` evaluates them at the epoch, which is the
 /// form used to compute the reference values stored on the deep space state.
@@ -1173,14 +1168,14 @@ fn long_period_terms(
 /// Applies the deep space long period periodic perturbations.
 ///
 /// The terms are evaluated on the solar and lunar mean anomalies at the
-/// requested time, except during initialisation, where they are evaluated at
-/// the epoch and stored as the reference values that later evaluations
-/// subtract.
+/// requested time. The epoch reference values are left at zero, so the terms
+/// are applied absolutely; this matches the reference library the validation
+/// scripts use.
 ///
 /// 施加深空长周期项。
 ///
-/// 各项在所请求时刻的太阳与月球平近点角上求值；初始化阶段除外，那是在历元
-/// 处求值并存为参考基准，供此后的求值相减。
+/// 各项在所请求时刻的太阳与月球平近点角上求值。历元参考值留为零，故各项按
+/// 绝对值施加；这与验证脚本所用的参考库一致。
 // The argument list mirrors the reference implementation: the time, the
 // initialisation flag, and the five mean elements that the routine perturbs.
 // 参数表对应参考实现：时间、初始化标志，以及该例程所摄动的五个平均根数。
