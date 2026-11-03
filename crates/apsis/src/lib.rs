@@ -17,7 +17,8 @@
 //! Each feature re-exports the modules of one layer and pulls in the features
 //! of the layers below it. For example, the `orbit` feature enables `physics`
 //! and re-exports `apsis_orbit`, `apsis_tle`, `apsis_sgp4`, `apsis_kepler`,
-//! `apsis_ephemeris`, and `apsis_maneuver`.
+//! `apsis_ephemeris`, `apsis_maneuver`, `apsis_mission`, `apsis_eoir`,
+//! `apsis_cat`, `apsis_seet`, `apsis_sensor`, and `apsis_hpop`.
 //!
 //! The `full` feature enables every layer, including `sim`. Because `sim`
 //! aggregates all other layers and is only needed by simulation workloads,
@@ -40,7 +41,8 @@
 //! 下游项目启用与其所需层相匹配的特性。每个特性重导出某一层的各模块，
 //! 并引入其下方各层的特性。例如，`orbit` 特性启用 `physics`，并重导出
 //! `apsis_orbit`、`apsis_tle`、`apsis_sgp4`、`apsis_kepler`、
-//! `apsis_ephemeris` 与 `apsis_maneuver`。
+//! `apsis_ephemeris`、`apsis_maneuver`、`apsis_mission`、`apsis_eoir`、
+//! `apsis_cat`、`apsis_seet`、`apsis_sensor` 与 `apsis_hpop`。
 //!
 //! `full` 特性启用每一层，包括 `sim`。因为 `sim` 聚合了其余所有层且只为
 //! 仿真工作负载所需，不运行仿真的项目可以改而启用 `ops`，它启用除 `sim`
@@ -91,7 +93,6 @@ pub use crate::physics::apsis_time;
 #[cfg(feature = "orbit")]
 mod orbit;
 
-#[cfg(feature = "orbit")]
 #[cfg(feature = "orbit")]
 pub use crate::orbit::apsis_cat;
 #[cfg(feature = "orbit")]
@@ -146,6 +147,7 @@ pub use crate::rf::apsis_link;
 
 #[cfg(feature = "rf")]
 pub use crate::rf::apsis_noise;
+#[cfg(feature = "rf")]
 pub use crate::rf::apsis_radar;
 
 #[cfg(feature = "rf")]

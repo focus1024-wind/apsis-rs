@@ -23,6 +23,19 @@ jobs:
         # `--all-features` 很重要：本 crate 默认不启用任何特性，没有它
         # 几乎其全部代码以及每个示例都会被跳过。
         run: cargo check --workspace --all-targets --all-features
+      - name: Check every feature selection
+        # Each layer can be selected on its own, so a re-export that is not
+        # gated correctly breaks a documented selection even when the
+        # all-features build passes. The default selection is included because
+        # it is the one a reader gets with a plain `cargo check`.
+        # 每一层都可单独选择，故一个门控错误的重导出会在全特性构建通过时
+        # 破坏某个已文档化的选择。默认选择也在此列，因为读者直接运行
+        # `cargo check` 得到的就是它。
+        run: |
+          cargo check --workspace
+          for feature in foundation physics orbit rf network ops sim full; do
+            cargo check --workspace --no-default-features --features "$feature"
+          done
       - name: Clippy
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Test

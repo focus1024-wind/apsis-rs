@@ -6,3 +6,7 @@
 # Generated validation data. Regenerate with the example commands listed in
 # validation/README.md.
 /validation/data/expected/*.csv
+
+# Python caches are never committed.
+__pycache__/
+*.pyc
