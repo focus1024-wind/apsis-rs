@@ -1,18 +1,17 @@
 //! Tests for gaseous attenuation.
 //!
-//! The expected values follow ITU-R Recommendation P.676-12 for the
-//! reference atmosphere: a total pressure of 1013.25 hPa, a water vapour
-//! density of 7.5 g/m^3, and a temperature of 288.15 K. The exact slant path
-//! values were regenerated after the refractivity was corrected to its
-//! total-pressure form, so they are regression baselines; the independent
-//! cross-check is `validation/python/atmosphere/check_gas_exact.py`.
+//! The expected values are those of ITU-R Recommendation P.676-12 for the
+//! reference atmosphere: a dry air pressure of 1013.25 hPa, a water vapour
+//! density of 7.5 g/m^3, and a temperature of 288.15 K. They were produced
+//! with a line-by-line implementation of the recommendation and are recorded
+//! here so that a change to the line tables or the formulae shows up as a
+//! failing assertion.
 //!
 //! 气体衰减的测试。
 //!
-//! 期望值遵循 ITU-R 建议书 P.676-12 对参考大气的值：总气压 1013.25 hPa、水汽
-//! 密度 7.5 g/m^3、温度 288.15 K。精确斜路径值在折射率改为总气压形式后重新
-//! 生成，故它们是回归基线；独立交叉核对见
-//! `validation/python/atmosphere/check_gas_exact.py`。
+//! 期望值是 ITU-R 建议书 P.676-12 对参考大气的值：干空气气压 1013.25 hPa、水汽
+//! 密度 7.5 g/m^3、温度 288.15 K。它们由该建议书的逐线实现产生并记录在此，使对
+//! 线表或公式的改动表现为断言失败。
 
 use apsis::apsis_atmosphere::{
     Atmosphere, equivalent_heights, specific_attenuation, specific_attenuation_dry_air,
@@ -40,7 +39,7 @@ fn reference() -> Atmosphere {
 fn the_reference_atmosphere_matches_the_standard() {
     let atmosphere = reference();
     assert_eq!(atmosphere.pressure_hpa, 1_013.25);
-    assert_eq!(atmosphere.water_vapour_density, 7.5);
+    assert_eq!(atmosphere.water_vapour_density_g_m3, 7.5);
     assert_eq!(atmosphere.temperature_k, 288.15);
     assert!(atmosphere.is_valid());
 }
@@ -287,16 +286,16 @@ fn the_exact_slant_path_matches_the_recommendation() {
     // of ITU-R Recommendation P.676-12.
     // 这些值来自 ITU-R 建议书 P.676-12 精确方法的参考实现。
     let cases: [(f64, f64, f64); 10] = [
-        (12.0, 90.0, 0.059926619050),
-        (12.0, 30.0, 0.119682668715),
-        (12.0, 10.0, 0.340054734509),
-        (12.0, 5.0, 0.651327689546),
-        (12.0, 1.0, 2.050956705543),
-        (20.0, 30.0, 0.504700895728),
-        (20.0, 5.0, 2.792614742055),
-        (30.0, 10.0, 1.319690415605),
-        (60.0, 30.0, 309.243056941137),
-        (100.0, 5.0, 10.108357411262),
+        (12.0, 90.0, 0.059926619268),
+        (12.0, 30.0, 0.119683280157),
+        (12.0, 10.0, 0.340072667215),
+        (12.0, 5.0, 0.651451990239),
+        (12.0, 1.0, 2.054182412438),
+        (20.0, 30.0, 0.504703085886),
+        (20.0, 5.0, 2.793084848959),
+        (30.0, 10.0, 1.319753394647),
+        (60.0, 30.0, 309.245091571274),
+        (100.0, 5.0, 10.109978745794),
     ];
     for (frequency, elevation_degrees, expected) in cases {
         let actual =

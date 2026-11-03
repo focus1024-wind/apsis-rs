@@ -176,8 +176,8 @@ pub fn standard_pressure(geometric_height_km: f64) -> f64 {
 ///
 /// 几何高度单位为千米。
 #[must_use]
-pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: f64) -> f64 {
-    surface_density * (-geometric_height_km / 2.0).exp()
+pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density_g_m3: f64) -> f64 {
+    surface_density_g_m3 * (-geometric_height_km / 2.0).exp()
 }
 
 /// Returns the radio refractive index of moist air, dimensionless.
@@ -187,13 +187,13 @@ pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: 
 /// <div>
 /// $$
 /// \begin{aligned}
-/// N &= \frac{77.6\,P}{T} - \frac{5.6\,e}{T} + \frac{3.75\times10^5\,e}{T^2} \\
+/// N &= \frac{77.6\,P_d}{T} + \frac{72\,e}{T} + \frac{3.75\times10^5\,e}{T^2} \\
 /// n &= 1 + N \times 10^{-6}
 /// \end{aligned}
 /// $$
 /// </div>
 ///
-/// with `P` the total pressure and `e` the water vapour partial pressure,
+/// with `P_d` the dry air pressure and `e` the water vapour partial pressure,
 /// both in hectopascals, and `T` the temperature in kelvin. The
 /// first two terms are the non-dispersive refractivity and the third is the
 /// dipole term that gives water vapour its strong effect.
@@ -208,13 +208,13 @@ pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: 
 /// <div>
 /// $$
 /// \begin{aligned}
-/// N &= \frac{77.6\,P}{T} - \frac{5.6\,e}{T} + \frac{3.75\times10^5\,e}{T^2} \\
+/// N &= \frac{77.6\,P_d}{T} + \frac{72\,e}{T} + \frac{3.75\times10^5\,e}{T^2} \\
 /// n &= 1 + N \times 10^{-6}
 /// \end{aligned}
 /// $$
 /// </div>
 ///
-/// 其中 `P` 是总气压，`e` 是水汽分压，两者均以百帕计；`T` 是温度，以
+/// 其中 `P_d` 是干空气气压，`e` 是水汽分压，两者均以百帕计；`T` 是温度，以
 /// 开尔文计。前两项是非色散折射率，第三项是使水汽产生强烈效应的偶极项。
 ///
 /// 出处：ITU-R 建议书 P.453，它给出湿空气折射率的这一表达式。
@@ -222,15 +222,15 @@ pub fn standard_water_vapour_density(geometric_height_km: f64, surface_density: 
 /// 温度非有限或非正时返回 `NaN`，因为该式在那里没有定义。
 #[must_use]
 pub fn radio_refractive_index(
-    pressure_hpa: f64,
+    dry_pressure_hpa: f64,
     vapour_pressure_hpa: f64,
     temperature_k: f64,
 ) -> f64 {
     if !temperature_k.is_finite() || temperature_k <= 0.0 {
         return f64::NAN;
     }
-    let refractivity = 77.6 * pressure_hpa / temperature_k
-        - 5.6 * vapour_pressure_hpa / temperature_k
+    let refractivity = 77.6 * dry_pressure_hpa / temperature_k
+        + 72.0 * vapour_pressure_hpa / temperature_k
         + 3.75e5 * vapour_pressure_hpa / (temperature_k * temperature_k);
     1.0 + refractivity * 1.0e-6
 }

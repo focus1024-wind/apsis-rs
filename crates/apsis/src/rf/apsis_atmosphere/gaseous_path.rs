@@ -1,7 +1,7 @@
 //! Slant path attenuation through the atmosphere.
 //!
 //! The attenuation along a slant path is not simply the specific attenuation
-//! divided by the sine of the elevation, because the atmosphere thins with
+//! divided by the sine of the `elevation_rad`, because the atmosphere thins with
 //! height and the path is curved. ITU-R Recommendation P.676 reduces the
 //! problem to two equivalent heights, one for dry air and one for water
 //! vapour, so that the zenith attenuation is the specific attenuation at the
@@ -116,7 +116,7 @@ pub fn equivalent_heights(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<
         return None;
     }
     let temperature = atmosphere.temperature_k;
-    let rho = atmosphere.water_vapour_density;
+    let rho = atmosphere.water_vapour_density_g_m3;
     let e = atmosphere.water_vapour_partial_pressure();
     let rp = (atmosphere.pressure_hpa + e) / 1_013.25;
 
@@ -201,18 +201,18 @@ pub fn zenith_attenuation(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<
     Some(dry * heights.dry_km + wet * heights.wet_km)
 }
 
-/// Returns the attenuation along a slant path at an elevation angle, in
+/// Returns the attenuation along a slant path at an `elevation_rad` angle, in
 /// decibels.
 ///
-/// The zenith attenuation is divided by the sine of the elevation. The
+/// The zenith attenuation is divided by the sine of the `elevation_rad`. The
 /// plane parallel approximation this uses is the one the recommendation
 /// applies for the approximate method; it is accurate above about five
-/// degrees of elevation.
+/// degrees of `elevation_rad`.
 ///
-/// The elevation is in radians.
+/// The `elevation_rad` is in radians.
 ///
 /// Returns `None` when the frequency or atmosphere is not usable, or when
-/// the elevation is at or below the horizon.
+/// the `elevation_rad` is at or below the horizon.
 ///
 /// 返回某仰角下沿斜路径的衰减，单位为分贝。
 ///
@@ -225,13 +225,13 @@ pub fn zenith_attenuation(frequency_ghz: f64, atmosphere: Atmosphere) -> Option<
 #[must_use]
 pub fn slant_path_attenuation(
     frequency_ghz: f64,
-    elevation: f64,
+    elevation_rad: f64,
     atmosphere: Atmosphere,
 ) -> Option<f64> {
-    if !elevation.is_finite() || elevation.sin() <= 0.0 {
+    if !elevation_rad.is_finite() || elevation_rad.sin() <= 0.0 {
         return None;
     }
-    Some(zenith_attenuation(frequency_ghz, atmosphere)? / elevation.sin())
+    Some(zenith_attenuation(frequency_ghz, atmosphere)? / elevation_rad.sin())
 }
 
 /// The number of layer boundaries used by the exact slant path integration.
@@ -272,17 +272,17 @@ const RAY_TRACE_EARTH_RADIUS_KM: f64 = 6_371.0;
 /// the refractive indices of adjacent layers, which the approximate method
 /// ignores.
 ///
-/// This is the form to use at low elevation, where the plane parallel
+/// This is the form to use at low `elevation_rad`, where the plane parallel
 /// approximation that [`slant_path_attenuation`] uses is inaccurate. It is
 /// far more expensive, so the approximate form remains available for the
-/// high elevation case where it is adequate.
+/// high `elevation_rad` case where it is adequate.
 ///
-/// The frequency is in gigahertz, the elevation in radians, and the surface
+/// The frequency is in gigahertz, the `elevation_rad` in radians, and the surface
 /// atmosphere supplies the pressure, the water vapour density, and the
 /// temperature at ground level. The surface water vapour density scales the
 /// exponential vapour profile, so the atmosphere defines the whole stack.
 ///
-/// Returns `None` when the frequency, elevation, or atmosphere is not
+/// Returns `None` when the frequency, `elevation_rad`, or atmosphere is not
 /// usable.
 ///
 /// Source: ITU-R Recommendation P.676-12, equations 13 through 19, with the
@@ -309,13 +309,16 @@ const RAY_TRACE_EARTH_RADIUS_KM: f64 = 6_371.0;
 #[must_use]
 pub fn slant_path_attenuation_exact(
     frequency_ghz: f64,
-    elevation: f64,
+    elevation_rad: f64,
     atmosphere: Atmosphere,
 ) -> Option<f64> {
     if !frequency_ghz.is_finite() || frequency_ghz <= 0.0 || !atmosphere.is_valid() {
         return None;
     }
-    if !elevation.is_finite() || elevation <= 0.0 || elevation > core::f64::consts::FRAC_PI_2 {
+    if !elevation_rad.is_finite()
+        || elevation_rad <= 0.0
+        || elevation_rad > core::f64::consts::FRAC_PI_2
+    {
         return None;
     }
 
@@ -341,15 +344,20 @@ pub fn slant_path_attenuation_exact(
         let pressure = crate::apsis_atmosphere::p835::standard_pressure(heights[index]);
         let density = crate::apsis_atmosphere::p835::standard_water_vapour_density(
             heights[index],
-            atmosphere.water_vapour_density,
+            atmosphere.water_vapour_density_g_m3,
         );
         temperatures[index] = temperature;
         pressures[index] = pressure;
         densities[index] = density;
 
-        // The refractive index takes the total pressure, as the
-        // recommendation specifies, not the dry air pressure.
-        // 折射率取总气压，如建议书所规定，而非干空气气压。
+        // FIXME(focus, 2026-11-03): the reference implementation passes the
+        // total pressure here while the formula names the dry pressure; which
+        // convention the ITU reference uses must be settled by re-running
+        // validation/python/atmosphere/check_gas_exact.py, which needs the
+        // itur package.
+        // FIXME(focus, 2026-11-03)：参考实现此处传总气压，而公式写的是干气压；
+        // ITU 参考采用哪种约定，需在具备 itur 包时重跑
+        // validation/python/atmosphere/check_gas_exact.py 确定。
         let vapour_pressure = density * temperature / 216.7;
         indices[index] = crate::apsis_atmosphere::p835::radio_refractive_index(
             pressure,
@@ -359,9 +367,9 @@ pub fn slant_path_attenuation_exact(
     }
 
     // The ray starts below the local horizon by the complement of the
-    // elevation, and is bent upward as it climbs.
+    // elevation_rad, and is bent upward as it climbs.
     // 射线自当地地平以下、低仰角的余角处开始，并随上升而向上弯折。
-    let mut angle = core::f64::consts::FRAC_PI_2 - elevation;
+    let mut angle = core::f64::consts::FRAC_PI_2 - elevation_rad;
     let mut total = 0.0;
 
     for index in 0..EXACT_BOUNDARY_COUNT {
