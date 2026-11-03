@@ -10,7 +10,7 @@ use apsis::apsis_math::Vec3;
 /// 位置比较的容差，单位为米。
 const POSITION_TOL: f64 = 1e-4;
 
-/// Tolerance for latitude and longitude comparisons, in radians.
+/// Tolerance for `latitude_rad` and `longitude_rad` comparisons, in radians.
 ///
 /// One microdegree is about 1.1e-8 radians, or roughly a centimeter on the
 /// Earth's surface.
@@ -23,7 +23,7 @@ const ANGLE_TOL: f64 = 1e-11;
 #[test]
 fn equatorial_point_lies_on_the_semi_major_axis() {
     let point = Geodetic::new(0.0, 0.0, 0.0).to_cartesian(WGS84);
-    assert!((point.x - WGS84.semi_major_axis()).abs() < POSITION_TOL);
+    assert!((point.x - WGS84.semi_major_axis_m()).abs() < POSITION_TOL);
     assert!(point.y.abs() < POSITION_TOL);
     assert!(point.z.abs() < POSITION_TOL);
 }
@@ -33,14 +33,14 @@ fn pole_lies_on_the_semi_minor_axis() {
     let point = Geodetic::new(core::f64::consts::FRAC_PI_2, 0.0, 0.0).to_cartesian(WGS84);
     assert!(point.x.abs() < POSITION_TOL);
     assert!(point.y.abs() < POSITION_TOL);
-    assert!((point.z - WGS84.semi_minor_axis()).abs() < POSITION_TOL);
+    assert!((point.z - WGS84.semi_minor_axis_m()).abs() < POSITION_TOL);
 }
 
 #[test]
 fn longitude_quarter_turn_places_the_point_on_the_second_axis() {
     let point = Geodetic::new(0.0, core::f64::consts::FRAC_PI_2, 0.0).to_cartesian(WGS84);
     assert!(point.x.abs() < POSITION_TOL);
-    assert!((point.y - WGS84.semi_major_axis()).abs() < POSITION_TOL);
+    assert!((point.y - WGS84.semi_major_axis_m()).abs() < POSITION_TOL);
 }
 
 #[test]
@@ -48,7 +48,7 @@ fn height_moves_the_point_along_the_ellipsoid_normal() {
     let surface = Geodetic::new(0.6, 0.3, 0.0).to_cartesian(WGS84);
     let elevated = Geodetic::new(0.6, 0.3, 500.0).to_cartesian(WGS84);
     assert!((surface.distance(elevated) - 500.0).abs() < POSITION_TOL);
-    // The normal at a non-polar latitude is not vertical, so the height
+    // The normal at a non-polar latitude_rad is not vertical, so the height
     // changes the horizontal components as well as the third one.
     // 非极地纬度处的法线并非竖直，故高度既改变第三分量也改变水平分量。
     assert!(elevated.x > surface.x);
@@ -66,20 +66,20 @@ fn conversion_round_trips_over_a_global_grid() {
                 );
                 let cartesian = original.to_cartesian(WGS84);
                 let recovered = geodetic_from_cartesian(cartesian, WGS84)
-                    .expect("off-axis points have a longitude");
+                    .expect("off-axis points have a longitude_rad");
                 assert!(
-                    (recovered.latitude - original.latitude).abs() < ANGLE_TOL,
-                    "latitude mismatch at {latitude_degrees}, {longitude_degrees}, {height}"
+                    (recovered.latitude_rad - original.latitude_rad).abs() < ANGLE_TOL,
+                    "latitude_rad mismatch at {latitude_degrees}, {longitude_degrees}, {height}"
                 );
                 assert!(
-                    (recovered.longitude - original.longitude).abs() < ANGLE_TOL,
-                    "longitude mismatch at {latitude_degrees}, {longitude_degrees}, {height}"
+                    (recovered.longitude_rad - original.longitude_rad).abs() < ANGLE_TOL,
+                    "longitude_rad mismatch at {latitude_degrees}, {longitude_degrees}, {height}"
                 );
                 assert!(
-                    (recovered.height - original.height).abs() < POSITION_TOL,
+                    (recovered.height_m - original.height_m).abs() < POSITION_TOL,
                     "height mismatch at {latitude_degrees}, {longitude_degrees}, {height}: {} vs {}",
-                    recovered.height,
-                    original.height
+                    recovered.height_m,
+                    original.height_m
                 );
             }
         }
@@ -90,14 +90,14 @@ fn conversion_round_trips_over_a_global_grid() {
 fn round_trip_preserves_the_cartesian_position() {
     let original = Geodetic::new(0.921, -1.234, 12_345.0).to_cartesian(WGS84);
     let recovered = geodetic_from_cartesian(original, WGS84)
-        .expect("off-axis points have a longitude")
+        .expect("off-axis points have a longitude_rad")
         .to_cartesian(WGS84);
     assert!(original.distance(recovered) < POSITION_TOL);
 }
 
 #[test]
 fn polar_axis_has_no_defined_longitude() {
-    let on_axis = Vec3::new(0.0, 0.0, WGS84.semi_minor_axis());
+    let on_axis = Vec3::new(0.0, 0.0, WGS84.semi_minor_axis_m());
     assert_eq!(geodetic_from_cartesian(on_axis, WGS84), None);
     // The origin is also on the axis.
     // 原点也在该轴上。
@@ -114,7 +114,7 @@ fn non_finite_positions_are_rejected() {
 
 #[test]
 fn known_point_matches_an_independent_computation() {
-    // Latitude 37.5 degrees north, longitude 121.333333... degrees west, at
+    // Latitude 37.5 degrees north, longitude_rad 121.333333... degrees west, at
     // zero height, evaluated with the defining WGS 84 parameters in
     // extended precision.
     // 北纬 37.5 度、西经 121.333333... 度、零高度，用 WGS 84 定义参数以扩展精度

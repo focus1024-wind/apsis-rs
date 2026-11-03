@@ -177,7 +177,10 @@ fn track(satellite: &Satellite, samples: usize, epoch_mjd: f64) -> Vec<OrbitSamp
                 .expect("the track propagates");
             let angle =
                 EarthRotationAngle::from_ut1_days(epoch_mjd - 51_544.5 + seconds / 86_400.0);
-            let fixed = Eci::new(state.position * 1_000.0).to_ecef(angle).vector() / 1_000.0;
+            let fixed = Eci::new(state.position_km * 1_000.0)
+                .to_ecef(angle)
+                .vector_m()
+                / 1_000.0;
             OrbitSample::new(seconds, fixed)
         })
         .collect()
@@ -198,7 +201,7 @@ fn propagate_serial(satellite: &Satellite, satellites: usize, samples: usize) ->
             let state = satellite
                 .propagate_minutes(seconds / 60.0)
                 .expect("the track propagates");
-            black_box(state.position);
+            black_box(state.position_km);
             count += 1;
         }
     }
@@ -241,7 +244,7 @@ fn propagate_parallel(
                         let state = satellite
                             .propagate_minutes(seconds / 60.0)
                             .expect("the track propagates");
-                        black_box(state.position);
+                        black_box(state.position_km);
                         count += 1;
                     }
                 }

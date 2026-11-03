@@ -51,9 +51,9 @@ fn placing_a_task_records_it() {
     assert!(schedule.is_placed(TaskId::new(0)));
     let placement = schedule.placement_of(TaskId::new(0)).expect("placed");
     assert_eq!(placement.task, TaskId::new(0));
-    assert_eq!(placement.start, 100.0);
-    assert_eq!(placement.duration, 60.0);
-    assert_eq!(placement.end(), 160.0);
+    assert_eq!(placement.start_s, 100.0);
+    assert_eq!(placement.duration_s, 60.0);
+    assert_eq!(placement.end_s(), 160.0);
     assert_eq!(schedule.scheduled_seconds(), 60.0);
     assert_eq!(schedule.earliest_start(), Some(100.0));
     assert_eq!(schedule.latest_end(), Some(160.0));
@@ -134,7 +134,7 @@ fn a_task_can_be_unplaced() {
         schedule
             .placement_of(TaskId::new(1))
             .expect("still placed")
-            .start,
+            .start_s,
         100.0
     );
 
@@ -160,7 +160,7 @@ fn the_index_survives_several_removals() {
         let placement = schedule
             .placement_of(TaskId::new(index))
             .unwrap_or_else(|| panic!("task {index} should still be placed"));
-        assert_eq!(placement.start, index as f64 * 100.0);
+        assert_eq!(placement.start_s, index as f64 * 100.0);
     }
     assert_eq!(schedule.len(), 4);
 }
@@ -472,7 +472,7 @@ fn the_resource_busy_until_reports_the_next_free_time() {
 #[test]
 fn a_placement_reports_what_it_covers() {
     let placement = Placement::new(TaskId::new(0), 100.0, 60.0);
-    assert_eq!(placement.end(), 160.0);
+    assert_eq!(placement.end_s(), 160.0);
     assert!(placement.covers(100.0));
     assert!(placement.covers(159.999));
     // The end is not covered, so back to back placements do not overlap.

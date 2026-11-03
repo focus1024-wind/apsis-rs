@@ -18,39 +18,41 @@ const POSITION_TOLERANCE: f64 = 1e-6;
 const VELOCITY_TOLERANCE: f64 = 1e-9;
 
 fn assert_state_close(state: State, position: [f64; 3], velocity: [f64; 3]) {
-    let position_error = (state.position - Vec3::new(position[0], position[1], position[2])).norm();
-    let velocity_error = (state.velocity - Vec3::new(velocity[0], velocity[1], velocity[2])).norm();
+    let position_error =
+        (state.position_km - Vec3::new(position[0], position[1], position[2])).norm();
+    let velocity_error =
+        (state.velocity_km_s - Vec3::new(velocity[0], velocity[1], velocity[2])).norm();
     assert!(
         position_error < POSITION_TOLERANCE,
         "position error {position_error}, got {}",
-        state.position
+        state.position_km
     );
     assert!(
         velocity_error < VELOCITY_TOLERANCE,
         "velocity error {velocity_error}, got {}",
-        state.velocity
+        state.velocity_km_s
     );
 }
 
 fn low_orbit() -> KeplerianElements {
     KeplerianElements {
-        semi_major_axis: 7_000.0,
+        semi_major_axis_km: 7_000.0,
         eccentricity: 0.01,
-        inclination: 0.9,
-        right_ascension: 1.2,
-        argument_of_perigee: 0.4,
-        true_anomaly: 0.7,
+        inclination_rad: 0.9,
+        right_ascension_rad: 1.2,
+        argument_of_perigee_rad: 0.4,
+        true_anomaly_rad: 0.7,
     }
 }
 
 fn elliptical_orbit() -> KeplerianElements {
     KeplerianElements {
-        semi_major_axis: 26_600.0,
+        semi_major_axis_km: 26_600.0,
         eccentricity: 0.74,
-        inclination: 0.1,
-        right_ascension: 2.0,
-        argument_of_perigee: 5.0,
-        true_anomaly: 1.1,
+        inclination_rad: 0.1,
+        right_ascension_rad: 2.0,
+        argument_of_perigee_rad: 5.0,
+        true_anomaly_rad: 1.1,
     }
 }
 
@@ -86,23 +88,23 @@ fn a_circular_equatorial_orbit_has_the_circular_speed() {
     // 在零偏心率、零倾角、零取向时，卫星位于第一轴上、沿第二轴运动，速率为
     // sqrt(mu / a)。
     let elements = KeplerianElements {
-        semi_major_axis: 6_378.137,
+        semi_major_axis_km: 6_378.137,
         eccentricity: 0.0,
-        inclination: 0.0,
-        right_ascension: 0.0,
-        argument_of_perigee: 0.0,
-        true_anomaly: 0.0,
+        inclination_rad: 0.0,
+        right_ascension_rad: 0.0,
+        argument_of_perigee_rad: 0.0,
+        true_anomaly_rad: 0.0,
     };
     let state = elements
         .to_state(GravityParameter::WGS84)
         .expect("elements are valid");
-    assert!((state.position.x - 6_378.137).abs() < 1e-9);
-    assert!(state.position.y.abs() < 1e-9);
-    assert!(state.position.z.abs() < 1e-9);
+    assert!((state.position_km.x - 6_378.137).abs() < 1e-9);
+    assert!(state.position_km.y.abs() < 1e-9);
+    assert!(state.position_km.z.abs() < 1e-9);
 
     let expected_speed = (GravityParameter::WGS84.value() / 6_378.137).sqrt();
-    assert!((state.velocity.norm() - expected_speed).abs() < 1e-9);
-    assert!(state.velocity.y > 0.0);
+    assert!((state.velocity_km_s.norm() - expected_speed).abs() < 1e-9);
+    assert!(state.velocity_km_s.y > 0.0);
 }
 
 #[test]
@@ -115,12 +117,12 @@ fn the_state_vector_lies_in_the_orbit_plane() {
     // plane is perpendicular to both.
     // 位置与速度张成轨道面，故该面的法线垂直于二者。
     let normal = state
-        .position
-        .cross(state.velocity)
+        .position_km
+        .cross(state.velocity_km_s)
         .normalize()
         .expect("non-zero");
-    assert!(normal.dot(state.position).abs() < 1e-6);
-    assert!(normal.dot(state.velocity).abs() < 1e-9);
+    assert!(normal.dot(state.position_km).abs() < 1e-6);
+    assert!(normal.dot(state.velocity_km_s).abs() < 1e-9);
 }
 
 #[test]
@@ -131,9 +133,9 @@ fn radius_follows_the_conic_equation() {
             .with_true_anomaly(true_anomaly)
             .to_state(GravityParameter::WGS84)
             .expect("elements are valid");
-        let p = elements.semi_latus_rectum();
+        let p = elements.semi_latus_rectum_km();
         let expected = p / (1.0 + elements.eccentricity * true_anomaly.cos());
-        assert!((state.position.norm() - expected).abs() < 1e-6);
+        assert!((state.position_km.norm() - expected).abs() < 1e-6);
     }
 }
 
@@ -148,9 +150,9 @@ fn perigee_and_apogee_are_the_extremes_of_the_radius() {
         .with_true_anomaly(PI)
         .to_state(GravityParameter::WGS84)
         .expect("valid");
-    assert!((perigee.position.norm() - elements.perigee_radius()).abs() < 1e-6);
-    assert!((apogee.position.norm() - elements.apogee_radius()).abs() < 1e-6);
-    assert!(perigee.position.norm() < apogee.position.norm());
+    assert!((perigee.position_km.norm() - elements.perigee_radius_km()).abs() < 1e-6);
+    assert!((apogee.position_km.norm() - elements.apogee_radius_km()).abs() < 1e-6);
+    assert!(perigee.position_km.norm() < apogee.position_km.norm());
 }
 
 #[test]
@@ -164,19 +166,19 @@ fn the_speed_is_highest_at_perigee() {
         .with_true_anomaly(PI)
         .to_state(GravityParameter::WGS84)
         .expect("valid");
-    assert!(perigee.velocity.norm() > apogee.velocity.norm());
+    assert!(perigee.velocity_km_s.norm() > apogee.velocity_km_s.norm());
 }
 
 #[test]
 fn orbital_geometry_is_consistent() {
     let elements = elliptical_orbit();
-    let p = elements.semi_latus_rectum();
-    assert!((p - elements.semi_major_axis * (1.0 - elements.eccentricity.powi(2))).abs() < 1e-9);
-    assert!((elements.semi_minor_axis().powi(2) - elements.semi_major_axis * p).abs() < 1e-6);
+    let p = elements.semi_latus_rectum_km();
+    assert!((p - elements.semi_major_axis_km * (1.0 - elements.eccentricity.powi(2))).abs() < 1e-9);
+    assert!((elements.semi_minor_axis_km().powi(2) - elements.semi_major_axis_km * p).abs() < 1e-6);
     assert!(
-        (elements.apogee_radius()
-            - elements.perigee_radius()
-            - 2.0 * elements.semi_major_axis * elements.eccentricity)
+        (elements.apogee_radius_km()
+            - elements.perigee_radius_km()
+            - 2.0 * elements.semi_major_axis_km * elements.eccentricity)
             .abs()
             < 1e-9
     );
@@ -185,9 +187,9 @@ fn orbital_geometry_is_consistent() {
 #[test]
 fn the_period_follows_keplers_third_law() {
     let elements = low_orbit();
-    let period = elements.period(GravityParameter::WGS84);
+    let period = elements.period_s(GravityParameter::WGS84);
     let expected =
-        2.0 * PI * (elements.semi_major_axis.powi(3) / GravityParameter::WGS84.value()).sqrt();
+        2.0 * PI * (elements.semi_major_axis_km.powi(3) / GravityParameter::WGS84.value()).sqrt();
     assert!((period - expected).abs() < 1e-9);
     // A 7000 km orbit has a period of about 97 minutes.
     // 7000 km 轨道的周期约为 97 分钟。
@@ -204,10 +206,10 @@ fn state_round_trips_through_the_elements() {
             .expect("state describes an ellipse");
 
         assert!(
-            (recovered.semi_major_axis - elements.semi_major_axis).abs() < 1e-6,
+            (recovered.semi_major_axis_km - elements.semi_major_axis_km).abs() < 1e-6,
             "semi-major axis {} vs {}",
-            recovered.semi_major_axis,
-            elements.semi_major_axis
+            recovered.semi_major_axis_km,
+            elements.semi_major_axis_km
         );
         assert!(
             (recovered.eccentricity - elements.eccentricity).abs() < 1e-9,
@@ -215,54 +217,58 @@ fn state_round_trips_through_the_elements() {
             recovered.eccentricity,
             elements.eccentricity
         );
-        assert!((recovered.inclination - elements.inclination).abs() < 1e-9);
+        assert!((recovered.inclination_rad - elements.inclination_rad).abs() < 1e-9);
         // The angles are compared modulo a full turn, because a value such
         // as 5.0 radians and one reduced to -1.28 radians describe the same
         // orientation.
         // 各角按模一周比较，因为诸如 5.0 弧度这样的值与归约到 -1.28 弧度的值描述同一
         // 取向。
-        assert!((wrap_to_pi(recovered.right_ascension - elements.right_ascension)).abs() < 1e-9);
         assert!(
-            (wrap_to_pi(recovered.argument_of_perigee - elements.argument_of_perigee)).abs() < 1e-9
+            (wrap_to_pi(recovered.right_ascension_rad - elements.right_ascension_rad)).abs() < 1e-9
         );
-        assert!((wrap_to_pi(recovered.true_anomaly - elements.true_anomaly)).abs() < 1e-7);
+        assert!(
+            (wrap_to_pi(recovered.argument_of_perigee_rad - elements.argument_of_perigee_rad))
+                .abs()
+                < 1e-9
+        );
+        assert!((wrap_to_pi(recovered.true_anomaly_rad - elements.true_anomaly_rad)).abs() < 1e-7);
 
         // The round trip must reproduce the state as well as the elements,
         // which is the stronger check.
         // 往返必须既复现状态也复现根数，后者是更强的检查。
         let again = recovered.to_state(GravityParameter::WGS84).expect("valid");
-        assert!((again.position - state.position).norm() < 1e-6);
-        assert!((again.velocity - state.velocity).norm() < 1e-9);
+        assert!((again.position_km - state.position_km).norm() < 1e-6);
+        assert!((again.velocity_km_s - state.velocity_km_s).norm() < 1e-9);
     }
 }
 
 #[test]
 fn a_circular_orbit_round_trips() {
     let elements = KeplerianElements {
-        semi_major_axis: 7_000.0,
+        semi_major_axis_km: 7_000.0,
         eccentricity: 0.0,
-        inclination: 1.0,
-        right_ascension: 0.5,
-        argument_of_perigee: 0.0,
-        true_anomaly: 0.0,
+        inclination_rad: 1.0,
+        right_ascension_rad: 0.5,
+        argument_of_perigee_rad: 0.0,
+        true_anomaly_rad: 0.0,
     };
     let state = elements
         .to_state(GravityParameter::WGS72)
         .expect("elements are valid");
     let recovered = KeplerianElements::from_state(&state, GravityParameter::WGS72)
         .expect("state describes an ellipse");
-    assert!((recovered.semi_major_axis - 7_000.0).abs() < 1e-6);
+    assert!((recovered.semi_major_axis_km - 7_000.0).abs() < 1e-6);
     assert!(recovered.eccentricity < 1e-9);
-    assert!((recovered.inclination - 1.0).abs() < 1e-9);
-    assert!((recovered.right_ascension - 0.5).abs() < 1e-9);
+    assert!((recovered.inclination_rad - 1.0).abs() < 1e-9);
+    assert!((recovered.right_ascension_rad - 0.5).abs() < 1e-9);
 }
 
 #[test]
 fn mean_anomaly_round_trips_through_the_elements() {
     let elements = elliptical_orbit();
-    let mean = elements.to_mean_anomaly();
-    let restored = elements.with_mean_anomaly(mean);
-    assert!((restored.true_anomaly - elements.true_anomaly).abs() < 1e-8);
+    let mean = elements.to_mean_anomaly_rad();
+    let restored = elements.with_mean_anomaly_rad(mean);
+    assert!((restored.true_anomaly_rad - elements.true_anomaly_rad).abs() < 1e-8);
 }
 
 #[test]
@@ -273,16 +279,16 @@ fn invalid_elements_are_rejected() {
     assert!(elements.to_state(GravityParameter::WGS84).is_none());
 
     let mut elements = low_orbit();
-    elements.semi_major_axis = -1.0;
+    elements.semi_major_axis_km = -1.0;
     assert!(!elements.is_valid());
     assert!(elements.to_state(GravityParameter::WGS84).is_none());
 
     let mut elements = low_orbit();
-    elements.inclination = PI + 0.1;
+    elements.inclination_rad = PI + 0.1;
     assert!(!elements.is_valid());
 
     let mut elements = low_orbit();
-    elements.true_anomaly = f64::NAN;
+    elements.true_anomaly_rad = f64::NAN;
     assert!(!elements.is_valid());
 }
 
@@ -291,8 +297,8 @@ fn degenerate_states_are_rejected() {
     assert_eq!(
         KeplerianElements::from_state(
             &State {
-                position: Vec3::ZERO,
-                velocity: Vec3::ZERO
+                position_km: Vec3::ZERO,
+                velocity_km_s: Vec3::ZERO
             },
             GravityParameter::WGS84
         ),
@@ -303,8 +309,8 @@ fn degenerate_states_are_rejected() {
     assert_eq!(
         KeplerianElements::from_state(
             &State {
-                position: Vec3::new(7_000.0, 0.0, 0.0),
-                velocity: Vec3::new(1.0, 0.0, 0.0)
+                position_km: Vec3::new(7_000.0, 0.0, 0.0),
+                velocity_km_s: Vec3::new(1.0, 0.0, 0.0)
             },
             GravityParameter::WGS84
         ),
@@ -315,8 +321,8 @@ fn degenerate_states_are_rejected() {
     assert_eq!(
         KeplerianElements::from_state(
             &State {
-                position: Vec3::new(7_000.0, 0.0, 0.0),
-                velocity: Vec3::new(0.0, 20.0, 0.0)
+                position_km: Vec3::new(7_000.0, 0.0, 0.0),
+                velocity_km_s: Vec3::new(0.0, 20.0, 0.0)
             },
             GravityParameter::WGS84
         ),
@@ -338,13 +344,13 @@ fn a_full_revolution_returns_to_the_same_point() {
     // 把平近点角推进一整圈必须返回相同位置，这验证各近点角换算彼此一致。
     let elements = elliptical_orbit();
     let start = elements
-        .with_mean_anomaly(1.0)
+        .with_mean_anomaly_rad(1.0)
         .to_state(GravityParameter::WGS84)
         .expect("valid");
     let end = elements
-        .with_mean_anomaly(1.0 + TAU)
+        .with_mean_anomaly_rad(1.0 + TAU)
         .to_state(GravityParameter::WGS84)
         .expect("valid");
-    assert!((start.position - end.position).norm() < 1e-6);
-    assert!((start.velocity - end.velocity).norm() < 1e-9);
+    assert!((start.position_km - end.position_km).norm() < 1e-6);
+    assert!((start.velocity_km_s - end.velocity_km_s).norm() < 1e-9);
 }

@@ -61,9 +61,9 @@ fn a_chain_of_tasks_is_placed_in_order() {
         .schedule
         .placement_of(TaskId::new(2))
         .expect("placed");
-    assert_eq!(first.start, 0.0);
-    assert_eq!(second.start, 60.0);
-    assert_eq!(third.start, 90.0);
+    assert_eq!(first.start_s, 0.0);
+    assert_eq!(second.start_s, 60.0);
+    assert_eq!(third.start_s, 90.0);
 }
 
 #[test]
@@ -86,7 +86,7 @@ fn a_precedence_floor_delays_a_task_that_could_start_earlier() {
     // The second resource was free from the start, but the constraint delays
     // the task to the end of the first.
     // 第二个资源从一开始就空闲，但该约束把任务推迟到第一个结束。
-    assert_eq!(second.start, 100.0);
+    assert_eq!(second.start_s, 100.0);
     assert!(result.honours_precedence(&graph));
 }
 
@@ -124,7 +124,7 @@ fn a_diamond_precedence_is_honoured() {
             .placement_of(TaskId::new(parallel))
             .expect("placed");
         assert!(
-            placement.end() <= last.start,
+            placement.end_s() <= last.start_s,
             "{placement:?} against {last:?}"
         );
     }
@@ -158,14 +158,14 @@ fn a_sequential_observation_and_downlink_is_expressed_as_two_tasks() {
         .schedule
         .placement_of(TaskId::new(1))
         .expect("placed");
-    assert_eq!(collection.start, 50.0);
+    assert_eq!(collection.start_s, 50.0);
     // The downlink starts when the collection ends.
     // 下行在采集结束时开始。
-    assert_eq!(transmission.start, 170.0);
+    assert_eq!(transmission.start_s, 170.0);
     // The two use different resources, so they may be placed back to back
     // without a conflict.
     // 二者使用不同资源，故它们可前后相接地放置而无冲突。
-    assert_eq!(collection.end(), transmission.start);
+    assert_eq!(collection.end_s(), transmission.start_s);
 }
 
 #[test]

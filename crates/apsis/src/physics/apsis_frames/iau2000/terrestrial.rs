@@ -73,7 +73,7 @@ pub fn bias_precession_nutation_matrix(t: f64) -> Mat3 {
     frame_to_mean_of_date(&super::precession::PrecessionAngles {
         gamma_bar: angles.gamma_bar,
         phi_bar: angles.phi_bar,
-        psi_bar: angles.psi_bar + nutation.longitude,
+        psi_bar: angles.psi_bar + nutation.longitude_rad,
         epsilon: angles.epsilon + nutation.obliquity,
     })
 }
@@ -81,7 +81,7 @@ pub fn bias_precession_nutation_matrix(t: f64) -> Mat3 {
 /// Returns the complementary terms of the equation of the equinoxes.
 ///
 /// The equation of the equinoxes has, besides the projection of the nutation
-/// in longitude onto the true equator, a set of small periodic terms from
+/// in `longitude_rad` onto the true equator, a set of small periodic terms from
 /// the same theory. They reach about twice the constant term of the
 /// osculating nutation, which is a millisecond of time, so they matter for a
 /// sidereal time that is quoted to that precision.
@@ -148,7 +148,7 @@ pub fn equation_of_the_equinoxes_complementary_terms(t: f64) -> f64 {
 /// equinoxes measured along the true equator. It is the quantity a sidereal
 /// time must be corrected by to become the hour angle of the true equinox.
 ///
-/// The value is the projection of the nutation in longitude onto the true
+/// The value is the projection of the nutation in `longitude_rad` onto the true
 /// equator, `dpsi cos(eps)`, plus the complementary terms of the theory.
 ///
 /// 返回某时刻的分点方程式。
@@ -161,7 +161,7 @@ pub fn equation_of_the_equinoxes_complementary_terms(t: f64) -> f64 {
 pub fn equation_of_the_equinoxes(t: f64) -> f64 {
     let nutation = nutation_2000a_with_2006_adjustment(t);
     let obliquity = mean_obliquity(t);
-    nutation.longitude * obliquity.cos() + equation_of_the_equinoxes_complementary_terms(t)
+    nutation.longitude_rad * obliquity.cos() + equation_of_the_equinoxes_complementary_terms(t)
 }
 
 /// The polar motion of the Earth, as two angles and the rotation.

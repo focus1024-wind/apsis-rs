@@ -47,11 +47,11 @@ fn values_at_grid_points_match_the_recommendation() {
         (60.0, 30.0, 2.086),
         (-60.0, 300.0, 0.544),
     ];
-    for (latitude, longitude, expected) in cases {
-        let actual = zero_isotherm_height(latitude, longitude).expect("valid coordinates");
+    for (latitude_rad, longitude_rad, expected) in cases {
+        let actual = zero_isotherm_height(latitude_rad, longitude_rad).expect("valid coordinates");
         assert!(
             (actual - expected).abs() < TOLERANCE,
-            "({latitude}, {longitude}): got {actual}, expected {expected}"
+            "({latitude_rad}, {longitude_rad}): got {actual}, expected {expected}"
         );
     }
 }
@@ -66,20 +66,21 @@ fn interpolated_values_match_the_recommendation() {
         (-89.9, 180.0, 2.895_933_333_333),
         (10.0, 100.0, 4.676),
     ];
-    for (latitude, longitude, expected) in cases {
-        let actual = zero_isotherm_height(latitude, longitude).expect("valid coordinates");
+    for (latitude_rad, longitude_rad, expected) in cases {
+        let actual = zero_isotherm_height(latitude_rad, longitude_rad).expect("valid coordinates");
         assert!(
             (actual - expected).abs() < 1e-6,
-            "({latitude}, {longitude}): got {actual}, expected {expected}"
+            "({latitude_rad}, {longitude_rad}): got {actual}, expected {expected}"
         );
     }
 }
 
 #[test]
 fn the_rain_height_is_the_isotherm_height_plus_the_offset() {
-    for (latitude, longitude) in [(0.0, 0.0), (45.0, 30.0), (-20.0, 200.0)] {
-        let isotherm = zero_isotherm_height(latitude, longitude).expect("valid coordinates");
-        let rain = rain_height(latitude, longitude).expect("valid coordinates");
+    for (latitude_rad, longitude_rad) in [(0.0, 0.0), (45.0, 30.0), (-20.0, 200.0)] {
+        let isotherm =
+            zero_isotherm_height(latitude_rad, longitude_rad).expect("valid coordinates");
+        let rain = rain_height(latitude_rad, longitude_rad).expect("valid coordinates");
         assert!((rain - isotherm - RAIN_HEIGHT_OFFSET_KM).abs() < TOLERANCE);
     }
 }
@@ -93,7 +94,7 @@ fn longitude_wraps_at_the_seam() {
     let at_360 = zero_isotherm_height(10.0, 360.0).expect("valid");
     assert!((at_zero - at_360).abs() < TOLERANCE);
 
-    // A negative longitude is the same as its positive equivalent.
+    // A negative longitude_rad is the same as its positive equivalent.
     // 负经度与其正等价经度相同。
     let negative = zero_isotherm_height(10.0, -10.0).expect("valid");
     let positive = zero_isotherm_height(10.0, 350.0).expect("valid");
@@ -105,12 +106,13 @@ fn the_height_is_bounded_by_the_table() {
     // Every tabulated value lies between the minimum and maximum of the
     // recommendation's global grid, which are about 0.006 km and 6.281 km.
     // 每个所列值都落在该建议书全球网格的最小与最大之间，即约 0.006 km 与 6.281 km。
-    for latitude in [-90.0, -45.0, 0.0, 45.0, 90.0] {
-        for longitude in [0.0, 90.0, 180.0, 270.0] {
-            let height = zero_isotherm_height(latitude, longitude).expect("valid coordinates");
+    for latitude_rad in [-90.0, -45.0, 0.0, 45.0, 90.0] {
+        for longitude_rad in [0.0, 90.0, 180.0, 270.0] {
+            let height =
+                zero_isotherm_height(latitude_rad, longitude_rad).expect("valid coordinates");
             assert!(
                 (0.0..=7.0).contains(&height),
-                "({latitude}, {longitude}) gave {height}"
+                "({latitude_rad}, {longitude_rad}) gave {height}"
             );
         }
     }
@@ -122,11 +124,11 @@ fn the_height_is_continuous_across_the_grid() {
     // 插值不得在相邻网格单元之间跳变。
     let mut previous = zero_isotherm_height(0.0, 0.0).expect("valid");
     for step in 1..=240 {
-        let longitude = f64::from(step) * 1.5;
-        let current = zero_isotherm_height(0.0, longitude).expect("valid coordinates");
+        let longitude_rad = f64::from(step) * 1.5;
+        let current = zero_isotherm_height(0.0, longitude_rad).expect("valid coordinates");
         assert!(
             (current - previous).abs() < 1.0,
-            "jump at longitude {longitude}: {previous} to {current}"
+            "jump at longitude_rad {longitude_rad}: {previous} to {current}"
         );
         previous = current;
     }

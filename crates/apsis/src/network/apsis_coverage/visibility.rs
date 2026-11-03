@@ -20,9 +20,9 @@ pub struct GroundPoint {
     ///
     /// 该位置所参照的椭球。
     pub ellipsoid: Ellipsoid,
-    /// The sensor elevation mask, in radians.
+    /// The sensor `elevation_rad` mask, in radians.
     ///
-    /// The minimum elevation above the local horizon at which the station
+    /// The minimum `elevation_rad` above the local horizon at which the station
     /// can see a satellite. A mask of zero means the station sees down to
     /// its own horizon.
     ///
@@ -30,7 +30,7 @@ pub struct GroundPoint {
     ///
     /// 该站能看到卫星所需高出当地地平的最小仰角。遮蔽为零意味着该站
     /// 能看到直至自身地平。
-    pub elevation_mask: f64,
+    pub elevation_mask_rad: f64,
 }
 
 impl GroundPoint {
@@ -38,11 +38,11 @@ impl GroundPoint {
     ///
     /// 在 WGS 84 椭球上以给定遮蔽创建地面点。
     #[must_use]
-    pub fn new(position: Geodetic, elevation_mask: f64) -> Self {
+    pub fn new(position: Geodetic, elevation_mask_rad: f64) -> Self {
         Self {
             position,
             ellipsoid: WGS84,
-            elevation_mask,
+            elevation_mask_rad,
         }
     }
 
@@ -63,7 +63,7 @@ impl GroundPoint {
 
     /// Returns the distance from the centre of the Earth, in kilometers.
     ///
-    /// This is the local radius of the ellipsoid at the station's latitude
+    /// This is the local radius of the ellipsoid at the station's `latitude_rad`
     /// plus its height, so it includes the effect of the flattening.
     ///
     /// 返回距地心的距离，单位为千米。
@@ -81,9 +81,9 @@ impl GroundPoint {
     #[must_use]
     pub fn is_valid(&self) -> bool {
         self.position.is_valid()
-            && self.elevation_mask.is_finite()
-            && (-FRAC_PI_2..=FRAC_PI_2).contains(&self.elevation_mask)
-            && self.ellipsoid.semi_major_axis() > 0.0
+            && self.elevation_mask_rad.is_finite()
+            && (-FRAC_PI_2..=FRAC_PI_2).contains(&self.elevation_mask_rad)
+            && self.ellipsoid.semi_major_axis_m() > 0.0
     }
 }
 
@@ -91,7 +91,7 @@ impl GroundPoint {
 ///
 /// The direction is a unit vector in the Earth-fixed frame. It is optional,
 /// because a station that can point anywhere with sufficient gain is
-/// modelled by its elevation mask alone; the direction matters only when the
+/// modelled by its `elevation_rad` mask alone; the direction matters only when the
 /// station has a fixed beam.
 ///
 /// 位于地面点、具有指向方向的传感器。
@@ -164,7 +164,7 @@ pub struct SubSatellitePoint {
 /// kilometers for a low Earth satellite.
 ///
 /// Returns `None` when the position is not finite or lies on the polar axis,
-/// where no longitude is defined.
+/// where no `longitude_rad` is defined.
 ///
 /// 返回地固系中某位置的星下点。
 ///
@@ -183,15 +183,15 @@ pub fn sub_satellite_point(
     let position_m = position_ecef_km * 1_000.0;
     let geodetic = crate::apsis_geodesy::geodetic_from_cartesian(position_m, ellipsoid)?;
     Some(SubSatellitePoint {
-        position: Geodetic::new(geodetic.latitude, geodetic.longitude, 0.0),
+        position: Geodetic::new(geodetic.latitude_rad, geodetic.longitude_rad, 0.0),
         ellipsoid,
     })
 }
 
-/// Returns the elevation of a satellite as seen from a station, in radians.
+/// Returns the `elevation_rad` of a satellite as seen from a station, in radians.
 ///
 /// The satellite position is in the Earth-fixed frame, in kilometers. The
-/// elevation is measured from the local horizon, which is the plane
+/// `elevation_rad` is measured from the local horizon, which is the plane
 /// perpendicular to the ellipsoid normal at the station.
 ///
 /// A positive value means the satellite is above the horizon, a value of a
@@ -230,9 +230,9 @@ pub fn elevation_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<
 /// Returns the unit vector along the ellipsoid normal at a station.
 ///
 /// This is the local vertical, the direction a plumb line points. For a
-/// geodetic position it follows from the latitude and longitude, because the
+/// geodetic position it follows from the `latitude_rad` and `longitude_rad`, because the
 /// normal of a biaxial ellipsoid lies in the meridian plane and makes the
-/// geodetic latitude with the equatorial plane.
+/// geodetic `latitude_rad` with the equatorial plane.
 ///
 /// 返回沿某站处椭球法线的单位矢量。
 ///
@@ -240,10 +240,10 @@ pub fn elevation_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<
 /// 得出，因为双轴椭球的法线位于子午面内，并与赤道面夹大地纬度。
 #[must_use]
 pub fn local_up(ground: &GroundPoint) -> Vec3 {
-    let latitude = ground.position.latitude;
-    let longitude = ground.position.longitude;
-    let (sin_latitude, cos_latitude) = latitude.sin_cos();
-    let (sin_longitude, cos_longitude) = longitude.sin_cos();
+    let latitude_rad = ground.position.latitude_rad;
+    let longitude_rad = ground.position.longitude_rad;
+    let (sin_latitude, cos_latitude) = latitude_rad.sin_cos();
+    let (sin_longitude, cos_longitude) = longitude_rad.sin_cos();
     Vec3::new(
         cos_latitude * cos_longitude,
         cos_latitude * sin_longitude,
@@ -255,7 +255,7 @@ pub fn local_up(ground: &GroundPoint) -> Vec3 {
 ///
 /// The azimuth is measured clockwise from north through east, in radians in
 /// `0..2*pi`. The local east and north directions are the usual ellipsoid
-/// tangent directions at the station's geodetic latitude and longitude.
+/// tangent directions at the station's geodetic `latitude_rad` and `longitude_rad`.
 ///
 /// Returns `None` when either position is not usable or the line of sight is
 /// zero.
@@ -276,10 +276,10 @@ pub fn azimuth_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f6
     if line_of_sight.norm() == 0.0 {
         return None;
     }
-    let latitude = ground.position.latitude;
-    let longitude = ground.position.longitude;
-    let (sin_latitude, cos_latitude) = latitude.sin_cos();
-    let (sin_longitude, cos_longitude) = longitude.sin_cos();
+    let latitude_rad = ground.position.latitude_rad;
+    let longitude_rad = ground.position.longitude_rad;
+    let (sin_latitude, cos_latitude) = latitude_rad.sin_cos();
+    let (sin_longitude, cos_longitude) = longitude_rad.sin_cos();
     let east = Vec3::new(-sin_longitude, cos_longitude, 0.0);
     let north = Vec3::new(
         -sin_latitude * cos_longitude,
@@ -298,7 +298,7 @@ pub fn azimuth_angle(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f6
     )
 }
 
-/// Returns the elevation of a satellite as seen from a station, in radians.
+/// Returns the `elevation_rad` of a satellite as seen from a station, in radians.
 ///
 /// This is the same as [`elevation_angle`], named for symmetry with the
 /// other visibility functions.
@@ -317,7 +317,7 @@ pub fn line_of_sight(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f6
 
 /// Returns `true` when a satellite is visible from a sensor.
 ///
-/// The satellite is visible when its elevation at the station is at least
+/// The satellite is visible when its `elevation_rad` at the station is at least
 /// the sensor's mask, and, for a directional sensor, when the direction to
 /// the satellite is within a right angle of the pointing direction, so that
 /// the satellite is in the forward hemisphere of the beam.
@@ -333,8 +333,8 @@ pub fn line_of_sight(satellite_ecef_km: Vec3, ground: &GroundPoint) -> Option<f6
 /// 卫星位置或传感器不可用时返回 `None`。
 #[must_use]
 pub fn visible_from(satellite_ecef_km: Vec3, sensor: &Sensor) -> Option<bool> {
-    let elevation = elevation_angle(satellite_ecef_km, &sensor.ground)?;
-    if elevation < sensor.ground.elevation_mask {
+    let elevation_rad = elevation_angle(satellite_ecef_km, &sensor.ground)?;
+    if elevation_rad < sensor.ground.elevation_mask_rad {
         return Some(false);
     }
     match sensor.pointing {
@@ -348,7 +348,7 @@ pub fn visible_from(satellite_ecef_km: Vec3, sensor: &Sensor) -> Option<bool> {
     }
 }
 
-/// Returns the elevation of a satellite as seen from a geodetic station.
+/// Returns the `elevation_rad` of a satellite as seen from a geodetic station.
 ///
 /// This is a convenience for a station given directly as a geodetic
 /// position, without building a [`GroundPoint`].
@@ -365,16 +365,16 @@ pub fn visible_from(satellite_ecef_km: Vec3, sensor: &Sensor) -> Option<bool> {
 pub fn visible_from_geodetic(
     satellite_ecef_km: Vec3,
     position: Geodetic,
-    elevation_mask: f64,
+    elevation_mask_rad: f64,
 ) -> Option<bool> {
-    let ground = GroundPoint::new(position, elevation_mask);
+    let ground = GroundPoint::new(position, elevation_mask_rad);
     visible_from(satellite_ecef_km, &Sensor::omnidirectional(ground))
 }
 
 /// Returns the central angle between a satellite and a ground station, in
 /// radians.
 ///
-/// This uses the spherical relation between the two radii and the elevation,
+/// This uses the spherical relation between the two radii and the `elevation_rad`,
 /// so it is consistent with the footprint geometry. The satellite position
 /// is used only for its radius.
 ///
@@ -390,10 +390,10 @@ pub fn visible_from_geodetic(
 pub fn central_angle_to_station(
     satellite_ecef_km: Vec3,
     ground: &GroundPoint,
-    elevation: f64,
+    elevation_rad: f64,
 ) -> Option<f64> {
     if !satellite_ecef_km.is_finite() || !ground.is_valid() {
         return None;
     }
-    earth_central_angle(satellite_ecef_km.norm(), ground.radius(), elevation)
+    earth_central_angle(satellite_ecef_km.norm(), ground.radius(), elevation_rad)
 }

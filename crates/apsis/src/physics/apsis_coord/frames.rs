@@ -33,10 +33,10 @@ pub struct Eci(Vec3);
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ecef(Vec3);
 
-/// A position in the Earth-fixed frame given as latitude, longitude, and
-/// height above the WGS 84 ellipsoid.
+/// A position in the Earth-fixed frame given as `latitude_rad`, `longitude_rad`, and
+/// `height_m` above the WGS 84 ellipsoid.
 ///
-/// Latitude and longitude are in radians and height is in meters. Latitude
+/// Latitude and `longitude_rad` are in radians and `height_m` is in meters. Latitude
 /// is geodetic, measured between the ellipsoid normal and the equatorial
 /// plane.
 ///
@@ -47,19 +47,19 @@ pub struct Ecef(Vec3);
 pub struct Geodetic(EllipsoidalPosition);
 
 impl Eci {
-    /// Creates an inertial position from a vector in meters.
+    /// Creates an inertial position from a `vector_m` in meters.
     ///
     /// 由米为单位的向量创建惯性位置。
     #[must_use]
-    pub const fn new(vector: Vec3) -> Self {
-        Self(vector)
+    pub const fn new(vector_m: Vec3) -> Self {
+        Self(vector_m)
     }
 
     /// Returns the position in meters.
     ///
     /// 返回以米为单位的位置。
     #[must_use]
-    pub const fn vector(self) -> Vec3 {
+    pub const fn vector_m(self) -> Vec3 {
         self.0
     }
 
@@ -74,19 +74,19 @@ impl Eci {
 }
 
 impl Ecef {
-    /// Creates an Earth-fixed position from a vector in meters.
+    /// Creates an Earth-fixed position from a `vector_m` in meters.
     ///
     /// 由米为单位的向量创建地固位置。
     #[must_use]
-    pub const fn new(vector: Vec3) -> Self {
-        Self(vector)
+    pub const fn new(vector_m: Vec3) -> Self {
+        Self(vector_m)
     }
 
     /// Returns the position in meters.
     ///
     /// 返回以米为单位的位置。
     #[must_use]
-    pub const fn vector(self) -> Vec3 {
+    pub const fn vector_m(self) -> Vec3 {
         self.0
     }
 
@@ -99,11 +99,11 @@ impl Ecef {
         Eci(rotation_ecef_to_eci(angle) * self.0)
     }
 
-    /// Converts this Earth-fixed position to latitude, longitude, and height
+    /// Converts this Earth-fixed position to `latitude_rad`, `longitude_rad`, and `height_m`
     /// above the given ellipsoid.
     ///
     /// Returns `None` when the position lies on the polar axis, where no
-    /// longitude is defined.
+    /// `longitude_rad` is defined.
     ///
     /// 把该地固位置转换为给定椭球之上的纬度、经度与高。
     ///
@@ -114,40 +114,44 @@ impl Ecef {
 }
 
 impl Geodetic {
-    /// Creates a geodetic position from latitude, longitude, and height.
+    /// Creates a geodetic position from `latitude_rad`, `longitude_rad`, and `height_m`.
     ///
-    /// Latitude and longitude are in radians and height is in meters.
+    /// Latitude and `longitude_rad` are in radians and `height_m` is in meters.
     ///
     /// 由纬度、经度与高创建大地位置。
     ///
     /// 纬度与经度用弧度，高用米。
     #[must_use]
-    pub const fn new(latitude: f64, longitude: f64, height: f64) -> Self {
-        Self(EllipsoidalPosition::new(latitude, longitude, height))
+    pub const fn new(latitude_rad: f64, longitude_rad: f64, height_m: f64) -> Self {
+        Self(EllipsoidalPosition::new(
+            latitude_rad,
+            longitude_rad,
+            height_m,
+        ))
     }
 
-    /// Returns the geodetic latitude in radians.
+    /// Returns the geodetic `latitude_rad` in radians.
     ///
     /// 返回大地纬度，单位为弧度。
     #[must_use]
-    pub const fn latitude(self) -> f64 {
-        self.0.latitude
+    pub const fn latitude_rad(self) -> f64 {
+        self.0.latitude_rad
     }
 
-    /// Returns the longitude in radians, positive east.
+    /// Returns the `longitude_rad` in radians, positive east.
     ///
     /// 返回经度，单位为弧度，向东为正。
     #[must_use]
-    pub const fn longitude(self) -> f64 {
-        self.0.longitude
+    pub const fn longitude_rad(self) -> f64 {
+        self.0.longitude_rad
     }
 
-    /// Returns the height above the ellipsoid in meters.
+    /// Returns the `height_m` above the ellipsoid in meters.
     ///
     /// 返回椭球高，单位为米。
     #[must_use]
-    pub const fn height(self) -> f64 {
-        self.0.height
+    pub const fn height_m(self) -> f64 {
+        self.0.height_m
     }
 
     /// Returns the underlying ellipsoidal position.

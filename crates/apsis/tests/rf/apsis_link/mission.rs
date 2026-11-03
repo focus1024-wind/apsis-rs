@@ -9,12 +9,12 @@ const TOLERANCE: f64 = 1e-9;
 fn ku() -> LinkParameters {
     LinkParameters {
         frequency_hz: 12.0e9,
-        transmit_power_watts: 10.0,
+        transmit_power_w: 10.0,
         transmit_gain_dbi: 30.0,
         transmit_loss_db: 1.0,
         receive_gain_dbi: 35.0,
         receive_loss_db: 0.5,
-        system_temperature_kelvin: 150.0,
+        system_temperature_k: 150.0,
         bandwidth_hz: 36.0e6,
         data_rate_bps: 10.0e6,
         required_ebno_db: 4.0,
@@ -31,7 +31,7 @@ fn the_ku_band_figures_match_the_closed_form() {
     assert!((result.carrier_to_noise_db + 0.851_850_500_184_127_7).abs() < TOLERANCE);
     assert!((result.ebno_db - 4.711_174_507_488_749).abs() < TOLERANCE);
     assert!((result.margin_db - 0.711_174_507_488_749).abs() < TOLERANCE);
-    assert!(result.closes);
+    assert!(result.is_closed);
 }
 
 #[test]
@@ -70,7 +70,7 @@ fn a_negative_margin_reports_an_open_link() {
         ..ku()
     };
     let result = link_budget(38_000_000.0, &parameters).expect("valid link");
-    assert!(!result.closes);
+    assert!(!result.is_closed);
     assert!(result.margin_db < 0.0);
 }
 
@@ -91,7 +91,7 @@ fn invalid_inputs_are_rejected() {
         link_budget(
             1.0e6,
             &LinkParameters {
-                transmit_power_watts: 0.0,
+                transmit_power_w: 0.0,
                 ..ku()
             }
         )
@@ -101,7 +101,7 @@ fn invalid_inputs_are_rejected() {
         link_budget(
             1.0e6,
             &LinkParameters {
-                system_temperature_kelvin: 0.0,
+                system_temperature_k: 0.0,
                 ..ku()
             }
         )

@@ -186,7 +186,10 @@ fn track(satellite: &Satellite, samples: usize, epoch_mjd: f64) -> Vec<OrbitSamp
                 .expect("the track propagates");
             let angle =
                 EarthRotationAngle::from_ut1_days(epoch_mjd - 51_544.5 + seconds / 86_400.0);
-            let fixed = Eci::new(state.position * 1_000.0).to_ecef(angle).vector() / 1_000.0;
+            let fixed = Eci::new(state.position_km * 1_000.0)
+                .to_ecef(angle)
+                .vector_m()
+                / 1_000.0;
             OrbitSample::new(seconds, fixed)
         })
         .collect()
@@ -224,8 +227,8 @@ fn main() {
                 total_satellites: satellites,
                 planes,
                 phase_factor: 1,
-                inclination: 53.0_f64.to_radians(),
-                semi_major_axis: BODY_RADIUS_KM + 550.0,
+                inclination_rad: 53.0_f64.to_radians(),
+                semi_major_axis_km: BODY_RADIUS_KM + 550.0,
             };
             // A day at a one minute step is 1441 samples per satellite.
             // 一分钟步长的一天是每颗卫星 1441 个样本。
@@ -255,7 +258,7 @@ fn main() {
                         let state = tracker
                             .propagate_minutes(seconds / 60.0)
                             .expect("the track propagates");
-                        black_box(state.position);
+                        black_box(state.position_km);
                         let _ = orbit;
                         propagated += 1;
                     }

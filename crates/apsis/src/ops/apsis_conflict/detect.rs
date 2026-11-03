@@ -91,44 +91,44 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
             conflicts.push(Conflict::new(
                 ConflictKind::Requirement,
                 placement.task,
-                placement.start,
+                placement.start_s,
                 "the task is not in the task list",
             ));
             continue;
         };
 
-        if (placement.duration - task.duration).abs() > 1e-12 {
+        if (placement.duration_s - task.duration_s).abs() > 1e-12 {
             conflicts.push(Conflict::new(
                 ConflictKind::Requirement,
                 placement.task,
-                placement.start,
+                placement.start_s,
                 format!(
                     "placed for {} s but the task lasts {} s",
-                    placement.duration, task.duration
+                    placement.duration_s, task.duration_s
                 ),
             ));
         }
 
-        if placement.start < task.earliest_start {
+        if placement.start_s < task.earliest_start_s {
             conflicts.push(Conflict::new(
                 ConflictKind::Window,
                 placement.task,
-                placement.start,
+                placement.start_s,
                 format!(
                     "starts at {}, before the window opens at {}",
-                    placement.start, task.earliest_start
+                    placement.start_s, task.earliest_start_s
                 ),
             ));
         }
-        if placement.end() > task.latest_end {
+        if placement.end_s() > task.latest_end_s {
             conflicts.push(Conflict::new(
                 ConflictKind::Window,
                 placement.task,
-                placement.end(),
+                placement.end_s(),
                 format!(
                     "ends at {}, after the window closes at {}",
-                    placement.end(),
-                    task.latest_end
+                    placement.end_s(),
+                    task.latest_end_s
                 ),
             ));
         }
@@ -147,7 +147,7 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
                     Conflict::new(
                         ConflictKind::Requirement,
                         placement.task,
-                        placement.start,
+                        placement.start_s,
                         format!("{} does not exist", requirement.resource),
                     )
                     .with_resource(requirement.resource),
@@ -162,7 +162,7 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
                     Conflict::new(
                         ConflictKind::Requirement,
                         placement.task,
-                        placement.start,
+                        placement.start_s,
                         format!(
                             "demand {} exceeds the capacity {} of {}",
                             requirement.demand,
@@ -174,15 +174,15 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
                 );
                 continue;
             }
-            if !resource.is_available_over(placement.start, placement.duration) {
+            if !resource.is_available_over(placement.start_s, placement.duration_s) {
                 conflicts.push(
                     Conflict::new(
                         ConflictKind::Availability,
                         placement.task,
-                        placement.start,
+                        placement.start_s,
                         format!(
                             "{} is not available from {} for {} s",
-                            resource.id, placement.start, placement.duration
+                            resource.id, placement.start_s, placement.duration_s
                         ),
                     )
                     .with_resource(requirement.resource),
@@ -203,8 +203,8 @@ pub fn detect(schedule: &Schedule, tasks: &[Task], resources: &ResourceSet) -> C
                 continue;
             };
             if let Some(demand) = task.demand_for(resource.id) {
-                events.push((placement.start, demand, placement.task));
-                events.push((placement.end(), -demand, placement.task));
+                events.push((placement.start_s, demand, placement.task));
+                events.push((placement.end_s(), -demand, placement.task));
             }
         }
         if events.is_empty() {
@@ -299,18 +299,18 @@ pub fn detect_precedence(schedule: &Schedule, constraints: &[Precedence]) -> Vec
         ) else {
             continue;
         };
-        if after.start < before.end() {
+        if after.start_s < before.end_s() {
             conflicts.push(
                 Conflict::new(
                     ConflictKind::Precedence,
                     constraint.after,
-                    after.start,
+                    after.start_s,
                     format!(
                         "{} must follow {} but starts at {} before it ends at {}",
                         constraint.after,
                         constraint.before,
-                        after.start,
-                        before.end()
+                        after.start_s,
+                        before.end_s()
                     ),
                 )
                 .with_other(constraint.before),

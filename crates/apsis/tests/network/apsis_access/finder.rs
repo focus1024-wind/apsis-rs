@@ -221,9 +221,9 @@ fn the_peak_of_an_overhead_pass_is_a_right_angle() {
     // greatest elevation is a right angle.
     // 参考几何自该站正上方经过，故最大仰角是直角。
     assert!(
-        (pass.peak_elevation - FRAC_PI_2).abs() < 0.01,
+        (pass.peak_elevation_rad - FRAC_PI_2).abs() < 0.01,
         "peak elevation {}",
-        pass.peak_elevation
+        pass.peak_elevation_rad
     );
 }
 
@@ -416,8 +416,8 @@ fn the_pass_reports_containment() {
         rise_seconds: 100.0,
         set_seconds: 200.0,
         peak_seconds: 150.0,
-        peak_elevation: 1.0,
-        mask_elevation: 0.1,
+        peak_elevation_rad: 1.0,
+        mask_elevation_rad: 0.1,
         peak_position: Vec3::new(ORBIT_RADIUS, 0.0, 0.0),
     };
     assert!(pass.contains(100.0));
@@ -550,8 +550,8 @@ fn the_summary_is_constructible_directly() {
         rise_seconds: 0.0,
         set_seconds: 10.0,
         peak_seconds: 5.0,
-        peak_elevation: 1.0,
-        mask_elevation: 0.1,
+        peak_elevation_rad: 1.0,
+        mask_elevation_rad: 0.1,
         peak_position: Vec3::ZERO,
     };
     let summary = PassSummary::new(vec![pass], 10.0);

@@ -26,8 +26,8 @@ use super::{PlanetaryTerm, SeriesTerm};
 /// The luni-solar terms of the series.
 ///
 /// The multipliers apply to the arguments `l`, `l'`, `F`, `D`, and `Om`
-/// in that order. The coefficients are the longitude sine, its time
-/// derivative, the longitude cosine, the obliquity cosine, its time
+/// in that order. The coefficients are the `longitude_rad` sine, its time
+/// derivative, the `longitude_rad` cosine, the obliquity cosine, its time
 /// derivative, and the obliquity sine, in units of 0.1 microarcsecond.
 ///
 /// 级数中的日月各项。
@@ -2760,9 +2760,9 @@ pub static LUNI_SOLAR: [SeriesTerm; 678] = [
 /// The planetary terms of the series.
 ///
 /// The multipliers apply to the arguments `l`, `F`, `D`, `Om`, the mean
-/// longitudes of Mercury through Uranus, the mean longitude of Neptune,
+/// longitudes of Mercury through Uranus, the mean `longitude_rad` of Neptune,
 /// and the general accumulated precession, in that order. The
-/// coefficients are the longitude sine, the longitude cosine, the
+/// coefficients are the `longitude_rad` sine, the `longitude_rad` cosine, the
 /// obliquity sine, and the obliquity cosine, in units of 0.1
 /// microarcsecond.
 ///

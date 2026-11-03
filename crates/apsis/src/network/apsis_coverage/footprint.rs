@@ -9,7 +9,7 @@ use core::f64::consts::PI;
 /// A circular ground footprint.
 ///
 /// The footprint is the part of the Earth's surface from which a satellite
-/// is visible above a given elevation mask. On a sphere it is an exact
+/// is visible above a given `elevation_rad` mask. On a sphere it is an exact
 /// circle, described here by the central angle from the sub-satellite point
 /// and the radius of the body.
 ///
@@ -27,11 +27,11 @@ pub struct Footprint {
     /// 覆盖区的中心半角，单位为弧度。
     ///
     /// 这是在地心处自星下点到覆盖区边缘的角度。
-    pub central_angle: f64,
+    pub central_angle_rad: f64,
     /// The radius of the body, in kilometers.
     ///
     /// 天体的半径，单位为千米。
-    pub body_radius: f64,
+    pub body_radius_km: f64,
 }
 
 impl Footprint {
@@ -39,10 +39,10 @@ impl Footprint {
     ///
     /// 由其中心角与天体半径创建覆盖区。
     #[must_use]
-    pub const fn new(central_angle: f64, body_radius: f64) -> Self {
+    pub const fn new(central_angle_rad: f64, body_radius_km: f64) -> Self {
         Self {
-            central_angle,
-            body_radius,
+            central_angle_rad,
+            body_radius_km,
         }
     }
 
@@ -52,7 +52,7 @@ impl Footprint {
     /// 返回沿地表量得的覆盖区半径，单位为千米。
     #[must_use]
     pub fn surface_radius(&self) -> f64 {
-        self.central_angle * self.body_radius
+        self.central_angle_rad * self.body_radius_km
     }
 
     /// Returns the area of the footprint, in square kilometers.
@@ -80,7 +80,7 @@ impl Footprint {
     /// 对球形天体这是精确的。
     #[must_use]
     pub fn area(&self) -> f64 {
-        2.0 * PI * self.body_radius * self.body_radius * (1.0 - self.central_angle.cos())
+        2.0 * PI * self.body_radius_km * self.body_radius_km * (1.0 - self.central_angle_rad.cos())
     }
 
     /// Returns the fraction of the whole sphere covered by the footprint.
@@ -94,7 +94,7 @@ impl Footprint {
     /// 绝不会超过一个半球。
     #[must_use]
     pub fn fraction_of_surface(&self) -> f64 {
-        self.area() / (4.0 * PI * self.body_radius * self.body_radius)
+        self.area() / (4.0 * PI * self.body_radius_km * self.body_radius_km)
     }
 
     /// Returns `true` when a ground point at the given central angle from
@@ -107,15 +107,17 @@ impl Footprint {
     ///
     /// 比较是含端点的，故恰在边缘上的点算在内部。
     #[must_use]
-    pub fn contains_central_angle(&self, central_angle: f64) -> bool {
-        central_angle.is_finite() && central_angle >= 0.0 && central_angle <= self.central_angle
+    pub fn contains_central_angle(&self, central_angle_rad: f64) -> bool {
+        central_angle_rad.is_finite()
+            && central_angle_rad >= 0.0
+            && central_angle_rad <= self.central_angle_rad
     }
 }
 
 /// Returns the central half angle of the footprint, in radians.
 ///
 /// This is the largest central angle at which the satellite is still above
-/// the elevation mask.
+/// the `elevation_rad` mask.
 ///
 /// Returns `None` when the geometry is not usable.
 ///
@@ -126,11 +128,11 @@ impl Footprint {
 /// 几何不可用时返回 `None`。
 #[must_use]
 pub fn footprint_central_angle(
-    satellite_radius: f64,
-    body_radius: f64,
-    elevation_mask: f64,
+    satellite_radius_km: f64,
+    body_radius_km: f64,
+    elevation_mask_rad: f64,
 ) -> Option<f64> {
-    let central = earth_central_angle(satellite_radius, body_radius, elevation_mask)?;
+    let central = earth_central_angle(satellite_radius_km, body_radius_km, elevation_mask_rad)?;
     if central.is_finite() && central >= 0.0 {
         Some(central)
     } else {
@@ -138,7 +140,7 @@ pub fn footprint_central_angle(
     }
 }
 
-/// Returns the footprint for a satellite and an elevation mask.
+/// Returns the footprint for a satellite and an `elevation_rad` mask.
 ///
 /// Returns `None` when the geometry is not usable.
 ///
@@ -147,13 +149,13 @@ pub fn footprint_central_angle(
 /// 几何不可用时返回 `None`。
 #[must_use]
 pub fn footprint(
-    satellite_radius: f64,
-    body_radius: f64,
-    elevation_mask: f64,
+    satellite_radius_km: f64,
+    body_radius_km: f64,
+    elevation_mask_rad: f64,
 ) -> Option<Footprint> {
     Some(Footprint::new(
-        footprint_central_angle(satellite_radius, body_radius, elevation_mask)?,
-        body_radius,
+        footprint_central_angle(satellite_radius_km, body_radius_km, elevation_mask_rad)?,
+        body_radius_km,
     ))
 }
 
@@ -169,8 +171,12 @@ pub fn footprint(
 ///
 /// 几何不可用时返回 `None`。
 #[must_use]
-pub fn footprint_area(satellite_radius: f64, body_radius: f64, elevation_mask: f64) -> Option<f64> {
-    Some(footprint(satellite_radius, body_radius, elevation_mask)?.area())
+pub fn footprint_area(
+    satellite_radius_km: f64,
+    body_radius_km: f64,
+    elevation_mask_rad: f64,
+) -> Option<f64> {
+    Some(footprint(satellite_radius_km, body_radius_km, elevation_mask_rad)?.area())
 }
 
 /// Returns the fraction of the Earth's surface covered by a footprint.
@@ -182,11 +188,11 @@ pub fn footprint_area(satellite_radius: f64, body_radius: f64, elevation_mask: f
 /// 几何不可用时返回 `None`。
 #[must_use]
 pub fn footprint_fraction(
-    satellite_radius: f64,
-    body_radius: f64,
-    elevation_mask: f64,
+    satellite_radius_km: f64,
+    body_radius_km: f64,
+    elevation_mask_rad: f64,
 ) -> Option<f64> {
-    Some(footprint(satellite_radius, body_radius, elevation_mask)?.fraction_of_surface())
+    Some(footprint(satellite_radius_km, body_radius_km, elevation_mask_rad)?.fraction_of_surface())
 }
 
 /// Returns the angle between two surface points, in radians.
@@ -245,7 +251,7 @@ pub fn point_in_footprint(
     Some(footprint.contains_central_angle(central))
 }
 
-/// Returns the elevation at which a footprint edge is seen from the ground,
+/// Returns the `elevation_rad` at which a footprint edge is seen from the ground,
 /// in radians.
 ///
 /// This is the inverse of [`footprint_central_angle`], useful when a
@@ -260,10 +266,10 @@ pub fn point_in_footprint(
 ///
 /// 几何不可用时返回 `None`。
 #[must_use]
-pub fn footprint_edge_elevation(satellite_radius: f64, footprint: &Footprint) -> Option<f64> {
+pub fn footprint_edge_elevation(satellite_radius_km: f64, footprint: &Footprint) -> Option<f64> {
     elevation_from_central_angle(
-        satellite_radius,
-        footprint.body_radius,
-        footprint.central_angle,
+        satellite_radius_km,
+        footprint.body_radius_km,
+        footprint.central_angle_rad,
     )
 }

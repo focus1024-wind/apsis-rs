@@ -27,7 +27,7 @@ const VERTICAL: f64 = FRAC_PI_2;
 ///
 /// 天顶，两种极化在那里重合。
 const ZENITH: f64 = FRAC_PI_2;
-/// A mid latitude elevation of thirty degrees.
+/// A mid `latitude_rad` elevation of thirty degrees.
 ///
 /// 三十度的中纬度仰角。
 const THIRTY_DEGREES: f64 = PI / 6.0;
@@ -360,7 +360,7 @@ fn an_elevation_at_the_horizon_is_rejected() {
 
 #[test]
 fn the_latitude_enters_through_the_vertical_adjustment() {
-    // Below thirty six degrees the latitude term is nonzero, so the same
+    // Below thirty six degrees the latitude_rad term is nonzero, so the same
     // geometry gives a different result at two latitudes.
     // 三十六度以下纬度项非零，故同一几何在两个纬度处给出不同结果。
     let temperate = rain_attenuation(
@@ -425,16 +425,16 @@ fn polarisation_tilt_converts_degrees() {
 #[test]
 fn the_integrated_path_uses_the_p839_rain_height() {
     use apsis::apsis_atmosphere::{rain_attenuation_at, rain_height};
-    let latitude = 45.0;
-    let longitude = 0.0;
+    let latitude_rad = 45.0;
+    let longitude_rad = 0.0;
     let integrated = rain_attenuation_at(
         20.0,
         12.0e9,
         HORIZONTAL,
         THIRTY_DEGREES,
         0.0,
-        latitude,
-        longitude,
+        latitude_rad,
+        longitude_rad,
     )
     .expect("valid");
     let explicit = rain_attenuation(
@@ -443,8 +443,8 @@ fn the_integrated_path_uses_the_p839_rain_height() {
         HORIZONTAL,
         THIRTY_DEGREES,
         0.0,
-        rain_height(latitude, longitude).expect("valid coordinates"),
-        latitude,
+        rain_height(latitude_rad, longitude_rad).expect("valid coordinates"),
+        latitude_rad,
     )
     .expect("valid");
     assert!((integrated.attenuation_db - explicit.attenuation_db).abs() < 1e-12);

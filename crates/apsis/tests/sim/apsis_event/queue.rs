@@ -81,12 +81,12 @@ fn the_tie_break_holds_across_a_heap_rebuild() {
 fn an_event_carries_its_identifier_and_time() {
     let mut queue = EventQueue::new();
     let id = queue.schedule(12.5, "payload").expect("the time is usable");
-    assert_eq!(id.time(), 12.5);
+    assert_eq!(id.time_s(), 12.5);
     assert_eq!(id.sequence(), 0);
 
     let event = queue.pop().expect("the queue is not empty");
     assert_eq!(event.id, id);
-    assert_eq!(event.time, 12.5);
+    assert_eq!(event.time_s, 12.5);
     assert_eq!(event.payload, "payload");
 }
 
@@ -110,7 +110,7 @@ fn a_follow_up_event_is_scheduled_relative_to_now() {
         .schedule_after(100.0, 30.0, "follow up")
         .expect("the delay is usable");
     let event = queue.pop().expect("the queue is not empty");
-    assert_eq!(event.time, 130.0);
+    assert_eq!(event.time_s, 130.0);
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn a_follow_up_with_a_bad_delay_is_refused() {
     // A zero delay schedules at the current instant.
     // 零延时在当前瞬时调度。
     let id = queue.schedule_after(5.0, 0.0, "now").expect("usable");
-    assert_eq!(id.time(), 5.0);
+    assert_eq!(id.time_s(), 5.0);
 }
 
 #[test]
@@ -138,7 +138,7 @@ fn events_can_be_scheduled_from_a_handler() {
         ticks += 1;
         if event.payload < 3 {
             queue
-                .schedule_after(event.time, 10.0, event.payload + 1)
+                .schedule_after(event.time_s, 10.0, event.payload + 1)
                 .expect("the delay is usable");
         }
     }
@@ -228,7 +228,7 @@ fn the_identifier_orders_by_time_then_sequence() {
 #[test]
 fn an_identifier_reports_itself() {
     let id = EventId::new(3.5, 7).expect("usable");
-    assert_eq!(id.time(), 3.5);
+    assert_eq!(id.time_s(), 3.5);
     assert_eq!(id.sequence(), 7);
     assert!(id.to_string().contains('7'));
     assert!(id.to_string().contains("3.5"));
@@ -238,7 +238,7 @@ fn an_identifier_reports_itself() {
 fn an_event_reports_whether_it_is_due() {
     let event = Event {
         id: EventId::new(5.0, 0).expect("usable"),
-        time: 5.0,
+        time_s: 5.0,
         payload: "x",
     };
     assert!(!event.is_due(4.999));
@@ -250,16 +250,16 @@ fn an_event_reports_whether_it_is_due() {
 fn an_event_can_be_rescheduled() {
     let event = Event {
         id: EventId::new(5.0, 0).expect("usable"),
-        time: 5.0,
+        time_s: 5.0,
         payload: "x",
     };
     let moved = event.reschedule(9.0, 1).expect("the new time is usable");
-    assert_eq!(moved.time, 9.0);
+    assert_eq!(moved.time_s, 9.0);
     assert_eq!(moved.id.sequence(), 1);
     assert_eq!(moved.payload, "x");
     // The original is unchanged.
     // 原件不变。
-    assert_eq!(event.time, 5.0);
+    assert_eq!(event.time_s, 5.0);
 
     assert!(event.reschedule(-1.0, 2).is_none());
     assert!(event.reschedule(f64::NAN, 3).is_none());
@@ -269,12 +269,12 @@ fn an_event_can_be_rescheduled() {
 fn an_event_can_change_its_payload() {
     let event = Event {
         id: EventId::new(5.0, 0).expect("usable"),
-        time: 5.0,
+        time_s: 5.0,
         payload: 1_u32,
     };
     let changed = event.with_payload("text");
     assert_eq!(changed.payload, "text");
-    assert_eq!(changed.time, 5.0);
+    assert_eq!(changed.time_s, 5.0);
 }
 
 #[test]

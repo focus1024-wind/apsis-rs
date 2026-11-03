@@ -141,9 +141,9 @@ fn merging_sorts_windows_into_time_order() {
         Window::new(15.0, 20.0),
     ])
     .expect("the windows are usable");
-    assert_eq!(merged[0].start(), 0.0);
-    assert_eq!(merged[1].start(), 15.0);
-    assert_eq!(merged[2].start(), 30.0);
+    assert_eq!(merged[0].start_s(), 0.0);
+    assert_eq!(merged[1].start_s(), 15.0);
+    assert_eq!(merged[2].start_s(), 30.0);
 }
 
 #[test]

@@ -175,7 +175,7 @@ fn an_element_pattern_floors_far_off_axis() {
 #[test]
 fn a_pattern_can_be_built_from_a_dish() {
     let dish = ParabolicAperture {
-        diameter: 3.0,
+        diameter_m: 3.0,
         efficiency: 0.65,
     };
     let wavelength = 0.025;
@@ -192,14 +192,15 @@ fn a_pattern_can_be_built_from_a_dish() {
             < 1e-9
     );
     assert!(
-        (pattern.beam_width - dish.half_power_beam_width(wavelength).expect("valid")).abs() < 1e-12
+        (pattern.beam_width_rad - dish.half_power_beam_width(wavelength).expect("valid")).abs()
+            < 1e-12
     );
 }
 
 #[test]
 fn an_invalid_dish_produces_no_pattern() {
     let dish = ParabolicAperture {
-        diameter: 0.0,
+        diameter_m: 0.0,
         efficiency: 0.65,
     };
     assert_eq!(ElementPattern::from_parabolic(dish, 0.025), None);
@@ -208,12 +209,12 @@ fn an_invalid_dish_produces_no_pattern() {
 #[test]
 fn the_pattern_enum_derives_the_same_values() {
     let dish = ParabolicAperture {
-        diameter: 3.0,
+        diameter_m: 3.0,
         efficiency: 0.65,
     };
     let wavelength = 0.025;
     let from_geometry = Pattern::Parabolic {
-        diameter: 3.0,
+        diameter_m: 3.0,
         efficiency: 0.65,
     };
     assert!(
@@ -223,7 +224,7 @@ fn the_pattern_enum_derives_the_same_values() {
             < 1e-9
     );
     assert!(
-        (from_geometry.beam_width(wavelength).expect("valid")
+        (from_geometry.beam_width_rad(wavelength).expect("valid")
             - dish.half_power_beam_width(wavelength).expect("valid"))
         .abs()
             < 1e-12
@@ -231,7 +232,7 @@ fn the_pattern_enum_derives_the_same_values() {
 
     let direct = Pattern::Direct {
         peak: Gain::from_dbi(30.0).expect("valid"),
-        beam_width: 0.05,
+        beam_width_rad: 0.05,
     };
     // The wavelength is ignored for a directly specified pattern.
     // 对直接指定的方向图，波长被忽略。
@@ -245,16 +246,16 @@ fn the_pattern_enum_derives_the_same_values() {
             .abs()
             < 1e-9
     );
-    assert!((direct.beam_width(0.025).expect("valid") - 0.05).abs() < 1e-12);
+    assert!((direct.beam_width_rad(0.025).expect("valid") - 0.05).abs() < 1e-12);
 }
 
 #[test]
 fn an_invalid_direct_pattern_produces_no_beam_width() {
     let direct = Pattern::Direct {
         peak: Gain::from_dbi(30.0).expect("valid"),
-        beam_width: -1.0,
+        beam_width_rad: -1.0,
     };
-    assert_eq!(direct.beam_width(0.025), None);
+    assert_eq!(direct.beam_width_rad(0.025), None);
 }
 
 #[test]

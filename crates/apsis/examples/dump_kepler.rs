@@ -47,7 +47,7 @@ struct Case {
     /// Semi-major axis, in kilometers.
     ///
     /// 半长轴，单位为千米。
-    semi_major_axis: f64,
+    semi_major_axis_km: f64,
     /// Eccentricity, dimensionless.
     ///
     /// 偏心率，无量纲。
@@ -76,12 +76,12 @@ impl Case {
     /// 以本 crate 所用的单位把该用例返回为根数。
     fn elements(&self) -> KeplerianElements {
         KeplerianElements {
-            semi_major_axis: self.semi_major_axis,
+            semi_major_axis_km: self.semi_major_axis_km,
             eccentricity: self.eccentricity,
-            inclination: self.inclination_deg.to_radians(),
-            right_ascension: self.right_ascension_deg.to_radians(),
-            argument_of_perigee: self.argument_of_perigee_deg.to_radians(),
-            true_anomaly: self.true_anomaly_deg.to_radians(),
+            inclination_rad: self.inclination_deg.to_radians(),
+            right_ascension_rad: self.right_ascension_deg.to_radians(),
+            argument_of_perigee_rad: self.argument_of_perigee_deg.to_radians(),
+            true_anomaly_rad: self.true_anomaly_deg.to_radians(),
         }
     }
 }
@@ -99,7 +99,7 @@ impl Case {
 const CASES: &[Case] = &[
     Case {
         name: "circular_equatorial",
-        semi_major_axis: 7_000.0,
+        semi_major_axis_km: 7_000.0,
         eccentricity: 0.0,
         inclination_deg: 0.0,
         right_ascension_deg: 0.0,
@@ -108,7 +108,7 @@ const CASES: &[Case] = &[
     },
     Case {
         name: "low_eccentricity",
-        semi_major_axis: 7_000.0,
+        semi_major_axis_km: 7_000.0,
         eccentricity: 0.01,
         inclination_deg: 51.6,
         right_ascension_deg: 68.8,
@@ -117,7 +117,7 @@ const CASES: &[Case] = &[
     },
     Case {
         name: "moderate_eccentricity",
-        semi_major_axis: 26_600.0,
+        semi_major_axis_km: 26_600.0,
         eccentricity: 0.74,
         inclination_deg: 5.7,
         right_ascension_deg: 114.6,
@@ -126,7 +126,7 @@ const CASES: &[Case] = &[
     },
     Case {
         name: "highly_eccentric",
-        semi_major_axis: 26_000.0,
+        semi_major_axis_km: 26_000.0,
         eccentricity: 0.97,
         inclination_deg: 28.5,
         right_ascension_deg: 300.0,
@@ -135,7 +135,7 @@ const CASES: &[Case] = &[
     },
     Case {
         name: "retrograde",
-        semi_major_axis: 8_000.0,
+        semi_major_axis_km: 8_000.0,
         eccentricity: 0.2,
         inclination_deg: 120.0,
         right_ascension_deg: 45.0,
@@ -144,7 +144,7 @@ const CASES: &[Case] = &[
     },
     Case {
         name: "near_polar",
-        semi_major_axis: 7_300.0,
+        semi_major_axis_km: 7_300.0,
         eccentricity: 0.005,
         inclination_deg: 88.0,
         right_ascension_deg: 15.0,
@@ -175,24 +175,24 @@ fn main() {
         // quantity the Python side uses to check the speed independently of
         // the direction.
         // 比能量也被报告，因为它是 Python 侧用来独立于方向核对速率的量。
-        let radius = state.position.norm();
-        let energy = state.velocity.norm_squared() / 2.0 - MU.value() / radius;
+        let radius = state.position_km.norm();
+        let energy = state.velocity_km_s.norm_squared() / 2.0 - MU.value() / radius;
         println!(
             "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
             case.name,
-            case.semi_major_axis,
+            case.semi_major_axis_km,
             case.eccentricity,
             case.inclination_deg.to_radians(),
             case.right_ascension_deg.to_radians(),
             case.argument_of_perigee_deg.to_radians(),
             case.true_anomaly_deg.to_radians(),
-            state.position.x,
-            state.position.y,
-            state.position.z,
-            state.velocity.x,
-            state.velocity.y,
-            state.velocity.z,
-            elements.period(MU),
+            state.position_km.x,
+            state.position_km.y,
+            state.position_km.z,
+            state.velocity_km_s.x,
+            state.velocity_km_s.y,
+            state.velocity_km_s.z,
+            elements.period_s(MU),
             energy
         );
     }
@@ -201,16 +201,16 @@ fn main() {
     // form, is included in the same table under its own name.
     // 地球静止半径处的圆轨道，其速率有闭式，故以它自己的名称纳入同一张表。
     let geo = KeplerianElements {
-        semi_major_axis: GEO_RADIUS,
+        semi_major_axis_km: GEO_RADIUS,
         eccentricity: 0.0,
-        inclination: 0.0,
-        right_ascension: 0.0,
-        argument_of_perigee: 0.0,
-        true_anomaly: 1.0,
+        inclination_rad: 0.0,
+        right_ascension_rad: 0.0,
+        argument_of_perigee_rad: 0.0,
+        true_anomaly_rad: 1.0,
     };
     let state = geo.to_state(MU).expect("geostationary circle is valid");
-    let radius = state.position.norm();
-    let energy = state.velocity.norm_squared() / 2.0 - MU.value() / radius;
+    let radius = state.position_km.norm();
+    let energy = state.velocity_km_s.norm_squared() / 2.0 - MU.value() / radius;
     println!(
         "geostationary_circular,{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
         GEO_RADIUS,
@@ -219,13 +219,13 @@ fn main() {
         0.0,
         0.0,
         1.0,
-        state.position.x,
-        state.position.y,
-        state.position.z,
-        state.velocity.x,
-        state.velocity.y,
-        state.velocity.z,
-        geo.period(MU),
+        state.position_km.x,
+        state.position_km.y,
+        state.position_km.z,
+        state.velocity_km_s.x,
+        state.velocity_km_s.y,
+        state.velocity_km_s.z,
+        geo.period_s(MU),
         energy
     );
 
@@ -241,12 +241,12 @@ fn main() {
               recovered_argument_of_perigee_rad,recovered_true_anomaly_rad,state_radius_km"
     );
     let base = KeplerianElements {
-        semi_major_axis: 7_000.0,
+        semi_major_axis_km: 7_000.0,
         eccentricity: 0.3,
-        inclination: 0.7,
-        right_ascension: 1.2,
-        argument_of_perigee: 0.4,
-        true_anomaly: 0.0,
+        inclination_rad: 0.7,
+        right_ascension_rad: 1.2,
+        argument_of_perigee_rad: 0.4,
+        true_anomaly_rad: 0.0,
     };
     for step in 0..36 {
         let true_anomaly = f64::from(step) * 10.0_f64.to_radians();
@@ -258,13 +258,13 @@ fn main() {
         println!(
             "{},{},{},{},{},{},{},{}",
             true_anomaly,
-            recovered.semi_major_axis,
+            recovered.semi_major_axis_km,
             recovered.eccentricity,
-            recovered.inclination,
-            recovered.right_ascension,
-            recovered.argument_of_perigee,
-            recovered.true_anomaly,
-            state.position.norm()
+            recovered.inclination_rad,
+            recovered.right_ascension_rad,
+            recovered.argument_of_perigee_rad,
+            recovered.true_anomaly_rad,
+            state.position_km.norm()
         );
     }
 }

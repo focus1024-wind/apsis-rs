@@ -128,6 +128,6 @@ fn a_shell_result_is_in_input_order() {
         let direct = satellite
             .propagate_minutes(minutes[index])
             .expect("the orbit propagates");
-        assert_eq!(state.position, direct.position, "at index {index}");
+        assert_eq!(state.position_km, direct.position_km, "at index {index}");
     }
 }

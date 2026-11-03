@@ -128,12 +128,12 @@ fn main() {
     // ---- Two-body Keplerian conversion ------------------------------------
     // ---- 二体开普勒换算 ------------------------------------------
     let elements = KeplerianElements {
-        semi_major_axis: 7_000.0,
+        semi_major_axis_km: 7_000.0,
         eccentricity: 0.01,
-        inclination: 0.9,
-        right_ascension: 0.5,
-        argument_of_perigee: 1.0,
-        true_anomaly: 0.3,
+        inclination_rad: 0.9,
+        right_ascension_rad: 0.5,
+        argument_of_perigee_rad: 1.0,
+        true_anomaly_rad: 0.3,
     };
     let nanos = measure(ITERATIONS, || {
         elements
@@ -150,7 +150,7 @@ fn main() {
             let state = satellite
                 .propagate_minutes(seconds / 60.0)
                 .expect("propagates");
-            apsis::apsis_ephemeris::Sample::new(seconds, state.position, state.velocity)
+            apsis::apsis_ephemeris::Sample::new(seconds, state.position_km, state.velocity_km_s)
         })
         .expect("the grid is usable");
     let nanos = measure(ITERATIONS, || {
@@ -169,7 +169,7 @@ fn main() {
     // ---- 地固转动 -------------------------------------------------
     let angle = EarthRotationAngle::from_ut1_days(EPOCH_MJD - 51_544.5);
     let eci = Eci::new(apsis::apsis_math::Vec3::new(7_000_000.0, 0.0, 0.0));
-    let nanos = measure(ITERATIONS, || eci.to_ecef(black_box(angle)).vector());
+    let nanos = measure(ITERATIONS, || eci.to_ecef(black_box(angle)).vector_m());
     report("TEME to Earth-fixed rotation", nanos, ITERATIONS);
 
     // ---- Geodetic conversion ---------------------------------------------
@@ -193,7 +193,10 @@ fn main() {
             .propagate_minutes(seconds / 60.0)
             .expect("propagates");
         let angle = EarthRotationAngle::from_ut1_days(EPOCH_MJD - 51_544.5 + seconds / 86_400.0);
-        let fixed = Eci::new(state.position * 1_000.0).to_ecef(angle).vector() / 1_000.0;
+        let fixed = Eci::new(state.position_km * 1_000.0)
+            .to_ecef(angle)
+            .vector_m()
+            / 1_000.0;
         samples.push(OrbitSample::new(seconds, fixed));
     }
     let finder = AccessFinder {
@@ -213,10 +216,10 @@ fn main() {
         receive_gain: Gain::from_dbi(35.0).expect("finite"),
         receive_loss: Decibel::from_db(0.5),
         system_temperature: NoiseTemperature::from_kelvin(150.0),
-        bandwidth: 36.0e6,
+        bandwidth_hz: 36.0e6,
         geometry: LinkGeometry {
-            distance: 38.0e6,
-            frequency: 12.0e9,
+            distance_m: 38.0e6,
+            frequency_hz: 12.0e9,
         },
     };
     let nanos = measure(ITERATIONS, || {

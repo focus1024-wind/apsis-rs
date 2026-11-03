@@ -14,11 +14,11 @@ pub struct Placement {
     ///
     /// 被放置的任务。
     pub task: TaskId,
-    /// The start time of the placement, in seconds.
+    /// The `start_s` time of the placement, in seconds.
     ///
     /// 放置的起始时刻，单位为秒。
-    pub start: f64,
-    /// The duration of the placement, in seconds.
+    pub start_s: f64,
+    /// The `duration_s` of the placement, in seconds.
     ///
     /// This is copied from the task so that a schedule carries everything
     /// needed to evaluate it without the tasks to hand.
@@ -26,7 +26,7 @@ pub struct Placement {
     /// 放置的时长，单位为秒。
     ///
     /// 它从任务复制而来，故一份计划无需持有任务集合也能完成评估。
-    pub duration: f64,
+    pub duration_s: f64,
 }
 
 impl Placement {
@@ -34,26 +34,26 @@ impl Placement {
     ///
     /// 创建一次放置。
     #[must_use]
-    pub const fn new(task: TaskId, start: f64, duration: f64) -> Self {
+    pub const fn new(task: TaskId, start_s: f64, duration_s: f64) -> Self {
         Self {
             task,
-            start,
-            duration,
+            start_s,
+            duration_s,
         }
     }
 
-    /// Returns the end time of the placement, in seconds.
+    /// Returns the `end_s` time of the placement, in seconds.
     ///
     /// 返回放置的结束时刻，单位为秒。
     #[must_use]
-    pub fn end(&self) -> f64 {
-        self.start + self.duration
+    pub fn end_s(&self) -> f64 {
+        self.start_s + self.duration_s
     }
 
     /// Returns `true` when the placement covers an instant.
     ///
-    /// The interval is half-open, so a placement covers its start and not its
-    /// end. That convention lets two back to back placements share a boundary
+    /// The interval is half-open, so a placement covers its `start_s` and not its
+    /// `end_s`. That convention lets two back to back placements share a boundary
     /// without overlapping.
     ///
     /// 当该放置覆盖某瞬时返回 `true`。
@@ -62,7 +62,7 @@ impl Placement {
     /// 放置可共享边界而不重叠。
     #[must_use]
     pub fn covers(&self, time: f64) -> bool {
-        time >= self.start && time < self.end()
+        time >= self.start_s && time < self.end_s()
     }
 
     /// Returns `true` when the placement overlaps another.
@@ -70,7 +70,7 @@ impl Placement {
     /// 当该放置与另一个放置重叠时返回 `true`。
     #[must_use]
     pub fn overlaps(&self, other: &Self) -> bool {
-        self.start < other.end() && other.start < self.end()
+        self.start_s < other.end_s() && other.start_s < self.end_s()
     }
 
     /// Returns `true` when the placement is usable.
@@ -78,7 +78,7 @@ impl Placement {
     /// 当该放置可用时返回 `true`。
     #[must_use]
     pub fn is_valid(&self) -> bool {
-        self.start.is_finite() && self.duration.is_finite() && self.duration >= 0.0
+        self.start_s.is_finite() && self.duration_s.is_finite() && self.duration_s >= 0.0
     }
 }
 
@@ -147,11 +147,11 @@ pub struct Evaluation {
     ///
     /// 已放置时长之和，单位为秒。
     pub scheduled_seconds: f64,
-    /// The earliest start time, or zero when nothing is placed.
+    /// The earliest `start_s` time, or zero when nothing is placed.
     ///
     /// 最早的开始时刻；无放置时为零。
     pub makespan_start: f64,
-    /// The latest end time, or zero when nothing is placed.
+    /// The latest `end_s` time, or zero when nothing is placed.
     ///
     /// 最晚的结束时刻；无放置时为零。
     pub makespan_end: f64,
@@ -165,7 +165,7 @@ impl Evaluation {
     /// Returns the length of the planning horizon the schedule covers, in
     /// seconds.
     ///
-    /// This is the time from the earliest start to the latest end, which is
+    /// This is the time from the earliest `start_s` to the latest `end_s`, which is
     /// the makespan of the plan.
     ///
     /// 返回该计划覆盖的规划时域长度，单位为秒。

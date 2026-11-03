@@ -12,7 +12,7 @@
 
 use apsis::apsis_atmosphere::{rain_height, zero_isotherm_height};
 
-/// The locations sampled, as latitude and longitude in degrees.
+/// The locations sampled, as `latitude_rad` and `longitude_rad` in degrees.
 ///
 /// 所采样的位置，以度计的纬度与经度。
 const POINTS: &[(f64, f64)] = &[
@@ -35,13 +35,13 @@ const POINTS: &[(f64, f64)] = &[
 
 fn main() {
     println!("latitude_deg,longitude_deg,isotherm_km,rain_height_km");
-    for &(latitude, longitude) in POINTS {
-        let Some(isotherm) = zero_isotherm_height(latitude, longitude) else {
+    for &(latitude_rad, longitude_rad) in POINTS {
+        let Some(isotherm) = zero_isotherm_height(latitude_rad, longitude_rad) else {
             continue;
         };
-        let Some(height) = rain_height(latitude, longitude) else {
+        let Some(height) = rain_height(latitude_rad, longitude_rad) else {
             continue;
         };
-        println!("{latitude},{longitude},{isotherm:.12},{height:.12}");
+        println!("{latitude_rad},{longitude_rad},{isotherm:.12},{height:.12}");
     }
 }

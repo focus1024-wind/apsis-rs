@@ -131,10 +131,14 @@ fn main() {
     let report = session.run(|_engine, recorder, event| {
         if event.payload.is_start() {
             starts += 1;
-            recorder.note(event.time, "started", event.payload.task().index() as f64);
+            recorder.note(event.time_s, "started", event.payload.task().index() as f64);
         } else {
             ends += 1;
-            recorder.note(event.time, "finished", event.payload.task().index() as f64);
+            recorder.note(
+                event.time_s,
+                "finished",
+                event.payload.task().index() as f64,
+            );
         }
     });
 
@@ -165,13 +169,13 @@ fn main() {
         .with_label("finished")
         .iter()
         .filter(|record| record.value == 0.0)
-        .map(|record| record.time)
+        .map(|record| record.time_s)
         .next();
     let downlink_start = trace
         .with_label("started")
         .iter()
         .filter(|record| record.value == 1.0)
-        .map(|record| record.time)
+        .map(|record| record.time_s)
         .next();
     if let (Some(collection_end), Some(downlink_start)) = (collection_end, downlink_start) {
         println!(
@@ -185,9 +189,13 @@ fn main() {
     let mut again = simulation.start();
     let repeated = again.run(|_engine, recorder, event| {
         if event.payload.is_start() {
-            recorder.note(event.time, "started", event.payload.task().index() as f64);
+            recorder.note(event.time_s, "started", event.payload.task().index() as f64);
         } else {
-            recorder.note(event.time, "finished", event.payload.task().index() as f64);
+            recorder.note(
+                event.time_s,
+                "finished",
+                event.payload.task().index() as f64,
+            );
         }
     });
     assert_eq!(repeated.executed(), report.executed());

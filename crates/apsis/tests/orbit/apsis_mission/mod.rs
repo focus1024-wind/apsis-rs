@@ -11,12 +11,12 @@ const TOLERANCE: f64 = 1e-9;
 
 fn circular(radius: f64) -> KeplerianElements {
     KeplerianElements {
-        semi_major_axis: radius,
+        semi_major_axis_km: radius,
         eccentricity: 0.0,
-        inclination: 0.0,
-        right_ascension: 0.0,
-        argument_of_perigee: 0.0,
-        true_anomaly: 0.0,
+        inclination_rad: 0.0,
+        right_ascension_rad: 0.0,
+        argument_of_perigee_rad: 0.0,
+        true_anomaly_rad: 0.0,
     }
 }
 
@@ -44,7 +44,7 @@ fn a_half_period_propagation_reverses_the_position() {
         .propagate(period / 2.0)
         .expect("valid segment");
     let result = sequence.run().expect("runs");
-    assert!((result.final_state.position + initial.position).norm() < 1e-6);
+    assert!((result.final_state.position_km + initial.position_km).norm() < 1e-6);
     assert_eq!(result.events.len(), 1);
     assert_eq!(result.events[0].kind, EventKind::Propagate);
 }
@@ -56,7 +56,7 @@ fn a_hohmann_sequence_reaches_the_target_circular_orbit() {
     let plan = plan_hohmann(from, to).expect("valid radii");
     let initial = circular(from);
     let initial_state = initial.to_state(GravityParameter::WGS84).expect("state");
-    let first_direction = initial_state.velocity.normalize().expect("direction");
+    let first_direction = initial_state.velocity_km_s.normalize().expect("direction");
     let first = MissionSequence::new(initial, GravityParameter::WGS84)
         .expect("valid sequence")
         .impulse(first_direction * plan.first_burn_km_s)
@@ -67,17 +67,21 @@ fn a_hohmann_sequence_reaches_the_target_circular_orbit() {
         .expect("runs");
     // At apoapsis the radius is the target radius.
     // 在远地点处半径即目标半径。
-    assert!((first.final_state.position.norm() - to).abs() < 1e-6);
-    let second_direction = first.final_state.velocity.normalize().expect("direction");
+    assert!((first.final_state.position_km.norm() - to).abs() < 1e-6);
+    let second_direction = first
+        .final_state
+        .velocity_km_s
+        .normalize()
+        .expect("direction");
     let second = MissionSequence::new(first.final_elements, GravityParameter::WGS84)
         .expect("valid sequence")
         .impulse(second_direction * plan.second_burn_km_s)
         .expect("valid impulse")
         .run()
         .expect("runs");
-    assert!((second.final_elements.semi_major_axis - to).abs() < 1e-6);
+    assert!((second.final_elements.semi_major_axis_km - to).abs() < 1e-6);
     assert!(second.final_elements.eccentricity < 1e-9);
-    assert!((second.final_state.position.norm() - to).abs() < 1e-6);
+    assert!((second.final_state.position_km.norm() - to).abs() < 1e-6);
     assert!(
         (first.total_delta_v_km_s + second.total_delta_v_km_s - plan.total_delta_v_km_s).abs()
             < 1e-12

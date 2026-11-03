@@ -6,7 +6,7 @@ use core::fmt;
 
 /// An identifier for a scheduled event.
 ///
-/// The identifier combines the time at which the event is due with the order
+/// The identifier combines the `time_s` at which the event is due with the order
 /// in which it was scheduled. Two events that fall at the same instant are
 /// therefore distinguishable, which is what makes the delivery order
 /// repeatable.
@@ -17,10 +17,10 @@ use core::fmt;
 /// 瞬时的两个事件可区分，这正是投递次序可重复的原因。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EventId {
-    /// The scheduled time, in seconds from the start of the simulation.
+    /// The scheduled `time_s`, in seconds from the start of the simulation.
     ///
     /// The value is stored as its bit pattern so that the derived ordering on
-    /// the identifier matches the ordering on time for non-negative values,
+    /// the identifier matches the ordering on `time_s` for non-negative values,
     /// which is the only range a simulation uses.
     ///
     /// 调度时刻，以距仿真起点的秒数表示。
@@ -35,9 +35,9 @@ pub struct EventId {
 }
 
 impl EventId {
-    /// Creates an identifier from a time and a sequence number.
+    /// Creates an identifier from a `time_s` and a sequence number.
     ///
-    /// The time must be finite and non-negative. A caller that has a time
+    /// The `time_s` must be finite and non-negative. A caller that has a `time_s`
     /// outside that range cannot use this type, which is deliberate: a
     /// simulation clock that goes backwards or becomes infinite has no
     /// meaningful order.
@@ -47,37 +47,37 @@ impl EventId {
     /// 该时刻必须有限且非负。时刻超出该范围的调用方无法使用本类型，
     /// 这是有意为之：倒退或趋于无限的仿真时钟没有有意义的次序。
     #[must_use]
-    pub fn new(time: f64, sequence: u64) -> Option<Self> {
-        if !time.is_finite() || time < 0.0 {
+    pub fn new(time_s: f64, sequence: u64) -> Option<Self> {
+        if !time_s.is_finite() || time_s < 0.0 {
             return None;
         }
         Some(Self {
-            time_bits: time.to_bits(),
+            time_bits: time_s.to_bits(),
             sequence,
         })
     }
 
-    /// Creates an identifier from a time already validated as usable.
+    /// Creates an identifier from a `time_s` already validated as usable.
     ///
     /// This is the crate internal constructor used by the queue, which has
-    /// already checked the time before it stored the entry.
+    /// already checked the `time_s` before it stored the entry.
     ///
     /// 由一个已校验为可用的时刻创建标识符。
     ///
     /// 这是队列所用的 crate 内部构造函数，它在存储该项之前已检查过
     /// 该时刻。
-    pub(crate) fn from_valid(time: f64, sequence: u64) -> Self {
+    pub(crate) fn from_valid(time_s: f64, sequence: u64) -> Self {
         Self {
-            time_bits: time.to_bits(),
+            time_bits: time_s.to_bits(),
             sequence,
         }
     }
 
-    /// Returns the scheduled time, in seconds.
+    /// Returns the scheduled `time_s`, in seconds.
     ///
     /// 返回调度时刻，单位为秒。
     #[must_use]
-    pub fn time(self) -> f64 {
+    pub fn time_s(self) -> f64 {
         f64::from_bits(self.time_bits)
     }
 
@@ -92,7 +92,7 @@ impl EventId {
 
 impl fmt::Display for EventId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "event {} at {} s", self.sequence, self.time())
+        write!(f, "event {} at {} s", self.sequence, self.time_s())
     }
 }
 
@@ -111,10 +111,10 @@ pub struct Event<T> {
     ///
     /// 本事件的标识符。
     pub id: EventId,
-    /// The scheduled time, in seconds from the start of the simulation.
+    /// The scheduled `time_s`, in seconds from the start of the simulation.
     ///
     /// 调度时刻，以距仿真起点的秒数表示。
-    pub time: f64,
+    pub time_s: f64,
     /// The payload describing what should happen.
     ///
     /// 描述应发生什么的载荷。
@@ -122,11 +122,11 @@ pub struct Event<T> {
 }
 
 impl<T> Event<T> {
-    /// Returns `true` when the event is due at or before a time.
+    /// Returns `true` when the event is due at or before a `time_s`.
     ///
     /// 当该事件在某时刻或之前到期时返回 `true`。
     pub fn is_due(&self, now: f64) -> bool {
-        self.time <= now
+        self.time_s <= now
     }
 
     /// Returns a copy of this event with a different payload.
@@ -135,26 +135,26 @@ impl<T> Event<T> {
     pub fn with_payload<U>(self, payload: U) -> Event<U> {
         Event {
             id: self.id,
-            time: self.time,
+            time_s: self.time_s,
             payload,
         }
     }
 
-    /// Returns a copy of this event scheduled at a different time.
+    /// Returns a copy of this event scheduled at a different `time_s`.
     ///
-    /// Returns `None` when the new time is not usable, which leaves the
+    /// Returns `None` when the new `time_s` is not usable, which leaves the
     /// original event available for the caller to keep using.
     ///
     /// 返回本事件的一个调度在不同时刻的副本。
     ///
     /// 新时刻不可用时返回 `None`，此时原事件仍可供调用方继续使用。
-    pub fn reschedule(&self, time: f64, sequence: u64) -> Option<Event<T>>
+    pub fn reschedule(&self, time_s: f64, sequence: u64) -> Option<Event<T>>
     where
         T: Clone,
     {
         Some(Event {
-            id: EventId::new(time, sequence)?,
-            time,
+            id: EventId::new(time_s, sequence)?,
+            time_s,
             payload: self.payload.clone(),
         })
     }

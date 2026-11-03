@@ -17,7 +17,7 @@
 //!    multiplying by the Boltzmann constant.
 //! 4. The carrier to noise density ratio is the carrier power divided by
 //!    that density, and the carrier to noise ratio divides it further by the
-//!    receiver bandwidth.
+//!    receiver `bandwidth_hz`.
 //!
 //! Sources:
 //!
@@ -38,10 +38,10 @@
 //!     receive_gain: Gain::from_dbi(35.0).expect("finite"),
 //!     receive_loss: apsis::apsis_rf::Decibel::from_db(0.5),
 //!     system_temperature: apsis::apsis_noise::NoiseTemperature::from_kelvin(150.0),
-//!     bandwidth: 36.0e6,
+//!     bandwidth_hz: 36.0e6,
 //!     geometry: LinkGeometry {
-//!         distance: 38_000_000.0,
-//!         frequency: 12.0e9,
+//!         distance_m: 38_000_000.0,
+//!         frequency_hz: 12.0e9,
 //!     },
 //! };
 //!

@@ -9,7 +9,7 @@
 //!
 //! - [`Eci`], an inertial Cartesian position in meters
 //! - [`Ecef`], an Earth-fixed Cartesian position in meters
-//! - [`Geodetic`], a latitude, longitude, and height above the WGS 84
+//! - [`Geodetic`], a `latitude_rad`, `longitude_rad`, and height above the WGS 84
 //!   ellipsoid
 //!
 //! The transformation between [`Eci`] and [`Ecef`] is the rotation defined
@@ -22,14 +22,14 @@
 //! use apsis::apsis_frames::EarthRotationAngle;
 //! use apsis::apsis_math::Vec3;
 //!
-//! // A station on the equator at zero longitude.
+//! // A station on the equator at zero longitude_rad.
 //! let station = Geodetic::new(0.0, 0.0, 0.0);
 //! let fixed = station.to_ecef();
-//! assert!((fixed.vector().x - WGS84.semi_major_axis()).abs() < 1e-6);
+//! assert!((fixed.vector_m().x - WGS84.semi_major_axis_m()).abs() < 1e-6);
 //!
 //! // Rotating it into the inertial frame preserves its length.
 //! let inertial = fixed.to_eci(EarthRotationAngle::from_ut1_days(0.0));
-//! assert!((inertial.vector().norm() - fixed.vector().norm()).abs() < 1e-6);
+//! assert!((inertial.vector_m().norm() - fixed.vector_m().norm()).abs() < 1e-6);
 //! let _ = Eci::new(Vec3::X);
 //! ```
 //!

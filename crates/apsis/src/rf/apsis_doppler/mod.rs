@@ -29,7 +29,7 @@
 //! assert_eq!(range_rate, Some(1_000.0));
 //!
 //! let shift = DopplerShift::from_range_rate(12.0e9, 1_000.0).expect("valid");
-//! assert!(shift.shifted_frequency() < 12.0e9);
+//! assert!(shift.shifted_frequency_hz() < 12.0e9);
 //! ```
 //!
 //! 多普勒频移计算。

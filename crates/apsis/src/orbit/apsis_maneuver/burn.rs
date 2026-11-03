@@ -115,7 +115,7 @@ impl FiniteBurn {
         self.duration
     }
 
-    /// Returns the velocity change the acceleration would give in free space,
+    /// Returns the `velocity_km_s` change the acceleration would give in free space,
     /// in kilometers per second.
     ///
     /// This is the acceleration times the duration, the delta-v the burn
@@ -152,24 +152,24 @@ impl FiniteBurn {
 
     /// Applies the burn to a state under two-body gravity.
     ///
-    /// The position and velocity are integrated forward over the duration
+    /// The `position_km` and `velocity_km_s` are integrated forward over the duration
     /// with the constant acceleration added to gravity. The exact solution
     /// of constant acceleration plus point mass gravity has no closed form,
     /// so the integration is a fixed step fourth order Runge-Kutta, which is
     /// accurate for the short arcs a burn occupies.
     ///
-    /// The achieved velocity change is measured against a coast of the same
-    /// duration, not against the initial velocity. That distinction matters:
-    /// gravity changes the velocity during the burn even with no thrust, so
-    /// the difference between the final and the initial velocity includes
-    /// the natural rotation of the velocity vector. Comparing against the
+    /// The achieved `velocity_km_s` change is measured against a coast of the same
+    /// duration, not against the initial `velocity_km_s`. That distinction matters:
+    /// gravity changes the `velocity_km_s` during the burn even with no thrust, so
+    /// the difference between the final and the initial `velocity_km_s` includes
+    /// the natural rotation of the `velocity_km_s` vector. Comparing against the
     /// coast isolates the contribution of the thrust, which is what the
     /// burn bought; it also makes the result converge on the nominal change
     /// as the duration shrinks, which the difference from the initial
-    /// velocity would not.
+    /// `velocity_km_s` would not.
     ///
     /// Returns the state at the end of the burn together with the achieved
-    /// velocity change.
+    /// `velocity_km_s` change.
     ///
     /// 在二体引力下把该点火作用于一个状态。
     ///
@@ -190,7 +190,7 @@ impl FiniteBurn {
         parameter: GravityParameter,
         steps: usize,
     ) -> Result<BurnOutcome, ManeuverError> {
-        if !state.position.is_finite() || !state.velocity.is_finite() {
+        if !state.position_km.is_finite() || !state.velocity_km_s.is_finite() {
             return Err(ManeuverError::new(ManeuverErrorKind::InvalidState));
         }
         if steps == 0 {
@@ -200,35 +200,36 @@ impl FiniteBurn {
         let mu = parameter.value();
         let step = self.duration / steps as f64;
 
-        // The two-body acceleration at a position.
+        // The two-body acceleration at a position_km.
         // 某位置处的二体加速度。
-        let gravity = |position: Vec3| -> Vec3 {
-            let radius = position.norm();
+        let gravity = |position_km: Vec3| -> Vec3 {
+            let radius = position_km.norm();
             if radius == 0.0 {
                 return Vec3::ZERO;
             }
-            position * (-mu / (radius * radius * radius))
+            position_km * (-mu / (radius * radius * radius))
         };
         // The thrust added to gravity, which is what the burn integrates.
         // 叠加到引力上的推力，即点火所积分的量。
-        let thrust_and_gravity = |position: Vec3| -> Vec3 { gravity(position) + self.acceleration };
+        let thrust_and_gravity =
+            |position_km: Vec3| -> Vec3 { gravity(position_km) + self.acceleration };
 
         // The burn trajectory.
         // 点火轨迹。
-        let mut position = state.position;
-        let mut velocity = state.velocity;
+        let mut position_km = state.position_km;
+        let mut velocity_km_s = state.velocity_km_s;
         for _ in 0..steps {
             let (new_position, new_velocity) =
-                rk4_step(position, velocity, step, &thrust_and_gravity);
-            position = new_position;
-            velocity = new_velocity;
+                rk4_step(position_km, velocity_km_s, step, &thrust_and_gravity);
+            position_km = new_position;
+            velocity_km_s = new_velocity;
         }
 
         // The coast trajectory over the same duration, with the same
         // integrator and step, so the only difference is the thrust.
         // 同时长、同积分器同步长的滑行轨迹，故二者唯一差别是推力。
-        let mut coast_position = state.position;
-        let mut coast_velocity = state.velocity;
+        let mut coast_position = state.position_km;
+        let mut coast_velocity = state.velocity_km_s;
         for _ in 0..steps {
             let (new_position, new_velocity) =
                 rk4_step(coast_position, coast_velocity, step, &gravity);
@@ -236,16 +237,19 @@ impl FiniteBurn {
             coast_velocity = new_velocity;
         }
 
-        if !position.is_finite() || !velocity.is_finite() {
+        if !position_km.is_finite() || !velocity_km_s.is_finite() {
             return Err(ManeuverError::new(ManeuverErrorKind::InvalidState)
                 .with_detail("the integration diverged"));
         }
 
         Ok(BurnOutcome {
-            state: State { position, velocity },
-            achieved_delta_v: velocity - coast_velocity,
-            nominal_delta_v: self.nominal_delta_v(),
-            duration: self.duration,
+            state: State {
+                position_km,
+                velocity_km_s,
+            },
+            achieved_delta_v_km_s: velocity_km_s - coast_velocity,
+            nominal_delta_v_km_s: self.nominal_delta_v(),
+            duration_s: self.duration,
         })
     }
 
@@ -296,34 +300,34 @@ pub struct BurnOutcome {
     ///
     /// 点火结束时的状态。
     pub state: State,
-    /// The velocity change actually achieved, in kilometers per second.
+    /// The `velocity_km_s` change actually achieved, in kilometers per second.
     ///
     /// 实际达到的速度变化，单位为千米每秒。
-    pub achieved_delta_v: Vec3,
-    /// The velocity change the acceleration would give in free space, in
+    pub achieved_delta_v_km_s: Vec3,
+    /// The `velocity_km_s` change the acceleration would give in free space, in
     /// kilometers per second.
     ///
     /// 该加速度在自由空间中会造成的速度变化，单位为千米每秒。
-    pub nominal_delta_v: f64,
+    pub nominal_delta_v_km_s: f64,
     /// The burn duration, in seconds.
     ///
     /// 点火时长，单位为秒。
-    pub duration: f64,
+    pub duration_s: f64,
 }
 
 impl BurnOutcome {
-    /// Returns the magnitude of the achieved velocity change.
+    /// Returns the magnitude of the achieved `velocity_km_s` change.
     ///
     /// 返回实际达到的速度变化的大小。
     #[must_use]
     pub fn achieved_magnitude(&self) -> f64 {
-        self.achieved_delta_v.norm()
+        self.achieved_delta_v_km_s.norm()
     }
 
     /// Returns the difference between the achieved and nominal change, in
     /// kilometers per second.
     ///
-    /// A negative value means gravity turned the velocity against the thrust
+    /// A negative value means gravity turned the `velocity_km_s` against the thrust
     /// during the burn, so the burn bought less than its free space delta-v.
     ///
     /// 返回实际变化与标称变化之差，单位为千米每秒。
@@ -332,7 +336,7 @@ impl BurnOutcome {
     /// 自由空间 delta-v。
     #[must_use]
     pub fn gravity_loss(&self) -> f64 {
-        self.achieved_magnitude() - self.nominal_delta_v
+        self.achieved_magnitude() - self.nominal_delta_v_km_s
     }
 
     /// Returns the elements at the end of the burn.
@@ -352,7 +356,7 @@ impl BurnOutcome {
 /// One classical Runge-Kutta fourth order step of the two-body equations
 /// with a constant acceleration added.
 ///
-/// The state is `(position, velocity)` and the equations are the usual
+/// The state is `(position_km, velocity_km_s)` and the equations are the usual
 /// `dr/dt = v` and `dv/dt = a(r)`, with `a` combining thrust and gravity.
 /// The four stages are the standard ones; writing them out keeps the loop
 /// allocation free.
@@ -362,24 +366,24 @@ impl BurnOutcome {
 /// 状态为 `(位置, 速度)`，方程即通常的 `dr/dt = v` 与 `dv/dt = a(r)`，其中
 /// `a` 合并推力与引力。四个级次是标准形式；直接写出使循环无需分配内存。
 fn rk4_step(
-    position: Vec3,
-    velocity: Vec3,
+    position_km: Vec3,
+    velocity_km_s: Vec3,
     step: f64,
     acceleration: &impl Fn(Vec3) -> Vec3,
 ) -> (Vec3, Vec3) {
-    let k1_v = acceleration(position);
-    let k1_r = velocity;
+    let k1_v = acceleration(position_km);
+    let k1_r = velocity_km_s;
 
-    let k2_v = acceleration(position + k1_r * (step / 2.0));
-    let k2_r = velocity + k1_v * (step / 2.0);
+    let k2_v = acceleration(position_km + k1_r * (step / 2.0));
+    let k2_r = velocity_km_s + k1_v * (step / 2.0);
 
-    let k3_v = acceleration(position + k2_r * (step / 2.0));
-    let k3_r = velocity + k2_v * (step / 2.0);
+    let k3_v = acceleration(position_km + k2_r * (step / 2.0));
+    let k3_r = velocity_km_s + k2_v * (step / 2.0);
 
-    let k4_v = acceleration(position + k3_r * step);
-    let k4_r = velocity + k3_v * step;
+    let k4_v = acceleration(position_km + k3_r * step);
+    let k4_r = velocity_km_s + k3_v * step;
 
-    let new_position = position + (k1_r + k2_r * 2.0 + k3_r * 2.0 + k4_r) * (step / 6.0);
-    let new_velocity = velocity + (k1_v + k2_v * 2.0 + k3_v * 2.0 + k4_v) * (step / 6.0);
+    let new_position = position_km + (k1_r + k2_r * 2.0 + k3_r * 2.0 + k4_r) * (step / 6.0);
+    let new_velocity = velocity_km_s + (k1_v + k2_v * 2.0 + k3_v * 2.0 + k4_v) * (step / 6.0);
     (new_position, new_velocity)
 }

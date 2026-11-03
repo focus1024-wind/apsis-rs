@@ -105,15 +105,15 @@ impl Simulation {
             // The duration is copied into the placement, so the plan is
             // checked against the task it claims to place.
             // 时长被复制进放置中，故针对该计划声称要放置的任务检查它。
-            if (placement.duration - task.duration).abs() > f64::EPSILON {
+            if (placement.duration_s - task.duration_s).abs() > f64::EPSILON {
                 return Err(SimulationError::new(SimulationErrorKind::InconsistentPlan)
                     .with_detail(format!(
                         "{} lasts {} s in the plan and {} s as a task",
-                        placement.task, placement.duration, task.duration
+                        placement.task, placement.duration_s, task.duration_s
                     )));
             }
-            timeline.push((placement.start, Activity::start(placement.task)));
-            timeline.push((placement.end(), Activity::end(placement.task)));
+            timeline.push((placement.start_s, Activity::start(placement.task)));
+            timeline.push((placement.end_s(), Activity::end(placement.task)));
         }
         Ok(Self {
             scenario,

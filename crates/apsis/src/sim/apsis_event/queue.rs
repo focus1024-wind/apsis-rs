@@ -24,7 +24,7 @@ struct Scheduled {
 }
 
 impl Scheduled {
-    fn time(self) -> f64 {
+    fn time_s(self) -> f64 {
         f64::from_bits(self.time_bits)
     }
 }
@@ -155,7 +155,7 @@ impl<T> EventQueue<T> {
     pub fn state(&self) -> QueueState {
         QueueState {
             pending: self.pending.len(),
-            next_time: self.pending.peek().map(|entry| entry.time()),
+            next_time: self.pending.peek().map(|entry| entry.time_s()),
             delivered: self.delivered,
         }
     }
@@ -169,7 +169,7 @@ impl<T> EventQueue<T> {
     /// 队列为空时返回 `None`。
     #[must_use]
     pub fn next_time(&self) -> Option<f64> {
-        self.pending.peek().map(|entry| entry.time())
+        self.pending.peek().map(|entry| entry.time_s())
     }
 
     /// Schedules an event at a time.
@@ -259,8 +259,8 @@ impl<T> EventQueue<T> {
             .expect("a pending entry always has its payload");
         self.delivered = self.delivered.wrapping_add(1);
         Some(Event {
-            id: EventId::from_valid(entry.time(), entry.sequence),
-            time: entry.time(),
+            id: EventId::from_valid(entry.time_s(), entry.sequence),
+            time_s: entry.time_s(),
             payload,
         })
     }

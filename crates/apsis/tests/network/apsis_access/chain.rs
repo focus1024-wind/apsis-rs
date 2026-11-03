@@ -49,8 +49,8 @@ fn passes_convert_to_the_same_intervals() {
         rise_seconds: 100.0,
         set_seconds: 200.0,
         peak_seconds: 150.0,
-        peak_elevation: 0.5,
-        mask_elevation: 0.1,
+        peak_elevation_rad: 0.5,
+        mask_elevation_rad: 0.1,
         peak_position: apsis::apsis_math::Vec3::ZERO,
     };
     let chain = chain_passes(&[vec![pass]]).expect("valid");

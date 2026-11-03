@@ -29,23 +29,23 @@ fn observation() -> Task {
 #[test]
 fn a_new_task_has_the_given_duration_and_nothing_else() {
     let task = simple();
-    assert_eq!(task.duration, 60.0);
+    assert_eq!(task.duration_s, 60.0);
     assert_eq!(task.priority, 0.0);
     assert!(!task.mandatory);
     assert_eq!(task.requirements, &[]);
     assert_eq!(task.requirement_count(), 0);
     // A task with no window is unbounded at both ends.
     // 无窗口的任务在两端都无界。
-    assert!(task.earliest_start.is_infinite() && task.earliest_start < 0.0);
-    assert!(task.latest_end.is_infinite() && task.latest_end > 0.0);
+    assert!(task.earliest_start_s.is_infinite() && task.earliest_start_s < 0.0);
+    assert!(task.latest_end_s.is_infinite() && task.latest_end_s > 0.0);
     assert!(!task.window_is_too_short());
 }
 
 #[test]
 fn a_window_restricts_the_task() {
     let task = observation();
-    assert_eq!(task.earliest_start, 100.0);
-    assert_eq!(task.latest_end, 1_000.0);
+    assert_eq!(task.earliest_start_s, 100.0);
+    assert_eq!(task.latest_end_s, 1_000.0);
     assert_eq!(task.window_length(), 900.0);
     assert!(task.fits_window());
     assert_eq!(task.earliest_possible_end(), 160.0);
@@ -217,13 +217,13 @@ fn a_task_displays_its_shape() {
 fn task_states_report_their_placement() {
     let pending = TaskState::Pending;
     assert!(!pending.is_scheduled());
-    assert_eq!(pending.start(), None);
+    assert_eq!(pending.start_s(), None);
     assert_eq!(pending.name(), "pending");
 
-    let scheduled = TaskState::Scheduled { start: 100.0 };
+    let scheduled = TaskState::Scheduled { start_s: 100.0 };
     assert!(scheduled.is_scheduled());
-    assert_eq!(scheduled.start(), Some(100.0));
-    assert_eq!(scheduled.end(60.0), Some(160.0));
+    assert_eq!(scheduled.start_s(), Some(100.0));
+    assert_eq!(scheduled.end_s(60.0), Some(160.0));
     assert_eq!(scheduled.name(), "scheduled");
 
     let deferred = TaskState::Deferred {

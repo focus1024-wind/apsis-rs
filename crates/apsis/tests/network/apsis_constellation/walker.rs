@@ -9,7 +9,7 @@ use core::f64::consts::PI;
 const TOLERANCE: f64 = 1e-12;
 
 /// A Walker 53 degree pattern with 24 satellites in 3 planes, as used by a
-/// mid latitude broadband constellation.
+/// mid `latitude_rad` broadband constellation.
 ///
 /// 一个 53 度的 Walker 模式，3 个轨道面、24 颗卫星，如中纬度宽带星座所用。
 fn broadband_pattern() -> WalkerPattern {
@@ -17,8 +17,8 @@ fn broadband_pattern() -> WalkerPattern {
         total_satellites: 24,
         planes: 3,
         phase_factor: 1,
-        inclination: 53.0_f64.to_radians(),
-        semi_major_axis: 6_878.137,
+        inclination_rad: 53.0_f64.to_radians(),
+        semi_major_axis_km: 6_878.137,
     }
 }
 
@@ -47,8 +47,8 @@ fn every_satellite_is_circular_and_at_the_same_radius() {
     let constellation = Constellation::walker(broadband_pattern(), 60_000.0).expect("valid");
     for satellite in constellation.satellites() {
         assert_eq!(satellite.elements.eccentricity, 0.0);
-        assert!((satellite.elements.semi_major_axis - 6_878.137).abs() < TOLERANCE);
-        assert!((satellite.elements.inclination - 53.0_f64.to_radians()).abs() < TOLERANCE);
+        assert!((satellite.elements.semi_major_axis_km - 6_878.137).abs() < TOLERANCE);
+        assert!((satellite.elements.inclination_rad - 53.0_f64.to_radians()).abs() < TOLERANCE);
     }
 }
 
@@ -59,9 +59,9 @@ fn the_planes_are_evenly_spaced_in_right_ascension() {
     for (plane, expected_right_ascension) in expected.iter().enumerate() {
         for satellite in constellation.plane(plane) {
             assert!(
-                (satellite.elements.right_ascension - expected_right_ascension).abs() < 1e-9,
+                (satellite.elements.right_ascension_rad - expected_right_ascension).abs() < 1e-9,
                 "plane {plane}: {} against {expected_right_ascension}",
-                satellite.elements.right_ascension
+                satellite.elements.right_ascension_rad
             );
         }
     }
@@ -74,7 +74,7 @@ fn satellites_within_a_plane_are_evenly_spaced_in_anomaly() {
         let satellites = constellation.plane(plane);
         let mut anomalies: Vec<f64> = satellites
             .iter()
-            .map(|satellite| satellite.elements.mean_anomaly())
+            .map(|satellite| satellite.elements.mean_anomaly_rad())
             .collect();
         anomalies.sort_by(|a, b| a.partial_cmp(b).expect("finite"));
         for pair in anomalies.windows(2) {
@@ -104,7 +104,7 @@ fn the_phase_offset_appears_between_adjacent_planes() {
             })
             .expect("the plane is not empty")
             .elements
-            .mean_anomaly()
+            .mean_anomaly_rad()
     };
     let first = first_of_plane(0);
     let second = first_of_plane(1);
@@ -134,7 +134,7 @@ fn a_zero_phase_factor_gives_no_offset_between_planes() {
             .find(|satellite| satellite.index_in_plane == 0)
             .expect("the plane is not empty")
             .elements
-            .mean_anomaly()
+            .mean_anomaly_rad()
     };
     // Every plane starts at the same anomaly.
     // 每个轨道面从相同的近点角开始。
@@ -146,9 +146,9 @@ fn a_zero_phase_factor_gives_no_offset_between_planes() {
 fn the_true_anomaly_matches_the_mean_anomaly_for_a_circular_orbit() {
     let constellation = Constellation::walker(broadband_pattern(), 0.0).expect("valid");
     for satellite in constellation.satellites() {
-        let mean = satellite.elements.mean_anomaly();
+        let mean = satellite.elements.mean_anomaly_rad();
         let expected = true_from_mean(mean, 0.0);
-        assert!((satellite.elements.true_anomaly - expected).abs() < 1e-12);
+        assert!((satellite.elements.true_anomaly_rad - expected).abs() < 1e-12);
     }
 }
 
@@ -158,8 +158,8 @@ fn a_single_plane_pattern_is_accepted() {
         total_satellites: 6,
         planes: 1,
         phase_factor: 0,
-        inclination: 0.0,
-        semi_major_axis: 7_000.0,
+        inclination_rad: 0.0,
+        semi_major_axis_km: 7_000.0,
     };
     let constellation = Constellation::walker(pattern, 0.0).expect("valid");
     assert_eq!(constellation.len(), 6);
@@ -167,7 +167,7 @@ fn a_single_plane_pattern_is_accepted() {
     // All satellites share a plane, so they share a right ascension.
     // 所有卫星共享一个轨道面，故共享一个赤经。
     for satellite in constellation.satellites() {
-        assert_eq!(satellite.elements.right_ascension, 0.0);
+        assert_eq!(satellite.elements.right_ascension_rad, 0.0);
     }
 }
 
@@ -177,8 +177,8 @@ fn a_pattern_with_one_satellite_per_plane_is_accepted() {
         total_satellites: 4,
         planes: 4,
         phase_factor: 3,
-        inclination: 1.0,
-        semi_major_axis: 7_000.0,
+        inclination_rad: 1.0,
+        semi_major_axis_km: 7_000.0,
     };
     let constellation = Constellation::walker(pattern, 0.0).expect("valid");
     assert_eq!(constellation.len(), 4);
@@ -237,7 +237,7 @@ fn an_out_of_range_phase_factor_is_rejected() {
 #[test]
 fn an_invalid_inclination_is_rejected() {
     let pattern = WalkerPattern {
-        inclination: PI + 0.1,
+        inclination_rad: PI + 0.1,
         ..broadband_pattern()
     };
     assert!(!pattern.is_valid());
@@ -250,7 +250,7 @@ fn an_invalid_inclination_is_rejected() {
 #[test]
 fn a_non_positive_semi_major_axis_is_rejected() {
     let pattern = WalkerPattern {
-        semi_major_axis: 0.0,
+        semi_major_axis_km: 0.0,
         ..broadband_pattern()
     };
     assert!(!pattern.is_valid());
@@ -308,8 +308,8 @@ fn the_notation_reports_the_walker_fields() {
         total_satellites: 24,
         planes: 3,
         phase_factor: 1,
-        inclination: 53.0_f64.to_radians(),
-        semi_major_axis: 6_878.137,
+        inclination_rad: 53.0_f64.to_radians(),
+        semi_major_axis_km: 6_878.137,
     };
     let notation = pattern.notation();
     assert!(notation.starts_with("53"), "notation {notation}");
@@ -321,28 +321,28 @@ fn a_custom_constellation_groups_satellites_by_right_ascension() {
     use apsis::apsis_kepler::KeplerianElements;
     let elements = [
         KeplerianElements {
-            semi_major_axis: 7_000.0,
+            semi_major_axis_km: 7_000.0,
             eccentricity: 0.001,
-            inclination: 0.9,
-            right_ascension: 0.0,
-            argument_of_perigee: 0.0,
-            true_anomaly: 0.0,
+            inclination_rad: 0.9,
+            right_ascension_rad: 0.0,
+            argument_of_perigee_rad: 0.0,
+            true_anomaly_rad: 0.0,
         },
         KeplerianElements {
-            semi_major_axis: 7_000.0,
+            semi_major_axis_km: 7_000.0,
             eccentricity: 0.001,
-            inclination: 0.9,
-            right_ascension: 0.0,
-            argument_of_perigee: 0.0,
-            true_anomaly: PI,
+            inclination_rad: 0.9,
+            right_ascension_rad: 0.0,
+            argument_of_perigee_rad: 0.0,
+            true_anomaly_rad: PI,
         },
         KeplerianElements {
-            semi_major_axis: 7_000.0,
+            semi_major_axis_km: 7_000.0,
             eccentricity: 0.001,
-            inclination: 0.9,
-            right_ascension: 2.0,
-            argument_of_perigee: 0.0,
-            true_anomaly: 0.5,
+            inclination_rad: 0.9,
+            right_ascension_rad: 2.0,
+            argument_of_perigee_rad: 0.0,
+            true_anomaly_rad: 0.5,
         },
     ];
     let constellation = Constellation::from_satellites(&elements, 0.0).expect("valid");
@@ -370,12 +370,12 @@ fn an_empty_custom_constellation_is_rejected() {
 fn a_custom_constellation_rejects_invalid_elements() {
     use apsis::apsis_kepler::KeplerianElements;
     let elements = [KeplerianElements {
-        semi_major_axis: -1.0,
+        semi_major_axis_km: -1.0,
         eccentricity: 0.0,
-        inclination: 0.0,
-        right_ascension: 0.0,
-        argument_of_perigee: 0.0,
-        true_anomaly: 0.0,
+        inclination_rad: 0.0,
+        right_ascension_rad: 0.0,
+        argument_of_perigee_rad: 0.0,
+        true_anomaly_rad: 0.0,
     }];
     let error = Constellation::from_satellites(&elements, 0.0).expect_err("negative radius");
     assert_eq!(error.kind(), ConstellationErrorKind::InvalidOrbit);
@@ -406,8 +406,8 @@ fn the_walker_phasing_matches_the_definition() {
         total_satellites: 24,
         planes: 3,
         phase_factor: 1,
-        inclination: 53.0_f64.to_radians(),
-        semi_major_axis: 6_878.137,
+        inclination_rad: 53.0_f64.to_radians(),
+        semi_major_axis_km: 6_878.137,
     };
     let constellation = Constellation::walker(pattern, 0.0).expect("valid");
     let per_plane = pattern.satellites_per_plane().expect("valid");
@@ -416,10 +416,10 @@ fn the_walker_phasing_matches_the_definition() {
             let expected_raan = plane as f64 * 2.0 * PI / pattern.planes as f64;
             let expected_mean = index as f64 * 2.0 * PI / per_plane as f64
                 + plane as f64 * pattern.phase_offset().expect("valid");
-            let actual_mean = satellite.elements.mean_anomaly().rem_euclid(2.0 * PI);
+            let actual_mean = satellite.elements.mean_anomaly_rad().rem_euclid(2.0 * PI);
             let expected_mean = expected_mean.rem_euclid(2.0 * PI);
             assert!(
-                (satellite.elements.right_ascension - expected_raan).abs() < 1e-9,
+                (satellite.elements.right_ascension_rad - expected_raan).abs() < 1e-9,
                 "plane {plane} RAAN"
             );
             assert!(
@@ -435,8 +435,8 @@ fn plane_outlines_sample_each_plane_on_its_circular_orbit() {
     let constellation = Constellation::walker(broadband_pattern(), 60_000.0).expect("valid");
     let outlines = constellation.plane_outlines(72);
     assert_eq!(outlines.len(), 3);
-    let radius = broadband_pattern().semi_major_axis;
-    let vertical = radius * broadband_pattern().inclination.sin();
+    let radius = broadband_pattern().semi_major_axis_km;
+    let vertical = radius * broadband_pattern().inclination_rad.sin();
     for (plane, outline) in outlines.iter().enumerate() {
         assert_eq!(outline.plane, plane);
         assert_eq!(outline.points.len(), 73);

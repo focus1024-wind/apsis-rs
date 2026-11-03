@@ -41,11 +41,11 @@ fn time_order_is_available_on_request() {
     trace.push(Record::observation(5.0, "a", 2.0));
     trace.push(Record::observation(7.0, "c", 3.0));
     let ordered = trace.in_time_order();
-    let times: Vec<f64> = ordered.iter().map(|record| record.time).collect();
+    let times: Vec<f64> = ordered.iter().map(|record| record.time_s).collect();
     assert_eq!(times, vec![5.0, 7.0, 10.0]);
     // The original is unchanged.
     // 原件不变。
-    assert_eq!(trace.records()[0].time, 10.0);
+    assert_eq!(trace.records()[0].time_s, 10.0);
 }
 
 #[test]

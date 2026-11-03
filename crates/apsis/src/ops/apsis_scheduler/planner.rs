@@ -175,7 +175,7 @@ impl SchedulingResult {
                 graph.predecessors_of(outcome.task).iter().all(|before| {
                     self.schedule
                         .placement_of(*before)
-                        .is_none_or(|placement| placement.end() <= after.start)
+                        .is_none_or(|placement| placement.end_s() <= after.start_s)
                 })
             })
     }
@@ -356,7 +356,7 @@ impl Planner {
     /// Plans a set of tasks, honouring a precedence graph.
     ///
     /// A task is placed only after every task that must precede it has been
-    /// placed, so the search for its start begins no earlier than the latest
+    /// placed, so the search for its `start_s` begins no earlier than the latest
     /// end among its predecessors. A predecessor that could not be placed
     /// makes the successor deferred as well, because the constraint cannot be
     /// met.
@@ -434,7 +434,7 @@ impl Planner {
                 continue;
             }
 
-            // A task may not start before the latest end among the tasks that
+            // A task may not start_s before the latest end among the tasks that
             // must precede it.
             // 任务的起点不得早于其前驱中最晚的结束时刻。
             let earliest = match Self::precedence_floor(id, tasks, precedence, &schedule, &states) {
@@ -460,22 +460,23 @@ impl Planner {
             // the constraints.
             // 施加该下界后的任务，使搜索遵从各约束。
             let constrained = match earliest {
-                Some(floor) if floor > task.earliest_start => {
+                Some(floor) if floor > task.earliest_start_s => {
                     let mut copy = task.clone();
-                    copy.earliest_start = floor;
+                    copy.earliest_start_s = floor;
                     copy
                 }
                 _ => task.clone(),
             };
 
-            if let Some(start) = earliest_feasible_start(&constrained, tasks, &schedule, resources)
+            if let Some(start_s) =
+                earliest_feasible_start(&constrained, tasks, &schedule, resources)
             {
-                match schedule.place(task, start) {
+                match schedule.place(task, start_s) {
                     Ok(_) => {
-                        set_state(&mut states, id, TaskState::Scheduled { start });
+                        set_state(&mut states, id, TaskState::Scheduled { start_s });
                         outcomes.push(PlanOutcome {
                             task: id,
-                            state: TaskState::Scheduled { start },
+                            state: TaskState::Scheduled { start_s },
                         });
                     }
                     Err(error) => {
@@ -495,8 +496,8 @@ impl Planner {
                 }
             } else {
                 let reason = format!(
-                    "no feasible start for the task in its window; window runs from {} to {}",
-                    task.earliest_start, task.latest_end
+                    "no feasible start_s for the task in its window; window runs from {} to {}",
+                    task.earliest_start_s, task.latest_end_s
                 );
                 set_state(
                     &mut states,
@@ -535,10 +536,10 @@ impl Planner {
             // 方可按位置索引。
             for id in &outcome.placed {
                 if let Some(slot) = outcomes.iter_mut().find(|entry| entry.task == *id) {
-                    let start = schedule
+                    let start_s = schedule
                         .placement_of(*id)
-                        .map_or(0.0, |placement| placement.start);
-                    slot.state = TaskState::Scheduled { start };
+                        .map_or(0.0, |placement| placement.start_s);
+                    slot.state = TaskState::Scheduled { start_s };
                 }
             }
             outcome.placed
@@ -557,10 +558,10 @@ impl Planner {
         }
     }
 
-    /// Returns the earliest start a task may have, given its predecessors.
+    /// Returns the earliest `start_s` a task may have, given its predecessors.
     ///
     /// Returns `Ok(None)` when there is no constraint, `Ok(Some(t))` when the
-    /// task may start no earlier than `t`, and `Err` when a predecessor was
+    /// task may `start_s` no earlier than `t`, and `Err` when a predecessor was
     /// not placed, which makes the constraint unsatisfiable.
     ///
     /// 给定其前驱，返回某任务可有的最早起点。
@@ -590,8 +591,9 @@ impl Planner {
                 };
                 return Err(reason);
             };
-            floor =
-                Some(floor.map_or(placement.end(), |current: f64| current.max(placement.end())));
+            floor = Some(floor.map_or(placement.end_s(), |current: f64| {
+                current.max(placement.end_s())
+            }));
         }
         Ok(floor)
     }

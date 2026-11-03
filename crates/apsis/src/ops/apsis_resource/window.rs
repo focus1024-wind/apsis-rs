@@ -5,29 +5,30 @@
 use crate::apsis_resource::error::{ResourceError, ResourceErrorKind};
 use core::fmt;
 
-/// A half-open interval of time, `[start, end)`.
+/// A half-open interval of time, with `start_s` inclusive and `end_s`
+/// exclusive.
 ///
 /// The half-open convention is the one that makes intervals tile without
 /// overlap or gap: an interval that ends where another begins shares only the
 /// instant at the boundary, which belongs to the second. Two intervals are
-/// therefore disjoint when the end of the first is at or before the start of
+/// therefore disjoint when the `end_s` of the first is at or before the `start_s` of
 /// the second.
 ///
-/// 半开时间区间 `[start, end)`。
+/// 半开时间区间，起点 `start_s` 包含、终点 `end_s` 不包含。
 ///
 /// 采用半开约定正是为了使区间既不重叠也无空隙地铺满：一个在某处结束、
 /// 另一处从此开始的区间只在边界那一瞬相交，而该瞬归后者。故当第一个区
 /// 间的终点不晚于第二个区间的起点时，二者不相交。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Interval {
-    /// The start of the interval, in seconds.
+    /// The `start_s` of the interval, in seconds.
     ///
     /// 区间起点，单位为秒。
-    pub start: f64,
-    /// The end of the interval, in seconds.
+    pub start_s: f64,
+    /// The `end_s` of the interval, in seconds.
     ///
     /// 区间终点，单位为秒。
-    pub end: f64,
+    pub end_s: f64,
 }
 
 impl Interval {
@@ -35,8 +36,8 @@ impl Interval {
     ///
     /// 创建一个区间。
     #[must_use]
-    pub const fn new(start: f64, end: f64) -> Self {
-        Self { start, end }
+    pub const fn new(start_s: f64, end_s: f64) -> Self {
+        Self { start_s, end_s }
     }
 
     /// Returns the duration of the interval, in seconds.
@@ -48,7 +49,7 @@ impl Interval {
     /// 对空区间该值为零，其余情形为正。
     #[must_use]
     pub fn duration(&self) -> f64 {
-        (self.end - self.start).max(0.0)
+        (self.end_s - self.start_s).max(0.0)
     }
 
     /// Returns `true` when the interval contains no time.
@@ -56,7 +57,7 @@ impl Interval {
     /// 当该区间不含任何时刻时返回 `true`。
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.end <= self.start
+        self.end_s <= self.start_s
     }
 
     /// Returns `true` when the interval is finite and ordered.
@@ -64,12 +65,12 @@ impl Interval {
     /// 当该区间有限且次序正确时返回 `true`。
     #[must_use]
     pub fn is_valid(&self) -> bool {
-        self.start.is_finite() && self.end.is_finite() && self.end >= self.start
+        self.start_s.is_finite() && self.end_s.is_finite() && self.end_s >= self.start_s
     }
 
     /// Returns `true` when an instant lies inside the interval.
     ///
-    /// The start is included and the end is excluded, so a boundary instant
+    /// The `start_s` is included and the `end_s` is excluded, so a boundary instant
     /// belongs to the interval that begins there.
     ///
     /// 当某时刻落在该区间内时返回 `true`。
@@ -77,7 +78,7 @@ impl Interval {
     /// 含起点不含终点，故边界时刻归由此处开始的区间。
     #[must_use]
     pub fn contains(&self, time: f64) -> bool {
-        time >= self.start && time < self.end
+        time >= self.start_s && time < self.end_s
     }
 
     /// Returns `true` when the interval fully contains another.
@@ -91,9 +92,9 @@ impl Interval {
     #[must_use]
     pub fn contains_interval(&self, other: &Self) -> bool {
         if other.is_empty() {
-            return other.start >= self.start && other.start <= self.end;
+            return other.start_s >= self.start_s && other.start_s <= self.end_s;
         }
-        other.start >= self.start && other.end <= self.end
+        other.start_s >= self.start_s && other.end_s <= self.end_s
     }
 
     /// Returns `true` when two intervals share any time.
@@ -106,7 +107,7 @@ impl Interval {
     /// 在一点相接的两个区间不重叠，因为在半开约定下该点只属于其中之一。
     #[must_use]
     pub fn overlaps(&self, other: &Self) -> bool {
-        self.start < other.end && other.start < self.end
+        self.start_s < other.end_s && other.start_s < self.end_s
     }
 
     /// Returns the intersection of two intervals, or `None` when they do not
@@ -119,8 +120,8 @@ impl Interval {
             return None;
         }
         Some(Self::new(
-            self.start.max(other.start),
-            self.end.min(other.end),
+            self.start_s.max(other.start_s),
+            self.end_s.min(other.end_s),
         ))
     }
 
@@ -129,7 +130,7 @@ impl Interval {
     /// 返回包含二者的最短区间。
     #[must_use]
     pub fn hull(&self, other: &Self) -> Self {
-        Self::new(self.start.min(other.start), self.end.max(other.end))
+        Self::new(self.start_s.min(other.start_s), self.end_s.max(other.end_s))
     }
 
     /// Returns `true` when the two intervals touch or overlap, so that they
@@ -138,13 +139,13 @@ impl Interval {
     /// 当两个区间相接或重叠时返回 `true`，此时合并它们不会留下空隙。
     #[must_use]
     pub fn is_adjacent_to(&self, other: &Self) -> bool {
-        self.start <= other.end && other.start <= self.end
+        self.start_s <= other.end_s && other.start_s <= self.end_s
     }
 }
 
 impl fmt::Display for Interval {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}, {})", self.start, self.end)
+        write!(f, "[{}, {})", self.start_s, self.end_s)
     }
 }
 
@@ -166,13 +167,13 @@ pub struct Window {
 }
 
 impl Window {
-    /// Creates a window from a start and an end time.
+    /// Creates a window from a `start_s` and an `end_s` time.
     ///
     /// 由起始时刻与结束时刻创建窗口。
     #[must_use]
-    pub const fn new(start: f64, end: f64) -> Self {
+    pub const fn new(start_s: f64, end_s: f64) -> Self {
         Self {
-            interval: Interval::new(start, end),
+            interval: Interval::new(start_s, end_s),
         }
     }
 
@@ -184,20 +185,20 @@ impl Window {
         Self { interval }
     }
 
-    /// Returns the start of the window, in seconds.
+    /// Returns the `start_s` of the window, in seconds.
     ///
     /// 返回窗口起点，单位为秒。
     #[must_use]
-    pub const fn start(&self) -> f64 {
-        self.interval.start
+    pub const fn start_s(&self) -> f64 {
+        self.interval.start_s
     }
 
-    /// Returns the end of the window, in seconds.
+    /// Returns the `end_s` of the window, in seconds.
     ///
     /// 返回窗口终点，单位为秒。
     #[must_use]
-    pub const fn end(&self) -> f64 {
-        self.interval.end
+    pub const fn end_s(&self) -> f64 {
+        self.interval.end_s
     }
 
     /// Returns the duration of the window, in seconds.
@@ -220,11 +221,11 @@ impl Window {
     ///
     /// 校验该窗口；不可用时返回原因。
     pub fn validate(&self) -> Result<(), ResourceError> {
-        if !self.interval.start.is_finite() || !self.interval.end.is_finite() {
+        if !self.interval.start_s.is_finite() || !self.interval.end_s.is_finite() {
             return Err(ResourceError::new(ResourceErrorKind::NotFinite)
                 .with_detail(format!("window {}", self.interval)));
         }
-        if self.interval.end < self.interval.start {
+        if self.interval.end_s < self.interval.start_s {
             return Err(ResourceError::new(ResourceErrorKind::ReversedInterval)
                 .with_detail(format!("window {}", self.interval)));
         }
@@ -264,18 +265,18 @@ pub fn merge_windows(windows: &[Window]) -> Result<Vec<Window>, ResourceError> {
     if intervals.is_empty() {
         return Ok(Vec::new());
     }
-    // Sorting on the start and then the end gives a deterministic order for
+    // Sorting on the start_s and then the end_s gives a deterministic order for
     // intervals with equal starts.
     // 先按起点再按终点排序，使起点相同的区间具有确定次序。
     intervals.sort_by(|first, second| {
         first
-            .start
-            .partial_cmp(&second.start)
+            .start_s
+            .partial_cmp(&second.start_s)
             .unwrap_or(core::cmp::Ordering::Equal)
             .then_with(|| {
                 first
-                    .end
-                    .partial_cmp(&second.end)
+                    .end_s
+                    .partial_cmp(&second.end_s)
                     .unwrap_or(core::cmp::Ordering::Equal)
             })
     });
@@ -284,7 +285,7 @@ pub fn merge_windows(windows: &[Window]) -> Result<Vec<Window>, ResourceError> {
     for interval in intervals {
         match merged.last_mut() {
             Some(current) if current.is_adjacent_to(&interval) => {
-                current.end = current.end.max(interval.end);
+                current.end_s = current.end_s.max(interval.end_s);
             }
             _ => merged.push(interval),
         }
@@ -320,11 +321,11 @@ pub fn subtract_window(windows: &[Window], removed: Window) -> Result<Vec<Window
             Some(overlap) => {
                 // The part before the removed window, and the part after it.
                 // 被减窗口之前的一段，以及之后的一段。
-                if overlap.start > window.interval.start {
-                    result.push(Window::new(window.interval.start, overlap.start));
+                if overlap.start_s > window.interval.start_s {
+                    result.push(Window::new(window.interval.start_s, overlap.start_s));
                 }
-                if overlap.end < window.interval.end {
-                    result.push(Window::new(overlap.end, window.interval.end));
+                if overlap.end_s < window.interval.end_s {
+                    result.push(Window::new(overlap.end_s, window.interval.end_s));
                 }
             }
         }

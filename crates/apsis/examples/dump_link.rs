@@ -113,9 +113,9 @@ fn main() {
             receive_dbi,
             receive_loss_db: receive_loss,
             temperature_k: temperature,
-            bandwidth_hz: bandwidth,
-            distance_m: distance,
-            frequency_hz: frequency,
+            bandwidth_hz,
+            distance_m,
+            frequency_hz,
         } = *scenario;
 
         let Some(transmit_power) = Power::from_dbw(transmit_dbw) else {
@@ -135,10 +135,10 @@ fn main() {
             receive_gain,
             receive_loss: Decibel::from_db(receive_loss),
             system_temperature: apsis::apsis_link::NoiseTemperature::from_kelvin(temperature),
-            bandwidth,
+            bandwidth_hz,
             geometry: LinkGeometry {
-                distance,
-                frequency,
+                distance_m,
+                frequency_hz,
             },
         };
 
@@ -156,7 +156,7 @@ fn main() {
         // the bandwidth, which makes it the carrier to noise ratio.
         // 每比特能量比在等于带宽的固定数据速率下报告，这使它即为载噪比。
         let ebn0 = budget
-            .energy_per_bit_over_noise(bandwidth)
+            .energy_per_bit_over_noise(bandwidth_hz)
             .map(apsis::apsis_link::Decibel::db);
 
         let field = |value: Option<f64>| match value {
@@ -165,7 +165,7 @@ fn main() {
         };
         println!(
             "{transmit_dbw},{transmit_dbi},{transmit_loss},{receive_dbi},{receive_loss},\
-             {temperature},{bandwidth:.6},{distance:.6},{frequency:.6},\
+             {temperature},{bandwidth_hz:.6},{distance_m:.6},{frequency_hz:.6},\
              {},{},{},{},{}",
             field(eirp),
             field(carrier),

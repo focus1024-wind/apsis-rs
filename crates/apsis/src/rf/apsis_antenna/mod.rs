@@ -37,7 +37,7 @@
 //!
 //! // A three meter dish at twelve gigahertz has a peak gain near 50 dBi.
 //! let dish = ParabolicAperture {
-//!     diameter: 3.0,
+//!     diameter_m: 3.0,
 //!     efficiency: 0.65,
 //! };
 //! let peak = dish.peak_gain(0.025).expect("valid wavelength");

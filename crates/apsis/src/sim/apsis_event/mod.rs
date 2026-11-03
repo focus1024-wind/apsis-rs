@@ -2,7 +2,7 @@
 //!
 //! A discrete-event simulation advances by jumping from one event to the
 //! next rather than by stepping through every instant. This module provides
-//! the queue that makes that possible: a priority queue ordered by time,
+//! the queue that makes that possible: a priority queue ordered by `time_s`,
 //! with a well defined order among events that fall at the same instant.
 //!
 //! The tie-break matters more than it first appears. Two events scheduled
@@ -15,7 +15,7 @@
 //! discrete-event simulator.
 //!
 //! Times are in seconds from the start of the simulation, so the queue holds
-//! no knowledge of calendars or time scales.
+//! no knowledge of calendars or `time_s` scales.
 //!
 //! ```
 //! use apsis::apsis_event::EventQueue;
@@ -26,7 +26,7 @@
 //!
 //! // The earliest event comes out first.
 //! let event = queue.pop().expect("the queue is not empty");
-//! assert_eq!(event.time, 5.0);
+//! assert_eq!(event.time_s, 5.0);
 //! assert_eq!(event.payload, "first");
 //! ```
 //!

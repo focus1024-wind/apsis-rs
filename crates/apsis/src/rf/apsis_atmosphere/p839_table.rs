@@ -19,7 +19,7 @@
 /// The grid runs from 90 degrees north to 90 degrees south in the row
 /// direction and from 0 to 360 degrees east in the column direction,
 /// both in steps of 1.5 degrees, so there are 121 rows and 241 columns.
-/// The value at a fractional latitude or longitude is found by bilinear
+/// The value at a fractional `latitude_rad` or `longitude_rad` is found by bilinear
 /// interpolation between the four surrounding points.
 ///
 /// Source: ITU-R Recommendation P.839-4, *Rain height model for prediction

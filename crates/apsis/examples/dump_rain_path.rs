@@ -38,7 +38,7 @@ fn main() {
         "rain_rate_mm_per_h,frequency_ghz,elevation_deg,latitude_deg,\
          specific_db_per_km,path_length_km,attenuation_db"
     );
-    for &(rain_rate, frequency_ghz, elevation_degrees, latitude) in SCENARIOS {
+    for &(rain_rate, frequency_ghz, elevation_degrees, latitude_rad) in SCENARIOS {
         let elevation = elevation_degrees.to_radians();
         let Some(result) = rain_attenuation(
             rain_rate,
@@ -47,12 +47,12 @@ fn main() {
             elevation,
             0.0,
             DEFAULT_RAIN_HEIGHT_KM,
-            latitude,
+            latitude_rad,
         ) else {
             continue;
         };
         println!(
-            "{rain_rate},{frequency_ghz},{elevation_degrees},{latitude},{:.12},{:.12},{:.12}",
+            "{rain_rate},{frequency_ghz},{elevation_degrees},{latitude_rad},{:.12},{:.12},{:.12}",
             result.specific_db_per_km, result.path_length_km, result.attenuation_db
         );
     }

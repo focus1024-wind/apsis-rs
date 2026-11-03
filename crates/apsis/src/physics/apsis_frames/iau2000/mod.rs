@@ -86,8 +86,8 @@ pub use terrestrial::{
 /// One term of the luni-solar nutation series.
 ///
 /// The five multipliers are applied to the Delaunay arguments in the order
-/// `l`, `l'`, `F`, `D`, `Om`. The six coefficients are the longitude sine,
-/// its time derivative, the longitude cosine, the obliquity cosine, its time
+/// `l`, `l'`, `F`, `D`, `Om`. The six coefficients are the `longitude_rad` sine,
+/// its time derivative, the `longitude_rad` cosine, the obliquity cosine, its time
 /// derivative, and the obliquity sine, in units of 0.1 microarcsecond.
 ///
 /// 日月章动级数的一项。
@@ -111,7 +111,7 @@ pub struct SeriesTerm {
 /// One term of the complementary terms of the equation of the equinoxes.
 ///
 /// The eight multipliers apply to the arguments `l`, `l'`, `F`, `D`, `Om`,
-/// the mean longitude of Venus, the mean longitude of the Earth, and the
+/// the mean `longitude_rad` of Venus, the mean `longitude_rad` of the Earth, and the
 /// general accumulated precession. The two coefficients are the sine and
 /// cosine amplitudes, in arcseconds.
 ///
@@ -135,8 +135,8 @@ pub struct ComplementaryTerm {
 ///
 /// The thirteen multipliers are applied to the planetary arguments in the
 /// order `l`, `F`, `D`, `Om`, Mercury through Uranus, Neptune, and the
-/// general accumulated precession. The four coefficients are the longitude
-/// sine, the longitude cosine, the obliquity sine, and the obliquity cosine,
+/// general accumulated precession. The four coefficients are the `longitude_rad`
+/// sine, the `longitude_rad` cosine, the obliquity sine, and the obliquity cosine,
 /// in units of 0.1 microarcsecond.
 ///
 /// 行星章动级数的一项。

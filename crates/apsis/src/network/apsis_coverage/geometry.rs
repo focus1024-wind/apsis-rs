@@ -2,14 +2,14 @@
 //! centre.
 //!
 //! The three points form a triangle. The angles of that triangle are the
-//! elevation at the ground point, the nadir angle at the satellite, and the
+//! `elevation_rad` at the ground point, the nadir angle at the satellite, and the
 //! central angle at the centre of the Earth. Because the ground point is
-//! directly below the local horizon, the elevation and the adjacent angle at
+//! directly below the local horizon, the `elevation_rad` and the adjacent angle at
 //! the ground point are complementary, so the three angles satisfy
 //!
 //! <div>
 //! $$
-//! \text{elevation} + \text{nadir} + \text{central} = 90^\circ
+//! \text{elevation\_rad} + \text{nadir} + \text{central} = 90^\circ
 //! $$
 //! </div>
 //!
@@ -18,12 +18,12 @@
 //!
 //! <div>
 //! $$
-//! \frac{\sin(\text{nadir})}{\text{body\_radius}} = \frac{\cos(\text{elevation})}{\text{satellite\_radius}}
+//! \frac{\sin(\text{nadir})}{\text{body\_radius}} = \frac{\cos(\text{elevation\_rad})}{\text{satellite\_radius}}
 //! $$
 //! </div>
 //!
 //! where the cosine appears because the angle at the ground point, inside
-//! the triangle, is the complement of the elevation.
+//! the triangle, is the complement of the `elevation_rad`.
 //!
 //! All angles are in radians and all lengths in kilometers. The body radius
 //! is the distance from the centre of the Earth to the ground point, so a
@@ -38,7 +38,7 @@
 //!
 //! <div>
 //! $$
-//! \text{elevation} + \text{nadir} + \text{central} = 90^\circ
+//! \text{elevation\_rad} + \text{nadir} + \text{central} = 90^\circ
 //! $$
 //! </div>
 //!
@@ -46,7 +46,7 @@
 //!
 //! <div>
 //! $$
-//! \frac{\sin(\text{nadir})}{\text{body\_radius}} = \frac{\cos(\text{elevation})}{\text{satellite\_radius}}
+//! \frac{\sin(\text{nadir})}{\text{body\_radius}} = \frac{\cos(\text{elevation\_rad})}{\text{satellite\_radius}}
 //! $$
 //! </div>
 //!
@@ -65,7 +65,7 @@ use core::f64::consts::FRAC_PI_2;
 /// moves toward the horizon.
 ///
 /// Returns `None` when the radii are not usable, when the body radius
-/// exceeds the satellite radius, or when the elevation is not finite.
+/// exceeds the satellite radius, or when the `elevation_rad` is not finite.
 ///
 /// 返回卫星处的天底角，单位为弧度。
 ///
@@ -74,14 +74,19 @@ use core::f64::consts::FRAC_PI_2;
 ///
 /// 半径不可用、天体半径超过卫星半径，或仰角非有限时返回 `None`。
 #[must_use]
-pub fn nadir_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
-    if !satellite_radius.is_finite() || !body_radius.is_finite() || !elevation.is_finite() {
+pub fn nadir_angle(
+    satellite_radius_km: f64,
+    body_radius_km: f64,
+    elevation_rad: f64,
+) -> Option<f64> {
+    if !satellite_radius_km.is_finite() || !body_radius_km.is_finite() || !elevation_rad.is_finite()
+    {
         return None;
     }
-    if body_radius <= 0.0 || satellite_radius < body_radius {
+    if body_radius_km <= 0.0 || satellite_radius_km < body_radius_km {
         return None;
     }
-    let sine = body_radius * elevation.cos() / satellite_radius;
+    let sine = body_radius_km * elevation_rad.cos() / satellite_radius_km;
     // Rounding can push the sine a little above one for a grazing geometry.
     // 对掠射几何，舍入可能把正弦略微推到一以上。
     Some(sine.clamp(-1.0, 1.0).asin())
@@ -102,14 +107,18 @@ pub fn nadir_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
 ///
 /// 几何不可用时返回 `None`。
 #[must_use]
-pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
-    let nadir = nadir_angle(satellite_radius, body_radius, elevation)?;
+pub fn earth_central_angle(
+    satellite_radius_km: f64,
+    body_radius_km: f64,
+    elevation_rad: f64,
+) -> Option<f64> {
+    let nadir = nadir_angle(satellite_radius_km, body_radius_km, elevation_rad)?;
     // Rounding can leave a small negative value at the zenith, where the
     // true angle is zero. The negative part is not physical, so it is
     // removed before the result is returned.
     // 在天顶处（真实角为零）舍入可能留下小的负值。该负值没有物理意义，
     // 故在返回结果前将其去掉。
-    Some((FRAC_PI_2 - elevation - nadir).max(0.0))
+    Some((FRAC_PI_2 - elevation_rad - nadir).max(0.0))
 }
 
 /// Returns the slant range between the satellite and the ground point, in
@@ -130,8 +139,8 @@ pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f
 /// </div>
 ///
 /// The law of cosines is used rather than the equivalent form
-/// `Rs sin(central) / cos(elevation)` because the latter is singular at the
-/// zenith, where the elevation is a right angle and its cosine is zero,
+/// `Rs sin(central) / cos(elevation_rad)` because the latter is singular at the
+/// zenith, where the `elevation_rad` is a right angle and its cosine is zero,
 /// even though the range there is simply the altitude.
 ///
 /// Returns `None` when the geometry is not usable.
@@ -150,35 +159,39 @@ pub fn earth_central_angle(satellite_radius: f64, body_radius: f64, elevation: f
 /// $$
 /// </div>
 ///
-/// 此处用余弦定理而非等价形式 `Rs sin(central) / cos(elevation)`，因为后者在
+/// 此处用余弦定理而非等价形式 `Rs sin(central) / cos(elevation_rad)`，因为后者在
 /// 天顶处奇异，那里仰角是直角、其余弦为零，尽管那里的距离恰是高度。
 ///
 /// 几何不可用时返回 `None`。
 #[must_use]
-pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> Option<f64> {
-    let central = earth_central_angle(satellite_radius, body_radius, elevation)?;
+pub fn slant_range(
+    satellite_radius_km: f64,
+    body_radius_km: f64,
+    elevation_rad: f64,
+) -> Option<f64> {
+    let central = earth_central_angle(satellite_radius_km, body_radius_km, elevation_rad)?;
     if !central.is_finite() || central < 0.0 {
         return None;
     }
-    let squared = satellite_radius * satellite_radius + body_radius * body_radius
-        - 2.0 * satellite_radius * body_radius * central.cos();
+    let squared = satellite_radius_km * satellite_radius_km + body_radius_km * body_radius_km
+        - 2.0 * satellite_radius_km * body_radius_km * central.cos();
     if squared < 0.0 {
         return None;
     }
     Some(squared.sqrt())
 }
 
-/// Returns the elevation angle for a central angle, in radians.
+/// Returns the `elevation_rad` angle for a central angle, in radians.
 ///
 /// This inverts [`earth_central_angle`]. It is used when the position of a
 /// ground point relative to the sub-satellite point is known and the
-/// elevation at that point is wanted.
+/// `elevation_rad` at that point is wanted.
 ///
 /// The relation is
 ///
 /// <div>
 /// $$
-/// \tan(\text{elevation}) = \frac{\cos(\text{central}) - \text{body\_radius} / \text{satellite\_radius}}{\sin(\text{central})}
+/// \tan(\text{elevation\_rad}) = \frac{\cos(\text{central}) - \text{body\_radius} / \text{satellite\_radius}}{\sin(\text{central})}
 /// $$
 /// </div>
 ///
@@ -194,29 +207,32 @@ pub fn slant_range(satellite_radius: f64, body_radius: f64, elevation: f64) -> O
 ///
 /// <div>
 /// $$
-/// \tan(\text{elevation}) = \frac{\cos(\text{central}) - \text{body\_radius} / \text{satellite\_radius}}{\sin(\text{central})}
+/// \tan(\text{elevation\_rad}) = \frac{\cos(\text{central}) - \text{body\_radius} / \text{satellite\_radius}}{\sin(\text{central})}
 /// $$
 /// </div>
 ///
 /// 半径不可用或中心角非有限时返回 `None`。
 #[must_use]
 pub fn elevation_from_central_angle(
-    satellite_radius: f64,
-    body_radius: f64,
-    central_angle: f64,
+    satellite_radius_km: f64,
+    body_radius_km: f64,
+    central_angle_rad: f64,
 ) -> Option<f64> {
-    if !satellite_radius.is_finite() || !body_radius.is_finite() || !central_angle.is_finite() {
+    if !satellite_radius_km.is_finite()
+        || !body_radius_km.is_finite()
+        || !central_angle_rad.is_finite()
+    {
         return None;
     }
-    if body_radius <= 0.0 || satellite_radius < body_radius {
+    if body_radius_km <= 0.0 || satellite_radius_km < body_radius_km {
         return None;
     }
-    let ratio = body_radius / satellite_radius;
-    let sine = central_angle.sin();
+    let ratio = body_radius_km / satellite_radius_km;
+    let sine = central_angle_rad.sin();
     if sine == 0.0 {
-        // Directly below the satellite the elevation is a right angle.
+        // Directly below the satellite the elevation_rad is a right angle.
         // 在卫星正下方仰角为直角。
         return Some(FRAC_PI_2);
     }
-    Some(((central_angle.cos() - ratio) / sine).atan())
+    Some(((central_angle_rad.cos() - ratio) / sine).atan())
 }

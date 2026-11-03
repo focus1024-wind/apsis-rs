@@ -84,14 +84,14 @@ pub fn range_rate_from_velocity(relative_position: Vec3, relative_velocity: Vec3
 ///
 /// 频率非正且非有限，或距离变化率非有限时返回 `None`。
 #[must_use]
-pub fn classical_shift(carrier_frequency: f64, range_rate: f64) -> Option<f64> {
-    if !carrier_frequency.is_finite() || carrier_frequency <= 0.0 {
+pub fn classical_shift(carrier_frequency_hz: f64, range_rate_m_s: f64) -> Option<f64> {
+    if !carrier_frequency_hz.is_finite() || carrier_frequency_hz <= 0.0 {
         return None;
     }
-    if !range_rate.is_finite() {
+    if !range_rate_m_s.is_finite() {
         return None;
     }
-    Some(-carrier_frequency * range_rate / SPEED_OF_LIGHT)
+    Some(-carrier_frequency_hz * range_rate_m_s / SPEED_OF_LIGHT)
 }
 
 /// Returns the relativistic Doppler factor for a range rate.
@@ -109,7 +109,7 @@ pub fn classical_shift(carrier_frequency: f64, range_rate: f64) -> Option<f64> {
 /// the two agree to a few parts in ten to the tenth.
 ///
 /// Returns `None` when the range rate is not finite, or when its magnitude
-/// reaches the speed of light, where the expression has no real value.
+/// reaches the `speed_m_s` of light, where the expression has no real value.
 ///
 /// 返回某距离变化率的相对论多普勒因子。
 ///
@@ -124,11 +124,11 @@ pub fn classical_shift(carrier_frequency: f64, range_rate: f64) -> Option<f64> {
 ///
 /// 距离变化率非有限，或其幅度达到光速（此时该式无实值）时返回 `None`。
 #[must_use]
-pub fn relativistic_doppler_factor(range_rate: f64) -> Option<f64> {
-    if !range_rate.is_finite() {
+pub fn relativistic_doppler_factor(range_rate_m_s: f64) -> Option<f64> {
+    if !range_rate_m_s.is_finite() {
         return None;
     }
-    let beta = range_rate / SPEED_OF_LIGHT;
+    let beta = range_rate_m_s / SPEED_OF_LIGHT;
     if beta.abs() >= 1.0 {
         return None;
     }
@@ -154,7 +154,7 @@ pub struct DopplerShift {
     /// The range rate, in meters per second, positive when receding.
     ///
     /// 距离变化率，单位为米每秒，远离时为正。
-    range_rate: f64,
+    range_rate_m_s: f64,
 }
 
 impl DopplerShift {
@@ -167,11 +167,11 @@ impl DopplerShift {
     ///
     /// 频率非正且非有限，或距离变化率非有限时返回 `None`。
     #[must_use]
-    pub fn from_range_rate(carrier_frequency: f64, range_rate: f64) -> Option<Self> {
-        classical_shift(carrier_frequency, range_rate)?;
+    pub fn from_range_rate(carrier_frequency_hz: f64, range_rate_m_s: f64) -> Option<Self> {
+        classical_shift(carrier_frequency_hz, range_rate_m_s)?;
         Some(Self {
-            carrier: carrier_frequency,
-            range_rate,
+            carrier: carrier_frequency_hz,
+            range_rate_m_s,
         })
     }
 
@@ -179,7 +179,7 @@ impl DopplerShift {
     ///
     /// 返回发射频率，单位为赫兹。
     #[must_use]
-    pub const fn carrier_frequency(self) -> f64 {
+    pub const fn carrier_frequency_hz(self) -> f64 {
         self.carrier
     }
 
@@ -187,8 +187,8 @@ impl DopplerShift {
     ///
     /// 返回距离变化率，单位为米每秒，远离时为正。
     #[must_use]
-    pub const fn range_rate(self) -> f64 {
-        self.range_rate
+    pub const fn range_rate_m_s(self) -> f64 {
+        self.range_rate_m_s
     }
 
     /// Returns the shift, in hertz.
@@ -199,16 +199,16 @@ impl DopplerShift {
     ///
     /// 两终端远离时该值为负。
     #[must_use]
-    pub fn shift(self) -> f64 {
-        classical_shift(self.carrier, self.range_rate).unwrap_or(0.0)
+    pub fn shift_hz(self) -> f64 {
+        classical_shift(self.carrier, self.range_rate_m_s).unwrap_or(0.0)
     }
 
     /// Returns the received frequency, in hertz.
     ///
     /// 返回接收频率，单位为赫兹。
     #[must_use]
-    pub fn shifted_frequency(self) -> f64 {
-        self.carrier + self.shift()
+    pub fn shifted_frequency_hz(self) -> f64 {
+        self.carrier + self.shift_hz()
     }
 
     /// Returns the shift including the relativistic clock correction, in
@@ -229,7 +229,7 @@ impl DopplerShift {
     /// because the difference from one is tiny and would lose precision if
     /// the shift were added to the carrier before the correction.
     ///
-    /// Returns `None` when the range rate reaches the speed of light.
+    /// Returns `None` when the range rate reaches the `speed_m_s` of light.
     ///
     /// 返回含相对论钟改正的频移，单位为赫兹。
     ///
@@ -246,7 +246,7 @@ impl DopplerShift {
     /// 距离变化率达到光速时返回 `None`。
     #[must_use]
     pub fn shift_including_relativity(self) -> Option<f64> {
-        let factor = relativistic_doppler_factor(self.range_rate)?;
+        let factor = relativistic_doppler_factor(self.range_rate_m_s)?;
         Some(self.carrier * (factor - 1.0))
     }
 
@@ -260,7 +260,7 @@ impl DopplerShift {
     /// 这是比较位于不同载波上的链路频移的便利方式。
     #[must_use]
     pub fn shift_in_ppm(self) -> f64 {
-        self.shift() / self.carrier * 1.0e6
+        self.shift_hz() / self.carrier * 1.0e6
     }
 
     /// Returns the rate of change of the shift, in hertz per second.
@@ -276,11 +276,11 @@ impl DopplerShift {
     ///
     /// 加速度非有限时返回 `None`。
     #[must_use]
-    pub fn shift_rate(self, range_acceleration: f64) -> Option<f64> {
-        if !range_acceleration.is_finite() {
+    pub fn shift_rate(self, range_acceleration_m_s2: f64) -> Option<f64> {
+        if !range_acceleration_m_s2.is_finite() {
             return None;
         }
-        Some(-self.carrier * range_acceleration / SPEED_OF_LIGHT)
+        Some(-self.carrier * range_acceleration_m_s2 / SPEED_OF_LIGHT)
     }
 
     /// Returns `true` when the shift is a redshift, meaning the terminals
@@ -289,7 +289,7 @@ impl DopplerShift {
     /// 当该频移是红移（即两终端远离、接收频率更低）时返回 `true`。
     #[must_use]
     pub fn is_receding(self) -> bool {
-        self.range_rate > 0.0
+        self.range_rate_m_s > 0.0
     }
 }
 
@@ -298,7 +298,7 @@ impl fmt::Display for DopplerShift {
         write!(
             f,
             "{} Hz on {} Hz ({:.3} ppm)",
-            self.shift(),
+            self.shift_hz(),
             self.carrier,
             self.shift_in_ppm()
         )
@@ -326,18 +326,18 @@ impl fmt::Display for DopplerShift {
 ///
 /// 速度为零长或任一参数非有限时返回 `None`。
 #[must_use]
-pub fn angle_from_range_rate(velocity: Vec3, range_rate: f64) -> Option<f64> {
-    if !velocity.is_finite() || !range_rate.is_finite() {
+pub fn angle_from_range_rate(velocity: Vec3, range_rate_m_s: f64) -> Option<f64> {
+    if !velocity.is_finite() || !range_rate_m_s.is_finite() {
         return None;
     }
-    let speed = velocity.norm();
-    if speed == 0.0 {
+    let speed_m_s = velocity.norm();
+    if speed_m_s == 0.0 {
         return None;
     }
-    Some((range_rate / speed).clamp(-1.0, 1.0).acos())
+    Some((range_rate_m_s / speed_m_s).clamp(-1.0, 1.0).acos())
 }
 
-/// Returns the largest possible shift magnitude for a carrier and a speed,
+/// Returns the largest possible shift magnitude for a carrier and a `speed_m_s`,
 /// in hertz.
 ///
 /// This is the shift when the motion is entirely along the line of sight,
@@ -345,7 +345,7 @@ pub fn angle_from_range_rate(velocity: Vec3, range_rate: f64) -> Option<f64> {
 /// half the total span between the approach and the recession extremes.
 ///
 /// The result is returned as a positive magnitude. Returns `None` when the
-/// carrier or speed is not positive and finite.
+/// carrier or `speed_m_s` is not positive and finite.
 ///
 /// 返回某载波与某速度下可能的最大频移幅度，单位为赫兹。
 ///
@@ -354,23 +354,23 @@ pub fn angle_from_range_rate(velocity: Vec3, range_rate: f64) -> Option<f64> {
 ///
 /// 结果以正幅度返回。载波或速度非正且非有限时返回 `None`。
 #[must_use]
-pub fn maximum_shift(carrier_frequency: f64, speed: f64) -> Option<f64> {
-    if !carrier_frequency.is_finite() || carrier_frequency <= 0.0 {
+pub fn maximum_shift(carrier_frequency_hz: f64, speed_m_s: f64) -> Option<f64> {
+    if !carrier_frequency_hz.is_finite() || carrier_frequency_hz <= 0.0 {
         return None;
     }
-    if !speed.is_finite() || speed < 0.0 {
+    if !speed_m_s.is_finite() || speed_m_s < 0.0 {
         return None;
     }
-    Some(carrier_frequency * speed / SPEED_OF_LIGHT)
+    Some(carrier_frequency_hz * speed_m_s / SPEED_OF_LIGHT)
 }
 
 /// Returns the total span of frequencies a receiver must accept to cover
-/// every range rate up to the given speed.
+/// every range rate up to the given `speed_m_s`.
 ///
 /// Approach and recession give shifts of opposite sign, so the span is twice
 /// the maximum shift.
 ///
-/// Returns `None` when the carrier or speed is not usable.
+/// Returns `None` when the carrier or `speed_m_s` is not usable.
 ///
 /// 返回接收机为覆盖直到给定速度的每个距离变化率所必须接受的总频率跨度。
 ///
@@ -378,6 +378,6 @@ pub fn maximum_shift(carrier_frequency: f64, speed: f64) -> Option<f64> {
 ///
 /// 载波或速度不可用时返回 `None`。
 #[must_use]
-pub fn acquisition_span(carrier_frequency: f64, speed: f64) -> Option<f64> {
-    maximum_shift(carrier_frequency, speed).map(|shift| 2.0 * shift)
+pub fn acquisition_span(carrier_frequency_hz: f64, speed_m_s: f64) -> Option<f64> {
+    maximum_shift(carrier_frequency_hz, speed_m_s).map(|shift| 2.0 * shift)
 }

@@ -158,7 +158,7 @@ impl<T> Engine<T> {
     #[must_use]
     pub fn state(&self) -> EngineState {
         EngineState {
-            now: self.now,
+            now_s: self.now,
             pending: self.queue.len(),
             executed: self.executed,
             next_time: self.queue.next_time(),
@@ -256,7 +256,7 @@ impl<T> Engine<T> {
     where
         F: FnMut(&mut Engine<T>, Event<T>),
     {
-        let started_at = self.now;
+        let started_at_s = self.now;
         let mut executed_this_run = 0_u64;
         self.stop_requested = false;
 
@@ -292,7 +292,7 @@ impl<T> Engine<T> {
                 break StopReason::QueueEmpty;
             };
 
-            self.now = event.time;
+            self.now = event.time_s;
             self.executed = self.executed.wrapping_add(1);
             executed_this_run += 1;
 
@@ -306,8 +306,8 @@ impl<T> Engine<T> {
         EngineOutcome {
             reason,
             executed: executed_this_run,
-            started_at,
-            ended_at: self.now,
+            started_at_s,
+            ended_at_s: self.now,
             remaining: self.queue.len(),
         }
     }

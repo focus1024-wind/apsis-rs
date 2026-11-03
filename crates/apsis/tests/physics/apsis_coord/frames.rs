@@ -10,17 +10,17 @@ const EPS: f64 = 1e-9;
 #[test]
 fn constructors_round_trip_the_vector() {
     let vector = Vec3::new(1.0, 2.0, 3.0);
-    assert_eq!(Eci::new(vector).vector(), vector);
-    assert_eq!(Ecef::new(vector).vector(), vector);
+    assert_eq!(Eci::new(vector).vector_m(), vector);
+    assert_eq!(Ecef::new(vector).vector_m(), vector);
 }
 
 #[test]
 fn geodetic_fields_round_trip() {
     let position = Geodetic::new(0.5, -1.0, 250.0);
-    assert_eq!(position.latitude(), 0.5);
-    assert_eq!(position.longitude(), -1.0);
-    assert_eq!(position.height(), 250.0);
-    assert_eq!(position.ellipsoidal().latitude, 0.5);
+    assert_eq!(position.latitude_rad(), 0.5);
+    assert_eq!(position.longitude_rad(), -1.0);
+    assert_eq!(position.height_m(), 250.0);
+    assert_eq!(position.ellipsoidal().latitude_rad, 0.5);
 }
 
 #[test]
@@ -35,15 +35,15 @@ fn geodetic_to_ecef_and_back_round_trips() {
     let recovered = original
         .to_ecef()
         .to_geodetic(WGS84)
-        .expect("off-axis points have a longitude");
-    assert!((recovered.latitude() - original.latitude()).abs() < 1e-11);
-    assert!((recovered.longitude() - original.longitude()).abs() < 1e-11);
-    assert!((recovered.height() - original.height()).abs() < 1e-4);
+        .expect("off-axis points have a longitude_rad");
+    assert!((recovered.latitude_rad() - original.latitude_rad()).abs() < 1e-11);
+    assert!((recovered.longitude_rad() - original.longitude_rad()).abs() < 1e-11);
+    assert!((recovered.height_m() - original.height_m()).abs() < 1e-4);
 }
 
 #[test]
 fn polar_axis_has_no_defined_longitude() {
-    let on_axis = Ecef::new(Vec3::new(0.0, 0.0, WGS84.semi_minor_axis()));
+    let on_axis = Ecef::new(Vec3::new(0.0, 0.0, WGS84.semi_minor_axis_m()));
     assert_eq!(on_axis.to_geodetic(WGS84), None);
     assert_eq!(Ecef::new(Vec3::ZERO).to_geodetic(WGS84), None);
 }
@@ -54,7 +54,7 @@ fn frame_conversions_round_trip() {
     let original = Eci::new(Vec3::new(7_000.0, -1_500.0, 3_200.0));
     let ecef = original.to_ecef(angle);
     let back = ecef.to_eci(angle);
-    assert!((back.vector() - original.vector()).norm() < EPS);
+    assert!((back.vector_m() - original.vector_m()).norm() < EPS);
 }
 
 #[test]
@@ -62,12 +62,12 @@ fn frame_conversion_preserves_length() {
     let angle = EarthRotationAngle::from_ut1_days(-3.5);
     let vector = Vec3::new(6_878_137.0, 0.0, 0.0);
     let converted = Eci::new(vector).to_ecef(angle);
-    assert!((converted.vector().norm() - vector.norm()).abs() < 1e-6);
+    assert!((converted.vector_m().norm() - vector.norm()).abs() < 1e-6);
 }
 
 #[test]
 fn a_ground_point_rotates_with_the_earth() {
-    // A point on the equator at zero longitude in the Earth-fixed frame is
+    // A point on the equator at zero longitude_rad in the Earth-fixed frame is
     // rotated by the Earth Rotation Angle in the inertial frame.
     // 地固系中赤道上零经度的一个点，在惯性系中按地球自转角被转动。
     let angle = EarthRotationAngle::from_ut1_days(1.5);
@@ -79,7 +79,7 @@ fn a_ground_point_rotates_with_the_earth() {
         6_378_137.0 * radians.sin(),
         0.0,
     );
-    assert!((inertial.vector() - expected).norm() < 1e-6);
+    assert!((inertial.vector_m() - expected).norm() < 1e-6);
 }
 
 #[test]
@@ -91,7 +91,7 @@ fn a_geodetic_station_round_trips_through_both_frames() {
     let angle = EarthRotationAngle::from_ut1_julian_date(2_460_000.5);
     let inertial = station.to_ecef().to_eci(angle);
     let back = inertial.to_ecef(angle).to_geodetic(WGS84).expect("station");
-    assert!((back.latitude() - station.latitude()).abs() < 1e-11);
-    assert!((back.longitude() - station.longitude()).abs() < 1e-11);
-    assert!((back.height() - station.height()).abs() < 1e-4);
+    assert!((back.latitude_rad() - station.latitude_rad()).abs() < 1e-11);
+    assert!((back.longitude_rad() - station.longitude_rad()).abs() < 1e-11);
+    assert!((back.height_m() - station.height_m()).abs() < 1e-4);
 }

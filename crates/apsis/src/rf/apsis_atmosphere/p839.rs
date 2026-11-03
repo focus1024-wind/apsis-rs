@@ -56,12 +56,12 @@ pub const RAIN_HEIGHT_OFFSET_KM: f64 = 0.36;
 /// Returns the height of the zero degree isotherm at a location, in
 /// kilometers above mean sea level.
 ///
-/// The latitude is in degrees, positive north, and the longitude in degrees,
+/// The `latitude_rad` is in degrees, positive north, and the `longitude_rad` in degrees,
 /// positive east. The value is interpolated bilinearly from the tabulated
 /// grid, and longitudes are reduced into `[0, 360)` first so that any
 /// convention is accepted.
 ///
-/// Returns `None` when either coordinate is not finite, or when the latitude
+/// Returns `None` when either coordinate is not finite, or when the `latitude_rad`
 /// is outside the range of the grid.
 ///
 /// Source: ITU-R Recommendation P.839-4, equation 1 and the tabulated
@@ -76,26 +76,26 @@ pub const RAIN_HEIGHT_OFFSET_KM: f64 = 0.36;
 ///
 /// 出处：ITU-R 建议书 P.839-4，式 1 及所列等温线高度。
 #[must_use]
-pub fn zero_isotherm_height(latitude: f64, longitude: f64) -> Option<f64> {
-    if !latitude.is_finite() || !longitude.is_finite() {
+pub fn zero_isotherm_height(latitude_rad: f64, longitude_rad: f64) -> Option<f64> {
+    if !latitude_rad.is_finite() || !longitude_rad.is_finite() {
         return None;
     }
-    if !(-90.0..=90.0).contains(&latitude) {
+    if !(-90.0..=90.0).contains(&latitude_rad) {
         return None;
     }
 
     // The rows run from north to south, so the row index grows as the
-    // latitude falls.
+    // latitude_rad falls.
     // 各行自北向南排列，故行下标随纬度下降而增大。
-    let row_position = (90.0 - latitude) / STEP_DEGREES;
+    let row_position = (90.0 - latitude_rad) / STEP_DEGREES;
     let row_lower = (row_position.floor() as usize).min(ROWS - 1);
     let row_upper = (row_lower + 1).min(ROWS - 1);
     let row_fraction = row_position - row_lower as f64;
 
     // The columns run from 0 to 360 degrees east, wrapping at the seam.
     // 各列自东经 0 度到 360 度排列，在接缝处环绕。
-    let longitude = longitude.rem_euclid(360.0);
-    let column_position = longitude / STEP_DEGREES;
+    let longitude_rad = longitude_rad.rem_euclid(360.0);
+    let column_position = longitude_rad / STEP_DEGREES;
     let column_lower = (column_position.floor() as usize).min(COLUMNS - 1);
     let column_upper = (column_lower + 1) % COLUMNS;
     let column_fraction = column_position - column_lower as f64;
@@ -125,8 +125,8 @@ pub fn zero_isotherm_height(latitude: f64, longitude: f64) -> Option<f64> {
 ///
 /// 坐标不可用时返回 `None`。
 #[must_use]
-pub fn rain_height(latitude: f64, longitude: f64) -> Option<f64> {
-    Some(zero_isotherm_height(latitude, longitude)? + RAIN_HEIGHT_OFFSET_KM)
+pub fn rain_height(latitude_rad: f64, longitude_rad: f64) -> Option<f64> {
+    Some(zero_isotherm_height(latitude_rad, longitude_rad)? + RAIN_HEIGHT_OFFSET_KM)
 }
 
 /// Returns the grid resolution of the tabulated isotherm height, in degrees.

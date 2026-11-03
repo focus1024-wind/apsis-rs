@@ -38,24 +38,24 @@ fn check(from: f64, to: f64) {
     let expected = closed_form(from, to);
     let transfer = hohmann_transfer(from, to, GravityParameter::WGS84).expect("usable radii");
     assert!(
-        (transfer.first_burn - expected[0]).abs() < 1e-12,
+        (transfer.first_burn_km_s - expected[0]).abs() < 1e-12,
         "first burn {} expected {}",
-        transfer.first_burn,
+        transfer.first_burn_km_s,
         expected[0]
     );
     assert!(
-        (transfer.second_burn - expected[1]).abs() < 1e-12,
+        (transfer.second_burn_km_s - expected[1]).abs() < 1e-12,
         "second burn {} expected {}",
-        transfer.second_burn,
+        transfer.second_burn_km_s,
         expected[1]
     );
     assert!(
-        (transfer.transfer_time - expected[2]).abs() < 1e-6,
+        (transfer.transfer_time_s - expected[2]).abs() < 1e-6,
         "time {} expected {}",
-        transfer.transfer_time,
+        transfer.transfer_time_s,
         expected[2]
     );
-    assert!((transfer.transfer_semi_major_axis - expected[3]).abs() < 1e-12);
+    assert!((transfer.transfer_semi_major_axis_km - expected[3]).abs() < 1e-12);
     assert!((transfer.total_delta_v() - expected[0].abs() - expected[1].abs()).abs() < 1e-12);
 }
 
@@ -77,8 +77,8 @@ fn a_geo_to_leo_descent_matches_the_vis_viva_result() {
 #[test]
 fn a_descent_has_negative_burns_and_a_positive_cost() {
     let transfer = hohmann_transfer(42_164.0, 6_678.0, GravityParameter::WGS84).expect("usable");
-    assert!(transfer.first_burn < 0.0);
-    assert!(transfer.second_burn < 0.0);
+    assert!(transfer.first_burn_km_s < 0.0);
+    assert!(transfer.second_burn_km_s < 0.0);
     assert!(transfer.total_delta_v() > 0.0);
     assert!(!transfer.is_raising());
     assert!(
@@ -92,17 +92,17 @@ fn a_descent_has_negative_burns_and_a_positive_cost() {
 #[test]
 fn a_raise_has_positive_burns() {
     let transfer = hohmann_transfer(6_678.0, 42_164.0, GravityParameter::WGS84).expect("usable");
-    assert!(transfer.first_burn > 0.0);
-    assert!(transfer.second_burn > 0.0);
+    assert!(transfer.first_burn_km_s > 0.0);
+    assert!(transfer.second_burn_km_s > 0.0);
     assert!(transfer.is_raising());
 }
 
 #[test]
 fn the_transfer_time_is_half_the_ellipse_period() {
     let transfer = hohmann_transfer(6_678.0, 42_164.0, GravityParameter::WGS84).expect("usable");
-    let semi_major = transfer.transfer_semi_major_axis;
+    let semi_major = transfer.transfer_semi_major_axis_km;
     let period = core::f64::consts::TAU * (semi_major.powi(3) / MU).sqrt();
-    assert!((transfer.transfer_time - period / 2.0).abs() < 1e-6);
+    assert!((transfer.transfer_time_s - period / 2.0).abs() < 1e-6);
 }
 
 #[test]

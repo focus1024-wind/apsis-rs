@@ -33,7 +33,7 @@ pub struct Pass {
     /// The greatest elevation during the pass, in radians.
     ///
     /// 该过境期间的最大仰角，单位为弧度。
-    pub peak_elevation: f64,
+    pub peak_elevation_rad: f64,
     /// The elevation at which the satellite crossed the mask, in radians.
     ///
     /// This is the station's mask, recorded so that a pass carries the
@@ -43,7 +43,7 @@ pub struct Pass {
     ///
     /// 这是地面站的遮蔽，记录它是为了使过境携带其被发现时所依据的
     /// 几何。
-    pub mask_elevation: f64,
+    pub mask_elevation_rad: f64,
     /// The satellite position in the Earth-fixed frame at the peak, in
     /// kilometers.
     ///
@@ -90,7 +90,7 @@ impl Pass {
     /// 这与峰值仰角相同，其命名是为在比较过境的调用处更具可读性。
     #[must_use]
     pub fn maximum_elevation(&self) -> f64 {
-        self.peak_elevation
+        self.peak_elevation_rad
     }
 }
 
@@ -192,8 +192,8 @@ impl PassSummary {
     pub fn highest(&self) -> Option<&Pass> {
         self.passes.iter().max_by(|first, second| {
             first
-                .peak_elevation
-                .partial_cmp(&second.peak_elevation)
+                .peak_elevation_rad
+                .partial_cmp(&second.peak_elevation_rad)
                 .unwrap_or(core::cmp::Ordering::Equal)
         })
     }

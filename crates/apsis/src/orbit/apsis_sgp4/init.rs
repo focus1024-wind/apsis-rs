@@ -74,7 +74,7 @@ pub struct Elements {
     /// Mean motion, in radians per minute.
     ///
     /// 平运动，单位为弧度每分钟。
-    pub mean_motion: f64,
+    pub mean_motion_rad_per_min: f64,
     /// Eccentricity, dimensionless.
     ///
     /// 偏心率，无量纲。
@@ -82,19 +82,19 @@ pub struct Elements {
     /// Inclination, in radians.
     ///
     /// 倾角，单位为弧度。
-    pub inclination: f64,
+    pub inclination_rad: f64,
     /// Right ascension of the ascending node, in radians.
     ///
     /// 升交点赤经，单位为弧度。
-    pub right_ascension: f64,
+    pub right_ascension_rad: f64,
     /// Argument of perigee, in radians.
     ///
     /// 近地点幅角，单位为弧度。
-    pub argument_of_perigee: f64,
+    pub argument_of_perigee_rad: f64,
     /// Mean anomaly, in radians.
     ///
     /// 平近点角，单位为弧度。
-    pub mean_anomaly: f64,
+    pub mean_anomaly_rad: f64,
 }
 
 impl Elements {
@@ -120,12 +120,12 @@ impl Elements {
         Some(Self {
             epoch_mjd,
             bstar: element.bstar,
-            mean_motion: element.mean_motion * TWO_PI / MINUTES_PER_DAY,
+            mean_motion_rad_per_min: element.mean_motion_rev_per_day * TWO_PI / MINUTES_PER_DAY,
             eccentricity: element.eccentricity,
-            inclination: element.inclination.to_radians(),
-            right_ascension: element.right_ascension.to_radians(),
-            argument_of_perigee: element.argument_of_perigee.to_radians(),
-            mean_anomaly: element.mean_anomaly.to_radians(),
+            inclination_rad: element.inclination_deg.to_radians(),
+            right_ascension_rad: element.right_ascension_deg.to_radians(),
+            argument_of_perigee_rad: element.argument_of_perigee_deg.to_radians(),
+            mean_anomaly_rad: element.mean_anomaly_deg.to_radians(),
         })
     }
 }
@@ -181,24 +181,24 @@ impl Elements {
 ///
 /// 出处：Vallado 等，*Revisiting Spacetrack Report #3*，AIAA 2006-6753，2006。
 pub fn unkozai_mean_motion(
-    mean_motion: f64,
+    mean_motion_rad_per_min: f64,
     eccentricity: f64,
-    inclination: f64,
+    inclination_rad: f64,
     model: GravityModel,
 ) -> f64 {
     let xke = model.xke();
     let j2 = model.j2;
-    let cosio = inclination.cos();
+    let cosio = inclination_rad.cos();
     let cosio2 = cosio * cosio;
     let omeosq = 1.0 - eccentricity * eccentricity;
     let rteosq = omeosq.sqrt();
 
-    let ak = (xke / mean_motion).powf(2.0 / 3.0);
+    let ak = (xke / mean_motion_rad_per_min).powf(2.0 / 3.0);
     let d1 = 0.75 * j2 * (3.0 * cosio2 - 1.0) / (rteosq * omeosq);
     let mut delta = d1 / (ak * ak);
     let adel = ak * (1.0 - delta * delta - delta * (1.0 / 3.0 + 134.0 * delta * delta / 81.0));
     delta = d1 / (adel * adel);
-    mean_motion / (1.0 + delta)
+    mean_motion_rad_per_min / (1.0 + delta)
 }
 
 /// Validates the mean elements before initialisation.
@@ -211,9 +211,13 @@ pub fn unkozai_mean_motion(
 ///
 /// 当轨道不可传播时返回错误，例如偏心率不描述闭合轨道，或平运动不为正。
 pub fn validate(elements: &Elements) -> Result<(), PropagationError> {
-    if !elements.mean_motion.is_finite() || elements.mean_motion <= 0.0 {
-        return Err(PropagationError::new(PropagationErrorKind::InvalidElements)
-            .with_detail(format!("mean motion is {}", elements.mean_motion)));
+    if !elements.mean_motion_rad_per_min.is_finite() || elements.mean_motion_rad_per_min <= 0.0 {
+        return Err(
+            PropagationError::new(PropagationErrorKind::InvalidElements).with_detail(format!(
+                "mean motion is {}",
+                elements.mean_motion_rad_per_min
+            )),
+        );
     }
     if !elements.eccentricity.is_finite()
         || elements.eccentricity < 0.0
@@ -223,10 +227,10 @@ pub fn validate(elements: &Elements) -> Result<(), PropagationError> {
             .with_detail(format!("eccentricity is {}", elements.eccentricity)));
     }
     for (name, value) in [
-        ("inclination", elements.inclination),
-        ("right ascension", elements.right_ascension),
-        ("argument of perigee", elements.argument_of_perigee),
-        ("mean anomaly", elements.mean_anomaly),
+        ("inclination_rad", elements.inclination_rad),
+        ("right ascension", elements.right_ascension_rad),
+        ("argument of perigee", elements.argument_of_perigee_rad),
+        ("mean anomaly", elements.mean_anomaly_rad),
     ] {
         if !value.is_finite() {
             return Err(PropagationError::new(PropagationErrorKind::InvalidElements)
@@ -247,6 +251,6 @@ pub fn validate(elements: &Elements) -> Result<(), PropagationError> {
 /// 当这些根数描述一条深空轨道时返回 `true`。
 ///
 /// 判据是轨道周期，它由平运动推出。
-pub fn is_deep_space(mean_motion: f64) -> bool {
-    TWO_PI / mean_motion >= DEEP_SPACE_PERIOD_MINUTES
+pub fn is_deep_space(mean_motion_rad_per_min: f64) -> bool {
+    TWO_PI / mean_motion_rad_per_min >= DEEP_SPACE_PERIOD_MINUTES
 }

@@ -50,9 +50,9 @@ fn the_nutation_at_j2000_matches_the_reference() {
     let t = 0.0;
     let nutation = nutation_2000a(t);
     assert!(
-        (nutation.longitude - -6.754422426417298e-05).abs() < 1e-16,
-        "longitude {}",
-        nutation.longitude
+        (nutation.longitude_rad - -6.754422426417298e-05).abs() < 1e-16,
+        "longitude_rad {}",
+        nutation.longitude_rad
     );
     assert!(
         (nutation.obliquity - -2.7970831192374137e-05).abs() < 1e-16,
@@ -69,12 +69,12 @@ fn the_nutation_2006_adjustment_is_a_scaling() {
     for t in [0.0, 0.5, 1.0, 2.0] {
         let base = nutation_2000a(t);
         let adjusted = nutation_2000a_with_2006_adjustment(t);
-        let expected_longitude = base.longitude * (1.0 + 0.469_7e-6 - 2.777_4e-6 * t);
+        let expected_longitude = base.longitude_rad * (1.0 + 0.469_7e-6 - 2.777_4e-6 * t);
         let expected_obliquity = base.obliquity * (1.0 - 2.777_4e-6 * t);
         assert!(
-            (adjusted.longitude - expected_longitude).abs() < 1e-20,
+            (adjusted.longitude_rad - expected_longitude).abs() < 1e-20,
             "t {t}: {} against {expected_longitude}",
-            adjusted.longitude
+            adjusted.longitude_rad
         );
         assert!(
             (adjusted.obliquity - expected_obliquity).abs() < 1e-20,
@@ -93,14 +93,14 @@ fn the_nutation_matches_the_reference_over_a_century() {
         (51_544.5, -6.754419567422628e-05, -2.797091091919891e-05),
         (60_000.0, -4.496357815269203e-05, 3.753534415176348e-05),
     ];
-    for (mjd, longitude, obliquity) in cases {
+    for (mjd, longitude_rad, obliquity) in cases {
         let tt = tt_julian_date(mjd);
         let t = (tt - 2_451_545.0) / 36_525.0;
         let nutation = nutation_2000a(t);
         assert!(
-            (nutation.longitude - longitude).abs() < 1e-14,
-            "MJD {mjd}: longitude {} against {longitude}",
-            nutation.longitude
+            (nutation.longitude_rad - longitude_rad).abs() < 1e-14,
+            "MJD {mjd}: longitude_rad {} against {longitude_rad}",
+            nutation.longitude_rad
         );
         assert!(
             (nutation.obliquity - obliquity).abs() < 1e-14,
@@ -347,7 +347,7 @@ fn the_polar_motion_shifts_the_earth_fixed_frame() {
 
 #[test]
 fn the_nutation_reaches_the_expected_magnitude() {
-    // The nutation in longitude reaches about seventeen arcseconds and the
+    // The nutation in longitude_rad reaches about seventeen arcseconds and the
     // nutation in obliquity about nine, so over a range of dates the
     // largest value found must be in that range.
     // 黄经章动达约十七角秒，黄赤交角章动约九角秒，故在一段日期上所能找到的最大值
@@ -359,14 +359,14 @@ fn the_nutation_reaches_the_expected_magnitude() {
         // 约五十年、步长为两周的跨度。
         let t = f64::from(step) * 0.125;
         let nutation = nutation_2000a(t);
-        largest_longitude = largest_longitude.max(nutation.longitude.abs());
+        largest_longitude = largest_longitude.max(nutation.longitude_rad.abs());
         largest_obliquity = largest_obliquity.max(nutation.obliquity.abs());
     }
     let longitude_arcseconds = largest_longitude / ARCSECOND;
     let obliquity_arcseconds = largest_obliquity / ARCSECOND;
     assert!(
         (19.0..20.0).contains(&longitude_arcseconds),
-        "longitude {longitude_arcseconds} arcseconds"
+        "longitude_rad {longitude_arcseconds} arcseconds"
     );
     assert!(
         (8.0..10.0).contains(&obliquity_arcseconds),
@@ -381,8 +381,8 @@ fn the_nutation_is_periodic() {
     // eighteen years and must oscillate in between.
     // 主导项的周期约为十八年与半年，故该值必须在十八年后回到接近其初值，并在其间
     // 振荡。
-    let initial = nutation_2000a(0.0).longitude;
-    let after_eighteen_years = nutation_2000a(0.18).longitude;
+    let initial = nutation_2000a(0.0).longitude_rad;
+    let after_eighteen_years = nutation_2000a(0.18).longitude_rad;
     assert!(
         (after_eighteen_years - initial).abs() < 1.5e-05,
         "{after_eighteen_years} against {initial}"
@@ -394,7 +394,7 @@ fn the_nutation_is_periodic() {
     let mut seen_negative = false;
     for step in 0..200 {
         let t = f64::from(step) * 0.001;
-        let value = nutation_2000a(t).longitude;
+        let value = nutation_2000a(t).longitude_rad;
         seen_positive |= value > 0.0;
         seen_negative |= value < 0.0;
     }
@@ -404,15 +404,15 @@ fn the_nutation_is_periodic() {
 #[test]
 fn the_equation_of_the_equinoxes_follows_the_nutation() {
     // The equation of the equinoxes is dominated by the nutation in
-    // longitude projected onto the true equator, so it shares its sign.
+    // longitude_rad projected onto the true equator, so it shares its sign.
     // 分点方程式主要由投影到真赤道上的黄经章动主导，故它与后者同号。
     for t in [0.02, 0.05, 0.1, 0.2] {
         let nutation = nutation_2000a_with_2006_adjustment(t);
         let equation = equation_of_the_equinoxes(t);
         assert!(
-            nutation.longitude.signum() == equation.signum(),
+            nutation.longitude_rad.signum() == equation.signum(),
             "t {t}: {} against {}",
-            nutation.longitude,
+            nutation.longitude_rad,
             equation
         );
     }

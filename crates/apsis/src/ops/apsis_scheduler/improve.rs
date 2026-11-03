@@ -189,18 +189,18 @@ pub fn improve(
                 continue;
             };
             if relocate_pair(waiting, blocker, tasks, schedule, resources) {
-                let start = schedule
+                let start_s = schedule
                     .placement_of(*id)
-                    .map_or(0.0, |placement| placement.start);
-                set_state(states, *id, TaskState::Scheduled { start });
+                    .map_or(0.0, |placement| placement.start_s);
+                set_state(states, *id, TaskState::Scheduled { start_s });
                 let blocker_start = schedule
                     .placement_of(blocker_id)
-                    .map_or(0.0, |placement| placement.start);
+                    .map_or(0.0, |placement| placement.start_s);
                 set_state(
                     states,
                     blocker_id,
                     TaskState::Scheduled {
-                        start: blocker_start,
+                        start_s: blocker_start,
                     },
                 );
                 outcome.placed.push(*id);
@@ -242,7 +242,7 @@ fn blocking_tasks(waiting: &Task, tasks: &[Task], schedule: &Schedule) -> Vec<Ta
                         .any(|requirement| other.demand_for(requirement.resource).is_some())
                 })
         })
-        .map(|placement| (placement.start, placement.task))
+        .map(|placement| (placement.start_s, placement.task))
         .collect();
     blockers.sort_by(|first, second| {
         first
@@ -271,7 +271,7 @@ fn relocate_pair(
     schedule: &mut Schedule,
     resources: &ResourceSet,
 ) -> bool {
-    let Some(blocker_start) = schedule.placement_of(blocker.id).map(|p| p.start) else {
+    let Some(blocker_start) = schedule.placement_of(blocker.id).map(|p| p.start_s) else {
         return false;
     };
     // Remove the blocker and look for a home for the waiting task.

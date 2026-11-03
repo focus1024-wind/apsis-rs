@@ -168,7 +168,7 @@ impl Sampler {
             // function returns a slightly different time.
             // 时刻取自网格而不采信函数返回值，因此即便函数给出略有差异的时刻，
             // 表格仍保持严格有序。
-            samples.push(Sample::new(time, sample.position, sample.velocity));
+            samples.push(Sample::new(time, sample.position_km, sample.velocity_km_s));
         }
         Ephemeris::from_samples(samples)
     }

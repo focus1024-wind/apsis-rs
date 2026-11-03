@@ -2,8 +2,8 @@
 //!
 //! A Keplerian element set describes an orbit as an ellipse, a parabola, or
 //! a hyperbola with a fixed orientation in space. From the six elements and
-//! the gravitational parameter, this module computes the position and
-//! velocity at any time under the two-body assumption, and converts in the
+//! the gravitational parameter, this module computes the `position_km` and
+//! `velocity_km_s` at any time under the two-body assumption, and converts in the
 //! other direction.
 //!
 //! The two-body model includes only the point mass gravity of the central
@@ -23,15 +23,15 @@
 //! // A circular orbit at the Earth's equatorial radius has the speed
 //! // sqrt(mu / r), about 7.9 km/s.
 //! let elements = KeplerianElements {
-//!     semi_major_axis: 6_378.137,
+//!     semi_major_axis_km: 6_378.137,
 //!     eccentricity: 0.0,
-//!     inclination: 0.0,
-//!     right_ascension: 0.0,
-//!     argument_of_perigee: 0.0,
-//!     true_anomaly: 0.0,
+//!     inclination_rad: 0.0,
+//!     right_ascension_rad: 0.0,
+//!     argument_of_perigee_rad: 0.0,
+//!     true_anomaly_rad: 0.0,
 //! };
 //! let state = elements.to_state(GravityParameter::WGS84).expect("valid elements");
-//! assert!((state.velocity.norm() - 7.909).abs() < 0.01);
+//! assert!((state.velocity_km_s.norm() - 7.909).abs() < 0.01);
 //! ```
 //!
 //! 开普勒轨道根数与二体传播。

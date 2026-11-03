@@ -21,12 +21,12 @@ use apsis::apsis_math::Vec3;
 /// 重构会立即显现。
 fn circular() -> KeplerianElements {
     KeplerianElements {
-        semi_major_axis: 7_000.0,
+        semi_major_axis_km: 7_000.0,
         eccentricity: 0.0,
-        inclination: 0.9,
-        right_ascension: 0.5,
-        argument_of_perigee: 0.0,
-        true_anomaly: 0.0,
+        inclination_rad: 0.9,
+        right_ascension_rad: 0.5,
+        argument_of_perigee_rad: 0.0,
+        true_anomaly_rad: 0.0,
     }
 }
 
@@ -35,12 +35,12 @@ fn circular() -> KeplerianElements {
 /// 返回该圆轨道在某时刻的精确状态。
 fn exact_state(seconds: f64) -> Sample {
     let elements = circular();
-    let mean = 2.0 * core::f64::consts::PI * seconds / elements.period(GravityParameter::WGS84);
+    let mean = 2.0 * core::f64::consts::PI * seconds / elements.period_s(GravityParameter::WGS84);
     let state = elements
-        .with_mean_anomaly(mean)
+        .with_mean_anomaly_rad(mean)
         .to_state(GravityParameter::WGS84)
         .expect("the circular orbit is valid");
-    Sample::new(seconds, state.position, state.velocity)
+    Sample::new(seconds, state.position_km, state.velocity_km_s)
 }
 
 fn sample_table(step: f64, span: f64) -> Ephemeris {
@@ -127,8 +127,8 @@ fn a_query_between_samples_is_interpolated() {
     assert_eq!(midpoint.seconds, 30.0);
     // The interpolated position differs from both endpoints.
     // 插值所得位置不同于两个端点。
-    assert_ne!(midpoint.position, ephemeris.samples()[0].position);
-    assert_ne!(midpoint.position, ephemeris.samples()[1].position);
+    assert_ne!(midpoint.position_km, ephemeris.samples()[0].position_km);
+    assert_ne!(midpoint.position_km, ephemeris.samples()[1].position_km);
     // And it is a plausible radius for the orbit.
     // 且它是该轨道的合理半径。
     assert!((midpoint.radius() - 7_000.0).abs() < 1.0);
@@ -145,7 +145,7 @@ fn the_interpolation_is_accurate_on_a_circular_orbit() {
         let time = f64::from(index) + 0.5;
         let interpolated = ephemeris.state_at(time).expect("covered");
         let truth = exact_state(time);
-        worst = worst.max(interpolated.position.distance(truth.position));
+        worst = worst.max(interpolated.position_km.distance(truth.position_km));
     }
     assert!(
         worst < 1e-3,
@@ -170,7 +170,7 @@ fn halving_the_step_cuts_the_error_by_about_sixteen() {
         while time < 600.0 {
             let interpolated = ephemeris.state_at(time).expect("covered");
             let truth = exact_state(time);
-            worst = worst.max(interpolated.position.distance(truth.position));
+            worst = worst.max(interpolated.position_km.distance(truth.position_km));
             time += step;
         }
         worst
@@ -193,10 +193,10 @@ fn the_interpolated_velocity_matches_the_position_derivative() {
     let ephemeris = sample_table(60.0, 600.0);
     let time = 137.0;
     let h = 1e-4;
-    let before = ephemeris.state_at(time - h).expect("covered").position;
-    let after = ephemeris.state_at(time + h).expect("covered").position;
+    let before = ephemeris.state_at(time - h).expect("covered").position_km;
+    let after = ephemeris.state_at(time + h).expect("covered").position_km;
     let numeric = (after - before) / (2.0 * h);
-    let analytic = ephemeris.state_at(time).expect("covered").velocity;
+    let analytic = ephemeris.state_at(time).expect("covered").velocity_km_s;
     assert!(
         numeric.distance(analytic) < 1e-6,
         "numeric {numeric} against analytic {analytic}"
@@ -380,7 +380,7 @@ fn positions_can_be_sampled_without_velocities() {
     // position-only source still produces a usable table.
     // 速度由有限差分重构，故仅提供位置的来源仍能产生可用的表。
     let ephemeris = Sampler::new(0.0, 600.0, 60.0)
-        .sample_positions(|seconds| exact_state(seconds).position)
+        .sample_positions(|seconds| exact_state(seconds).position_km)
         .expect("the positions are finite");
     assert_eq!(ephemeris.len(), 11);
 
@@ -389,10 +389,10 @@ fn positions_can_be_sampled_without_velocities() {
     let sample = ephemeris.state_at(300.0).expect("covered");
     let truth = exact_state(300.0);
     assert!(
-        sample.velocity.distance(truth.velocity) < 1e-2,
+        sample.velocity_km_s.distance(truth.velocity_km_s) < 1e-2,
         "the reconstructed velocity {} is too far from {}",
-        sample.velocity,
-        truth.velocity
+        sample.velocity_km_s,
+        truth.velocity_km_s
     );
 
     // The interpolation is still usable, though far less accurate than with
@@ -406,7 +406,11 @@ fn positions_can_be_sampled_without_velocities() {
     for index in 0..600 {
         let time = f64::from(index) + 0.5;
         let interpolated = ephemeris.state_at(time).expect("covered");
-        worst = worst.max(interpolated.position.distance(exact_state(time).position));
+        worst = worst.max(
+            interpolated
+                .position_km
+                .distance(exact_state(time).position_km),
+        );
     }
     assert!(worst < 5.0, "the worst position error is {worst} km");
 }

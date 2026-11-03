@@ -4,7 +4,7 @@
 //! about its mean position. It is caused mainly by the torque of the Moon
 //! and the Sun on the equatorial bulge, with smaller contributions from the
 //! planets. The model gives the offset of the true pole from the mean pole
-//! as two angles: the nutation in longitude and the nutation in obliquity.
+//! as two angles: the nutation in `longitude_rad` and the nutation in obliquity.
 //!
 //! The series has two parts whose arguments and coefficient groupings
 //! differ. The luni-solar part has 678 terms built from the Delaunay
@@ -49,15 +49,15 @@ const UNIT_TO_RADIAN: f64 = 1.0e-7 * PI / (180.0 * 3_600.0);
 /// 把角秒转换为弧度。
 const ARCSECOND_TO_RADIAN: f64 = PI / (180.0 * 3_600.0);
 
-/// The nutation in longitude and obliquity, in radians.
+/// The nutation in `longitude_rad` and obliquity, in radians.
 ///
 /// 黄经与黄赤交角方向的章动，单位为弧度。
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Nutation {
-    /// The nutation in longitude, in radians.
+    /// The nutation in `longitude_rad`, in radians.
     ///
     /// 黄经方向的章动，单位为弧度。
-    pub longitude: f64,
+    pub longitude_rad: f64,
     /// The nutation in obliquity, in radians.
     ///
     /// 黄赤交角方向的章动，单位为弧度。
@@ -69,19 +69,19 @@ impl Nutation {
     ///
     /// 由其两个角创建章动。
     #[must_use]
-    pub const fn new(longitude: f64, obliquity: f64) -> Self {
+    pub const fn new(longitude_rad: f64, obliquity: f64) -> Self {
         Self {
-            longitude,
+            longitude_rad,
             obliquity,
         }
     }
 
-    /// Returns the nutation in longitude, in arcseconds.
+    /// Returns the nutation in `longitude_rad`, in arcseconds.
     ///
     /// 返回黄经方向的章动，单位为角秒。
     #[must_use]
     pub fn longitude_arcseconds(self) -> f64 {
-        self.longitude / ARCSECOND_TO_RADIAN
+        self.longitude_rad / ARCSECOND_TO_RADIAN
     }
 
     /// Returns the nutation in obliquity, in arcseconds.
@@ -98,7 +98,7 @@ impl Nutation {
     #[must_use]
     pub const fn plus(self, other: Self) -> Self {
         Self::new(
-            self.longitude + other.longitude,
+            self.longitude_rad + other.longitude_rad,
             self.obliquity + other.obliquity,
         )
     }
@@ -106,7 +106,7 @@ impl Nutation {
 
 /// Evaluates one term of the luni-solar series.
 ///
-/// The five multipliers are applied to the Delaunay arguments. The longitude
+/// The five multipliers are applied to the Delaunay arguments. The `longitude_rad`
 /// is the sum of a time dependent sine, a constant sine, and a cosine. The
 /// obliquity is the sum of a time dependent cosine, a constant cosine, and a
 /// sine.
@@ -137,7 +137,7 @@ fn lunisolar_term(term: &SeriesTerm, arguments: &DelaunayArguments, t: f64) -> N
 /// Evaluates one term of the planetary series.
 ///
 /// The thirteen multipliers are applied to the planetary arguments. The
-/// longitude is a sine plus a cosine, and the obliquity is a sine plus a
+/// `longitude_rad` is a sine plus a cosine, and the obliquity is a sine plus a
 /// cosine, with no time dependence in either.
 ///
 /// 求行星级数的一项。
@@ -159,7 +159,7 @@ fn planetary_term(term: &PlanetaryTerm, arguments: &PlanetaryArguments) -> Nutat
     Nutation::new(c[0] * sine + c[1] * cosine, c[2] * sine + c[3] * cosine)
 }
 
-/// Returns the nutation in longitude and obliquity for a time.
+/// Returns the nutation in `longitude_rad` and obliquity for a time.
 ///
 /// The time is in Julian centuries from J2000.0 on the Terrestrial Time
 /// scale. This is the IAU 2000A model, which includes the planetary terms.
@@ -186,7 +186,7 @@ pub fn nutation_2000a(t: f64) -> Nutation {
     }
 
     Nutation::new(
-        sum.longitude * UNIT_TO_RADIAN,
+        sum.longitude_rad * UNIT_TO_RADIAN,
         sum.obliquity * UNIT_TO_RADIAN,
     )
 }
@@ -217,7 +217,7 @@ pub fn nutation_2000a_with_2006_adjustment(t: f64) -> Nutation {
     // 该调整是对章动本身缩放，而非加上一个独立项，故它被写成一个因子。
     let fj2 = -2.777_4e-6 * t;
     Nutation::new(
-        nutation.longitude * (1.0 + 0.469_7e-6 + fj2),
+        nutation.longitude_rad * (1.0 + 0.469_7e-6 + fj2),
         nutation.obliquity * (1.0 + fj2),
     )
 }

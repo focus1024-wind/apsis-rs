@@ -21,11 +21,11 @@ pub struct State {
     /// Position, in kilometers.
     ///
     /// 位置，单位为千米。
-    pub position: Vec3,
+    pub position_km: Vec3,
     /// Velocity, in kilometers per second.
     ///
     /// 速度，单位为千米每秒。
-    pub velocity: Vec3,
+    pub velocity_km_s: Vec3,
     /// The propagated semi-major axis, in kilometers.
     ///
     /// This is the semi-major axis after the secular drag term has been
@@ -44,7 +44,7 @@ impl State {
     /// 返回到地心的距离，单位为千米。
     #[must_use]
     pub fn altitude_radius(self) -> f64 {
-        self.position.norm()
+        self.position_km.norm()
     }
 
     /// Returns the speed relative to the Earth's center, in kilometers per
@@ -53,6 +53,6 @@ impl State {
     /// 返回相对地心的速率，单位为千米每秒。
     #[must_use]
     pub fn speed(self) -> f64 {
-        self.velocity.norm()
+        self.velocity_km_s.norm()
     }
 }

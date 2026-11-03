@@ -63,13 +63,19 @@ fn main() {
         // The nutation, from the IAU 2000A model.
         // 章动，取自 IAU 2000A 模型。
         let nutation = nutation_2000a(t);
-        println!("{mjd},nutation_longitude_a,0,{:.17e}", nutation.longitude);
+        println!(
+            "{mjd},nutation_longitude_a,0,{:.17e}",
+            nutation.longitude_rad
+        );
         println!("{mjd},nutation_obliquity_a,0,{:.17e}", nutation.obliquity);
 
         // The nutation with the IAU 2006 adjustment.
         // 施加 IAU 2006 调整后的章动。
         let adjusted = nutation_2000a_with_2006_adjustment(t);
-        println!("{mjd},nutation_longitude_06a,0,{:.17e}", adjusted.longitude);
+        println!(
+            "{mjd},nutation_longitude_06a,0,{:.17e}",
+            adjusted.longitude_rad
+        );
         println!("{mjd},nutation_obliquity_06a,0,{:.17e}", adjusted.obliquity);
 
         // The four precession angles.

@@ -69,10 +69,10 @@ impl fmt::Display for RecordKind {
 /// 记录很小且按值复制，故轨迹保存的是扁平列表而非引用树。
 #[derive(Debug, Clone, PartialEq)]
 pub struct Record {
-    /// The simulation time the record was made at, in seconds.
+    /// The simulation `time_s` the record was made at, in seconds.
     ///
     /// 作出该记录时的仿真时刻，单位为秒。
-    pub time: f64,
+    pub time_s: f64,
     /// What the record is about.
     ///
     /// 该记录所关于的内容。
@@ -91,9 +91,9 @@ impl Record {
     /// Creates a record.
     ///
     /// 创建一条记录。
-    pub fn new(time: f64, kind: RecordKind, label: impl Into<String>, value: f64) -> Self {
+    pub fn new(time_s: f64, kind: RecordKind, label: impl Into<String>, value: f64) -> Self {
         Self {
-            time,
+            time_s,
             kind,
             label: label.into(),
             value,
@@ -103,27 +103,27 @@ impl Record {
     /// Creates an observation record.
     ///
     /// 创建一条观测记录。
-    pub fn observation(time: f64, label: impl Into<String>, value: f64) -> Self {
-        Self::new(time, RecordKind::Observation, label, value)
+    pub fn observation(time_s: f64, label: impl Into<String>, value: f64) -> Self {
+        Self::new(time_s, RecordKind::Observation, label, value)
     }
 
     /// Creates a state record.
     ///
     /// 创建一条状态记录。
-    pub fn state(time: f64, label: impl Into<String>, value: f64) -> Self {
-        Self::new(time, RecordKind::State, label, value)
+    pub fn state(time_s: f64, label: impl Into<String>, value: f64) -> Self {
+        Self::new(time_s, RecordKind::State, label, value)
     }
 
     /// Creates a warning record.
     ///
     /// 创建一条警告记录。
-    pub fn warning(time: f64, label: impl Into<String>, value: f64) -> Self {
-        Self::new(time, RecordKind::Warning, label, value)
+    pub fn warning(time_s: f64, label: impl Into<String>, value: f64) -> Self {
+        Self::new(time_s, RecordKind::Warning, label, value)
     }
 
     /// Returns `true` when the record is usable.
     ///
-    /// A record whose time or value is not finite has no place in a trace,
+    /// A record whose `time_s` or value is not finite has no place in a trace,
     /// because it cannot be ordered or summarized.
     ///
     /// 当该记录可用时返回 `true`。
@@ -131,7 +131,7 @@ impl Record {
     /// 时间或值非有限的记录在轨迹中没有位置，因为它无法被排序或汇总。
     #[must_use]
     pub fn is_valid(&self) -> bool {
-        self.time.is_finite() && self.value.is_finite() && !self.label.is_empty()
+        self.time_s.is_finite() && self.value.is_finite() && !self.label.is_empty()
     }
 }
 
@@ -140,7 +140,7 @@ impl fmt::Display for Record {
         write!(
             f,
             "{} {} {} = {}",
-            self.time, self.kind, self.label, self.value
+            self.time_s, self.kind, self.label, self.value
         )
     }
 }

@@ -19,7 +19,7 @@ use super::ComplementaryTerm;
 /// The terms that do not depend on time.
 ///
 /// The eight multipliers apply to the arguments `l`, `l'`, `F`, `D`, `Om`,
-/// the mean longitude of Venus, the mean longitude of the Earth, and the
+/// the mean `longitude_rad` of Venus, the mean `longitude_rad` of the Earth, and the
 /// general accumulated precession, in that order.
 ///
 /// 不依赖时间的各项。

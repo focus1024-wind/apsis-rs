@@ -84,12 +84,12 @@ fn main() {
                 Ok(state) => {
                     println!(
                         "{index},{minutes:.1},0,{:.9},{:.9},{:.9},{:.12},{:.12},{:.12}",
-                        state.position.x,
-                        state.position.y,
-                        state.position.z,
-                        state.velocity.x,
-                        state.velocity.y,
-                        state.velocity.z
+                        state.position_km.x,
+                        state.position_km.y,
+                        state.position_km.z,
+                        state.velocity_km_s.x,
+                        state.velocity_km_s.y,
+                        state.velocity_km_s.z
                     );
                 }
                 Err(error) => {

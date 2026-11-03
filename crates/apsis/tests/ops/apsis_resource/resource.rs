@@ -102,8 +102,8 @@ fn adding_disjoint_windows_keeps_them_separate() {
     assert_eq!(resource.window_count(), 2);
     // The stored order is time order, not insertion order.
     // 存储次序是时间次序，而非插入次序。
-    assert_eq!(resource.windows()[0].start(), 0.0);
-    assert_eq!(resource.windows()[1].start(), 30.0);
+    assert_eq!(resource.windows()[0].start_s(), 0.0);
+    assert_eq!(resource.windows()[1].start_s(), 30.0);
 }
 
 #[test]

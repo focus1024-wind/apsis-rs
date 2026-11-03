@@ -61,21 +61,21 @@ use core::f64::consts::PI;
 #[must_use]
 pub fn off_axis_attenuation(
     peak: Gain,
-    beam_width: f64,
-    off_axis_angle: f64,
+    beam_width_rad: f64,
+    off_axis_angle_rad: f64,
     floor_db: f64,
 ) -> Option<Decibel> {
     let peak_db = peak.as_decibel()?;
-    if !beam_width.is_finite() || beam_width <= 0.0 {
+    if !beam_width_rad.is_finite() || beam_width_rad <= 0.0 {
         return None;
     }
     if !floor_db.is_finite() || floor_db <= 0.0 {
         return None;
     }
-    if !off_axis_angle.is_finite() {
+    if !off_axis_angle_rad.is_finite() {
         return None;
     }
-    let ratio = 12.0 * (off_axis_angle / beam_width).powi(2);
+    let ratio = 12.0 * (off_axis_angle_rad / beam_width_rad).powi(2);
     let attenuation = ratio.min(floor_db);
     Some(peak_db - Decibel::from_db(attenuation))
 }
@@ -106,7 +106,7 @@ pub fn off_axis_attenuation(
 /// $$
 /// </div>
 ///
-/// The angle is in radians and the diameter to wavelength ratio decides
+/// The angle is in radians and the `diameter_m` to `wavelength_m` ratio decides
 /// which branch applies, because a small antenna has a broader main lobe
 /// and therefore a wider range over which the pattern must be controlled.
 ///
@@ -155,11 +155,11 @@ pub fn off_axis_attenuation(
 /// 出处：ITU，*Radio Regulations*，附录 8，其中再现了 ITU-R 建议书
 /// S.465 的参考方向图。
 #[must_use]
-pub fn mask_gain(diameter_over_wavelength: f64, off_axis_angle: f64) -> Option<f64> {
+pub fn mask_gain(diameter_over_wavelength: f64, off_axis_angle_rad: f64) -> Option<f64> {
     if !diameter_over_wavelength.is_finite() || diameter_over_wavelength <= 0.0 {
         return None;
     }
-    if !off_axis_angle.is_finite() || off_axis_angle < 0.0 {
+    if !off_axis_angle_rad.is_finite() || off_axis_angle_rad < 0.0 {
         return None;
     }
 
@@ -174,13 +174,13 @@ pub fn mask_gain(diameter_over_wavelength: f64, off_axis_angle: f64) -> Option<f
     };
     let head = if large_aperture { 29.0 } else { 32.0 };
 
-    if off_axis_angle < cap_angle {
+    if off_axis_angle_rad < cap_angle {
         // Inside the first degree the pattern is taken at its value at one
         // degree, which is the most restrictive point on the falling branch.
         // 在一度以内，方向图取其一度的值，这是下降支上限制最严的点。
         Some(head - 25.0 * cap_angle.to_degrees().log10())
-    } else if off_axis_angle <= floor_angle {
-        Some(head - 25.0 * off_axis_angle.to_degrees().log10())
+    } else if off_axis_angle_rad <= floor_angle {
+        Some(head - 25.0 * off_axis_angle_rad.to_degrees().log10())
     } else {
         Some(-10.0)
     }
@@ -198,14 +198,14 @@ pub fn mask_gain(diameter_over_wavelength: f64, off_axis_angle: f64) -> Option<f
 /// 实测或已发表的值直接给出。该枚举使链路预算能接受二者。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Pattern {
-    /// A parabolic aperture, described by its diameter and efficiency.
+    /// A parabolic aperture, described by its `diameter_m` and efficiency.
     ///
     /// 抛物面孔径，由其直径与效率描述。
     Parabolic {
-        /// The reflector diameter, in meters.
+        /// The reflector `diameter_m`, in meters.
         ///
         /// 反射面直径，单位为米。
-        diameter: f64,
+        diameter_m: f64,
         /// The aperture efficiency, dimensionless.
         ///
         /// 孔径效率，无量纲。
@@ -223,51 +223,51 @@ pub enum Pattern {
         /// The half power beam width, in radians.
         ///
         /// 半功率波束宽度，单位为弧度。
-        beam_width: f64,
+        beam_width_rad: f64,
     },
 }
 
 impl Pattern {
-    /// Returns the peak gain of this pattern at the given wavelength.
+    /// Returns the peak gain of this pattern at the given `wavelength_m`.
     ///
-    /// The wavelength is ignored for a directly specified pattern, which
+    /// The `wavelength_m` is ignored for a directly specified pattern, which
     /// already carries its peak gain.
     ///
     /// 返回本方向图在给定波长处的峰值增益。
     ///
     /// 对直接指定的方向图，波长被忽略，因为它已带有其峰值增益。
     #[must_use]
-    pub fn peak_gain(self, wavelength: f64) -> Option<Gain> {
+    pub fn peak_gain(self, wavelength_m: f64) -> Option<Gain> {
         match self {
             Self::Parabolic {
-                diameter,
+                diameter_m,
                 efficiency,
             } => ParabolicAperture {
-                diameter,
+                diameter_m,
                 efficiency,
             }
-            .peak_gain(wavelength),
+            .peak_gain(wavelength_m),
             Self::Direct { peak, .. } => Some(peak),
         }
     }
 
     /// Returns the half power beam width of this pattern at the given
-    /// wavelength, in radians.
+    /// `wavelength_m`, in radians.
     ///
     /// 返回本方向图在给定波长处的半功率波束宽度，单位为弧度。
     #[must_use]
-    pub fn beam_width(self, wavelength: f64) -> Option<f64> {
+    pub fn beam_width_rad(self, wavelength_m: f64) -> Option<f64> {
         match self {
             Self::Parabolic {
-                diameter,
+                diameter_m,
                 efficiency,
             } => ParabolicAperture {
-                diameter,
+                diameter_m,
                 efficiency,
             }
-            .half_power_beam_width(wavelength),
-            Self::Direct { beam_width, .. } => {
-                (beam_width.is_finite() && beam_width > 0.0).then_some(beam_width)
+            .half_power_beam_width(wavelength_m),
+            Self::Direct { beam_width_rad, .. } => {
+                (beam_width_rad.is_finite() && beam_width_rad > 0.0).then_some(beam_width_rad)
             }
         }
     }
@@ -291,7 +291,7 @@ pub struct ElementPattern {
     /// The half power beam width, in radians.
     ///
     /// 半功率波束宽度，单位为弧度。
-    pub beam_width: f64,
+    pub beam_width_rad: f64,
     /// The sidelobe floor, in decibels below the peak.
     ///
     /// 旁瓣底限，相对峰值以分贝计。
@@ -306,7 +306,7 @@ impl Default for ElementPattern {
     fn default() -> Self {
         Self {
             peak: Gain::ISOTROPIC,
-            beam_width: PI,
+            beam_width_rad: PI,
             floor_db: f64::MIN_POSITIVE,
         }
     }
@@ -324,26 +324,26 @@ impl ElementPattern {
     /// 旁瓣底限被设为《无线电规则》参考方向图的值，即相对峰值低
     /// 32 分贝，这是小型地球站常见的坏情形。
     #[must_use]
-    pub const fn new(peak: Gain, beam_width: f64) -> Self {
+    pub const fn new(peak: Gain, beam_width_rad: f64) -> Self {
         Self {
             peak,
-            beam_width,
+            beam_width_rad,
             floor_db: 32.0,
         }
     }
 
-    /// Creates a pattern from a parabolic aperture at a wavelength.
+    /// Creates a pattern from a parabolic aperture at a `wavelength_m`.
     ///
-    /// Returns `None` when the aperture or wavelength is not usable.
+    /// Returns `None` when the aperture or `wavelength_m` is not usable.
     ///
     /// 由某波长处的抛物面孔径创建方向图。
     ///
     /// 孔径或波长不可用时返回 `None`。
     #[must_use]
-    pub fn from_parabolic(aperture: ParabolicAperture, wavelength: f64) -> Option<Self> {
+    pub fn from_parabolic(aperture: ParabolicAperture, wavelength_m: f64) -> Option<Self> {
         Some(Self {
-            peak: aperture.peak_gain(wavelength)?,
-            beam_width: aperture.half_power_beam_width(wavelength)?,
+            peak: aperture.peak_gain(wavelength_m)?,
+            beam_width_rad: aperture.half_power_beam_width(wavelength_m)?,
             floor_db: 32.0,
         })
     }
@@ -366,9 +366,13 @@ impl ElementPattern {
     ///
     /// 方向图不可用或角度非有限时返回 `None`。
     #[must_use]
-    pub fn gain_at(self, off_axis_angle: f64) -> Option<Gain> {
-        let attenuation =
-            off_axis_attenuation(self.peak, self.beam_width, off_axis_angle, self.floor_db)?;
+    pub fn gain_at(self, off_axis_angle_rad: f64) -> Option<Gain> {
+        let attenuation = off_axis_attenuation(
+            self.peak,
+            self.beam_width_rad,
+            off_axis_angle_rad,
+            self.floor_db,
+        )?;
         Gain::from_dbi(attenuation.db())
     }
 
@@ -379,8 +383,8 @@ impl ElementPattern {
     #[must_use]
     pub fn is_valid(self) -> bool {
         self.peak.dbi().is_some()
-            && self.beam_width.is_finite()
-            && self.beam_width > 0.0
+            && self.beam_width_rad.is_finite()
+            && self.beam_width_rad > 0.0
             && self.floor_db.is_finite()
             && self.floor_db > 0.0
     }

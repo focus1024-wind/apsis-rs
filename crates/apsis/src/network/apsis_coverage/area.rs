@@ -1,11 +1,11 @@
-//! Coverage of a latitude-longitude polygon.
+//! Coverage of a `latitude_rad`-`longitude_rad` polygon.
 //!
 //! An area target is a closed polygon on the ellipsoid. This module tests
 //! whether a grid point lies inside the polygon and computes the same
 //! coverage and revisit statistics as [`grid_coverage`](crate::apsis_coverage::grid_coverage),
 //! restricted to the points inside the polygon.
 //!
-//! The polygon is interpreted in the longitude-latitude plane, so edges are
+//! The polygon is interpreted in the `longitude_rad`-`latitude_rad` plane, so edges are
 //! straight in that plane rather than great-circle arcs. That is the usual
 //! convention for an area target drawn on a map, and it keeps the inside
 //! test exact and inexpensive. A polygon must not cross the antimeridian;
@@ -26,7 +26,7 @@ use crate::apsis_math::Vec3;
 
 use super::grid::{CoverageGrid, CoverageSample};
 
-/// A closed polygon in the longitude-latitude plane.
+/// A closed polygon in the `longitude_rad`-`latitude_rad` plane.
 ///
 /// Vertices are stored in radians. The closing edge from the last vertex to
 /// the first is implicit. The polygon must not cross the antimeridian.
@@ -44,7 +44,7 @@ impl GeoPolygon {
     /// Creates a polygon from radian vertices.
     ///
     /// Returns an error when there are fewer than three vertices, a value is
-    /// not finite, or a latitude is outside `-pi/2..=pi/2`.
+    /// not finite, or a `latitude_rad` is outside `-pi/2..=pi/2`.
     ///
     /// 由弧度顶点创建多边形。
     ///
@@ -57,14 +57,14 @@ impl GeoPolygon {
             ));
         }
         let half_pi = core::f64::consts::FRAC_PI_2;
-        for (latitude, longitude) in vertices {
-            if !latitude.is_finite()
-                || !longitude.is_finite()
-                || !(-half_pi..=half_pi).contains(latitude)
+        for (latitude_rad, longitude_rad) in vertices {
+            if !latitude_rad.is_finite()
+                || !longitude_rad.is_finite()
+                || !(-half_pi..=half_pi).contains(latitude_rad)
             {
                 return Err(Error::with_message(
                     ErrorKind::InvalidInput,
-                    "polygon vertices must be finite and have a valid latitude",
+                    "polygon vertices must be finite and have a valid latitude_rad",
                 ));
             }
         }
@@ -79,7 +79,9 @@ impl GeoPolygon {
     pub fn from_degrees(vertices: &[(f64, f64)]) -> Result<Self> {
         let radians: Vec<(f64, f64)> = vertices
             .iter()
-            .map(|(latitude, longitude)| (latitude.to_radians(), longitude.to_radians()))
+            .map(|(latitude_rad, longitude_rad)| {
+                (latitude_rad.to_radians(), longitude_rad.to_radians())
+            })
             .collect();
         Self::new(&radians)
     }
@@ -92,7 +94,7 @@ impl GeoPolygon {
         &self.vertices
     }
 
-    /// Returns the latitude-longitude bounds as `(south, north, west, east)`.
+    /// Returns the `latitude_rad`-`longitude_rad` bounds as `(south, north, west, east)`.
     ///
     /// 返回 `(南, 北, 西, 东)` 的经纬度边界。
     #[must_use]
@@ -101,18 +103,18 @@ impl GeoPolygon {
         let mut north = f64::NEG_INFINITY;
         let mut west = f64::INFINITY;
         let mut east = f64::NEG_INFINITY;
-        for (latitude, longitude) in &self.vertices {
-            south = south.min(*latitude);
-            north = north.max(*latitude);
-            west = west.min(*longitude);
-            east = east.max(*longitude);
+        for (latitude_rad, longitude_rad) in &self.vertices {
+            south = south.min(*latitude_rad);
+            north = north.max(*latitude_rad);
+            west = west.min(*longitude_rad);
+            east = east.max(*longitude_rad);
         }
         (south, north, west, east)
     }
 
     /// Returns true when a point lies inside the polygon.
     ///
-    /// Uses the even-odd ray casting rule in the longitude-latitude plane.
+    /// Uses the even-odd ray casting rule in the `longitude_rad`-`latitude_rad` plane.
     /// Points exactly on an edge are not guaranteed to be classified either
     /// way.
     ///
@@ -120,20 +122,20 @@ impl GeoPolygon {
     ///
     /// 在经纬度平面中使用奇偶射线法。恰位于边上的点不保证归入哪一侧。
     #[must_use]
-    pub fn contains(&self, latitude: f64, longitude: f64) -> bool {
+    pub fn contains(&self, latitude_rad: f64, longitude_rad: f64) -> bool {
         let mut inside = false;
         let count = self.vertices.len();
         let mut previous = self.vertices[count - 1];
         for &current in &self.vertices {
             let (previous_latitude, previous_longitude) = previous;
             let (current_latitude, current_longitude) = current;
-            let crosses = (current_latitude > latitude) != (previous_latitude > latitude);
+            let crosses = (current_latitude > latitude_rad) != (previous_latitude > latitude_rad);
             if crosses {
                 let fraction =
-                    (latitude - current_latitude) / (previous_latitude - current_latitude);
+                    (latitude_rad - current_latitude) / (previous_latitude - current_latitude);
                 let crossing_longitude =
                     current_longitude + fraction * (previous_longitude - current_longitude);
-                if longitude < crossing_longitude {
+                if longitude_rad < crossing_longitude {
                     inside = !inside;
                 }
             }
@@ -230,9 +232,9 @@ pub fn area_coverage(
     let mut units: Vec<Vec3> = Vec::with_capacity(total);
     for row in 0..rows {
         for column in 0..columns {
-            let (latitude, longitude) = grid.point(row, column);
+            let (latitude_rad, longitude_rad) = grid.point(row, column);
             let index = row * columns + column;
-            inside[index] = polygon.contains(latitude, longitude);
+            inside[index] = polygon.contains(latitude_rad, longitude_rad);
             units.push(grid.unit_vector(row, column));
         }
     }
@@ -347,8 +349,8 @@ pub fn area_access(
     let mut inside = Vec::new();
     for row in 0..rows {
         for column in 0..columns {
-            let (latitude, longitude) = grid.point(row, column);
-            if polygon.contains(latitude, longitude) {
+            let (latitude_rad, longitude_rad) = grid.point(row, column);
+            if polygon.contains(latitude_rad, longitude_rad) {
                 inside.push(grid.unit_vector(row, column));
             }
         }

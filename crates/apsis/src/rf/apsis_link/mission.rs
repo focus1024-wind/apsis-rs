@@ -32,7 +32,7 @@ pub struct LinkParameters {
     /// Power delivered to the transmit antenna, in watts.
     ///
     /// 送到发射天线的功率，单位为瓦特。
-    pub transmit_power_watts: f64,
+    pub transmit_power_w: f64,
     /// Transmit antenna gain in dBi.
     ///
     /// 发射天线增益，单位为 dBi。
@@ -52,7 +52,7 @@ pub struct LinkParameters {
     /// System noise temperature referred to the receiver input, in kelvin.
     ///
     /// 折算到接收机输入端的系统噪声温度，单位为开尔文。
-    pub system_temperature_kelvin: f64,
+    pub system_temperature_k: f64,
     /// Receiver noise bandwidth in hertz.
     ///
     /// 接收机噪声带宽，单位为赫兹。
@@ -71,12 +71,12 @@ impl Default for LinkParameters {
     fn default() -> Self {
         Self {
             frequency_hz: 12.0e9,
-            transmit_power_watts: 10.0,
+            transmit_power_w: 10.0,
             transmit_gain_dbi: 30.0,
             transmit_loss_db: 1.0,
             receive_gain_dbi: 35.0,
             receive_loss_db: 0.5,
-            system_temperature_kelvin: 150.0,
+            system_temperature_k: 150.0,
             bandwidth_hz: 36.0e6,
             data_rate_bps: 10.0e6,
             required_ebno_db: 4.0,
@@ -128,7 +128,7 @@ pub struct LinkResult {
     /// Whether the margin is not negative.
     ///
     /// 余量非负时为真。
-    pub closes: bool,
+    pub is_closed: bool,
     /// Receive gain over system temperature, in decibels per kelvin.
     ///
     /// 接收增益与系统温度之比，单位为分贝每开尔文。
@@ -153,7 +153,7 @@ pub fn link_budget(distance_meters: f64, parameters: &LinkParameters) -> Result<
         )
     })?;
     let budget = LinkBudget {
-        transmit_power: Power::from_watts(parameters.transmit_power_watts),
+        transmit_power: Power::from_watts(parameters.transmit_power_w),
         transmit_gain: Gain::from_dbi(parameters.transmit_gain_dbi).ok_or_else(|| {
             Error::with_message(
                 ErrorKind::InvalidInput,
@@ -163,11 +163,11 @@ pub fn link_budget(distance_meters: f64, parameters: &LinkParameters) -> Result<
         transmit_loss: Decibel::from_db(parameters.transmit_loss_db),
         receive_gain,
         receive_loss: Decibel::from_db(parameters.receive_loss_db),
-        system_temperature: NoiseTemperature::from_kelvin(parameters.system_temperature_kelvin),
-        bandwidth: parameters.bandwidth_hz,
+        system_temperature: NoiseTemperature::from_kelvin(parameters.system_temperature_k),
+        bandwidth_hz: parameters.bandwidth_hz,
         geometry: LinkGeometry {
-            distance: distance_meters,
-            frequency: parameters.frequency_hz,
+            distance_m: distance_meters,
+            frequency_hz: parameters.frequency_hz,
         },
     };
     let path_loss = budget.geometry.path_loss().ok_or_else(|| {
@@ -205,7 +205,7 @@ pub fn link_budget(distance_meters: f64, parameters: &LinkParameters) -> Result<
     let margin = link_margin(ebno, Decibel::from_db(parameters.required_ebno_db));
     let gain_to_temperature = gain_to_temperature(
         receive_gain,
-        NoiseTemperature::from_kelvin(parameters.system_temperature_kelvin),
+        NoiseTemperature::from_kelvin(parameters.system_temperature_k),
     )
     .ok_or_else(|| Error::with_message(ErrorKind::InvalidInput, "G/T is undefined".to_string()))?;
     Ok(LinkResult {
@@ -225,7 +225,7 @@ pub fn link_budget(distance_meters: f64, parameters: &LinkParameters) -> Result<
         carrier_to_noise_db: carrier_to_noise.db(),
         ebno_db: ebno.db(),
         margin_db: margin.margin().db(),
-        closes: margin.closes(),
+        is_closed: margin.is_closed(),
         gain_to_temperature_db: 10.0 * gain_to_temperature.log10(),
     })
 }
@@ -243,10 +243,10 @@ fn validate(distance_meters: f64, parameters: &LinkParameters) -> Result<()> {
             "frequency_hz must be positive and finite, in hertz".to_string(),
         ));
     }
-    if !parameters.transmit_power_watts.is_finite() || parameters.transmit_power_watts <= 0.0 {
+    if !parameters.transmit_power_w.is_finite() || parameters.transmit_power_w <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "transmit_power_watts must be positive and finite, in watts".to_string(),
+            "transmit_power_w must be positive and finite, in watts".to_string(),
         ));
     }
     if !parameters.transmit_loss_db.is_finite() || !parameters.receive_loss_db.is_finite() {
@@ -261,12 +261,10 @@ fn validate(distance_meters: f64, parameters: &LinkParameters) -> Result<()> {
             "transmit_loss_db and receive_loss_db must be non-negative, in decibels".to_string(),
         ));
     }
-    if !parameters.system_temperature_kelvin.is_finite()
-        || parameters.system_temperature_kelvin <= 0.0
-    {
+    if !parameters.system_temperature_k.is_finite() || parameters.system_temperature_k <= 0.0 {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "system_temperature_kelvin must be positive and finite, in kelvin".to_string(),
+            "system_temperature_k must be positive and finite, in kelvin".to_string(),
         ));
     }
     if !parameters.bandwidth_hz.is_finite() || parameters.bandwidth_hz <= 0.0 {

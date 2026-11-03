@@ -1,7 +1,7 @@
 //! The SGP4 and SDP4 analytical orbit propagator.
 //!
 //! The propagator takes the mean orbital elements of a two-line element set
-//! and returns the position and velocity of the satellite at a requested
+//! and returns the `position_km` and `velocity_km_s` of the satellite at a requested
 //! instant. It is the model that the element sets are fitted to, so it is
 //! the correct way to use them; a general purpose numerical integrator
 //! given the same elements would drift away from the published positions.
@@ -20,7 +20,7 @@
 //!   revolutions per day; this module converts to radians and radians per
 //!   minute internally.
 //! - The output is expressed in the True Equator Mean Equinox (TEME) frame,
-//!   with position in kilometers and velocity in kilometers per second. TEME
+//!   with `position_km` in kilometers and `velocity_km_s` in kilometers per second. TEME
 //!   is the frame the model defines; converting it to an Earth-fixed frame
 //!   requires the Earth rotation and the equation of the equinoxes and is
 //!   not part of this module.
@@ -44,10 +44,10 @@
 //!
 //! // Propagate to the epoch of the elements.
 //! let state = satellite.propagate_minutes(0.0).expect("epoch state exists");
-//! // The position of a low Earth satellite is a few thousand kilometers
+//! // The position_km of a low Earth satellite is a few thousand kilometers
 //! // from the center of the Earth.
-//! assert!(state.position.norm() > 6_600.0);
-//! assert!(state.position.norm() < 7_200.0);
+//! assert!(state.position_km.norm() > 6_600.0);
+//! assert!(state.position_km.norm() < 7_200.0);
 //! ```
 //!
 //! SGP4 与 SDP4 解析轨道传播器。

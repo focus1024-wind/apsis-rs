@@ -118,25 +118,25 @@ impl Schedule {
             return Err(ScheduleError::new(ScheduleErrorKind::AlreadyPlaced)
                 .with_detail(format!("{}", task.id)));
         }
-        if start < task.earliest_start {
+        if start < task.earliest_start_s {
             return Err(
                 ScheduleError::new(ScheduleErrorKind::BeforeWindow).with_detail(format!(
                     "task {} starts at {start}, before its window opens at {}",
-                    task.id, task.earliest_start
+                    task.id, task.earliest_start_s
                 )),
             );
         }
-        if start + task.duration > task.latest_end {
+        if start + task.duration_s > task.latest_end_s {
             return Err(
                 ScheduleError::new(ScheduleErrorKind::AfterWindow).with_detail(format!(
                     "task {} ends at {}, after its window closes at {}",
                     task.id,
-                    start + task.duration,
-                    task.latest_end
+                    start + task.duration_s,
+                    task.latest_end_s
                 )),
             );
         }
-        let placement = Placement::new(task.id, start, task.duration);
+        let placement = Placement::new(task.id, start, task.duration_s);
         self.index.insert(task.id.index(), self.placements.len());
         self.placements.push(placement);
         Ok(self
@@ -198,8 +198,8 @@ impl Schedule {
             .collect();
         selected.sort_by(|first, second| {
             first
-                .start
-                .partial_cmp(&second.start)
+                .start_s
+                .partial_cmp(&second.start_s)
                 .unwrap_or(core::cmp::Ordering::Equal)
         });
         selected
@@ -237,7 +237,7 @@ impl Schedule {
     pub fn scheduled_seconds(&self) -> f64 {
         self.placements
             .iter()
-            .map(|placement| placement.duration)
+            .map(|placement| placement.duration_s)
             .sum()
     }
 
@@ -252,7 +252,7 @@ impl Schedule {
     pub fn earliest_start(&self) -> Option<f64> {
         self.placements
             .iter()
-            .map(|placement| placement.start)
+            .map(|placement| placement.start_s)
             .min_by(|first, second| {
                 first
                     .partial_cmp(second)
@@ -270,7 +270,7 @@ impl Schedule {
     pub fn latest_end(&self) -> Option<f64> {
         self.placements
             .iter()
-            .map(Placement::end)
+            .map(Placement::end_s)
             .max_by(|first, second| {
                 first
                     .partial_cmp(second)
@@ -314,11 +314,11 @@ impl Schedule {
                     ScheduleError::new(ScheduleErrorKind::RequirementMismatch)
                         .with_detail(format!("{} is not in the task list", placement.task))
                 })?;
-            if (placement.duration - task.duration).abs() > 1e-12 {
+            if (placement.duration_s - task.duration_s).abs() > 1e-12 {
                 return Err(ScheduleError::new(ScheduleErrorKind::RequirementMismatch)
                     .with_detail(format!(
                         "{} is placed for {} s but takes {} s",
-                        task.id, placement.duration, task.duration
+                        task.id, placement.duration_s, task.duration_s
                     )));
             }
         }
@@ -332,8 +332,8 @@ impl Schedule {
                     continue;
                 };
                 if let Some(demand) = task.demand_for(resource.id) {
-                    events.push((placement.start, demand));
-                    events.push((placement.end(), -demand));
+                    events.push((placement.start_s, demand));
+                    events.push((placement.end_s(), -demand));
                 }
             }
             if events.is_empty() {
@@ -399,8 +399,8 @@ impl Schedule {
                     continue;
                 };
                 if let Some(demand) = task.demand_for(resource.id) {
-                    events.push((placement.start, demand));
-                    events.push((placement.end(), -demand));
+                    events.push((placement.start_s, demand));
+                    events.push((placement.end_s(), -demand));
                     placement_count += 1;
                 }
             }
@@ -465,8 +465,8 @@ impl Schedule {
         let mut ordered = self.placements.clone();
         ordered.sort_by(|first, second| {
             first
-                .start
-                .partial_cmp(&second.start)
+                .start_s
+                .partial_cmp(&second.start_s)
                 .unwrap_or(core::cmp::Ordering::Equal)
                 .then_with(|| first.task.cmp(&second.task))
         });
@@ -497,7 +497,7 @@ impl Schedule {
                     .find(|task| task.id == placement.task)
                     .is_some_and(|task| task.requires(resource) && placement.covers(time))
             })
-            .map(Placement::end)
+            .map(Placement::end_s)
             .max_by(|first, second| {
                 first
                     .partial_cmp(second)

@@ -149,7 +149,7 @@ fn the_two_treatments_agree_to_second_order() {
     // 经典频移与相对论频移相差一个 `beta` 平方量级的载波比例。
     let carrier = 12.0e9;
     let shift = DopplerShift::from_range_rate(carrier, 7_000.0).expect("valid");
-    let classical = shift.shift();
+    let classical = shift.shift_hz();
     let relativistic = shift.shift_including_relativity().expect("valid");
     let relative_difference = (relativistic - classical).abs() / carrier;
     let beta = 7_000.0 / SPEED_OF_LIGHT;
@@ -180,24 +180,24 @@ fn a_speed_of_light_range_rate_is_rejected() {
 #[test]
 fn the_shift_type_reports_the_carrier_and_rate() {
     let shift = DopplerShift::from_range_rate(12.0e9, 1_000.0).expect("valid");
-    assert_eq!(shift.carrier_frequency(), 12.0e9);
-    assert_eq!(shift.range_rate(), 1_000.0);
+    assert_eq!(shift.carrier_frequency_hz(), 12.0e9);
+    assert_eq!(shift.range_rate_m_s(), 1_000.0);
     assert!(shift.is_receding());
 }
 
 #[test]
 fn the_shift_type_converts_between_frequencies() {
     let shift = DopplerShift::from_range_rate(12.0e9, 1_000.0).expect("valid");
-    let received = shift.shifted_frequency();
+    let received = shift.shifted_frequency_hz();
     assert!(received < 12.0e9);
-    assert!((received - (12.0e9 + shift.shift())).abs() < 1e-6);
+    assert!((received - (12.0e9 + shift.shift_hz())).abs() < 1e-6);
 }
 
 #[test]
 fn an_approaching_terminal_has_a_higher_received_frequency() {
     let shift = DopplerShift::from_range_rate(12.0e9, -1_000.0).expect("valid");
     assert!(!shift.is_receding());
-    assert!(shift.shifted_frequency() > 12.0e9);
+    assert!(shift.shifted_frequency_hz() > 12.0e9);
 }
 
 #[test]
@@ -211,7 +211,7 @@ fn the_shift_in_parts_per_million_is_consistent() {
 #[test]
 fn the_relativistic_shift_is_close_to_the_classical_one() {
     let shift = DopplerShift::from_range_rate(12.0e9, 7_000.0).expect("valid");
-    let classical = shift.shift();
+    let classical = shift.shift_hz();
     let total = shift.shift_including_relativity().expect("valid");
     // Both are negative for a receding terminal and agree in sign.
     // 对远离的终端二者都为负，符号一致。

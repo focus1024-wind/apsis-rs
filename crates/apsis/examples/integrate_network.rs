@@ -107,7 +107,7 @@ fn position_ecef_km(satellite: &Satellite, seconds: f64) -> Vec3 {
     // The orbit layer works in kilometers and the coordinate layer in
     // meters, so the conversion happens at this boundary.
     // 轨道层以千米工作，坐标层以米工作，故在此边界处换算。
-    let inertial = Eci::new(state.position * 1_000.0);
+    let inertial = Eci::new(state.position_km * 1_000.0);
     // The Earth rotation angle needs the UT1 time. The difference between
     // UT1 and TAI is under a second, which is under 0.005 degrees of
     // rotation, so the TAI epoch is used here.
@@ -115,7 +115,7 @@ fn position_ecef_km(satellite: &Satellite, seconds: f64) -> Vec3 {
     // 故此处使用 TAI 历元。
     let days_since_j2000 = (epoch_mjd() + seconds / 86_400.0) - 51_544.5;
     let angle = EarthRotationAngle::from_ut1_days(days_since_j2000);
-    inertial.to_ecef(angle).vector() / 1_000.0
+    inertial.to_ecef(angle).vector_m() / 1_000.0
 }
 
 fn main() {
@@ -125,8 +125,8 @@ fn main() {
         total_satellites: 24,
         planes: 3,
         phase_factor: 1,
-        inclination: 53.0_f64.to_radians(),
-        semi_major_axis: 6_928.137,
+        inclination_rad: 53.0_f64.to_radians(),
+        semi_major_axis_km: 6_928.137,
     };
     let constellation =
         Constellation::walker(pattern, epoch_mjd()).expect("the pattern is consistent");
@@ -175,7 +175,7 @@ fn main() {
     // point of the first sample. Placing the station there rather than at a
     // fixed location makes the example depend only on the chain working,
     // not on the particular ground track of this element set, which crosses
-    // a given longitude only every few orbits.
+    // a given longitude_rad only every few orbits.
     // 第 4 步：来自一个被放在第一个样本星下点的地面站的可见性窗口。把站放在那里
     // 而非固定位置，使本示例只依赖于该链正常工作，而不依赖于该根数集特定的地面轨迹
     // ——它每隔几个轨道才穿过某一给定经度。
@@ -317,30 +317,30 @@ fn main() {
         .to_geodetic(apsis::apsis_coord::WGS84)
         .expect("the satellite is off the polar axis");
     let radius_m = propagated_radius_km * 1_000.0;
-    let lower = radius_m - apsis::apsis_coord::WGS84.semi_major_axis();
-    let upper = radius_m - apsis::apsis_coord::WGS84.semi_minor_axis();
+    let lower = radius_m - apsis::apsis_coord::WGS84.semi_major_axis_m();
+    let upper = radius_m - apsis::apsis_coord::WGS84.semi_minor_axis_m();
     assert!(
-        (lower - 1.0..=upper + 1.0).contains(&geodetic.height()),
+        (lower - 1.0..=upper + 1.0).contains(&geodetic.height_m()),
         "the geodetic height {} m is outside [{lower:.1}, {upper:.1}]",
-        geodetic.height()
+        geodetic.height_m()
     );
     assert!(geodetic.ellipsoidal().is_valid());
-    assert_eq!(sub_satellite.position.height, 0.0);
+    assert_eq!(sub_satellite.position.height_m, 0.0);
 
-    // The sub-satellite point must lie at the same latitude and longitude
+    // The sub-satellite point must lie at the same latitude_rad and longitude_rad
     // as the satellite itself.
     // 星下点必须位于与卫星本身相同的纬度与经度。
     assert!(
-        (sub_satellite.position.latitude - geodetic.latitude()).abs() < 1e-9,
-        "latitude {} against {}",
-        sub_satellite.position.latitude,
-        geodetic.latitude()
+        (sub_satellite.position.latitude_rad - geodetic.latitude_rad()).abs() < 1e-9,
+        "latitude_rad {} against {}",
+        sub_satellite.position.latitude_rad,
+        geodetic.latitude_rad()
     );
     assert!(
-        (sub_satellite.position.longitude - geodetic.longitude()).abs() < 1e-9,
-        "longitude {} against {}",
-        sub_satellite.position.longitude,
-        geodetic.longitude()
+        (sub_satellite.position.longitude_rad - geodetic.longitude_rad()).abs() < 1e-9,
+        "longitude_rad {} against {}",
+        sub_satellite.position.longitude_rad,
+        geodetic.longitude_rad()
     );
     // The epoch of the element set must round trip through the time layer.
     // 根数集的历元必须经时间层往返一致。
@@ -367,15 +367,15 @@ fn main() {
 ///
 /// Walker 构建是圆形的，故半径即半长轴，位置由三个取向角与该近点角得出。
 fn elements_position(elements: &apsis::apsis_kepler::KeplerianElements) -> Vec3 {
-    let radius = elements.semi_major_axis;
-    let angle = elements.true_anomaly;
+    let radius = elements.semi_major_axis_km;
+    let angle = elements.true_anomaly_rad;
     // The position in the perifocal frame.
     // 近焦点系中的位置。
     let perifocal = Vec3::new(radius * angle.cos(), radius * angle.sin(), 0.0);
     let rotation = apsis::apsis_kepler::perifocal_to_inertial(
-        elements.argument_of_perigee,
-        elements.inclination,
-        elements.right_ascension,
+        elements.argument_of_perigee_rad,
+        elements.inclination_rad,
+        elements.right_ascension_rad,
     );
     rotation * perifocal
 }

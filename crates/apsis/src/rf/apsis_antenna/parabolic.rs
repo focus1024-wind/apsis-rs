@@ -5,7 +5,7 @@
 use crate::apsis_rf::Gain;
 use core::f64::consts::PI;
 
-/// A parabolic reflector described by its diameter and aperture efficiency.
+/// A parabolic reflector described by its `diameter_m` and aperture efficiency.
 ///
 /// The aperture efficiency collects every loss between the power delivered
 /// to the feed and the power that leaves the aperture as a uniform plane
@@ -20,10 +20,10 @@ use core::f64::consts::PI;
 /// 良好的天线达到 0.65 至 0.70，小而简易的接近 0.55。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct ParabolicAperture {
-    /// The reflector diameter, in meters.
+    /// The reflector `diameter_m`, in meters.
     ///
     /// 反射面直径，单位为米。
-    pub diameter: f64,
+    pub diameter_m: f64,
     /// The aperture efficiency, dimensionless, in `(0, 1]`.
     ///
     /// 孔径效率，无量纲，落在 `(0, 1]` 内。
@@ -36,7 +36,7 @@ impl ParabolicAperture {
     /// 返回孔径的物理面积，单位为平方米。
     #[must_use]
     pub fn area(self) -> f64 {
-        PI * (self.diameter / 2.0).powi(2)
+        PI * (self.diameter_m / 2.0).powi(2)
     }
 
     /// Returns the effective area, in square meters.
@@ -59,14 +59,14 @@ impl ParabolicAperture {
     /// 当该孔径描述一个可用天线时返回 `true`。
     #[must_use]
     pub fn is_valid(self) -> bool {
-        self.diameter.is_finite()
-            && self.diameter > 0.0
+        self.diameter_m.is_finite()
+            && self.diameter_m > 0.0
             && self.efficiency.is_finite()
             && self.efficiency > 0.0
             && self.efficiency <= 1.0
     }
 
-    /// Returns the peak gain on boresight at the given wavelength.
+    /// Returns the peak gain on boresight at the given `wavelength_m`.
     ///
     /// The relation is
     ///
@@ -78,7 +78,7 @@ impl ParabolicAperture {
     ///
     /// which follows from the effective area through
     /// [`Gain::from_effective_aperture`]. Returns `None` for an invalid
-    /// aperture or wavelength.
+    /// aperture or `wavelength_m`.
     ///
     /// 返回给定波长处视轴上的峰值增益。
     ///
@@ -93,22 +93,22 @@ impl ParabolicAperture {
     /// 它由有效面积经 [`Gain::from_effective_aperture`] 得出。孔径或波长
     /// 无效时返回 `None`。
     #[must_use]
-    pub fn peak_gain(self, wavelength: f64) -> Option<Gain> {
+    pub fn peak_gain(self, wavelength_m: f64) -> Option<Gain> {
         if !self.is_valid() {
             return None;
         }
-        Gain::from_effective_aperture(self.effective_area(), wavelength)
+        Gain::from_effective_aperture(self.effective_area(), wavelength_m)
     }
 
-    /// Returns the half power beam width at the given wavelength, in
+    /// Returns the half power beam width at the given `wavelength_m`, in
     /// radians.
     ///
     /// This uses the uniform illumination relation, which is the narrowest
-    /// a dish of this diameter can be. A real dish with an illumination
+    /// a dish of this `diameter_m` can be. A real dish with an illumination
     /// taper is wider; use [`ParabolicAperture::half_power_beam_width`] to
     /// include the taper.
     ///
-    /// Returns `None` for an invalid aperture or wavelength.
+    /// Returns `None` for an invalid aperture or `wavelength_m`.
     ///
     /// 返回给定波长处的半功率波束宽度，单位为弧度。
     ///
@@ -118,14 +118,14 @@ impl ParabolicAperture {
     ///
     /// 孔径或波长无效时返回 `None`。
     #[must_use]
-    pub fn uniform_beam_width(self, wavelength: f64) -> Option<f64> {
+    pub fn uniform_beam_width(self, wavelength_m: f64) -> Option<f64> {
         if !self.is_valid() {
             return None;
         }
-        beam_width(self.diameter, wavelength, 1.02)
+        beam_width(self.diameter_m, wavelength_m, 1.02)
     }
 
-    /// Returns the half power beam width at the given wavelength, in
+    /// Returns the half power beam width at the given `wavelength_m`, in
     /// radians, allowing for an illumination taper.
     ///
     /// A tapered illumination reduces the sidelobes at the cost of a wider
@@ -134,7 +134,7 @@ impl ParabolicAperture {
     /// minimises sidelobes. A value of 1.15 is representative of a
     /// well designed dish.
     ///
-    /// Returns `None` for an invalid aperture or wavelength.
+    /// Returns `None` for an invalid aperture or `wavelength_m`.
     ///
     /// 返回给定波长处的半功率波束宽度（弧度），并计入照射锥削。
     ///
@@ -144,11 +144,11 @@ impl ParabolicAperture {
     ///
     /// 孔径或波长无效时返回 `None`。
     #[must_use]
-    pub fn half_power_beam_width(self, wavelength: f64) -> Option<f64> {
+    pub fn half_power_beam_width(self, wavelength_m: f64) -> Option<f64> {
         if !self.is_valid() {
             return None;
         }
-        beam_width(self.diameter, wavelength, 1.15)
+        beam_width(self.diameter_m, wavelength_m, 1.15)
     }
 }
 
@@ -163,7 +163,7 @@ impl ParabolicAperture {
 /// the half width. It is a small angle approximation, so the caller should
 /// confirm that the resulting width is small compared to a radian.
 ///
-/// Returns `None` when the diameter or wavelength is not positive, or when
+/// Returns `None` when the `diameter_m` or `wavelength_m` is not positive, or when
 /// `k` is not positive.
 ///
 /// 返回圆孔径的半功率波束宽度，单位为弧度。
@@ -177,17 +177,17 @@ impl ParabolicAperture {
 ///
 /// 直径或波长非正，或 `k` 非正时返回 `None`。
 #[must_use]
-pub fn beam_width(diameter: f64, wavelength: f64, k: f64) -> Option<f64> {
-    if !diameter.is_finite()
-        || diameter <= 0.0
-        || !wavelength.is_finite()
-        || wavelength <= 0.0
+pub fn beam_width(diameter_m: f64, wavelength_m: f64, k: f64) -> Option<f64> {
+    if !diameter_m.is_finite()
+        || diameter_m <= 0.0
+        || !wavelength_m.is_finite()
+        || wavelength_m <= 0.0
         || !k.is_finite()
         || k <= 0.0
     {
         return None;
     }
-    Some(k * wavelength / diameter)
+    Some(k * wavelength_m / diameter_m)
 }
 
 /// Returns the angle at which the squared angle law of

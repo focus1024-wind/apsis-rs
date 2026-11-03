@@ -92,13 +92,13 @@ pub struct Task {
     ///
     /// 该任务的标识符。
     pub id: TaskId,
-    /// The duration of the task, in seconds.
+    /// The `duration_s` of the task, in seconds.
     ///
     /// 任务时长，单位为秒。
-    pub duration: f64,
-    /// The earliest time at which the task may start, in seconds.
+    pub duration_s: f64,
+    /// The earliest time at which the task may `start_s`, in seconds.
     ///
-    /// This is the start of the earliest window in which the task may run.
+    /// This is the `start_s` of the earliest window in which the task may run.
     /// A task with no window has no restriction, which is what the
     /// constructors give.
     ///
@@ -106,15 +106,15 @@ pub struct Task {
     ///
     /// 即该任务可运行的最早窗口的起点。没有窗口的任务不受限制，构造函数
     /// 给出的正是这种情形。
-    pub earliest_start: f64,
-    /// The latest time at which the task may end, in seconds.
+    pub earliest_start_s: f64,
+    /// The latest time at which the task may `end_s`, in seconds.
     ///
     /// A task with no window has no restriction.
     ///
     /// 该任务可结束的最晚时刻，单位为秒。
     ///
     /// 没有窗口的任务不受限制。
-    pub latest_end: f64,
+    pub latest_end_s: f64,
     /// The resources the task requires, in the order they were added.
     ///
     /// 该任务要求的资源，按添加顺序排列。
@@ -144,21 +144,21 @@ pub struct Task {
 }
 
 impl Task {
-    /// Creates a task with the given duration and no requirements.
+    /// Creates a task with the given `duration_s` and no requirements.
     ///
-    /// The task may start at any finite time, because it has no window. It
+    /// The task may `start_s` at any finite time, because it has no window. It
     /// has a priority of zero and is not mandatory.
     ///
     /// 以给定时长、无资源需求创建任务。
     ///
     /// 该任务没有窗口，故可在任意有限时刻开始。其优先级为零，且非强制。
     #[must_use]
-    pub fn new(id: TaskId, duration: f64) -> Self {
+    pub fn new(id: TaskId, duration_s: f64) -> Self {
         Self {
             id,
-            duration,
-            earliest_start: f64::NEG_INFINITY,
-            latest_end: f64::INFINITY,
+            duration_s,
+            earliest_start_s: f64::NEG_INFINITY,
+            latest_end_s: f64::INFINITY,
             requirements: Vec::new(),
             priority: 0.0,
             mandatory: false,
@@ -168,17 +168,17 @@ impl Task {
     /// Returns a copy of this task with a time window.
     ///
     /// The window is the interval in which the whole task must fit, so the
-    /// task may start no earlier than the window start and must end no later
-    /// than the window end.
+    /// task may `start_s` no earlier than the window `start_s` and must `end_s` no later
+    /// than the window `end_s`.
     ///
     /// 返回带时间窗口的本任务副本。
     ///
     /// 该窗口是整个任务必须容纳其中的区间，故任务起点不早于窗口起点、终点
     /// 不晚于窗口终点。
     #[must_use]
-    pub fn with_window(mut self, start: f64, end: f64) -> Self {
-        self.earliest_start = start;
-        self.latest_end = end;
+    pub fn with_window(mut self, start_s: f64, end_s: f64) -> Self {
+        self.earliest_start_s = start_s;
+        self.latest_end_s = end_s;
         self
     }
 
@@ -283,7 +283,7 @@ impl Task {
     /// Returns the length of the window in which the task must fit, in
     /// seconds.
     ///
-    /// Returns infinity when the task has no restriction at either end, and
+    /// Returns infinity when the task has no restriction at either `end_s`, and
     /// zero or a negative value when the window cannot hold the task at all.
     ///
     /// 返回该任务必须容纳其中的窗口长度，单位为秒。
@@ -291,7 +291,7 @@ impl Task {
     /// 任务两端均无限制时返回无穷；窗口完全容不下该任务时返回零或负值。
     #[must_use]
     pub fn window_length(&self) -> f64 {
-        self.latest_end - self.earliest_start
+        self.latest_end_s - self.earliest_start_s
     }
 
     /// Returns `true` when the window cannot hold the task.
@@ -299,10 +299,10 @@ impl Task {
     /// 当窗口容不下该任务时返回 `true`。
     #[must_use]
     pub fn window_is_too_short(&self) -> bool {
-        self.duration > self.window_length()
+        self.duration_s > self.window_length()
     }
 
-    /// Returns the earliest time the task could end, given its window.
+    /// Returns the earliest time the task could `end_s`, given its window.
     ///
     /// Returns infinity when the task has no upper bound, and negative
     /// infinity when it has no lower bound.
@@ -312,7 +312,7 @@ impl Task {
     /// 任务无上界时返回无穷，无下界时返回负无穷。
     #[must_use]
     pub fn earliest_possible_end(&self) -> f64 {
-        self.earliest_start + self.duration
+        self.earliest_start_s + self.duration_s
     }
 
     /// Returns `true` when the task fits its window.
@@ -341,8 +341,8 @@ impl Task {
 
     /// Validates the task, returning the reason when it is not usable.
     ///
-    /// A task is usable when its duration is finite and positive, its window
-    /// is finite at the ends it states and holds the duration, every demand
+    /// A task is usable when its `duration_s` is finite and positive, its window
+    /// is finite at the ends it states and holds the `duration_s`, every demand
     /// is positive and finite and names a distinct resource, and the weights
     /// are finite.
     ///
@@ -351,31 +351,31 @@ impl Task {
     /// 任务可用当且仅当：时长有限且为正；窗口在其给出的两端有限并容得下该
     /// 时长；每条需求为正且有限并指向互不相同的资源；各权值有限。
     pub fn validate(&self) -> Result<(), TaskError> {
-        if !self.duration.is_finite() || self.duration <= 0.0 {
+        if !self.duration_s.is_finite() || self.duration_s <= 0.0 {
             return Err(TaskError::new(TaskErrorKind::InvalidDuration)
-                .with_detail(format!("duration {}", self.duration)));
+                .with_detail(format!("duration_s {}", self.duration_s)));
         }
-        if self.earliest_start.is_nan() || self.latest_end.is_nan() {
+        if self.earliest_start_s.is_nan() || self.latest_end_s.is_nan() {
             return Err(
                 TaskError::new(TaskErrorKind::InvalidWindow).with_detail(format!(
                     "window [{}, {}]",
-                    self.earliest_start, self.latest_end
+                    self.earliest_start_s, self.latest_end_s
                 )),
             );
         }
-        if self.latest_end < self.earliest_start {
+        if self.latest_end_s < self.earliest_start_s {
             return Err(
                 TaskError::new(TaskErrorKind::InvalidWindow).with_detail(format!(
                     "window [{}, {}] runs backwards",
-                    self.earliest_start, self.latest_end
+                    self.earliest_start_s, self.latest_end_s
                 )),
             );
         }
         if self.window_is_too_short() {
             return Err(
                 TaskError::new(TaskErrorKind::WindowTooShort).with_detail(format!(
-                    "duration {} does not fit the window [{}, {}]",
-                    self.duration, self.earliest_start, self.latest_end
+                    "duration_s {} does not fit the window [{}, {}]",
+                    self.duration_s, self.earliest_start_s, self.latest_end_s
                 )),
             );
         }
@@ -408,7 +408,7 @@ impl Task {
     }
 
     /// Returns the value of the task, which is its priority weighted by its
-    /// duration.
+    /// `duration_s`.
     ///
     /// This is the quantity a scheduler maximises when it is asked to make
     /// the most of the available time: a long task of high priority is worth
@@ -420,7 +420,7 @@ impl Task {
     /// 时长较长的任务价值更高。
     #[must_use]
     pub fn weighted_value(&self) -> f64 {
-        self.priority * self.duration
+        self.priority * self.duration_s
     }
 }
 
@@ -430,7 +430,7 @@ impl core::fmt::Display for Task {
             f,
             "{} of {} s requiring {} resource(s)",
             self.id,
-            self.duration,
+            self.duration_s,
             self.requirements.len()
         )
     }
@@ -457,10 +457,10 @@ pub enum TaskState {
     ///
     /// 该任务已在某时刻放置。
     Scheduled {
-        /// The start time of the placement, in seconds.
+        /// The `start_s` time of the placement, in seconds.
         ///
         /// 放置的起始时刻，单位为秒。
-        start: f64,
+        start_s: f64,
     },
     /// The task was deliberately left out.
     ///
@@ -503,23 +503,23 @@ impl TaskState {
         matches!(self, Self::Scheduled { .. })
     }
 
-    /// Returns the start time of the placement, if there is one.
+    /// Returns the `start_s` time of the placement, if there is one.
     ///
     /// 返回放置的起始时刻，若有。
     #[must_use]
-    pub const fn start(&self) -> Option<f64> {
+    pub const fn start_s(&self) -> Option<f64> {
         match self {
-            Self::Scheduled { start } => Some(*start),
+            Self::Scheduled { start_s } => Some(*start_s),
             _ => None,
         }
     }
 
-    /// Returns the end time of the placement, if there is one.
+    /// Returns the `end_s` time of the placement, if there is one.
     ///
     /// 返回放置的结束时刻，若有。
     #[must_use]
-    pub fn end(&self, duration: f64) -> Option<f64> {
-        self.start().map(|start| start + duration)
+    pub fn end_s(&self, duration_s: f64) -> Option<f64> {
+        self.start_s().map(|start_s| start_s + duration_s)
     }
 
     /// Returns a short name for the state.
@@ -638,17 +638,17 @@ impl TaskSet {
         self.tasks.is_empty()
     }
 
-    /// Returns the total duration of every task, in seconds.
+    /// Returns the total `duration_s` of every task, in seconds.
     ///
     /// This is the load the tasks would place on the schedule if each used
-    /// one unit of resource for its whole duration.
+    /// one unit of resource for its whole `duration_s`.
     ///
     /// 返回所有任务的总时长，单位为秒。
     ///
     /// 这是各任务在整个时长内各占一个单位资源时，会施加到计划上的负载。
     #[must_use]
     pub fn total_duration(&self) -> f64 {
-        self.tasks.iter().map(|task| task.duration).sum()
+        self.tasks.iter().map(|task| task.duration_s).sum()
     }
 
     /// Returns the total weighted value of every task.
@@ -713,8 +713,8 @@ pub fn task_order(tasks: &[Task]) -> Vec<TaskId> {
             .unwrap_or(core::cmp::Ordering::Equal)
             .then_with(|| {
                 first
-                    .latest_end
-                    .partial_cmp(&second.latest_end)
+                    .latest_end_s
+                    .partial_cmp(&second.latest_end_s)
                     .unwrap_or(core::cmp::Ordering::Equal)
             })
             .then_with(|| first.id.cmp(&second.id))

@@ -376,9 +376,9 @@ impl Scenario {
         ScenarioSummary {
             resources: self.resources.len(),
             tasks: self.tasks.len(),
-            total_task_duration: self.tasks.iter().map(|task| task.duration).sum(),
+            total_task_duration_s: self.tasks.iter().map(|task| task.duration_s).sum(),
             precedence_edges: self.precedence.edge_count(),
-            total_availability: self
+            total_availability_s: self
                 .resources
                 .iter()
                 .map(crate::apsis_resource::Resource::total_availability)
@@ -421,8 +421,8 @@ impl Scenario {
                     text,
                     "window {} {} {}",
                     resource.id.index(),
-                    window.start(),
-                    window.end()
+                    window.start_s(),
+                    window.end_s()
                 );
             }
         }
@@ -432,21 +432,21 @@ impl Scenario {
                 text,
                 "\ntask {} duration {}",
                 task.id.index(),
-                task.duration
+                task.duration_s
             );
             // A task with no window leaves both ends infinite, which the
             // text form omits rather than writing an infinity.
             // 没有窗口的任务使两端均为无限，文本形式省略它而不写出无限。
-            if task.earliest_start.is_finite() || task.latest_end.is_finite() {
-                let start = if task.earliest_start.is_finite() {
-                    task.earliest_start
+            if task.earliest_start_s.is_finite() || task.latest_end_s.is_finite() {
+                let start = if task.earliest_start_s.is_finite() {
+                    task.earliest_start_s
                 } else {
                     0.0
                 };
-                let end = if task.latest_end.is_finite() {
-                    task.latest_end
+                let end = if task.latest_end_s.is_finite() {
+                    task.latest_end_s
                 } else {
-                    start + task.duration
+                    start + task.duration_s
                 };
                 let _ = writeln!(text, "task_window {} {start} {end}", task.id.index());
             }
@@ -510,7 +510,7 @@ pub struct ScenarioSummary {
     /// The sum of the task durations, in seconds.
     ///
     /// 各任务时长之和，单位为秒。
-    pub total_task_duration: f64,
+    pub total_task_duration_s: f64,
     /// The number of precedence constraints.
     ///
     /// 先后约束的数量。
@@ -518,5 +518,5 @@ pub struct ScenarioSummary {
     /// The sum of the resource availability, in seconds.
     ///
     /// 各资源可用时长之和，单位为秒。
-    pub total_availability: f64,
+    pub total_availability_s: f64,
 }

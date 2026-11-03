@@ -16,9 +16,9 @@
 use crate::apsis_geodesy::ellipsoid::Ellipsoid;
 use crate::apsis_math::Vec3;
 
-/// A geodetic position: latitude, longitude, and height above an ellipsoid.
+/// A geodetic position: `latitude_rad`, `longitude_rad`, and `height_m` above an ellipsoid.
 ///
-/// Latitude and longitude are in radians and height is in meters. Latitude
+/// Latitude and `longitude_rad` are in radians and `height_m` is in meters. Latitude
 /// is geodetic, measured between the ellipsoid normal and the equatorial
 /// plane, and lies in `[-pi/2, pi/2]`. Longitude is measured east from the
 /// prime meridian. Height is the distance along the ellipsoid normal, taken
@@ -31,30 +31,30 @@ use crate::apsis_math::Vec3;
 /// 之外取正。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Geodetic {
-    /// Geodetic latitude, in radians.
+    /// Geodetic `latitude_rad`, in radians.
     ///
     /// 大地纬度，单位为弧度。
-    pub latitude: f64,
+    pub latitude_rad: f64,
     /// Longitude, in radians, positive east.
     ///
     /// 经度，单位为弧度，向东为正。
-    pub longitude: f64,
+    pub longitude_rad: f64,
     /// Height above the ellipsoid, in meters.
     ///
     /// 椭球高，单位为米。
-    pub height: f64,
+    pub height_m: f64,
 }
 
 impl Geodetic {
-    /// Creates a geodetic position from latitude, longitude, and height.
+    /// Creates a geodetic position from `latitude_rad`, `longitude_rad`, and `height_m`.
     ///
     /// 由纬度、经度与高创建大地位置。
     #[must_use]
-    pub const fn new(latitude: f64, longitude: f64, height: f64) -> Self {
+    pub const fn new(latitude_rad: f64, longitude_rad: f64, height_m: f64) -> Self {
         Self {
-            latitude,
-            longitude,
-            height,
+            latitude_rad,
+            longitude_rad,
+            height_m,
         }
     }
 
@@ -107,20 +107,20 @@ impl Geodetic {
         cartesian_from_geodetic(self, ellipsoid)
     }
 
-    /// Returns `true` when every field is finite and the latitude and
-    /// longitude are inside their ranges.
+    /// Returns `true` when every field is finite and the `latitude_rad` and
+    /// `longitude_rad` are inside their ranges.
     ///
     /// 当各字段都有限，且纬度与经度位于其范围内时返回 `true`。
     #[must_use]
     pub fn is_valid(self) -> bool {
         let half_pi = core::f64::consts::FRAC_PI_2;
-        self.latitude.is_finite()
-            && self.longitude.is_finite()
-            && self.height.is_finite()
-            && self.latitude >= -half_pi
-            && self.latitude <= half_pi
-            && self.longitude >= -core::f64::consts::PI
-            && self.longitude <= core::f64::consts::PI
+        self.latitude_rad.is_finite()
+            && self.longitude_rad.is_finite()
+            && self.height_m.is_finite()
+            && self.latitude_rad >= -half_pi
+            && self.latitude_rad <= half_pi
+            && self.longitude_rad >= -core::f64::consts::PI
+            && self.longitude_rad <= core::f64::consts::PI
     }
 }
 
@@ -135,32 +135,32 @@ impl Geodetic {
 #[must_use]
 pub fn cartesian_from_geodetic(geodetic: Geodetic, ellipsoid: Ellipsoid) -> Vec3 {
     let Geodetic {
-        latitude,
-        longitude,
-        height,
+        latitude_rad,
+        longitude_rad,
+        height_m,
     } = geodetic;
-    let (sin_latitude, cos_latitude) = latitude.sin_cos();
-    let (sin_longitude, cos_longitude) = longitude.sin_cos();
-    let prime_vertical = ellipsoid.prime_vertical_radius(latitude);
+    let (sin_latitude, cos_latitude) = latitude_rad.sin_cos();
+    let (sin_longitude, cos_longitude) = longitude_rad.sin_cos();
+    let prime_vertical = ellipsoid.prime_vertical_radius_m(latitude_rad);
     let eccentricity_squared = ellipsoid.eccentricity_squared();
 
-    let horizontal = prime_vertical + height;
+    let horizontal = prime_vertical + height_m;
     let x = horizontal * cos_latitude * cos_longitude;
     let y = horizontal * cos_latitude * sin_longitude;
-    let z = (prime_vertical * (1.0 - eccentricity_squared) + height) * sin_latitude;
+    let z = (prime_vertical * (1.0 - eccentricity_squared) + height_m) * sin_latitude;
     Vec3::new(x, y, z)
 }
 
 /// Converts Earth-fixed Cartesian coordinates to a geodetic position.
 ///
-/// The latitude and height are recovered by Bowring's method, which solves
+/// The `latitude_rad` and `height_m` are recovered by Bowring's method, which solves
 /// the meridian equation in closed form and then refines the result with a
 /// few fixed point steps. The iteration converges to well below a
 /// micrometer for positions from below the ellipsoid out to geostationary
 /// radius.
 ///
 /// Returns `None` when the position is not finite, or when it lies on the
-/// polar axis so that no longitude is defined.
+/// polar axis so that no `longitude_rad` is defined.
 ///
 /// 把地固笛卡尔坐标转换为大地位置。
 ///
@@ -177,24 +177,24 @@ pub fn geodetic_from_cartesian(cartesian: Vec3, ellipsoid: Ellipsoid) -> Option<
 
     let squared = ellipsoid.eccentricity_squared();
     let second_squared = ellipsoid.second_eccentricity_squared();
-    let semi_major = ellipsoid.semi_major_axis();
-    let semi_minor = ellipsoid.semi_minor_axis();
+    let semi_major = ellipsoid.semi_major_axis_m();
+    let semi_minor = ellipsoid.semi_minor_axis_m();
 
     let horizontal_squared = x * x + y * y;
     if horizontal_squared == 0.0 {
-        // On the polar axis the longitude is undefined.
+        // On the polar axis the longitude_rad is undefined.
         // 在极轴上经度未定义。
         return None;
     }
     let horizontal = horizontal_squared.sqrt();
-    let longitude = y.atan2(x);
+    let longitude_rad = y.atan2(x);
 
-    // Bowring's initial latitude estimate, obtained by treating the point
+    // Bowring's initial latitude_rad estimate, obtained by treating the point
     // as if it lay on a locally spherical surface.
     // Bowring 的纬度初值估计，做法是把该点视为位于局部球面上。
     let theta = (z * semi_major).atan2(horizontal * semi_minor);
     let (sin_theta, cos_theta) = theta.sin_cos();
-    let mut latitude = (z + second_squared * semi_minor * sin_theta * sin_theta * sin_theta)
+    let mut latitude_rad = (z + second_squared * semi_minor * sin_theta * sin_theta * sin_theta)
         .atan2(horizontal - squared * semi_major * cos_theta * cos_theta * cos_theta);
 
     // Refine with fixed point steps on the ellipsoid equation. Three steps
@@ -203,23 +203,24 @@ pub fn geodetic_from_cartesian(cartesian: Vec3, ellipsoid: Ellipsoid) -> Option<
     // 用椭球方程的不动点迭代精化。三步即可把误差降到浮点噪声水平，适用于
     // 任何地面高度。
     for _ in 0..3 {
-        let (sin_latitude, _) = latitude.sin_cos();
-        latitude = (z + squared * ellipsoid.prime_vertical_radius(latitude) * sin_latitude)
-            .atan2(horizontal);
+        let (sin_latitude, _) = latitude_rad.sin_cos();
+        latitude_rad =
+            (z + squared * ellipsoid.prime_vertical_radius_m(latitude_rad) * sin_latitude)
+                .atan2(horizontal);
     }
 
-    let (sin_latitude, cos_latitude) = latitude.sin_cos();
-    // Guard against a latitude that has converged exactly to a pole, where
+    let (sin_latitude, cos_latitude) = latitude_rad.sin_cos();
+    // Guard against a latitude_rad that has converged exactly to a pole, where
     // the division below would be singular.
     // 防止纬度恰好收敛到极点，否则下文的除法为奇异。
     if cos_latitude == 0.0 {
         return None;
     }
-    let height = if cos_latitude.abs() > 0.5 {
-        horizontal / cos_latitude - ellipsoid.prime_vertical_radius(latitude)
+    let height_m = if cos_latitude.abs() > 0.5 {
+        horizontal / cos_latitude - ellipsoid.prime_vertical_radius_m(latitude_rad)
     } else {
-        z / sin_latitude - ellipsoid.prime_vertical_radius(latitude) * (1.0 - squared)
+        z / sin_latitude - ellipsoid.prime_vertical_radius_m(latitude_rad) * (1.0 - squared)
     };
 
-    Some(Geodetic::new(latitude, longitude, height))
+    Some(Geodetic::new(latitude_rad, longitude_rad, height_m))
 }

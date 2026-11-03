@@ -51,7 +51,7 @@ pub struct DipoleField {
     ///
     /// 磁场大小，单位为纳特斯拉。
     pub magnitude_nt: f64,
-    /// Magnetic latitude in radians, positive north.
+    /// Magnetic `latitude_rad` in radians, positive north.
     ///
     /// 磁纬度，单位为弧度，向北为正。
     pub magnetic_latitude_rad: f64,
@@ -104,8 +104,8 @@ pub fn dipole_field(position_km: Vec3) -> Result<DipoleField> {
     let radial = -2.0 * EQUATORIAL_FIELD_NT * ratio * sin_latitude;
     let latitudinal = EQUATORIAL_FIELD_NT * ratio * cos_latitude;
     let radial_unit = position_km * (1.0 / radius);
-    let longitude = y.atan2(x);
-    let (sin_longitude, cos_longitude) = longitude.sin_cos();
+    let longitude_rad = y.atan2(x);
+    let (sin_longitude, cos_longitude) = longitude_rad.sin_cos();
     let latitude_unit = Vec3::new(
         -sin_latitude * cos_longitude,
         -sin_latitude * sin_longitude,
@@ -129,8 +129,8 @@ pub fn dipole_field(position_km: Vec3) -> Result<DipoleField> {
 /// Returns the unit vector from the Earth toward the Sun at a TT date.
 ///
 /// The position uses the low precision solar coordinates of Meeus,
-/// *Astronomical Algorithms*, chapter 25: the mean longitude and anomaly
-/// give the ecliptic longitude, which the obliquity rotates into the
+/// *Astronomical Algorithms*, chapter 25: the mean `longitude_rad` and anomaly
+/// give the ecliptic `longitude_rad`, which the obliquity rotates into the
 /// equatorial frame. The accuracy is a fraction of a degree, enough for
 /// eclipse geometry but not for pointing.
 ///

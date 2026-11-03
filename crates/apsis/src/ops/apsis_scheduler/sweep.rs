@@ -89,13 +89,13 @@ pub fn earliest_feasible_start(
         // 无需求的任务可在其窗口开启时即开始。既无需求又无窗口的任务没有有限
         // 的开启时刻，故使用计划原点：返回任务上存的负无穷会使
         // `Schedule::place` 拒绝它。
-        return Some(if task.earliest_start.is_finite() {
-            task.earliest_start
+        return Some(if task.earliest_start_s.is_finite() {
+            task.earliest_start_s
         } else {
             0.0
         });
     }
-    let latest_start = task.latest_end - task.duration;
+    let latest_start = task.latest_end_s - task.duration_s;
 
     // The demand of every task, looked up by identifier once. The sweep
     // visits every placement of every required resource, and reading the
@@ -139,22 +139,22 @@ fn enumerate_earliest_start(
     latest_start: f64,
     index: &DemandIndex,
 ) -> Option<f64> {
-    let mut candidates: Vec<f64> = vec![task.earliest_start];
+    let mut candidates: Vec<f64> = vec![task.earliest_start_s];
     for requirement in &task.requirements {
         let resource = resources.get(requirement.resource)?;
         for window in resource.windows() {
-            candidates.push(window.start());
+            candidates.push(window.start_s());
         }
         for placement in schedule.placements() {
             let overlaps = demand_on(index, placement.task, resource.id).is_some();
             if overlaps {
-                candidates.push(placement.end());
+                candidates.push(placement.end_s());
             }
         }
     }
 
     candidates
-        .retain(|time| time.is_finite() && *time >= task.earliest_start && *time <= latest_start);
+        .retain(|time| time.is_finite() && *time >= task.earliest_start_s && *time <= latest_start);
     candidates.sort_by(|first, second| {
         first
             .partial_cmp(second)
@@ -188,7 +188,7 @@ fn swept_earliest_start(
     for requirement in &task.requirements {
         let resource = resources.get(requirement.resource)?;
         let fitting = starts_fitting_on(
-            task.duration,
+            task.duration_s,
             requirement.demand,
             requirement.resource,
             schedule,
@@ -201,7 +201,7 @@ fn swept_earliest_start(
         }
     }
     let &(low, high) = allowed.first()?;
-    let start = low.max(task.earliest_start);
+    let start = low.max(task.earliest_start_s);
     let end = high.min(latest_start);
     (start <= end).then_some(start)
 }
@@ -229,7 +229,7 @@ fn starts_fitting_on(
     let blocked = blocked_intervals(demand, resource_id, schedule, resource, demands);
     let mut result = Vec::new();
     for window in resource.windows() {
-        for (from, to) in subtract(&blocked, window.start(), window.end()) {
+        for (from, to) in subtract(&blocked, window.start_s(), window.end_s()) {
             // The placement has to fit inside, so the last start is the end
             // of the free interval less the duration.
             // 放置须容纳于其中，故最晚起点为该空闲区间的终点减去时长。
@@ -270,8 +270,8 @@ fn blocked_intervals(
         let Some(placed) = demand_on(demands, placement.task, resource_id) else {
             continue;
         };
-        events.push((placement.start, placed));
-        events.push((placement.end(), -placed));
+        events.push((placement.start_s, placed));
+        events.push((placement.end_s(), -placed));
     }
     if events.is_empty() {
         return Vec::new();

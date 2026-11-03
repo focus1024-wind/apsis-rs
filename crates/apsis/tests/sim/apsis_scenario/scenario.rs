@@ -201,9 +201,9 @@ fn the_summary_counts_what_the_scenario_holds() {
     let summary = scenario.summary();
     assert_eq!(summary.resources, 1);
     assert_eq!(summary.tasks, 2);
-    assert_eq!(summary.total_task_duration, 150.0);
+    assert_eq!(summary.total_task_duration_s, 150.0);
     assert_eq!(summary.precedence_edges, 1);
-    assert_eq!(summary.total_availability, 1_200.0);
+    assert_eq!(summary.total_availability_s, 1_200.0);
 }
 
 #[test]
@@ -242,9 +242,9 @@ require 1 0 1
     assert_eq!(scenario.resources()[1].capacity(), 2.0);
     assert_eq!(scenario.tasks().len(), 2);
     let first = &scenario.tasks()[0];
-    assert_eq!(first.duration, 60.0);
-    assert_eq!(first.earliest_start, 100.0);
-    assert_eq!(first.latest_end, 1_000.0);
+    assert_eq!(first.duration_s, 60.0);
+    assert_eq!(first.earliest_start_s, 100.0);
+    assert_eq!(first.latest_end_s, 1_000.0);
     assert_eq!(first.priority, 5.0);
     assert!(first.mandatory);
     assert_eq!(first.requirement_count(), 2);

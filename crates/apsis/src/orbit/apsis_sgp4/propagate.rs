@@ -141,7 +141,7 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
     let eccentricity = eccentricity.max(MINIMUM_ECCENTRICITY);
 
     anomaly += satellite.no_unkozai * templ;
-    let mut longitude = anomaly + argument + node;
+    let mut longitude_rad = anomaly + argument + node;
 
     // Reduce the angles to a single turn. The reference implementation uses
     // a remainder that keeps the sign of the dividend for the right
@@ -155,8 +155,8 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
         -((-node) % TWO_PI)
     };
     argument %= TWO_PI;
-    longitude %= TWO_PI;
-    anomaly = (longitude - argument - node) % TWO_PI;
+    longitude_rad %= TWO_PI;
+    anomaly = (longitude_rad - argument - node) % TWO_PI;
 
     let mut perturbed_eccentricity = eccentricity;
     let mut perturbed_inclination = inclination;
@@ -308,9 +308,9 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
     let vz = sini * cossu;
 
     let radius = mrt * satellite.model.radius;
-    let position = Vec3::new(radius * ux, radius * uy, radius * uz);
+    let position_km = Vec3::new(radius * ux, radius * uy, radius * uz);
     let velocity_scale = satellite.model.radius * satellite.xke() / 60.0;
-    let velocity = Vec3::new(
+    let velocity_km_s = Vec3::new(
         (mvt * ux + rvdot * vx) * velocity_scale,
         (mvt * uy + rvdot * vy) * velocity_scale,
         (mvt * uz + rvdot * vz) * velocity_scale,
@@ -322,8 +322,8 @@ pub(crate) fn propagate(satellite: &Satellite, minutes: f64) -> Result<State, Pr
     }
 
     Ok(State {
-        position,
-        velocity,
+        position_km,
+        velocity_km_s,
         semi_major_axis: semi_major * satellite.model.radius,
     })
 }

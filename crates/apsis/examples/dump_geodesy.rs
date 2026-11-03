@@ -30,14 +30,18 @@ fn main() {
     let longitudes = [-179.0_f64, -90.0, -45.0, 0.0, 45.0, 90.0, 179.0];
     let heights = [-1_000.0_f64, 0.0, 100.0, 3_000.0, 35_786_000.0];
 
-    for latitude in latitudes {
-        for longitude in longitudes {
+    for latitude_rad in latitudes {
+        for longitude_rad in longitudes {
             for height in heights {
-                let point = Geodetic::new(latitude.to_radians(), longitude.to_radians(), height)
-                    .to_ecef_on(WGS84)
-                    .vector();
+                let point = Geodetic::new(
+                    latitude_rad.to_radians(),
+                    longitude_rad.to_radians(),
+                    height,
+                )
+                .to_ecef_on(WGS84)
+                .vector_m();
                 println!(
-                    "{latitude},{longitude},{height},{:.9},{:.9},{:.9}",
+                    "{latitude_rad},{longitude_rad},{height},{:.9},{:.9},{:.9}",
                     point.x, point.y, point.z
                 );
             }

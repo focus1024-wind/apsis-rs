@@ -1,6 +1,6 @@
 //! Reference ellipsoids and geodetic computations.
 //!
-//! A geodetic position is written as latitude, longitude, and height above
+//! A geodetic position is written as `latitude_rad`, `longitude_rad`, and height above
 //! an ellipsoid. Latitude here is always geodetic, the angle between the
 //! ellipsoid normal and the equatorial plane, not geocentric. The two
 //! differ by up to about 0.19 degrees at mid latitudes, so the distinction
@@ -21,7 +21,7 @@
 //! // The equator has zero height and a radius equal to the semi-major axis.
 //! let point = Geodetic::new(0.0, 0.0, 0.0);
 //! let cartesian = point.to_cartesian(WGS84);
-//! assert!((cartesian.norm() - WGS84.semi_major_axis()).abs() < 1e-9);
+//! assert!((cartesian.norm() - WGS84.semi_major_axis_m()).abs() < 1e-9);
 //! ```
 //!
 //! 参考椭球与大地计算。

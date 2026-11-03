@@ -233,17 +233,17 @@ fn the_geodetic_helper_agrees_with_the_sensor_path() {
 fn the_sub_satellite_point_is_at_zero_height() {
     let satellite = Vec3::new(BODY_RADIUS + 550.0, 0.0, 0.0);
     let point = sub_satellite_point(satellite, WGS84).expect("valid");
-    assert_eq!(point.position.height, 0.0);
-    assert!(point.position.latitude.abs() < 1e-9);
-    assert!(point.position.longitude.abs() < 1e-9);
+    assert_eq!(point.position.height_m, 0.0);
+    assert!(point.position.latitude_rad.abs() < 1e-9);
+    assert!(point.position.longitude_rad.abs() < 1e-9);
 }
 
 #[test]
 fn the_sub_satellite_point_keeps_the_longitude() {
     let satellite = Vec3::new(0.0, 4_000.0, 4_500.0);
     let point = sub_satellite_point(satellite, WGS84).expect("valid");
-    assert!((point.position.longitude - FRAC_PI_2).abs() < 1e-9);
-    assert!(point.position.latitude > 0.0);
+    assert!((point.position.longitude_rad - FRAC_PI_2).abs() < 1e-9);
+    assert!(point.position.latitude_rad > 0.0);
 }
 
 #[test]

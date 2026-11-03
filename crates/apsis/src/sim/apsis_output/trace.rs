@@ -101,8 +101,8 @@ impl Trace {
     pub fn in_time_order(&self) -> Vec<Record> {
         let mut ordered = self.records.clone();
         ordered.sort_by(|left, right| {
-            left.time
-                .partial_cmp(&right.time)
+            left.time_s
+                .partial_cmp(&right.time_s)
                 .unwrap_or(core::cmp::Ordering::Equal)
         });
         ordered
@@ -157,7 +157,7 @@ impl Trace {
             .iter()
             .rev()
             .find(|record| record.label == label)
-            .map(|record| record.time)
+            .map(|record| record.time_s)
     }
 
     /// Returns the labels present, in sorted order.

@@ -54,16 +54,16 @@ impl LinkGeometry {
     ///
     /// 它是两点连线在最接近处越过地表的量度。负值表示该链路被遮挡。
     #[must_use]
-    pub fn surface_clearance(&self, body_radius: f64) -> f64 {
-        self.centre_distance_km - body_radius
+    pub fn surface_clearance(&self, body_radius_km: f64) -> f64 {
+        self.centre_distance_km - body_radius_km
     }
 
     /// Returns `true` when the link clears the body.
     ///
     /// 当该链路越过天体时返回 `true`。
     #[must_use]
-    pub fn is_clear(&self, body_radius: f64) -> bool {
-        self.centre_distance_km >= body_radius
+    pub fn is_clear(&self, body_radius_km: f64) -> bool {
+        self.centre_distance_km >= body_radius_km
     }
 }
 

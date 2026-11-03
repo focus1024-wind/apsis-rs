@@ -45,7 +45,7 @@
 //! // The two burns that raise a circular orbit from 7000 to 8000 km.
 //! let transfer = hohmann_transfer(7_000.0, 8_000.0, GravityParameter::WGS84)
 //!     .expect("the radii are usable");
-//! assert!(transfer.first_burn > 0.0);
+//! assert!(transfer.first_burn_km_s > 0.0);
 //! assert!(transfer.total_delta_v() > 0.0);
 //! ```
 //!

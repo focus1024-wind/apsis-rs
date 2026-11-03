@@ -1,8 +1,8 @@
 //! Rain attenuation.
 //!
 //! The specific attenuation of rain is modelled as a power law in the rain
-//! rate, `gamma = k R^alpha`, where `k` and `alpha` depend on the frequency,
-//! on the polarisation, and on the elevation. The coefficients are given by
+//! rate, `gamma = k R^alpha`, where `k` and `alpha` depend on the `frequency_hz`,
+//! on the `polarisation_rad`, and on the `elevation_rad`. The coefficients are given by
 //! ITU-R Recommendation P.838 as closed form curve fits rather than as a
 //! table, which is what the current revision of that recommendation uses.
 //!
@@ -53,11 +53,11 @@ use crate::apsis_rf::Decibel;
 /// 该值考虑了射线在低层大气中的折射，折射使地球显得比实际更大。
 const EFFECTIVE_EARTH_RADIUS_KM: f64 = 8_500.0;
 
-/// A mid latitude rain height, in kilometers above sea level.
+/// A mid `latitude_rad` rain height, in kilometers above sea level.
 ///
 /// Recommendation P.618 takes the rain height from the zero degree isotherm
 /// height of Recommendation P.839, which is tabulated as a function of
-/// latitude and longitude. Prefer [`rain_attenuation_at`], which looks the
+/// `latitude_rad` and `longitude_rad`. Prefer [`rain_attenuation_at`], which looks the
 /// value up, over [`rain_attenuation`] with this constant.
 ///
 /// 中纬度雨顶高度，以海拔千米计。
@@ -76,17 +76,17 @@ struct CurveTerm {
     ///
     /// 幅度系数。
     amplitude: f64,
-    /// The centre of the term, on a base ten logarithmic frequency axis.
+    /// The centre of the term, on a base ten logarithmic `frequency_hz` axis.
     ///
     /// 该项的中心，在十进对数频率轴上。
     centre: f64,
-    /// The width of the term, on a base ten logarithmic frequency axis.
+    /// The width of the term, on a base ten logarithmic `frequency_hz` axis.
     ///
     /// 该项的宽度，在十进对数频率轴上。
     width: f64,
 }
 
-/// The coefficients of the `k` curve fit for horizontal polarisation.
+/// The coefficients of the `k` curve fit for horizontal `polarisation_rad`.
 ///
 /// 水平极化 `k` 曲线拟合的系数。
 const K_HORIZONTAL_TERMS: &[CurveTerm] = &[
@@ -112,7 +112,7 @@ const K_HORIZONTAL_TERMS: &[CurveTerm] = &[
     },
 ];
 
-/// The coefficients of the `k` curve fit for vertical polarisation.
+/// The coefficients of the `k` curve fit for vertical `polarisation_rad`.
 ///
 /// 垂直极化 `k` 曲线拟合的系数。
 const K_VERTICAL_TERMS: &[CurveTerm] = &[
@@ -138,7 +138,7 @@ const K_VERTICAL_TERMS: &[CurveTerm] = &[
     },
 ];
 
-/// The coefficients of the `alpha` curve fit for horizontal polarisation.
+/// The coefficients of the `alpha` curve fit for horizontal `polarisation_rad`.
 ///
 /// 水平极化 `alpha` 曲线拟合的系数。
 const ALPHA_HORIZONTAL_TERMS: &[CurveTerm] = &[
@@ -169,7 +169,7 @@ const ALPHA_HORIZONTAL_TERMS: &[CurveTerm] = &[
     },
 ];
 
-/// The coefficients of the `alpha` curve fit for vertical polarisation.
+/// The coefficients of the `alpha` curve fit for vertical `polarisation_rad`.
 ///
 /// 垂直极化 `alpha` 曲线拟合的系数。
 const ALPHA_VERTICAL_TERMS: &[CurveTerm] = &[
@@ -233,7 +233,7 @@ const ALPHA_SLOPE_VERTICAL: f64 = -0.053_739;
 /// 垂直 `alpha` 曲线拟合的常数。
 const ALPHA_OFFSET_VERTICAL: f64 = 0.834_33;
 
-/// A rain attenuation result at a given elevation.
+/// A rain attenuation result at a given `elevation_rad`.
 ///
 /// 给定仰角下的降雨衰减结果。
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -294,8 +294,8 @@ impl RainAttenuation {
 
 /// Evaluates one P.838-3 curve term.
 ///
-/// The term is a Gaussian on a base ten logarithmic frequency axis, so the
-/// frequency must be in gigahertz and positive.
+/// The term is a Gaussian on a base ten logarithmic `frequency_hz` axis, so the
+/// `frequency_hz` must be in gigahertz and positive.
 ///
 /// 求一个 P.838-3 曲线项。
 ///
@@ -305,7 +305,7 @@ fn curve_term(term: CurveTerm, frequency_ghz: f64) -> f64 {
     term.amplitude * (-((logarithm - term.centre) / term.width).powi(2)).exp()
 }
 
-/// Returns the `k` for a polarisation, before the elevation correction.
+/// Returns the `k` for a `polarisation_rad`, before the `elevation_rad` correction.
 ///
 /// 返回某极化的 `k`，在仰角修正之前。
 fn base_k(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) -> f64 {
@@ -316,7 +316,7 @@ fn base_k(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) -> f
     10f64.powf(gaussian + slope * frequency_ghz.log10() + offset)
 }
 
-/// Returns the `alpha` for a polarisation, before the elevation correction.
+/// Returns the `alpha` for a `polarisation_rad`, before the `elevation_rad` correction.
 ///
 /// 返回某极化的 `alpha`，在仰角修正之前。
 fn base_alpha(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) -> f64 {
@@ -329,15 +329,15 @@ fn base_alpha(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) 
 
 /// Returns the P.838-3 coefficients of the specific attenuation power law.
 ///
-/// The polarisation is an angle in radians between the electric field and
+/// The `polarisation_rad` is an angle in radians between the electric field and
 /// the horizontal, so zero is horizontal and a right angle is vertical. The
-/// elevation is in radians, and the frequency is in hertz.
+/// `elevation_rad` is in radians, and the `frequency_hz` is in hertz.
 ///
 /// The result is a pair of the coefficient `k` and the exponent `alpha` of
 /// the relation `gamma = k R^alpha`, with the rain rate in millimeters per
 /// hour and the result in decibels per kilometer.
 ///
-/// Returns `None` when the frequency, polarisation, or elevation is not
+/// Returns `None` when the `frequency_hz`, `polarisation_rad`, or `elevation_rad` is not
 /// usable. The recommendation is stated for frequencies from 1 GHz to
 /// 1000 GHz.
 ///
@@ -356,12 +356,16 @@ fn base_alpha(terms: &[CurveTerm], slope: f64, offset: f64, frequency_ghz: f64) 
 ///
 /// 出处：ITU-R 建议书 P.838-3，式 2 与式 3。
 #[must_use]
-pub fn rain_coefficients(frequency: f64, polarisation: f64, elevation: f64) -> Option<(f64, f64)> {
-    let frequency_ghz = frequency / 1.0e9;
+pub fn rain_coefficients(
+    frequency_hz: f64,
+    polarisation_rad: f64,
+    elevation_rad: f64,
+) -> Option<(f64, f64)> {
+    let frequency_ghz = frequency_hz / 1.0e9;
     if !frequency_ghz.is_finite() || !(1.0..=1_000.0).contains(&frequency_ghz) {
         return None;
     }
-    if !polarisation.is_finite() || !elevation.is_finite() {
+    if !polarisation_rad.is_finite() || !elevation_rad.is_finite() {
         return None;
     }
 
@@ -390,13 +394,13 @@ pub fn rain_coefficients(frequency: f64, polarisation: f64, elevation: f64) -> O
         frequency_ghz,
     );
 
-    // The elevation and polarisation enter through the square of the cosine
-    // of the elevation angle and the cosine of twice the polarisation tilt.
-    // The elevation term vanishes at the zenith, where the distinction
-    // between horizontal and vertical polarisation disappears.
+    // The elevation_rad and polarisation_rad enter through the square of the cosine
+    // of the elevation_rad angle and the cosine of twice the polarisation_rad tilt.
+    // The elevation_rad term vanishes at the zenith, where the distinction
+    // between horizontal and vertical polarisation_rad disappears.
     // 仰角与极化通过仰角余弦的平方以及二倍极化倾角的余弦进入。仰角项在
     // 天顶处消失，那里水平与垂直极化之别不复存在。
-    let geometry_factor = elevation.cos().powi(2) * (2.0 * polarisation).cos();
+    let geometry_factor = elevation_rad.cos().powi(2) * (2.0 * polarisation_rad).cos();
     let k = 0.5 * (k_horizontal + k_vertical + (k_horizontal - k_vertical) * geometry_factor);
     let alpha = (k_horizontal * alpha_horizontal
         + k_vertical * alpha_vertical
@@ -419,37 +423,37 @@ pub fn rain_coefficients(frequency: f64, polarisation: f64, elevation: f64) -> O
 /// 降雨率为负，或系数不可用时返回 `None`。
 #[must_use]
 pub fn specific_rain_attenuation(
-    rain_rate: f64,
-    frequency: f64,
-    polarisation: f64,
-    elevation: f64,
+    rain_rate_mm_per_h: f64,
+    frequency_hz: f64,
+    polarisation_rad: f64,
+    elevation_rad: f64,
 ) -> Option<f64> {
-    if !rain_rate.is_finite() || rain_rate < 0.0 {
+    if !rain_rate_mm_per_h.is_finite() || rain_rate_mm_per_h < 0.0 {
         return None;
     }
-    let (k, alpha) = rain_coefficients(frequency, polarisation, elevation)?;
-    Some(k * rain_rate.powf(alpha))
+    let (k, alpha) = rain_coefficients(frequency_hz, polarisation_rad, elevation_rad)?;
+    Some(k * rain_rate_mm_per_h.powf(alpha))
 }
 
 /// Returns the total rain attenuation along a slant path.
 ///
 /// The rain rate is the value exceeded for the percentage of time of
-/// interest, in millimeters per hour. The frequency is in hertz, the
-/// polarisation and elevation are in radians, the latitude is in degrees,
+/// interest, in millimeters per hour. The `frequency_hz` is in hertz, the
+/// `polarisation_rad` and `elevation_rad` are in radians, the `latitude_rad` is in degrees,
 /// and the station height above sea level and the rain layer height are in
 /// kilometers; pass [`DEFAULT_RAIN_HEIGHT_KM`] for the latter when no local
 /// value is available.
 ///
 /// The method is the one of Recommendation P.618. The slant path length
-/// follows from the rain height, the station height, and the elevation, with
+/// follows from the rain height, the station height, and the `elevation_rad`, with
 /// a correction for the curvature of the Earth. Two reduction factors then
 /// account for the non-uniformity of the rain: a horizontal factor that
-/// depends on the specific attenuation, the frequency, and the horizontal
+/// depends on the specific attenuation, the `frequency_hz`, and the horizontal
 /// projection of the path, and a vertical factor that depends on the
-/// latitude through the angle at which the path crosses the rain layer.
+/// `latitude_rad` through the angle at which the path crosses the rain layer.
 ///
-/// Returns `None` when the rain rate, frequency, or elevation is not usable,
-/// or when the elevation is at or below the horizon. A station at or above
+/// Returns `None` when the rain rate, `frequency_hz`, or `elevation_rad` is not usable,
+/// or when the `elevation_rad` is at or below the horizon. A station at or above
 /// the rain layer has an empty rain path, so its attenuation is zero.
 ///
 /// Source: ITU-R Recommendation P.618-13, equations 1 through 10.
@@ -471,27 +475,32 @@ pub fn specific_rain_attenuation(
 /// 出处：ITU-R 建议书 P.618-13，式 1 至式 10。
 #[must_use]
 pub fn rain_attenuation(
-    rain_rate: f64,
-    frequency: f64,
-    polarisation: f64,
-    elevation: f64,
+    rain_rate_mm_per_h: f64,
+    frequency_hz: f64,
+    polarisation_rad: f64,
+    elevation_rad: f64,
     station_height_km: f64,
     rain_height_km: f64,
-    latitude: f64,
+    latitude_rad: f64,
 ) -> Option<RainAttenuation> {
-    if !rain_rate.is_finite() || rain_rate < 0.0 {
+    if !rain_rate_mm_per_h.is_finite() || rain_rate_mm_per_h < 0.0 {
         return None;
     }
-    if !elevation.is_finite() || elevation.sin() <= 0.0 {
+    if !elevation_rad.is_finite() || elevation_rad.sin() <= 0.0 {
         return None;
     }
     if !station_height_km.is_finite() || !rain_height_km.is_finite() {
         return None;
     }
-    if !latitude.is_finite() {
+    if !latitude_rad.is_finite() {
         return None;
     }
-    let specific = specific_rain_attenuation(rain_rate, frequency, polarisation, elevation)?;
+    let specific = specific_rain_attenuation(
+        rain_rate_mm_per_h,
+        frequency_hz,
+        polarisation_rad,
+        elevation_rad,
+    )?;
 
     // Equation 2: the slant path length, with the Earth curvature term.
     // 式 2：斜路径长度，含地球曲率项。
@@ -507,17 +516,17 @@ pub fn rain_attenuation(
             vertical_adjustment: 1.0,
         });
     }
-    let sine = elevation.sin();
+    let sine = elevation_rad.sin();
     let slant_length = 2.0 * height_difference
         / ((sine * sine + 2.0 * height_difference / EFFECTIVE_EARTH_RADIUS_KM).sqrt() + sine);
 
     // Equation 3: the horizontal projection of the slant path.
     // 式 3：斜路径的水平投影。
-    let horizontal_length = (slant_length * elevation.cos()).abs();
+    let horizontal_length = (slant_length * elevation_rad.cos()).abs();
 
     // Equation 6: the horizontal reduction factor.
     // 式 6：水平缩减因子。
-    let frequency_ghz = frequency / 1.0e9;
+    let frequency_ghz = frequency_hz / 1.0e9;
     let horizontal_reduction = 1.0
         / (1.0 + 0.78 * (horizontal_length * specific / frequency_ghz).sqrt()
             - 0.38 * (1.0 - (-2.0 * horizontal_length).exp()));
@@ -528,8 +537,8 @@ pub fn rain_attenuation(
 
     // Equation 8: the longer of the two path estimates.
     // 式 8：两个路径估计中较长者。
-    let path_length = if eta > elevation {
-        horizontal_length * horizontal_reduction / elevation.cos()
+    let path_length = if eta > elevation_rad {
+        horizontal_length * horizontal_reduction / elevation_rad.cos()
     } else {
         height_difference / sine
     };
@@ -537,18 +546,18 @@ pub fn rain_attenuation(
     // Equation 9: the vertical adjustment factor.
     // 式 9：垂直调整因子。
     //
-    // The exponential takes the elevation in degrees, not radians, because
+    // The exponential takes the elevation_rad in degrees, not radians, because
     // the coefficients of 31 and 0.45 were fitted with degrees. The sine
-    // takes the elevation in radians, as usual.
+    // takes the elevation_rad in radians, as usual.
     // 指数以度而非弧度接收仰角，因为 31 与 0.45 两个系数是以度拟合的。
     // 正弦照常以弧度接收仰角。
-    let latitude_magnitude = latitude.abs();
+    let latitude_magnitude = latitude_rad.abs();
     let xi = if latitude_magnitude < 36.0 {
         36.0 - latitude_magnitude
     } else {
         0.0
     };
-    let elevation_degrees = elevation.to_degrees();
+    let elevation_degrees = elevation_rad.to_degrees();
     let vertical_adjustment = 1.0
         / (1.0
             + sine.sqrt()
@@ -570,7 +579,7 @@ pub fn rain_attenuation(
     })
 }
 
-/// Returns the angle in radians for a polarisation described by a tilt from
+/// Returns the angle in radians for a `polarisation_rad` described by a tilt from
 /// horizontal.
 ///
 /// This is a convenience for the two cases that are quoted by name.
@@ -579,8 +588,8 @@ pub fn rain_attenuation(
 ///
 /// 这是为两种常被具名引用的情形提供的便利。
 #[must_use]
-pub const fn polarisation_tilt(degrees_from_horizontal: f64) -> f64 {
-    degrees_from_horizontal * core::f64::consts::PI / 180.0
+pub const fn polarisation_tilt(degrees_from_horizontal_deg: f64) -> f64 {
+    degrees_from_horizontal_deg * core::f64::consts::PI / 180.0
 }
 
 /// Returns the total rain attenuation along a slant path, taking the rain
@@ -588,7 +597,7 @@ pub const fn polarisation_tilt(degrees_from_horizontal: f64) -> f64 {
 ///
 /// This is the same calculation as [`rain_attenuation`], with the rain layer
 /// height looked up from the tabulated zero degree isotherm height at the
-/// given latitude and longitude rather than supplied by the caller. It is
+/// given `latitude_rad` and `longitude_rad` rather than supplied by the caller. It is
 /// the form to use unless a locally measured isotherm height is available.
 ///
 /// The station height must be given; pass zero for a station at sea level.
@@ -613,22 +622,22 @@ pub const fn polarisation_tilt(degrees_from_horizontal: f64) -> f64 {
 /// P.618-13。
 #[must_use]
 pub fn rain_attenuation_at(
-    rain_rate: f64,
-    frequency: f64,
-    polarisation: f64,
-    elevation: f64,
+    rain_rate_mm_per_h: f64,
+    frequency_hz: f64,
+    polarisation_rad: f64,
+    elevation_rad: f64,
     station_height_km: f64,
-    latitude: f64,
-    longitude: f64,
+    latitude_rad: f64,
+    longitude_rad: f64,
 ) -> Option<RainAttenuation> {
-    let rain_height_km = crate::apsis_atmosphere::p839::rain_height(latitude, longitude)?;
+    let rain_height_km = crate::apsis_atmosphere::p839::rain_height(latitude_rad, longitude_rad)?;
     rain_attenuation(
-        rain_rate,
-        frequency,
-        polarisation,
-        elevation,
+        rain_rate_mm_per_h,
+        frequency_hz,
+        polarisation_rad,
+        elevation_rad,
         station_height_km,
         rain_height_km,
-        latitude,
+        latitude_rad,
     )
 }

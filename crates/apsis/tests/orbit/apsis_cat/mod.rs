@@ -10,12 +10,12 @@ use apsis::apsis_math::Vec3;
 
 fn circular(radius: f64) -> KeplerianElements {
     KeplerianElements {
-        semi_major_axis: radius,
+        semi_major_axis_km: radius,
         eccentricity: 0.0,
-        inclination: 0.0,
-        right_ascension: 0.0,
-        argument_of_perigee: 0.0,
-        true_anomaly: 0.0,
+        inclination_rad: 0.0,
+        right_ascension_rad: 0.0,
+        argument_of_perigee_rad: 0.0,
+        true_anomaly_rad: 0.0,
     }
 }
 
@@ -24,7 +24,7 @@ fn a_linear_relative_motion_reaches_its_closest_at_the_expected_time() {
     let primary_state = circular(7_000.0)
         .to_state(GravityParameter::WGS84)
         .expect("state");
-    let primary = StateSample::new(0.0, primary_state.position, primary_state.velocity);
+    let primary = StateSample::new(0.0, primary_state.position_km, primary_state.velocity_km_s);
     let mut first = Vec::new();
     let mut second = Vec::new();
     for index in 0..=10 {
@@ -60,26 +60,26 @@ fn a_linear_relative_motion_reaches_its_closest_at_the_expected_time() {
 fn crossing_circular_orbits_meet_at_the_node() {
     let base = circular(7_000.0);
     let inclined = KeplerianElements {
-        inclination: core::f64::consts::FRAC_PI_2,
+        inclination_rad: core::f64::consts::FRAC_PI_2,
         ..base
     };
     let mut first = Vec::new();
     let mut second = Vec::new();
-    let period = base.period(GravityParameter::WGS84);
+    let period = base.period_s(GravityParameter::WGS84);
     let steps = 120;
     for index in 0..=steps {
         let seconds = period * f64::from(index) / f64::from(steps);
         let mean = core::f64::consts::TAU * f64::from(index) / f64::from(steps);
         let a = base
-            .with_mean_anomaly(mean)
+            .with_mean_anomaly_rad(mean)
             .to_state(GravityParameter::WGS84)
             .expect("state");
         let b = inclined
-            .with_mean_anomaly(mean)
+            .with_mean_anomaly_rad(mean)
             .to_state(GravityParameter::WGS84)
             .expect("state");
-        first.push(StateSample::new(seconds, a.position, a.velocity));
-        second.push(StateSample::new(seconds, b.position, b.velocity));
+        first.push(StateSample::new(seconds, a.position_km, a.velocity_km_s));
+        second.push(StateSample::new(seconds, b.position_km, b.velocity_km_s));
     }
     let result = closest_approach(&first, &second).expect("valid grid");
     // At the node both positions coincide.
@@ -98,7 +98,7 @@ fn separated_phases_on_one_circular_orbit_keep_a_constant_chord() {
     let separation = 10.0_f64.to_radians();
     let mut first = Vec::new();
     let mut second = Vec::new();
-    let period = base.period(GravityParameter::WGS84);
+    let period = base.period_s(GravityParameter::WGS84);
     let steps = 90;
     for index in 0..=steps {
         let seconds = period * f64::from(index) / f64::from(steps);
@@ -111,8 +111,8 @@ fn separated_phases_on_one_circular_orbit_keep_a_constant_chord() {
             .with_true_anomaly(mean + separation)
             .to_state(GravityParameter::WGS84)
             .expect("state");
-        first.push(StateSample::new(seconds, a.position, a.velocity));
-        second.push(StateSample::new(seconds, b.position, b.velocity));
+        first.push(StateSample::new(seconds, a.position_km, a.velocity_km_s));
+        second.push(StateSample::new(seconds, b.position_km, b.velocity_km_s));
     }
     let result = closest_approach(&first, &second).expect("valid grid");
     let expected = 2.0 * 7_000.0 * (separation / 2.0).sin();

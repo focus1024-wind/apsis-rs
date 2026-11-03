@@ -9,7 +9,7 @@ use core::f64::consts::PI;
 ///
 /// 一面三米天线，具有典型孔径效率。
 const DISH: ParabolicAperture = ParabolicAperture {
-    diameter: 3.0,
+    diameter_m: 3.0,
     efficiency: 0.65,
 };
 
@@ -41,11 +41,11 @@ fn peak_gain_matches_the_closed_form() {
 #[test]
 fn a_larger_dish_has_more_gain() {
     let small = ParabolicAperture {
-        diameter: 1.0,
+        diameter_m: 1.0,
         efficiency: 0.65,
     };
     let large = ParabolicAperture {
-        diameter: 2.0,
+        diameter_m: 2.0,
         efficiency: 0.65,
     };
     let wavelength = 0.025;
@@ -62,11 +62,11 @@ fn a_larger_dish_has_more_gain() {
 #[test]
 fn a_higher_aperture_efficiency_adds_gain() {
     let low = ParabolicAperture {
-        diameter: 3.0,
+        diameter_m: 3.0,
         efficiency: 0.5,
     };
     let high = ParabolicAperture {
-        diameter: 3.0,
+        diameter_m: 3.0,
         efficiency: 0.7,
     };
     let wavelength = 0.025;
@@ -113,7 +113,7 @@ fn beam_width_helper_validates_its_arguments() {
 #[test]
 fn an_invalid_aperture_produces_no_result() {
     let zero_diameter = ParabolicAperture {
-        diameter: 0.0,
+        diameter_m: 0.0,
         efficiency: 0.65,
     };
     assert!(!zero_diameter.is_valid());
@@ -121,20 +121,20 @@ fn an_invalid_aperture_produces_no_result() {
     assert_eq!(zero_diameter.half_power_beam_width(0.025), None);
 
     let bad_efficiency = ParabolicAperture {
-        diameter: 3.0,
+        diameter_m: 3.0,
         efficiency: 1.5,
     };
     assert!(!bad_efficiency.is_valid());
     assert_eq!(bad_efficiency.peak_gain(0.025), None);
 
     let zero_efficiency = ParabolicAperture {
-        diameter: 3.0,
+        diameter_m: 3.0,
         efficiency: 0.0,
     };
     assert!(!zero_efficiency.is_valid());
 
     let non_finite = ParabolicAperture {
-        diameter: f64::NAN,
+        diameter_m: f64::NAN,
         efficiency: 0.65,
     };
     assert!(!non_finite.is_valid());

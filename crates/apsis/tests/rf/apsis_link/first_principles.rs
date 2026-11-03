@@ -42,10 +42,10 @@ fn budget(
         receive_gain: Gain::from_dbi(rx_gain_dbi).expect("finite gain"),
         receive_loss: Decibel::from_db(rx_loss_db),
         system_temperature: NoiseTemperature::from_kelvin(temperature_k),
-        bandwidth: bandwidth_hz,
+        bandwidth_hz,
         geometry: LinkGeometry {
-            distance: distance_m,
-            frequency: frequency_hz,
+            distance_m,
+            frequency_hz,
         },
     }
 }
@@ -55,9 +55,9 @@ fn budget(
 ///
 /// 由定义方程返回路径损耗、EIRP、载波功率、C/N0、C/N 与 Eb/N0。
 fn closed_form(budget: &LinkBudget, data_rate: f64) -> [f64; 6] {
-    let wavelength = SPEED_OF_LIGHT / budget.geometry.frequency;
+    let wavelength = SPEED_OF_LIGHT / budget.geometry.frequency_hz;
     let path_loss =
-        20.0 * (4.0 * core::f64::consts::PI * budget.geometry.distance / wavelength).log10();
+        20.0 * (4.0 * core::f64::consts::PI * budget.geometry.distance_m / wavelength).log10();
     let eirp = 10.0 * budget.transmit_power.watts().log10()
         + budget.transmit_gain.dbi().expect("gain")
         - budget.transmit_loss.db();
@@ -65,7 +65,7 @@ fn closed_form(budget: &LinkBudget, data_rate: f64) -> [f64; 6] {
         eirp - path_loss + budget.receive_gain.dbi().expect("gain") - budget.receive_loss.db();
     let noise_density = 10.0 * (BOLTZMANN * budget.system_temperature.kelvin()).log10();
     let c_n0 = carrier - noise_density;
-    let c_n = c_n0 - 10.0 * budget.bandwidth.log10();
+    let c_n = c_n0 - 10.0 * budget.bandwidth_hz.log10();
     let eb_n0 = c_n0 - 10.0 * data_rate.log10();
     [path_loss, eirp, carrier, c_n0, c_n, eb_n0]
 }
@@ -198,8 +198,8 @@ fn the_gain_to_temperature_matches_its_definition() {
 #[test]
 fn a_zero_margin_closes_and_a_negative_one_does_not() {
     let exact = link_margin(Decibel::from_db(70.0), Decibel::from_db(70.0));
-    assert!(exact.closes());
+    assert!(exact.is_closed());
     assert_eq!(exact.margin().db(), 0.0);
     let short = link_margin(Decibel::from_db(69.9), Decibel::from_db(70.0));
-    assert!(!short.closes());
+    assert!(!short.is_closed());
 }

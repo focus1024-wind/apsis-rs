@@ -70,7 +70,7 @@ fn a_handler_can_record_each_activity() {
     let report = session.run(|_engine, recorder, event| {
         if event.payload.is_start() {
             starts += 1;
-            recorder.note(event.time, "started", event.payload.task().index() as f64);
+            recorder.note(event.time_s, "started", event.payload.task().index() as f64);
         } else {
             ends += 1;
         }
@@ -91,7 +91,7 @@ fn the_run_starts_at_the_scenario_epoch() {
     let report = session.run(|_, _, _| {});
     // The timeline events are absolute, so the run reaches the end event.
     // 时间线事件是绝对的，故运行到达结束事件。
-    assert!(report.outcome.ended_at > 1_000.0);
+    assert!(report.outcome.ended_at_s > 1_000.0);
 }
 
 #[test]
@@ -124,7 +124,7 @@ fn a_run_is_reproducible_from_one_prepared_simulation() {
     let collect = || {
         let mut session = simulation.start();
         let mut seen = Vec::new();
-        session.run(|_, _, event| seen.push((event.time, event.payload)));
+        session.run(|_, _, event| seen.push((event.time_s, event.payload)));
         seen
     };
     assert_eq!(collect(), collect());
@@ -151,7 +151,7 @@ fn a_handler_may_schedule_further_activity() {
     let report = session.run(|engine, _, event| {
         if matches!(event.payload, Activity::Start { .. }) {
             engine
-                .schedule(event.time + 30.0, Activity::end(event.payload.task()))
+                .schedule(event.time_s + 30.0, Activity::end(event.payload.task()))
                 .expect("the time is usable");
             extra += 1;
         }
@@ -204,7 +204,7 @@ fn precedence_is_honoured_in_the_timeline() {
     let second = schedule
         .placement_of(apsis::apsis_task::TaskId::new(1))
         .expect("placed");
-    assert!(second.start >= first.end());
+    assert!(second.start_s >= first.end_s());
 }
 
 #[test]

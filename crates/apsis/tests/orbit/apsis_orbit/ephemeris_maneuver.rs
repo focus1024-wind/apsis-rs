@@ -56,7 +56,7 @@ fn an_orbit_samples_into_an_ephemeris() {
             .propagate_minutes(sample.seconds / 60.0)
             .expect("the orbit propagates");
         assert!(
-            sample.position.distance(direct.position) < 1e-12,
+            sample.position_km.distance(direct.position_km) < 1e-12,
             "at {} s",
             sample.seconds
         );
@@ -81,7 +81,7 @@ fn the_interpolated_ephemeris_matches_a_direct_propagation() {
         let seconds = f64::from(index) * 10.0;
         let interpolated = ephemeris.state_at(seconds).expect("the time is covered");
         let direct = orbit.propagate_minutes(seconds / 60.0).expect("propagates");
-        worst = worst.max(interpolated.position.distance(direct.position));
+        worst = worst.max(interpolated.position_km.distance(direct.position_km));
     }
     // A one minute Hermite step on a low Earth orbit is accurate to far
     // better than a meter here.
@@ -126,15 +126,15 @@ fn a_burn_raises_the_osculating_orbit() {
     let state = orbit.propagate_minutes(0.0).expect("propagates");
     // Thrust along the velocity.
     // 沿速度方向施加推力。
-    let direction = state.velocity.normalize().expect("non-zero");
+    let direction = state.velocity_km_s.normalize().expect("non-zero");
     let burn = FiniteBurn::along(direction, 1e-4, 30.0).expect("usable");
 
     let after = orbit.apply_burn(0.0, burn, 500).expect("the burn applies");
     assert!(
-        after.semi_major_axis > before.semi_major_axis,
+        after.semi_major_axis_km > before.semi_major_axis_km,
         "the axis went from {} to {}",
-        before.semi_major_axis,
-        after.semi_major_axis
+        before.semi_major_axis_km,
+        after.semi_major_axis_km
     );
 }
 
@@ -145,14 +145,14 @@ fn a_burn_matches_a_direct_application() {
     // 门面必须是薄封装：通过它施加点火与手工传播并施加点火相同。
     let orbit = orbit();
     let state = orbit.propagate_minutes(5.0).expect("propagates");
-    let direction = state.velocity.normalize().expect("non-zero");
+    let direction = state.velocity_km_s.normalize().expect("non-zero");
     let burn = FiniteBurn::along(direction, 1e-4, 20.0).expect("usable");
 
     let through_facade = orbit.apply_burn(5.0, burn, 500).expect("applies");
 
     let kepler_state = apsis::apsis_kepler::State {
-        position: state.position,
-        velocity: state.velocity,
+        position_km: state.position_km,
+        velocity_km_s: state.velocity_km_s,
     };
     let outcome = burn
         .apply(kepler_state, GravityParameter::WGS72, 500)
@@ -162,10 +162,10 @@ fn a_burn_matches_a_direct_application() {
             .expect("still elliptical");
 
     assert!(
-        (through_facade.semi_major_axis - by_hand.semi_major_axis).abs() < 1e-9,
+        (through_facade.semi_major_axis_km - by_hand.semi_major_axis_km).abs() < 1e-9,
         "{} against {}",
-        through_facade.semi_major_axis,
-        by_hand.semi_major_axis
+        through_facade.semi_major_axis_km,
+        by_hand.semi_major_axis_km
     );
 }
 
@@ -173,7 +173,7 @@ fn a_burn_matches_a_direct_application() {
 fn an_escaping_burn_is_reported() {
     let orbit = orbit();
     let state = orbit.propagate_minutes(0.0).expect("propagates");
-    let direction = state.velocity.normalize().expect("non-zero");
+    let direction = state.velocity_km_s.normalize().expect("non-zero");
     // A burn far larger than orbital velocity.
     // 远大于轨道速度的点火。
     let burn = FiniteBurn::along(direction, 1e-2, 600.0).expect("usable");
@@ -193,24 +193,24 @@ fn a_hohmann_transfer_plans_a_raise_the_orbit_layer_can_sample() {
     // 点火，并对所得轨道采样。
     let orbit = orbit();
     let elements = orbit.osculating_elements(0.0).expect("elliptical");
-    let from = elements.semi_major_axis;
+    let from = elements.semi_major_axis_km;
     let to = from + 50.0;
     let transfer = hohmann_transfer(from, to, GravityParameter::WGS72).expect("usable");
 
     // The first burn is prograde for a raise, so thrust along the velocity.
     // 抬高时第一次点火是顺行的，故沿速度方向施加推力。
     let state = orbit.propagate_minutes(0.0).expect("propagates");
-    let direction = state.velocity.normalize().expect("non-zero");
+    let direction = state.velocity_km_s.normalize().expect("non-zero");
     // Turn the delta-v into an acceleration over a short burn.
     // 在短点火中把 delta-v 化为加速度。
     let duration = 10.0;
-    let burn =
-        FiniteBurn::along(direction, transfer.first_burn / duration, duration).expect("usable");
+    let burn = FiniteBurn::along(direction, transfer.first_burn_km_s / duration, duration)
+        .expect("usable");
     let after = orbit.apply_burn(0.0, burn, 1_000).expect("applies");
     assert!(
-        after.semi_major_axis > from,
+        after.semi_major_axis_km > from,
         "the transfer should raise the orbit from {from} to {}",
-        after.semi_major_axis
+        after.semi_major_axis_km
     );
 
     // The osculating elements of the post burn state are the planning

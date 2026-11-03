@@ -13,8 +13,8 @@ fn stores_the_given_value() {
 
 #[test]
 fn period_is_the_reciprocal() {
-    assert!((Hertz::new(2.0).period() - 0.5).abs() < 1e-12);
-    assert!(Hertz::new(0.0).period().is_infinite());
+    assert!((Hertz::new(2.0).period_s() - 0.5).abs() < 1e-12);
+    assert!(Hertz::new(0.0).period_s().is_infinite());
 }
 
 #[test]

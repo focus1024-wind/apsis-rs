@@ -23,12 +23,12 @@ fn sample_fields_match_the_reference_parser() {
     assert_eq!(element.international_designator, "98067A");
     assert_eq!(element.element_set_number, 292);
     assert_eq!(element.revolution_number, 56353);
-    assert!((element.inclination - 51.6416).abs() < 1e-12);
-    assert!((element.right_ascension - 247.4627).abs() < 1e-12);
+    assert!((element.inclination_deg - 51.6416).abs() < 1e-12);
+    assert!((element.right_ascension_deg - 247.4627).abs() < 1e-12);
     assert!((element.eccentricity - 0.0006703).abs() < 1e-15);
-    assert!((element.argument_of_perigee - 130.5360).abs() < 1e-12);
-    assert!((element.mean_anomaly - 325.0288).abs() < 1e-12);
-    assert!((element.mean_motion - 15.72125391).abs() < 1e-9);
+    assert!((element.argument_of_perigee_deg - 130.5360).abs() < 1e-12);
+    assert!((element.mean_anomaly_deg - 325.0288).abs() < 1e-12);
+    assert!((element.mean_motion_rev_per_day - 15.72125391).abs() < 1e-9);
 }
 
 #[test]

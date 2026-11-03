@@ -870,7 +870,7 @@ pub struct Atmosphere {
     /// The water vapour density, in grams per cubic meter.
     ///
     /// 水汽密度，以克每立方米计。
-    pub water_vapour_density: f64,
+    pub water_vapour_density_g_m3: f64,
     /// The temperature, in kelvin.
     ///
     /// 温度，以开尔文计。
@@ -890,7 +890,7 @@ impl Atmosphere {
     /// 密度 7.5 g/m^3，温度 288.15 K。
     pub const REFERENCE: Self = Self {
         pressure_hpa: 1_013.25,
-        water_vapour_density: 7.5,
+        water_vapour_density_g_m3: 7.5,
         temperature_k: 288.15,
     };
 
@@ -898,10 +898,14 @@ impl Atmosphere {
     ///
     /// 由其三个参数创建大气。
     #[must_use]
-    pub const fn new(pressure_hpa: f64, water_vapour_density: f64, temperature_k: f64) -> Self {
+    pub const fn new(
+        pressure_hpa: f64,
+        water_vapour_density_g_m3: f64,
+        temperature_k: f64,
+    ) -> Self {
         Self {
             pressure_hpa,
-            water_vapour_density,
+            water_vapour_density_g_m3,
             temperature_k,
         }
     }
@@ -917,7 +921,7 @@ impl Atmosphere {
     /// 质量得出。
     #[must_use]
     pub fn water_vapour_partial_pressure(self) -> f64 {
-        self.water_vapour_density * self.temperature_k / 216.7
+        self.water_vapour_density_g_m3 * self.temperature_k / 216.7
     }
 
     /// Returns `true` when the state describes a physical atmosphere.
@@ -927,8 +931,8 @@ impl Atmosphere {
     pub fn is_valid(self) -> bool {
         self.pressure_hpa.is_finite()
             && self.pressure_hpa > 0.0
-            && self.water_vapour_density.is_finite()
-            && self.water_vapour_density >= 0.0
+            && self.water_vapour_density_g_m3.is_finite()
+            && self.water_vapour_density_g_m3 >= 0.0
             && self.temperature_k.is_finite()
             && self.temperature_k > 0.0
     }

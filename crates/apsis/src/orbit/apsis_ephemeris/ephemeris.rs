@@ -7,7 +7,7 @@ use crate::apsis_math::Vec3;
 
 /// One sampled state.
 ///
-/// A sample is a position and velocity at a time, which is the form every
+/// A sample is a `position_km` and `velocity_km_s` at a time, which is the form every
 /// propagator in the workspace produces and the form the interpolation
 /// needs.
 ///
@@ -24,11 +24,11 @@ pub struct Sample {
     /// Position, in kilometers.
     ///
     /// 位置，单位为千米。
-    pub position: Vec3,
+    pub position_km: Vec3,
     /// Velocity, in kilometers per second.
     ///
     /// 速度，单位为千米每秒。
-    pub velocity: Vec3,
+    pub velocity_km_s: Vec3,
 }
 
 impl Sample {
@@ -36,20 +36,20 @@ impl Sample {
     ///
     /// 创建一个样本。
     #[must_use]
-    pub const fn new(seconds: f64, position: Vec3, velocity: Vec3) -> Self {
+    pub const fn new(seconds: f64, position_km: Vec3, velocity_km_s: Vec3) -> Self {
         Self {
             seconds,
-            position,
-            velocity,
+            position_km,
+            velocity_km_s,
         }
     }
 
-    /// Returns `true` when the time, position, and velocity are finite.
+    /// Returns `true` when the time, `position_km`, and `velocity_km_s` are finite.
     ///
     /// 当时间、位置与速度都有限时返回 `true`。
     #[must_use]
     pub fn is_valid(&self) -> bool {
-        self.seconds.is_finite() && self.position.is_finite() && self.velocity.is_finite()
+        self.seconds.is_finite() && self.position_km.is_finite() && self.velocity_km_s.is_finite()
     }
 
     /// Returns the distance from the origin, in kilometers.
@@ -57,7 +57,7 @@ impl Sample {
     /// 返回到原点的距离，单位为千米。
     #[must_use]
     pub fn radius(&self) -> f64 {
-        self.position.norm()
+        self.position_km.norm()
     }
 
     /// Returns the speed, in kilometers per second.
@@ -65,7 +65,7 @@ impl Sample {
     /// 返回速率，单位为千米每秒。
     #[must_use]
     pub fn speed(&self) -> f64 {
-        self.velocity.norm()
+        self.velocity_km_s.norm()
     }
 }
 
@@ -100,9 +100,9 @@ pub fn hermite_position(p0: Vec3, v0: Vec3, p1: Vec3, v1: Vec3, dt: f64, s: f64)
 
 /// Evaluates the derivative of the Hermite cubic for one component.
 ///
-/// This is the velocity that goes with [`hermite_position`]. It is the exact
+/// This is the `velocity_km_s` that goes with [`hermite_position`]. It is the exact
 /// derivative of that cubic, so the reconstructed state is internally
-/// consistent: a caller that differentiates the position gets this velocity.
+/// consistent: a caller that differentiates the `position_km` gets this `velocity_km_s`.
 ///
 /// 对一个分量求 Hermite 三次式的导数。
 ///
@@ -116,14 +116,14 @@ pub fn hermite_velocity(p0: Vec3, v0: Vec3, p1: Vec3, v1: Vec3, dt: f64, s: f64)
     let dh01 = -6.0 * s2 + 6.0 * s;
     let dh11 = 3.0 * s2 - 2.0 * s;
     // The chain rule turns the per interval derivative into a per second
-    // one, which divides the position terms by `dt` and leaves the velocity
+    // one, which divides the position_km terms by `dt` and leaves the velocity_km_s
     // terms, already per second, untouched.
     // 链式法则把每单位区间的导数变为每单位秒的导数：位置项除以 `dt`，而速度项
     // 本就以每秒计，保持不变。
     p0 * (dh00 / dt) + v0 * dh10 + p1 * (dh01 / dt) + v1 * dh11
 }
 
-/// Evaluates both the Hermite position and velocity.
+/// Evaluates both the Hermite `position_km` and `velocity_km_s`.
 ///
 /// 同时求 Hermite 位置与速度。
 #[must_use]
@@ -331,15 +331,15 @@ impl Ephemeris {
 
         let dt = second.seconds - first.seconds;
         let s = (seconds - first.seconds) / dt;
-        let (position, velocity) = hermite_state(
-            first.position,
-            first.velocity,
-            second.position,
-            second.velocity,
+        let (position_km, velocity_km_s) = hermite_state(
+            first.position_km,
+            first.velocity_km_s,
+            second.position_km,
+            second.velocity_km_s,
             dt,
             s,
         );
-        Some(Sample::new(seconds, position, velocity))
+        Some(Sample::new(seconds, position_km, velocity_km_s))
     }
 
     /// Returns the state at a time, or the nearest endpoint when the time is

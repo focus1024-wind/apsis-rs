@@ -39,9 +39,9 @@ fn the_field_falls_as_the_inverse_cube() {
 fn the_l_shell_and_magnetic_latitude_follow_the_dipole() {
     let position = Vec3::new(4_000.0, 0.0, 4_000.0);
     let field = dipole_field(position).expect("valid");
-    let latitude = field.magnetic_latitude_rad;
-    assert!((latitude - core::f64::consts::FRAC_PI_4).abs() < TOLERANCE);
-    let expected = position.norm() / EARTH_RADIUS_KM / latitude.cos().powi(2);
+    let latitude_rad = field.magnetic_latitude_rad;
+    assert!((latitude_rad - core::f64::consts::FRAC_PI_4).abs() < TOLERANCE);
+    let expected = position.norm() / EARTH_RADIUS_KM / latitude_rad.cos().powi(2);
     assert!((field.l_shell - expected).abs() < TOLERANCE);
 }
 

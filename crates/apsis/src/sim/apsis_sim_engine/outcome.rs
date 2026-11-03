@@ -86,11 +86,11 @@ pub struct EngineOutcome {
     /// The simulation time the run started from, in seconds.
     ///
     /// 该运行的起始仿真时刻，单位为秒。
-    pub started_at: f64,
+    pub started_at_s: f64,
     /// The simulation time the run reached, in seconds.
     ///
     /// 该运行所到达的仿真时刻，单位为秒。
-    pub ended_at: f64,
+    pub ended_at_s: f64,
     /// The number of events still pending when the run stopped.
     ///
     /// 该运行停止时仍待处理的事件数。
@@ -103,7 +103,7 @@ impl EngineOutcome {
     /// 返回该运行所覆盖的时长，单位为秒。
     #[must_use]
     pub fn duration(&self) -> f64 {
-        self.ended_at - self.started_at
+        self.ended_at_s - self.started_at_s
     }
 
     /// Returns the mean number of events per second of simulation time.
@@ -140,7 +140,7 @@ impl fmt::Display for EngineOutcome {
         write!(
             f,
             "{} event(s) from {} s to {} s, stopped by {}",
-            self.executed, self.started_at, self.ended_at, self.reason
+            self.executed, self.started_at_s, self.ended_at_s, self.reason
         )
     }
 }
@@ -153,7 +153,7 @@ pub struct EngineState {
     /// The current simulation time, in seconds.
     ///
     /// 当前仿真时刻，单位为秒。
-    pub now: f64,
+    pub now_s: f64,
     /// The number of pending events.
     ///
     /// 待处理事件的数量。

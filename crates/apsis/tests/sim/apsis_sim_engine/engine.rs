@@ -13,7 +13,7 @@ fn a_new_engine_is_idle_at_time_zero() {
     assert_eq!(engine.pending(), 0);
     assert_eq!(engine.next_time(), None);
     let state = engine.state();
-    assert_eq!(state.now, 0.0);
+    assert_eq!(state.now_s, 0.0);
     assert_eq!(state.executed, 0);
     assert!(state.is_idle());
     assert_eq!(state.next_time, None);
@@ -33,8 +33,8 @@ fn a_run_executes_every_event_in_order() {
     assert_eq!(outcome.executed, 3);
     assert_eq!(outcome.reason, StopReason::QueueEmpty);
     assert!(outcome.is_natural());
-    assert_eq!(outcome.started_at, 0.0);
-    assert_eq!(outcome.ended_at, 30.0);
+    assert_eq!(outcome.started_at_s, 0.0);
+    assert_eq!(outcome.ended_at_s, 30.0);
     assert_eq!(outcome.remaining, 0);
     assert_eq!(engine.now(), 30.0);
     assert_eq!(engine.executed(), 3);
@@ -51,7 +51,7 @@ fn a_handler_can_schedule_follow_up_events() {
 
     let mut seen = Vec::new();
     let outcome = engine.run(|engine, event| {
-        seen.push(event.time);
+        seen.push(event.time_s);
         if event.payload < 3 {
             engine
                 .schedule_after(10.0, event.payload + 1)
@@ -65,7 +65,7 @@ fn a_handler_can_schedule_follow_up_events() {
     // The clock ends at the last event, not at the delay of the last
     // follow-up, which was never scheduled.
     // 时钟结束于最后一个事件，而非最后一个后续事件的延时，后者从未被调度。
-    assert_eq!(outcome.ended_at, 30.0);
+    assert_eq!(outcome.ended_at_s, 30.0);
 }
 
 #[test]
@@ -140,7 +140,7 @@ fn a_time_limit_stops_the_run_and_leaves_the_event_pending() {
     assert_eq!(engine.next_time(), Some(20.0));
     // The clock is at the last event executed, not at the limit.
     // 时钟在最后执行的事件处，而非在限制处。
-    assert_eq!(outcome.ended_at, 10.0);
+    assert_eq!(outcome.ended_at_s, 10.0);
 }
 
 #[test]
@@ -260,8 +260,8 @@ fn the_clock_can_be_set_to_start_at_an_offset() {
     assert_eq!(engine.next_time(), Some(1_005.0));
 
     let outcome = engine.run(|_, _| {});
-    assert_eq!(outcome.started_at, 1_000.0);
-    assert_eq!(outcome.ended_at, 1_005.0);
+    assert_eq!(outcome.started_at_s, 1_000.0);
+    assert_eq!(outcome.ended_at_s, 1_005.0);
     assert_eq!(outcome.duration(), 5.0);
 
     // An unusable time is ignored, leaving the clock alone.

@@ -110,7 +110,7 @@ pub struct Satellite {
     ///
     /// `-0.5 j3 / j2 sin i`。
     pub(crate) aycof: f64,
-    /// The `j3` contribution to the argument of latitude.
+    /// The `j3` contribution to the argument of `latitude_rad`.
     ///
     /// `j3` 对纬度幅角的贡献。
     pub(crate) xlcof: f64,
@@ -349,8 +349,8 @@ impl Satellite {
         let j4 = model.j4;
 
         let ecco = elements.eccentricity;
-        let inclo = elements.inclination;
-        let no_kozai = elements.mean_motion;
+        let inclo = elements.inclination_rad;
+        let no_kozai = elements.mean_motion_rad_per_min;
 
         let no_unkozai = init::unkozai_mean_motion(no_kozai, ecco, inclo, model);
         let method = if init::is_deep_space(no_unkozai) {
@@ -429,7 +429,7 @@ impl Satellite {
                         + 0.75
                             * x1mth2
                             * (2.0 * etasq - eeta * (1.0 + etasq))
-                            * (2.0 * elements.argument_of_perigee).cos()));
+                            * (2.0 * elements.argument_of_perigee_rad).cos()));
         let cc5 = 2.0 * coef1 * ao * omeosq * (1.0 + 2.75 * (etasq + eeta) + eeta * etasq);
 
         let temp1 = 1.5 * j2 * pinvsq * no_unkozai;
@@ -445,7 +445,7 @@ impl Satellite {
         let nodedot = xhdot1
             + (0.5 * temp2 * (4.0 - 19.0 * cosio2) + 2.0 * temp3 * (3.0 - 7.0 * cosio2)) * cosio;
 
-        let omgcof = elements.bstar * cc3 * elements.argument_of_perigee.cos();
+        let omgcof = elements.bstar * cc3 * elements.argument_of_perigee_rad.cos();
         let mut xmcof = 0.0;
         if ecco > 1.0e-4 {
             xmcof = -2.0 / 3.0 * coef * elements.bstar / eeta;
@@ -460,9 +460,9 @@ impl Satellite {
         };
         let aycof = -0.5 * model.j3_over_j2() * sinio;
 
-        let delmotemp = 1.0 + eta * elements.mean_anomaly.cos();
+        let delmotemp = 1.0 + eta * elements.mean_anomaly_rad.cos();
         let delmo = delmotemp * delmotemp * delmotemp;
-        let sinmao = elements.mean_anomaly.sin();
+        let sinmao = elements.mean_anomaly_rad.sin();
         let x7thm1 = 7.0 * cosio2 - 1.0;
 
         let mut satellite = Self {
@@ -470,9 +470,9 @@ impl Satellite {
             no_unkozai,
             ecco,
             inclo,
-            nodeo: elements.right_ascension,
-            argpo: elements.argument_of_perigee,
-            mo: elements.mean_anomaly,
+            nodeo: elements.right_ascension_rad,
+            argpo: elements.argument_of_perigee_rad,
+            mo: elements.mean_anomaly_rad,
             bstar: elements.bstar,
             epoch_mjd: elements.epoch_mjd,
             method,

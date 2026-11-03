@@ -11,12 +11,12 @@ use apsis::apsis_math::Vec3;
 /// 给定半径、位于赤道面内的圆轨道。
 fn circular(radius: f64) -> KeplerianElements {
     KeplerianElements {
-        semi_major_axis: radius,
+        semi_major_axis_km: radius,
         eccentricity: 0.0,
-        inclination: 0.0,
-        right_ascension: 0.0,
-        argument_of_perigee: 0.0,
-        true_anomaly: 0.0,
+        inclination_rad: 0.0,
+        right_ascension_rad: 0.0,
+        argument_of_perigee_rad: 0.0,
+        true_anomaly_rad: 0.0,
     }
 }
 
@@ -94,13 +94,13 @@ fn a_hohmann_transfer_raises_an_orbit() {
     assert!(transfer.is_raising());
     // Raising an orbit takes two prograde burns.
     // 抬高轨道需要两次顺行点火。
-    assert!(transfer.first_burn > 0.0);
-    assert!(transfer.second_burn > 0.0);
-    assert_eq!(transfer.transfer_semi_major_axis, 7_500.0);
+    assert!(transfer.first_burn_km_s > 0.0);
+    assert!(transfer.second_burn_km_s > 0.0);
+    assert_eq!(transfer.transfer_semi_major_axis_km, 7_500.0);
     assert!(transfer.total_delta_v() > 0.0);
     assert_eq!(
         transfer.total_delta_v(),
-        transfer.first_burn + transfer.second_burn
+        transfer.first_burn_km_s + transfer.second_burn_km_s
     );
     assert_eq!(transfer.mean_radius(), 7_500.0);
 }
@@ -113,14 +113,14 @@ fn a_hohmann_transfer_lowers_an_orbit() {
     let transfer =
         hohmann_transfer(8_000.0, 7_000.0, GravityParameter::WGS84).expect("the radii are usable");
     assert!(!transfer.is_raising());
-    assert!(transfer.first_burn < 0.0);
-    assert!(transfer.second_burn < 0.0);
+    assert!(transfer.first_burn_km_s < 0.0);
+    assert!(transfer.second_burn_km_s < 0.0);
     // The cost is the same either way.
     // 两种方向的代价相同。
     let raised =
         hohmann_transfer(7_000.0, 8_000.0, GravityParameter::WGS84).expect("the radii are usable");
     assert!((transfer.total_delta_v() - raised.total_delta_v()).abs() < 1e-12);
-    assert!((transfer.transfer_time - raised.transfer_time).abs() < 1e-12);
+    assert!((transfer.transfer_time_s - raised.transfer_time_s).abs() < 1e-12);
 }
 
 #[test]
@@ -135,7 +135,7 @@ fn the_first_burn_matches_the_vis_viva_speeds() {
     let mu = GravityParameter::WGS84.value();
     let circular = (mu / 7_000.0).sqrt();
     let ellipse = (mu * (2.0 / 7_000.0 - 1.0 / 8_000.0)).sqrt();
-    assert!((transfer.first_burn - (ellipse - circular)).abs() < 1e-12);
+    assert!((transfer.first_burn_km_s - (ellipse - circular)).abs() < 1e-12);
 }
 
 #[test]
@@ -143,8 +143,8 @@ fn the_transfer_time_is_half_the_ellipse_period() {
     let transfer =
         hohmann_transfer(7_000.0, 8_000.0, GravityParameter::WGS84).expect("the radii are usable");
     let half_period =
-        circular(transfer.transfer_semi_major_axis).period(GravityParameter::WGS84) / 2.0;
-    assert!((transfer.transfer_time - half_period).abs() < 1e-9);
+        circular(transfer.transfer_semi_major_axis_km).period_s(GravityParameter::WGS84) / 2.0;
+    assert!((transfer.transfer_time_s - half_period).abs() < 1e-9);
 }
 
 #[test]
@@ -168,8 +168,8 @@ fn a_hohmann_transfer_matches_a_known_leo_to_geo_case() {
     // 转移椭圆与两个轨道都相切：其近地点是停泊半径，远地点是目的地，故其偏心率由
     // 这两个半径得出。
     let eccentricity = (to - from) / (to + from);
-    let perigee = transfer.transfer_semi_major_axis * (1.0 - eccentricity);
-    let apogee = transfer.transfer_semi_major_axis * (1.0 + eccentricity);
+    let perigee = transfer.transfer_semi_major_axis_km * (1.0 - eccentricity);
+    let apogee = transfer.transfer_semi_major_axis_km * (1.0 + eccentricity);
     assert!((perigee - from).abs() < 1e-9);
     assert!((apogee - to).abs() < 1e-9);
 }
@@ -242,8 +242,8 @@ fn a_finite_burn_agrees_with_its_equivalent_impulse_in_free_space() {
     // 中心天体被赋予了一个趋于零的参数。
     let burn = FiniteBurn::new(Vec3::new(0.0, 0.001, 0.0), 100.0).expect("usable");
     let state = apsis::apsis_kepler::State {
-        position: Vec3::new(1.0e9, 0.0, 0.0),
-        velocity: Vec3::ZERO,
+        position_km: Vec3::new(1.0e9, 0.0, 0.0),
+        velocity_km_s: Vec3::ZERO,
     };
     // A negligible gravitational parameter leaves only the thrust.
     // 可忽略的引力参数只留下推力。
@@ -255,7 +255,7 @@ fn a_finite_burn_agrees_with_its_equivalent_impulse_in_free_space() {
         "the achieved change is {}",
         outcome.achieved_magnitude()
     );
-    assert!((outcome.nominal_delta_v - 0.1).abs() < 1e-12);
+    assert!((outcome.nominal_delta_v_km_s - 0.1).abs() < 1e-12);
     // There is no gravity to lose anything to.
     // 没有引力可损失任何东西。
     assert!(outcome.gravity_loss().abs() < 1e-9);
@@ -276,7 +276,10 @@ fn a_finite_burn_converges_on_the_matching_impulse() {
     // The thrust direction is along the velocity, which for this orbit is
     // the second axis.
     // 推力方向沿速度，对该轨道而言即第二轴。
-    let direction = state.velocity.normalize().expect("the speed is non-zero");
+    let direction = state
+        .velocity_km_s
+        .normalize()
+        .expect("the speed is non-zero");
     let target_delta_v = 0.01;
 
     let achieved_for = |duration: f64| {
@@ -320,10 +323,13 @@ fn a_finite_burn_delivers_less_than_nominal_against_gravity() {
     let parameter = GravityParameter::WGS84;
     let elements = circular(7_000.0);
     let state = elements.to_state(parameter).expect("valid");
-    let direction = state.velocity.normalize().expect("the speed is non-zero");
+    let direction = state
+        .velocity_km_s
+        .normalize()
+        .expect("the speed is non-zero");
     // A burn lasting a tenth of the orbital period.
     // 持续轨道周期十分之一的点火。
-    let duration = elements.period(parameter) / 10.0;
+    let duration = elements.period_s(parameter) / 10.0;
     let acceleration = 1e-5;
     let burn = FiniteBurn::along(direction, acceleration, duration).expect("usable");
     let outcome = burn.apply(state, parameter, 1_000).expect("the burn runs");
@@ -335,7 +341,7 @@ fn a_finite_burn_delivers_less_than_nominal_against_gravity() {
     );
     // The position moved during the burn.
     // 点火期间位置移动了。
-    assert!(outcome.state.position.distance(state.position) > 1.0);
+    assert!(outcome.state.position_km.distance(state.position_km) > 1.0);
 }
 
 #[test]
@@ -345,15 +351,15 @@ fn a_finite_burn_raises_the_orbit_when_prograde() {
     let parameter = GravityParameter::WGS84;
     let elements = circular(7_000.0);
     let state = elements.to_state(parameter).expect("valid");
-    let direction = state.velocity.normalize().expect("non-zero");
+    let direction = state.velocity_km_s.normalize().expect("non-zero");
     let burn = FiniteBurn::along(direction, 1e-4, 60.0).expect("usable");
     let outcome = burn.apply(state, parameter, 1_000).expect("the burn runs");
     let after = outcome.elements(parameter).expect("still elliptical");
     assert!(
-        after.semi_major_axis > elements.semi_major_axis,
+        after.semi_major_axis_km > elements.semi_major_axis_km,
         "the axis went from {} to {}",
-        elements.semi_major_axis,
-        after.semi_major_axis
+        elements.semi_major_axis_km,
+        after.semi_major_axis_km
     );
 }
 
@@ -364,11 +370,11 @@ fn a_finite_burn_lowers_the_orbit_when_retrograde() {
     let parameter = GravityParameter::WGS84;
     let elements = circular(7_000.0);
     let state = elements.to_state(parameter).expect("valid");
-    let direction = -state.velocity.normalize().expect("non-zero");
+    let direction = -state.velocity_km_s.normalize().expect("non-zero");
     let burn = FiniteBurn::along(direction, 1e-4, 60.0).expect("usable");
     let outcome = burn.apply(state, parameter, 1_000).expect("the burn runs");
     let after = outcome.elements(parameter).expect("still elliptical");
-    assert!(after.semi_major_axis < elements.semi_major_axis);
+    assert!(after.semi_major_axis_km < elements.semi_major_axis_km);
 }
 
 #[test]
@@ -376,7 +382,7 @@ fn a_finite_burn_can_be_applied_to_elements() {
     let parameter = GravityParameter::WGS84;
     let elements = circular(7_000.0);
     let state = elements.to_state(parameter).expect("valid");
-    let direction = state.velocity.normalize().expect("non-zero");
+    let direction = state.velocity_km_s.normalize().expect("non-zero");
     let burn = FiniteBurn::along(direction, 1e-4, 60.0).expect("usable");
 
     let from_state = burn.apply(state, parameter, 500).expect("the burn runs");
@@ -388,8 +394,8 @@ fn a_finite_burn_can_be_applied_to_elements() {
     assert!(
         from_state
             .state
-            .position
-            .distance(from_elements.state.position)
+            .position_km
+            .distance(from_elements.state.position_km)
             < 1e-9
     );
 }
@@ -397,7 +403,7 @@ fn a_finite_burn_can_be_applied_to_elements() {
 #[test]
 fn a_burn_on_invalid_elements_is_refused() {
     let bad = KeplerianElements {
-        semi_major_axis: -1.0,
+        semi_major_axis_km: -1.0,
         ..circular(7_000.0)
     };
     let burn = FiniteBurn::new(Vec3::new(0.0, 1e-4, 0.0), 60.0).expect("usable");
@@ -425,7 +431,7 @@ fn a_large_burn_can_escape_and_is_reported() {
     // 强度足以超过逃逸速度的点火不留下椭圆根数，结果通过返回 `None` 报告这一点。
     let parameter = GravityParameter::WGS84;
     let state = circular(7_000.0).to_state(parameter).expect("valid");
-    let direction = state.velocity.normalize().expect("non-zero");
+    let direction = state.velocity_km_s.normalize().expect("non-zero");
     let burn = FiniteBurn::along(direction, 1e-2, 600.0).expect("usable");
     let outcome = burn.apply(state, parameter, 2_000).expect("the burn runs");
     assert!(outcome.elements(parameter).is_none());
@@ -442,13 +448,13 @@ fn the_equivalent_impulse_matches_the_nominal_change() {
 fn the_outcome_reports_the_achieved_magnitude() {
     let parameter = GravityParameter::WGS84;
     let state = circular(7_000.0).to_state(parameter).expect("valid");
-    let direction = state.velocity.normalize().expect("non-zero");
+    let direction = state.velocity_km_s.normalize().expect("non-zero");
     let burn = FiniteBurn::along(direction, 1e-4, 60.0).expect("usable");
     let outcome = burn.apply(state, parameter, 500).expect("the burn runs");
     assert!(outcome.achieved_magnitude() > 0.0);
-    assert_eq!(outcome.duration, 60.0);
+    assert_eq!(outcome.duration_s, 60.0);
     assert_eq!(
-        outcome.achieved_delta_v.norm(),
+        outcome.achieved_delta_v_km_s.norm(),
         outcome.achieved_magnitude()
     );
 }
@@ -465,7 +471,7 @@ fn a_burn_that_escapes_is_refused_by_the_elements_route() {
     let parameter = GravityParameter::WGS84;
     let elements = circular(7_000.0);
     let state = elements.to_state(parameter).expect("valid");
-    let direction = state.velocity.normalize().expect("non-zero");
+    let direction = state.velocity_km_s.normalize().expect("non-zero");
     let burn = FiniteBurn::along(direction, 1.0e-2, 600.0).expect("usable");
 
     let error = burn

@@ -147,12 +147,12 @@ pub(crate) fn feasible_at_indexed(
     if !start.is_finite() {
         return false;
     }
-    let end = start + task.duration;
+    let end = start + task.duration_s;
     for requirement in &task.requirements {
         let Some(resource) = resources.get(requirement.resource) else {
             return false;
         };
-        if !resource.is_available_over(start, task.duration) {
+        if !resource.is_available_over(start, task.duration_s) {
             return false;
         }
         // The demand of the new task must fit alongside the placements that
@@ -168,8 +168,8 @@ pub(crate) fn feasible_at_indexed(
             {
                 continue;
             }
-            if placement.start < end && start < placement.end() {
-                boundaries.push(placement.start);
+            if placement.start_s < end && start < placement.end_s() {
+                boundaries.push(placement.start_s);
             }
         }
         for boundary in boundaries {

@@ -139,12 +139,12 @@ pub fn link_geometry(first: Vec3, second: Vec3, body_radius: f64) -> Option<Link
 pub fn sun_blocks_link(
     link: &LinkGeometry,
     sun_direction: Vec3,
-    field_of_view: f64,
+    field_of_view_rad: f64,
 ) -> Option<bool> {
-    if !sun_direction.is_finite() || !field_of_view.is_finite() {
+    if !sun_direction.is_finite() || !field_of_view_rad.is_finite() {
         return None;
     }
-    if field_of_view < 0.0 {
+    if field_of_view_rad < 0.0 {
         return None;
     }
     let sun = sun_direction.normalize()?;
@@ -152,5 +152,5 @@ pub fn sun_blocks_link(
     let backward = link.direction_second_to_first.normalize()?;
     let forward_angle = forward.dot(sun).clamp(-1.0, 1.0).acos();
     let backward_angle = backward.dot(sun).clamp(-1.0, 1.0).acos();
-    Some(forward_angle <= field_of_view || backward_angle <= field_of_view)
+    Some(forward_angle <= field_of_view_rad || backward_angle <= field_of_view_rad)
 }

@@ -35,7 +35,7 @@ fn the_footprint_at_a_ten_degree_mask_matches_a_hand_computation() {
     // 8 659 493.8 平方千米。
     let mask = 10.0_f64.to_radians();
     let footprint = footprint(LOW_ORBIT, BODY_RADIUS, mask).expect("valid");
-    assert!((footprint.central_angle.to_degrees() - 14.956_635_124_957_29).abs() < 1e-9);
+    assert!((footprint.central_angle_rad.to_degrees() - 14.956_635_124_957_29).abs() < 1e-9);
     assert!((footprint.surface_radius() - 1_664.965_006_091_034_9).abs() < 1e-6);
     assert!((footprint.area() - 8_659_493.809_336_036).abs() < 1e-3);
     assert!((footprint.fraction_of_surface() - 0.016_939_280_322_558_092).abs() < 1e-12);
@@ -44,7 +44,7 @@ fn the_footprint_at_a_ten_degree_mask_matches_a_hand_computation() {
 #[test]
 fn the_area_matches_the_spherical_cap_relation() {
     let footprint = footprint(LOW_ORBIT, BODY_RADIUS, 0.3).expect("valid");
-    let expected = 2.0 * PI * BODY_RADIUS * BODY_RADIUS * (1.0 - footprint.central_angle.cos());
+    let expected = 2.0 * PI * BODY_RADIUS * BODY_RADIUS * (1.0 - footprint.central_angle_rad.cos());
     assert!((footprint.area() - expected).abs() < TOLERANCE);
 }
 
@@ -186,7 +186,7 @@ fn the_footprint_central_angle_helper_matches_the_constructor() {
     let mask = 15.0_f64.to_radians();
     let central = footprint_central_angle(LOW_ORBIT, BODY_RADIUS, mask).expect("valid");
     let footprint = footprint(LOW_ORBIT, BODY_RADIUS, mask).expect("valid");
-    assert!((central - footprint.central_angle).abs() < TOLERANCE);
+    assert!((central - footprint.central_angle_rad).abs() < TOLERANCE);
 }
 
 #[test]

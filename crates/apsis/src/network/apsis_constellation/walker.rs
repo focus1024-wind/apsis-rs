@@ -42,11 +42,11 @@ pub struct WalkerPattern {
     /// The inclination of every plane, in radians.
     ///
     /// 各轨道面的倾角，单位为弧度。
-    pub inclination: f64,
+    pub inclination_rad: f64,
     /// The semi-major axis of every satellite, in kilometers.
     ///
     /// 各卫星的半长轴，单位为千米。
-    pub semi_major_axis: f64,
+    pub semi_major_axis_km: f64,
 }
 
 impl WalkerPattern {
@@ -117,10 +117,10 @@ impl WalkerPattern {
             && self.planes > 0
             && self.total_satellites % self.planes == 0
             && self.phase_factor < self.planes
-            && self.inclination.is_finite()
-            && (0.0..=PI).contains(&self.inclination)
-            && self.semi_major_axis.is_finite()
-            && self.semi_major_axis > 0.0
+            && self.inclination_rad.is_finite()
+            && (0.0..=PI).contains(&self.inclination_rad)
+            && self.semi_major_axis_km.is_finite()
+            && self.semi_major_axis_km > 0.0
     }
 
     /// Returns the Walker notation for this pattern, such as `53: 24/3/1`.
@@ -138,7 +138,7 @@ impl WalkerPattern {
     pub fn notation(self) -> String {
         format!(
             "{}: {}/{}/{}",
-            self.inclination.to_degrees(),
+            self.inclination_rad.to_degrees(),
             self.total_satellites,
             self.planes,
             self.phase_factor
@@ -194,7 +194,7 @@ impl WalkerPattern {
             return Err(
                 ConstellationError::new(ConstellationErrorKind::InvalidOrbit).with_detail(format!(
                     "inclination {} rad, semi-major axis {} km, phase factor {}",
-                    self.inclination, self.semi_major_axis, self.phase_factor
+                    self.inclination_rad, self.semi_major_axis_km, self.phase_factor
                 )),
             );
         }
@@ -207,27 +207,27 @@ impl WalkerPattern {
         for plane in 0..self.planes {
             // The right ascension of this plane.
             // 本轨道面的赤经。
-            let right_ascension = (plane as f64 * plane_spacing).rem_euclid(2.0 * PI);
+            let right_ascension_rad = (plane as f64 * plane_spacing).rem_euclid(2.0 * PI);
             // The phase offset of this plane relative to the first.
             // 本轨道面相对第一个轨道面的相位偏移。
             let plane_phase = plane as f64 * phase_offset;
             for satellite in 0..per_plane {
-                let mean_anomaly =
+                let mean_anomaly_rad =
                     (satellite as f64 * anomaly_spacing + plane_phase).rem_euclid(2.0 * PI);
                 satellites.push(KeplerianElements {
-                    semi_major_axis: self.semi_major_axis,
+                    semi_major_axis_km: self.semi_major_axis_km,
                     // The Walker pattern is circular.
                     // Walker 构型为圆轨道。
                     eccentricity: 0.0,
-                    inclination: self.inclination,
-                    right_ascension,
+                    inclination_rad: self.inclination_rad,
+                    right_ascension_rad,
                     // The argument of perigee is undefined for a circular
                     // orbit, so it is set to zero and the position along the
                     // orbit is carried entirely by the mean anomaly.
                     // 圆轨道的近地点幅角未定义，故置零；轨道上的位置完全由
                     // 平近点角承载。
-                    argument_of_perigee: 0.0,
-                    true_anomaly: crate::apsis_kepler::true_from_mean(mean_anomaly, 0.0),
+                    argument_of_perigee_rad: 0.0,
+                    true_anomaly_rad: crate::apsis_kepler::true_from_mean(mean_anomaly_rad, 0.0),
                 });
             }
         }
@@ -400,11 +400,11 @@ impl Constellation {
             }
             let plane = if let Some(plane) = planes
                 .iter()
-                .position(|value| (value - elements.right_ascension).abs() < 1e-12)
+                .position(|value| (value - elements.right_ascension_rad).abs() < 1e-12)
             {
                 plane
             } else {
-                planes.push(elements.right_ascension);
+                planes.push(elements.right_ascension_rad);
                 counts.push(0);
                 planes.len() - 1
             };
@@ -476,19 +476,19 @@ impl Constellation {
                 continue;
             };
             let elements = satellite.elements;
-            let start = elements.mean_anomaly();
+            let start = elements.mean_anomaly_rad();
             let mut points = Vec::with_capacity(samples + 1);
             let mut complete = true;
             for index in 0..=samples {
                 let anomaly = start + core::f64::consts::TAU * index as f64 / samples as f64;
                 let Some(state) = elements
-                    .with_mean_anomaly(anomaly)
+                    .with_mean_anomaly_rad(anomaly)
                     .to_state(GravityParameter::WGS84)
                 else {
                     complete = false;
                     break;
                 };
-                points.push(rotation * state.position);
+                points.push(rotation * state.position_km);
             }
             if complete {
                 outlines.push(PlaneOutline { plane, points });
@@ -589,7 +589,7 @@ impl Constellation {
     pub fn altitude_above(&self, body_radius_km: f64) -> Option<f64> {
         self.satellites
             .first()
-            .map(|satellite| satellite.elements.semi_major_axis - body_radius_km)
+            .map(|satellite| satellite.elements.semi_major_axis_km - body_radius_km)
     }
 
     /// Returns the count of satellites in each plane.

@@ -112,7 +112,7 @@ fn main() {
     println!(
         "tasks: {} observation(s), {} s of work in total",
         tasks.len(),
-        tasks.iter().map(|task| task.duration).sum::<f64>()
+        tasks.iter().map(|task| task.duration_s).sum::<f64>()
     );
 
     // Step 3: plan.
@@ -177,7 +177,7 @@ fn main() {
     let ordered = result.schedule.in_time_order();
     for pair in ordered.windows(2) {
         assert!(
-            pair[1].start >= pair[0].start,
+            pair[1].start_s >= pair[0].start_s,
             "the time order is not sorted"
         );
     }
@@ -244,13 +244,13 @@ fn main() {
         .expect("the transmission is placed");
     println!(
         "sequence: collect {:.0}-{:.0} s, downlink {:.0}-{:.0} s",
-        collection.start,
-        collection.end(),
-        transmission.start,
-        transmission.end()
+        collection.start_s,
+        collection.end_s(),
+        transmission.start_s,
+        transmission.end_s()
     );
     assert!(
-        transmission.start >= collection.end(),
+        transmission.start_s >= collection.end_s(),
         "the downlink must follow the collection"
     );
     assert!(apsis::apsis_conflict::detect(&chained.schedule, &chain, &extra).is_clear());

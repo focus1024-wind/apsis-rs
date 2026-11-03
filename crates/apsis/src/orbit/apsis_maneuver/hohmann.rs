@@ -33,29 +33,29 @@ pub struct HohmannTransfer {
     /// The radius of the orbit the transfer starts from, in kilometers.
     ///
     /// 转移起始轨道的半径，单位为千米。
-    pub from_radius: f64,
+    pub from_radius_km: f64,
     /// The radius of the orbit the transfer arrives at, in kilometers.
     ///
     /// 转移到达轨道的半径，单位为千米。
-    pub to_radius: f64,
+    pub to_radius_km: f64,
     /// The semi-major axis of the transfer ellipse, in kilometers.
     ///
     /// 转移椭圆的半长轴，单位为千米。
-    pub transfer_semi_major_axis: f64,
+    pub transfer_semi_major_axis_km: f64,
     /// The first burn, along the direction of motion, in kilometers per
     /// second.
     ///
     /// 第一次点火，沿运动方向，单位为千米每秒。
-    pub first_burn: f64,
+    pub first_burn_km_s: f64,
     /// The second burn, along the direction of motion, in kilometers per
     /// second.
     ///
     /// 第二次点火，沿运动方向，单位为千米每秒。
-    pub second_burn: f64,
+    pub second_burn_km_s: f64,
     /// The coast time between the burns, in seconds.
     ///
     /// 两次点火之间的滑行时间，单位为秒。
-    pub transfer_time: f64,
+    pub transfer_time_s: f64,
 }
 
 impl HohmannTransfer {
@@ -69,7 +69,7 @@ impl HohmannTransfer {
     /// 它是两次点火大小之和，即无论方向如何该转移所需的代价。
     #[must_use]
     pub fn total_delta_v(&self) -> f64 {
-        self.first_burn.abs() + self.second_burn.abs()
+        self.first_burn_km_s.abs() + self.second_burn_km_s.abs()
     }
 
     /// Returns `true` when the transfer raises the orbit.
@@ -77,7 +77,7 @@ impl HohmannTransfer {
     /// 当该转移抬升轨道时返回 `true`。
     #[must_use]
     pub fn is_raising(&self) -> bool {
-        self.to_radius > self.from_radius
+        self.to_radius_km > self.from_radius_km
     }
 
     /// Returns the velocity change of the first burn, unsigned.
@@ -85,7 +85,7 @@ impl HohmannTransfer {
     /// 返回第一次点火的速度变化，不带符号。
     #[must_use]
     pub fn first_burn_magnitude(&self) -> f64 {
-        self.first_burn.abs()
+        self.first_burn_km_s.abs()
     }
 
     /// Returns the velocity change of the second burn, unsigned.
@@ -93,7 +93,7 @@ impl HohmannTransfer {
     /// 返回第二次点火的速度变化，不带符号。
     #[must_use]
     pub fn second_burn_magnitude(&self) -> f64 {
-        self.second_burn.abs()
+        self.second_burn_km_s.abs()
     }
 
     /// Returns the mean radius the transfer is symmetric about, in
@@ -107,7 +107,7 @@ impl HohmannTransfer {
     /// 它即该椭圆的半长轴，为两个轨道半径的算术平均。
     #[must_use]
     pub fn mean_radius(&self) -> f64 {
-        self.transfer_semi_major_axis
+        self.transfer_semi_major_axis_km
     }
 }
 
@@ -144,34 +144,34 @@ impl HohmannTransfer {
 /// 相反方向，因为椭圆到达时比它必须汇入的圆轨道更慢。滑行时间为该椭圆
 /// 周期的一半。
 pub fn hohmann_transfer(
-    from_radius: f64,
-    to_radius: f64,
+    from_radius_km: f64,
+    to_radius_km: f64,
     parameter: GravityParameter,
 ) -> Result<HohmannTransfer, ManeuverError> {
-    for radius in [from_radius, to_radius] {
+    for radius in [from_radius_km, to_radius_km] {
         if !radius.is_finite() || radius <= 0.0 {
             return Err(ManeuverError::new(ManeuverErrorKind::InvalidRadius)
                 .with_detail(format!("radius {radius}")));
         }
     }
-    if from_radius == to_radius {
+    if from_radius_km == to_radius_km {
         return Err(ManeuverError::new(ManeuverErrorKind::DegenerateTransfer)
-            .with_detail(format!("both radii are {from_radius}")));
+            .with_detail(format!("both radii are {from_radius_km}")));
     }
 
     let mu = parameter.value();
-    let transfer_semi_major_axis = f64::midpoint(from_radius, to_radius);
+    let transfer_semi_major_axis_km = f64::midpoint(from_radius_km, to_radius_km);
 
     // The circular speeds at each radius.
     // 各半径处的圆轨道速度。
-    let circular_from = (mu / from_radius).sqrt();
-    let circular_to = (mu / to_radius).sqrt();
+    let circular_from = (mu / from_radius_km).sqrt();
+    let circular_to = (mu / to_radius_km).sqrt();
 
     // The speeds on the transfer ellipse at each radius, from the vis-viva
     // equation `v^2 = mu (2 / r - 1 / a)`.
     // 各半径处转移椭圆上的速度，由活力公式 `v^2 = mu (2 / r - 1 / a)` 得出。
-    let transfer_from = (mu * (2.0 / from_radius - 1.0 / transfer_semi_major_axis)).sqrt();
-    let transfer_to = (mu * (2.0 / to_radius - 1.0 / transfer_semi_major_axis)).sqrt();
+    let transfer_from = (mu * (2.0 / from_radius_km - 1.0 / transfer_semi_major_axis_km)).sqrt();
+    let transfer_to = (mu * (2.0 / to_radius_km - 1.0 / transfer_semi_major_axis_km)).sqrt();
 
     // The first burn accelerates onto the ellipse; the second accelerates
     // from the ellipse speed up to the circular speed at the destination.
@@ -179,19 +179,19 @@ pub fn hohmann_transfer(
     // which speed is larger.
     // 第一次点火把卫星加速到椭圆上；第二次把椭圆上的速度加速到目标处圆轨道
     // 速度。两者均沿运动方向，符号取决于哪个速度更大。
-    let first_burn = transfer_from - circular_from;
-    let second_burn = circular_to - transfer_to;
+    let first_burn_km_s = transfer_from - circular_from;
+    let second_burn_km_s = circular_to - transfer_to;
 
     // Half the period of the transfer ellipse.
     // 转移椭圆周期的一半。
-    let transfer_time = core::f64::consts::PI * (transfer_semi_major_axis.powi(3) / mu).sqrt();
+    let transfer_time_s = core::f64::consts::PI * (transfer_semi_major_axis_km.powi(3) / mu).sqrt();
 
     Ok(HohmannTransfer {
-        from_radius,
-        to_radius,
-        transfer_semi_major_axis,
-        first_burn,
-        second_burn,
-        transfer_time,
+        from_radius_km,
+        to_radius_km,
+        transfer_semi_major_axis_km,
+        first_burn_km_s,
+        second_burn_km_s,
+        transfer_time_s,
     })
 }

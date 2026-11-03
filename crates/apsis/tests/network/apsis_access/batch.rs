@@ -46,15 +46,15 @@ fn track(satellite: &Satellite, samples: usize) -> Vec<OrbitSample> {
     (0..samples)
         .map(|index| {
             let seconds = index as f64 * 60.0;
-            // The propagated radius sets the shell the synthetic longitude
+            // The propagated radius sets the shell the synthetic longitude_rad
             // sweep runs on, so the track is at a realistic altitude.
             // 所传播的半径设定合成经度扫描所在的壳层，故轨迹处于真实的高度。
             let radius = satellite
                 .propagate_minutes(seconds / 60.0)
                 .expect("the track propagates")
-                .position
+                .position_km
                 .norm();
-            // A slow sweep in longitude stands in for the rotation into the
+            // A slow sweep in longitude_rad stands in for the rotation into the
             // Earth-fixed frame; the exact geometry is not what this test is
             // about, only that the batch search reproduces the sequential one.
             // 缓慢的经度扫描代行转入地固系的转动；本测试关心的不是精确几何，只是批量搜索

@@ -118,14 +118,14 @@ pub struct TwoLineElement {
     ///
     /// 根数集编号，在卫星根数更新时递增。
     pub element_set_number: u32,
-    /// Orbital inclination, in degrees.
+    /// Orbital `inclination_deg`, in degrees.
     ///
     /// 轨道倾角，单位为度。
-    pub inclination: f64,
+    pub inclination_deg: f64,
     /// Right ascension of the ascending node, in degrees.
     ///
     /// 升交点赤经，单位为度。
-    pub right_ascension: f64,
+    pub right_ascension_deg: f64,
     /// Orbital eccentricity, dimensionless.
     ///
     /// 轨道偏心率，无量纲。
@@ -133,15 +133,15 @@ pub struct TwoLineElement {
     /// Argument of perigee, in degrees.
     ///
     /// 近地点幅角，单位为度。
-    pub argument_of_perigee: f64,
+    pub argument_of_perigee_deg: f64,
     /// Mean anomaly, in degrees.
     ///
     /// 平近点角，单位为度。
-    pub mean_anomaly: f64,
+    pub mean_anomaly_deg: f64,
     /// Mean motion, in revolutions per day.
     ///
     /// 平运动，单位为每日圈数。
-    pub mean_motion: f64,
+    pub mean_motion_rev_per_day: f64,
     /// Revolution number at epoch.
     ///
     /// 历元处的转数。
@@ -512,12 +512,12 @@ impl TwoLineElement {
         let bstar = exponent_field(first, 54, 61, first_number)?;
         let element_set_number = unsigned_field(first, 65, 68, first_number)?;
 
-        let inclination = float_field(second, 9, 16, second_number)?;
-        let right_ascension = float_field(second, 18, 25, second_number)?;
+        let inclination_deg = float_field(second, 9, 16, second_number)?;
+        let right_ascension_deg = float_field(second, 18, 25, second_number)?;
         let eccentricity = assumed_decimal_field(second, 27, 33, second_number)?;
-        let argument_of_perigee = float_field(second, 35, 42, second_number)?;
-        let mean_anomaly = float_field(second, 44, 51, second_number)?;
-        let mean_motion = float_field(second, 53, 63, second_number)?;
+        let argument_of_perigee_deg = float_field(second, 35, 42, second_number)?;
+        let mean_anomaly_deg = float_field(second, 44, 51, second_number)?;
+        let mean_motion_rev_per_day = float_field(second, 53, 63, second_number)?;
         let revolution_number = unsigned_field(second, 64, 68, second_number)?;
 
         Ok(Self {
@@ -530,12 +530,12 @@ impl TwoLineElement {
             mean_motion_double_dot,
             bstar,
             element_set_number,
-            inclination,
-            right_ascension,
+            inclination_deg,
+            right_ascension_deg,
             eccentricity,
-            argument_of_perigee,
-            mean_anomaly,
-            mean_motion,
+            argument_of_perigee_deg,
+            mean_anomaly_deg,
+            mean_motion_rev_per_day,
             revolution_number,
         })
     }

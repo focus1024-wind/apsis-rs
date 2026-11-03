@@ -202,14 +202,17 @@ pub fn main_lobe_break_angle(diameter_over_wavelength: f64) -> Option<f64> {
 ///
 /// 比值或角度不可用时返回 `None`。
 #[must_use]
-pub fn reference_pattern_gain(diameter_over_wavelength: f64, off_axis_angle: f64) -> Option<f64> {
-    if !off_axis_angle.is_finite() || off_axis_angle < 0.0 {
+pub fn reference_pattern_gain(
+    diameter_over_wavelength: f64,
+    off_axis_angle_rad: f64,
+) -> Option<f64> {
+    if !off_axis_angle_rad.is_finite() || off_axis_angle_rad < 0.0 {
         return None;
     }
     let peak = reference_peak_gain(diameter_over_wavelength)?;
     let break_angle = main_lobe_break_angle(diameter_over_wavelength)?;
     let (head, floor_angle) = sidelobe_branch(diameter_over_wavelength);
-    let angle_degrees = off_axis_angle.to_degrees();
+    let angle_degrees = off_axis_angle_rad.to_degrees();
 
     if angle_degrees < break_angle {
         Some(peak - 2.5e-3 * (diameter_over_wavelength * angle_degrees).powi(2))
@@ -229,9 +232,9 @@ pub fn reference_pattern_gain(diameter_over_wavelength: f64, off_axis_angle: f64
 #[must_use]
 pub fn reference_pattern_decibel(
     diameter_over_wavelength: f64,
-    off_axis_angle: f64,
+    off_axis_angle_rad: f64,
 ) -> Option<Decibel> {
-    let gain = reference_pattern_gain(diameter_over_wavelength, off_axis_angle)?;
+    let gain = reference_pattern_gain(diameter_over_wavelength, off_axis_angle_rad)?;
     Decibel::from_db(gain)
         .is_finite()
         .then_some(Decibel::from_db(gain))

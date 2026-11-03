@@ -131,12 +131,12 @@ fn enumerate(
     if !task.is_valid() {
         return None;
     }
-    let latest_start = task.latest_end - task.duration;
-    let mut candidates: Vec<f64> = vec![task.earliest_start];
+    let latest_start = task.latest_end_s - task.duration_s;
+    let mut candidates: Vec<f64> = vec![task.earliest_start_s];
     for requirement in &task.requirements {
         let resource = resources.get(requirement.resource)?;
         for window in resource.windows() {
-            candidates.push(window.start());
+            candidates.push(window.start_s());
         }
         for placement in schedule.placements() {
             let overlaps = tasks
@@ -144,12 +144,12 @@ fn enumerate(
                 .find(|other| other.id == placement.task)
                 .is_some_and(|other| other.demand_for(resource.id).is_some());
             if overlaps {
-                candidates.push(placement.end());
+                candidates.push(placement.end_s());
             }
         }
     }
     candidates
-        .retain(|time| time.is_finite() && *time >= task.earliest_start && *time <= latest_start);
+        .retain(|time| time.is_finite() && *time >= task.earliest_start_s && *time <= latest_start);
     candidates.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
     candidates.dedup();
     candidates

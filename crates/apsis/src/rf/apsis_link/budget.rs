@@ -7,32 +7,32 @@ use crate::apsis_noise::NoiseTemperature;
 use crate::apsis_rf::{Decibel, Gain, Power, free_space_path_loss, wavelength};
 
 /// The geometric part of a link: how far apart the terminals are and at what
-/// frequency they operate.
+/// `frequency_hz` they operate.
 ///
 /// 链路的几何部分：两端相距多远，以及在什么频率上工作。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LinkGeometry {
-    /// The distance between the terminals, in meters.
+    /// The `distance_m` between the terminals, in meters.
     ///
     /// 两端之间的距离，单位为米。
-    pub distance: f64,
-    /// The carrier frequency, in hertz.
+    pub distance_m: f64,
+    /// The carrier `frequency_hz`, in hertz.
     ///
     /// 载波频率，单位为赫兹。
-    pub frequency: f64,
+    pub frequency_hz: f64,
 }
 
 impl LinkGeometry {
     /// Returns the free space path loss for this geometry.
     ///
-    /// Returns `None` when the distance or frequency is not usable.
+    /// Returns `None` when the `distance_m` or `frequency_hz` is not usable.
     ///
     /// 返回该几何的自由空间路径损耗。
     ///
     /// 距离或频率不可用时返回 `None`。
     #[must_use]
     pub fn path_loss(self) -> Option<Decibel> {
-        free_space_path_loss(self.distance, self.frequency)
+        free_space_path_loss(self.distance_m, self.frequency_hz)
     }
 
     /// Returns `true` when the geometry is usable.
@@ -40,10 +40,10 @@ impl LinkGeometry {
     /// 当该几何可用时返回 `true`。
     #[must_use]
     pub fn is_valid(self) -> bool {
-        self.distance.is_finite()
-            && self.distance > 0.0
-            && self.frequency.is_finite()
-            && self.frequency > 0.0
+        self.distance_m.is_finite()
+            && self.distance_m > 0.0
+            && self.frequency_hz.is_finite()
+            && self.frequency_hz > 0.0
     }
 }
 
@@ -88,8 +88,8 @@ pub struct LinkBudget {
     /// The receiver noise bandwidth, in hertz.
     ///
     /// 接收机噪声带宽，单位为赫兹。
-    pub bandwidth: f64,
-    /// The distance and frequency of the link.
+    pub bandwidth_hz: f64,
+    /// The `distance_m` and `frequency_hz` of the link.
     ///
     /// 链路的距离与频率。
     pub geometry: LinkGeometry,
@@ -209,11 +209,11 @@ impl LinkBudget {
     /// 任一输入不可用时返回 `None`。
     #[must_use]
     pub fn carrier_to_noise(&self) -> Option<Decibel> {
-        if !self.bandwidth.is_finite() || self.bandwidth <= 0.0 {
+        if !self.bandwidth_hz.is_finite() || self.bandwidth_hz <= 0.0 {
             return None;
         }
         let density = self.carrier_to_noise_density()?;
-        Some(density - Decibel::from_ratio(self.bandwidth)?)
+        Some(density - Decibel::from_ratio(self.bandwidth_hz)?)
     }
 
     /// Returns the energy per bit to noise density ratio for a data rate.
@@ -267,14 +267,14 @@ impl LinkBudget {
 
     /// Returns the wavelength of the carrier, in meters.
     ///
-    /// Returns `None` when the frequency is not usable.
+    /// Returns `None` when the `frequency_hz` is not usable.
     ///
     /// 返回载波的波长，单位为米。
     ///
     /// 频率不可用时返回 `None`。
     #[must_use]
     pub fn carrier_wavelength(&self) -> Option<f64> {
-        wavelength(self.geometry.frequency)
+        wavelength(self.geometry.frequency_hz)
     }
 
     /// Returns `true` when every input describes a usable link.
@@ -288,8 +288,8 @@ impl LinkBudget {
             && self.receive_gain.dbi().is_some()
             && self.receive_loss.is_finite()
             && self.system_temperature.is_valid()
-            && self.bandwidth.is_finite()
-            && self.bandwidth > 0.0
+            && self.bandwidth_hz.is_finite()
+            && self.bandwidth_hz > 0.0
             && self.geometry.is_valid()
     }
 }
@@ -327,7 +327,7 @@ impl LinkMargin {
     ///
     /// 当余量非负时返回 `true`。
     #[must_use]
-    pub fn closes(self) -> bool {
+    pub fn is_closed(self) -> bool {
         self.margin().db() >= 0.0
     }
 }

@@ -9,12 +9,12 @@
 //!
 //! - The **luni-solar** series uses the five Delaunay arguments in the order
 //!   `l`, `l'`, `F`, `D`, `Om`: the mean anomaly of the Moon, the mean
-//!   anomaly of the Sun, the mean argument of latitude of the Moon, the mean
-//!   elongation of the Moon from the Sun, and the mean longitude of the
+//!   anomaly of the Sun, the mean argument of `latitude_rad` of the Moon, the mean
+//!   elongation of the Moon from the Sun, and the mean `longitude_rad` of the
 //!   Moon's ascending node.
 //! - The **planetary** series uses `l`, `F`, `D`, `Om`, the mean longitudes
-//!   of Mercury through Uranus, the mean longitude of Neptune, and the
-//!   general accumulated precession in longitude.
+//!   of Mercury through Uranus, the mean `longitude_rad` of Neptune, and the
+//!   general accumulated precession in `longitude_rad`.
 //!
 //! The reference evaluates `l'` and `D` with inline expressions while using
 //! functions for the others, and the inline expressions differ in the last
@@ -144,10 +144,10 @@ pub fn mean_elongation_moon_sun_iers2003(t: f64) -> f64 {
     anp((arcseconds % TURN_ARCSECONDS) * ARCSECOND_TO_RADIAN)
 }
 
-/// Returns the mean argument of latitude of the Moon, in radians.
+/// Returns the mean argument of `latitude_rad` of the Moon, in radians.
 ///
-/// This is the Delaunay argument `F`, the mean longitude of the Moon minus
-/// the mean longitude of its ascending node.
+/// This is the Delaunay argument `F`, the mean `longitude_rad` of the Moon minus
+/// the mean `longitude_rad` of its ascending node.
 ///
 /// 返回月球的平纬度参数，单位为弧度。
 ///
@@ -173,7 +173,7 @@ pub fn mean_elongation_moon_sun(t: f64) -> f64 {
     anp((arcseconds % TURN_ARCSECONDS) * ARCSECOND_TO_RADIAN)
 }
 
-/// Returns the mean longitude of the Moon's ascending node, in radians.
+/// Returns the mean `longitude_rad` of the Moon's ascending node, in radians.
 ///
 /// This is the Delaunay argument `Om`.
 ///
@@ -187,7 +187,7 @@ pub fn mean_longitude_node(t: f64) -> f64 {
     anp((arcseconds % TURN_ARCSECONDS) * ARCSECOND_TO_RADIAN)
 }
 
-/// Returns the mean longitude of Mercury, in radians.
+/// Returns the mean `longitude_rad` of Mercury, in radians.
 ///
 /// 返回水星的平黄经，单位为弧度。
 #[must_use]
@@ -195,7 +195,7 @@ pub fn mean_longitude_mercury(t: f64) -> f64 {
     anp(4.402_608_842 + 2_608.790_314_157_4 * t)
 }
 
-/// Returns the mean longitude of Venus, in radians.
+/// Returns the mean `longitude_rad` of Venus, in radians.
 ///
 /// 返回金星的平黄经，单位为弧度。
 #[must_use]
@@ -203,7 +203,7 @@ pub fn mean_longitude_venus(t: f64) -> f64 {
     anp(3.176_146_697 + 1_021.328_554_621_1 * t)
 }
 
-/// Returns the mean longitude of the Earth, in radians.
+/// Returns the mean `longitude_rad` of the Earth, in radians.
 ///
 /// 返回地球的平黄经，单位为弧度。
 #[must_use]
@@ -211,7 +211,7 @@ pub fn mean_longitude_earth(t: f64) -> f64 {
     anp(1.753_470_314 + 628.307_584_999_1 * t)
 }
 
-/// Returns the mean longitude of Mars, in radians.
+/// Returns the mean `longitude_rad` of Mars, in radians.
 ///
 /// 返回火星的平黄经，单位为弧度。
 #[must_use]
@@ -219,7 +219,7 @@ pub fn mean_longitude_mars(t: f64) -> f64 {
     anp(6.203_480_913 + 334.061_242_670_0 * t)
 }
 
-/// Returns the mean longitude of Jupiter, in radians.
+/// Returns the mean `longitude_rad` of Jupiter, in radians.
 ///
 /// 返回木星的平黄经，单位为弧度。
 #[must_use]
@@ -227,7 +227,7 @@ pub fn mean_longitude_jupiter(t: f64) -> f64 {
     anp(0.599_546_497 + 52.969_096_264_1 * t)
 }
 
-/// Returns the mean longitude of Saturn, in radians.
+/// Returns the mean `longitude_rad` of Saturn, in radians.
 ///
 /// 返回土星的平黄经，单位为弧度。
 #[must_use]
@@ -235,7 +235,7 @@ pub fn mean_longitude_saturn(t: f64) -> f64 {
     anp(0.874_016_757 + 21.329_910_496_0 * t)
 }
 
-/// Returns the mean longitude of Uranus, in radians.
+/// Returns the mean `longitude_rad` of Uranus, in radians.
 ///
 /// 返回天王星的平黄经，单位为弧度。
 #[must_use]
@@ -243,7 +243,7 @@ pub fn mean_longitude_uranus(t: f64) -> f64 {
     anp(5.481_293_872 + 7.478_159_856_7 * t)
 }
 
-/// Returns the mean longitude of Neptune, in radians.
+/// Returns the mean `longitude_rad` of Neptune, in radians.
 ///
 /// The reference evaluates this inline, from the MHB2000 model rather than
 /// from the IERS 2003 expressions used for the other planets.
@@ -257,7 +257,7 @@ pub fn mean_longitude_neptune(t: f64) -> f64 {
     anp(5.321_159_000 + 3.812_777_400_0 * t)
 }
 
-/// Returns the general accumulated precession in longitude, in radians.
+/// Returns the general accumulated precession in `longitude_rad`, in radians.
 ///
 /// 返回黄经上的一般累积岁差，单位为弧度。
 #[must_use]
@@ -278,7 +278,7 @@ pub struct DelaunayArguments {
     ///
     /// 太阳的平近点角。
     pub l_prime: f64,
-    /// The mean argument of latitude of the Moon.
+    /// The mean argument of `latitude_rad` of the Moon.
     ///
     /// 月球的平纬度参数。
     pub f: f64,
@@ -286,7 +286,7 @@ pub struct DelaunayArguments {
     ///
     /// 月球相对太阳的平距角。
     pub d: f64,
-    /// The mean longitude of the Moon's ascending node.
+    /// The mean `longitude_rad` of the Moon's ascending node.
     ///
     /// 月球升交点的平黄经。
     pub omega: f64,
@@ -332,7 +332,7 @@ pub struct PlanetaryArguments {
     ///
     /// 月球的平近点角。
     pub l: f64,
-    /// The mean argument of latitude of the Moon.
+    /// The mean argument of `latitude_rad` of the Moon.
     ///
     /// 月球的平纬度参数。
     pub f: f64,
@@ -340,43 +340,43 @@ pub struct PlanetaryArguments {
     ///
     /// 月球相对太阳的平距角。
     pub d: f64,
-    /// The mean longitude of the Moon's ascending node.
+    /// The mean `longitude_rad` of the Moon's ascending node.
     ///
     /// 月球升交点的平黄经。
     pub omega: f64,
-    /// The mean longitude of Mercury.
+    /// The mean `longitude_rad` of Mercury.
     ///
     /// 水星的平黄经。
     pub mercury: f64,
-    /// The mean longitude of Venus.
+    /// The mean `longitude_rad` of Venus.
     ///
     /// 金星的平黄经。
     pub venus: f64,
-    /// The mean longitude of the Earth.
+    /// The mean `longitude_rad` of the Earth.
     ///
     /// 地球的平黄经。
     pub earth: f64,
-    /// The mean longitude of Mars.
+    /// The mean `longitude_rad` of Mars.
     ///
     /// 火星的平黄经。
     pub mars: f64,
-    /// The mean longitude of Jupiter.
+    /// The mean `longitude_rad` of Jupiter.
     ///
     /// 木星的平黄经。
     pub jupiter: f64,
-    /// The mean longitude of Saturn.
+    /// The mean `longitude_rad` of Saturn.
     ///
     /// 土星的平黄经。
     pub saturn: f64,
-    /// The mean longitude of Uranus.
+    /// The mean `longitude_rad` of Uranus.
     ///
     /// 天王星的平黄经。
     pub uranus: f64,
-    /// The mean longitude of Neptune.
+    /// The mean `longitude_rad` of Neptune.
     ///
     /// 海王星的平黄经。
     pub neptune: f64,
-    /// The general accumulated precession in longitude.
+    /// The general accumulated precession in `longitude_rad`.
     ///
     /// 黄经上的一般累积岁差。
     pub precession: f64,

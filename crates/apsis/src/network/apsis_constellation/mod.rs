@@ -6,7 +6,7 @@
 //! operational use:
 //!
 //! - A **Walker constellation**, in which satellites are spread evenly over
-//!   a set of orbital planes that share an inclination and a semi-major
+//!   a set of orbital planes that share an `inclination_rad` and a semi-major
 //!   axis, with a fixed phase relationship between adjacent planes.
 //! - A **custom constellation**, where each shell is described separately so
 //!   that a design that does not follow the Walker pattern can still be
@@ -26,7 +26,7 @@
 //! 当前用于卫星互联网的星座是在若干高度上的 Walker 构型，因此多数调用方需要的
 //! 是 Walker 构造函数。
 //!
-//! The Walker notation is written `i: t/p/f`, where `i` is the inclination
+//! The Walker notation is written `i: t/p/f`, where `i` is the `inclination_rad`
 //! in degrees, `t` the total number of satellites, `p` the number of planes,
 //! and `f` the phase factor. The satellites are placed so that
 //! `t / p` satellites share each plane and adjacent planes are offset in
@@ -51,8 +51,8 @@
 //!     total_satellites: 24,
 //!     planes: 3,
 //!     phase_factor: 1,
-//!     inclination: 53.0_f64.to_radians(),
-//!     semi_major_axis: 6_878.137,
+//!     inclination_rad: 53.0_f64.to_radians(),
+//!     semi_major_axis_km: 6_878.137,
 //! };
 //! let constellation =
 //!     Constellation::walker(pattern, 0.0).expect("the pattern is consistent");

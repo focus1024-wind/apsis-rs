@@ -287,7 +287,7 @@ impl AccessFinder {
                 .with_detail(format!("times run from {first} to {last}")));
         }
 
-        let mask = self.station.elevation_mask;
+        let mask = self.station.elevation_mask_rad;
         let mut elevations = Vec::with_capacity(samples.len());
         for sample in samples {
             let elevation = elevation_at(sample.seconds).ok_or_else(|| {
@@ -351,8 +351,8 @@ impl AccessFinder {
                     rise_seconds,
                     set_seconds,
                     peak_seconds,
-                    peak_elevation: peak,
-                    mask_elevation: mask,
+                    peak_elevation_rad: peak,
+                    mask_elevation_rad: mask,
                     peak_position,
                 });
                 peak = f64::NEG_INFINITY;
@@ -367,8 +367,8 @@ impl AccessFinder {
                 rise_seconds,
                 set_seconds: last,
                 peak_seconds,
-                peak_elevation: peak,
-                mask_elevation: mask,
+                peak_elevation_rad: peak,
+                mask_elevation_rad: mask,
                 peak_position,
             });
         }
@@ -404,7 +404,7 @@ impl AccessFinder {
     where
         F: FnMut(f64) -> Option<f64>,
     {
-        let mask = self.station.elevation_mask;
+        let mask = self.station.elevation_mask_rad;
         let mut low = samples[index - 1].seconds;
         let mut high = samples[index].seconds;
 

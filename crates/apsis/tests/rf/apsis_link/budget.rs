@@ -29,10 +29,10 @@ fn downlink() -> LinkBudget {
         receive_gain: Gain::from_dbi(35.0).expect("finite"),
         receive_loss: Decibel::from_db(0.5),
         system_temperature: NoiseTemperature::from_kelvin(150.0),
-        bandwidth: 36.0e6,
+        bandwidth_hz: 36.0e6,
         geometry: LinkGeometry {
-            distance: 38_000_000.0,
-            frequency: 12.0e9,
+            distance_m: 38_000_000.0,
+            frequency_hz: 12.0e9,
         },
     }
 }
@@ -132,11 +132,11 @@ fn the_carrier_to_noise_density_helper_matches_the_method() {
 #[test]
 fn a_wider_bandwidth_lowers_the_carrier_to_noise() {
     let narrow = LinkBudget {
-        bandwidth: 1.0e6,
+        bandwidth_hz: 1.0e6,
         ..downlink()
     };
     let wide = LinkBudget {
-        bandwidth: 10.0e6,
+        bandwidth_hz: 10.0e6,
         ..downlink()
     };
     let narrow_ratio = narrow.carrier_to_noise().expect("valid");
@@ -188,8 +188,8 @@ fn validity_is_reported() {
 
     let bad_geometry = LinkBudget {
         geometry: LinkGeometry {
-            distance: 0.0,
-            frequency: 12.0e9,
+            distance_m: 0.0,
+            frequency_hz: 12.0e9,
         },
         ..downlink()
     };
@@ -206,7 +206,7 @@ fn validity_is_reported() {
     assert_eq!(bad_temperature.carrier_to_noise_density(), None);
 
     let bad_bandwidth = LinkBudget {
-        bandwidth: -1.0,
+        bandwidth_hz: -1.0,
         ..downlink()
     };
     assert!(!bad_bandwidth.is_valid());
@@ -227,18 +227,18 @@ fn a_margin_reports_whether_the_link_closes() {
     let required = Decibel::from_db(70.0);
     let margin = link_margin(achieved, required);
     assert!((margin.margin().db() - 5.0).abs() < TOLERANCE);
-    assert!(margin.closes());
+    assert!(margin.is_closed());
 
     // A link that exactly meets the requirement closes with zero margin.
     // 恰好满足要求的链路以零余量闭合。
     let exact = link_margin(required, required);
     assert_eq!(exact.margin().db(), 0.0);
-    assert!(exact.closes());
+    assert!(exact.is_closed());
 
     // A link below the requirement does not close.
     // 低于要求的链路不闭合。
     let short = link_margin(Decibel::from_db(65.0), required);
-    assert!(!short.closes());
+    assert!(!short.is_closed());
     assert!((short.margin().db() + 5.0).abs() < TOLERANCE);
 }
 
@@ -289,7 +289,7 @@ fn a_budget_can_be_used_with_a_computed_antenna_pattern() {
     // 导出的增益。
     use apsis::apsis_link::ParabolicAperture;
     let dish = ParabolicAperture {
-        diameter: 3.0,
+        diameter_m: 3.0,
         efficiency: 0.65,
     };
     let wavelength = 0.025;
@@ -297,8 +297,8 @@ fn a_budget_can_be_used_with_a_computed_antenna_pattern() {
     let budget = LinkBudget {
         receive_gain: gain,
         geometry: LinkGeometry {
-            distance: 38_000_000.0,
-            frequency: 12.0e9,
+            distance_m: 38_000_000.0,
+            frequency_hz: 12.0e9,
         },
         ..downlink()
     };

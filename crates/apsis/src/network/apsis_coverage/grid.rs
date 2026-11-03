@@ -14,35 +14,35 @@ use crate::apsis_core::{Error, ErrorKind, Result};
 use crate::apsis_geodesy::{Geodetic, WGS84};
 use crate::apsis_math::Vec3;
 
-/// A latitude-longitude grid on the WGS 84 ellipsoid.
+/// A `latitude_rad`-`longitude_rad` grid on the WGS 84 ellipsoid.
 ///
 /// 基于 WGS 84 椭球的经纬网格。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CoverageGrid {
-    /// Southern latitude limit, in radians.
+    /// Southern `latitude_rad` limit, in radians.
     ///
     /// 南界纬度，单位为弧度。
-    pub lat_min: f64,
-    /// Northern latitude limit, in radians.
+    pub lat_min_rad: f64,
+    /// Northern `latitude_rad` limit, in radians.
     ///
     /// 北界纬度，单位为弧度。
-    pub lat_max: f64,
-    /// Western longitude limit, in radians.
+    pub lat_max_rad: f64,
+    /// Western `longitude_rad` limit, in radians.
     ///
     /// 西界经度，单位为弧度。
-    pub lon_min: f64,
-    /// Eastern longitude limit, in radians.
+    pub lon_min_rad: f64,
+    /// Eastern `longitude_rad` limit, in radians.
     ///
     /// 东界经度，单位为弧度。
-    pub lon_max: f64,
+    pub lon_max_rad: f64,
     /// Latitude spacing, in radians.
     ///
     /// 纬向间隔，单位为弧度。
-    pub lat_step: f64,
+    pub lat_step_rad: f64,
     /// Longitude spacing, in radians.
     ///
     /// 经向间隔，单位为弧度。
-    pub lon_step: f64,
+    pub lon_step_rad: f64,
 }
 
 impl CoverageGrid {
@@ -56,41 +56,45 @@ impl CoverageGrid {
     /// 除非上下限有序、纬度位于 `-pi/2..=pi/2`，且两个间隔均为正且有限，
     /// 否则返回错误。
     pub fn new(
-        lat_min: f64,
-        lat_max: f64,
-        lon_min: f64,
-        lon_max: f64,
-        lat_step: f64,
-        lon_step: f64,
+        lat_min_rad: f64,
+        lat_max_rad: f64,
+        lon_min_rad: f64,
+        lon_max_rad: f64,
+        lat_step_rad: f64,
+        lon_step_rad: f64,
     ) -> Result<Self> {
         let half_pi = core::f64::consts::FRAC_PI_2;
-        if !lat_min.is_finite()
-            || !lat_max.is_finite()
-            || !lon_min.is_finite()
-            || !lon_max.is_finite()
-            || !(-half_pi..=half_pi).contains(&lat_min)
-            || !(-half_pi..=half_pi).contains(&lat_max)
-            || lat_max < lat_min
-            || lon_max < lon_min
+        if !lat_min_rad.is_finite()
+            || !lat_max_rad.is_finite()
+            || !lon_min_rad.is_finite()
+            || !lon_max_rad.is_finite()
+            || !(-half_pi..=half_pi).contains(&lat_min_rad)
+            || !(-half_pi..=half_pi).contains(&lat_max_rad)
+            || lat_max_rad < lat_min_rad
+            || lon_max_rad < lon_min_rad
         {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "lat_min, lat_max, lon_min, and lon_max must be finite and ordered; latitudes are in radians within -pi/2..=pi/2",
+                "lat_min_rad, lat_max_rad, lon_min_rad, and lon_max_rad must be finite and ordered; latitudes are in radians within -pi/2..=pi/2",
             ));
         }
-        if !lat_step.is_finite() || lat_step <= 0.0 || !lon_step.is_finite() || lon_step <= 0.0 {
+        if !lat_step_rad.is_finite()
+            || lat_step_rad <= 0.0
+            || !lon_step_rad.is_finite()
+            || lon_step_rad <= 0.0
+        {
             return Err(Error::with_message(
                 ErrorKind::InvalidInput,
-                "lat_step and lon_step must be positive and finite, in radians",
+                "lat_step_rad and lon_step_rad must be positive and finite, in radians",
             ));
         }
         Ok(Self {
-            lat_min,
-            lat_max,
-            lon_min,
-            lon_max,
-            lat_step,
-            lon_step,
+            lat_min_rad,
+            lat_max_rad,
+            lon_min_rad,
+            lon_max_rad,
+            lat_step_rad,
+            lon_step_rad,
         })
     }
 
@@ -98,37 +102,37 @@ impl CoverageGrid {
     ///
     /// 由度数创建网格。
     pub fn from_degrees(
-        lat_min: f64,
-        lat_max: f64,
-        lon_min: f64,
-        lon_max: f64,
-        lat_step: f64,
-        lon_step: f64,
+        lat_min_rad: f64,
+        lat_max_rad: f64,
+        lon_min_rad: f64,
+        lon_max_rad: f64,
+        lat_step_rad: f64,
+        lon_step_rad: f64,
     ) -> Result<Self> {
         Self::new(
-            lat_min.to_radians(),
-            lat_max.to_radians(),
-            lon_min.to_radians(),
-            lon_max.to_radians(),
-            lat_step.to_radians(),
-            lon_step.to_radians(),
+            lat_min_rad.to_radians(),
+            lat_max_rad.to_radians(),
+            lon_min_rad.to_radians(),
+            lon_max_rad.to_radians(),
+            lat_step_rad.to_radians(),
+            lon_step_rad.to_radians(),
         )
     }
 
-    /// Returns the number of latitude rows.
+    /// Returns the number of `latitude_rad` rows.
     ///
     /// 返回纬向行数。
     #[must_use]
     pub fn rows(&self) -> usize {
-        ((self.lat_max - self.lat_min) / self.lat_step).floor() as usize + 1
+        ((self.lat_max_rad - self.lat_min_rad) / self.lat_step_rad).floor() as usize + 1
     }
 
-    /// Returns the number of longitude columns.
+    /// Returns the number of `longitude_rad` columns.
     ///
     /// 返回经向列数。
     #[must_use]
     pub fn columns(&self) -> usize {
-        ((self.lon_max - self.lon_min) / self.lon_step).floor() as usize + 1
+        ((self.lon_max_rad - self.lon_min_rad) / self.lon_step_rad).floor() as usize + 1
     }
 
     /// Returns the total number of points.
@@ -147,14 +151,14 @@ impl CoverageGrid {
         self.len() == 0
     }
 
-    /// Returns the latitude and longitude of a point, in radians.
+    /// Returns the `latitude_rad` and `longitude_rad` of a point, in radians.
     ///
     /// 返回某点的纬度与经度，单位为弧度。
     #[must_use]
     pub fn point(&self, row: usize, column: usize) -> (f64, f64) {
         (
-            self.lat_min + row as f64 * self.lat_step,
-            self.lon_min + column as f64 * self.lon_step,
+            self.lat_min_rad + row as f64 * self.lat_step_rad,
+            self.lon_min_rad + column as f64 * self.lon_step_rad,
         )
     }
 
@@ -163,8 +167,8 @@ impl CoverageGrid {
     /// 返回椭球上某点的单位矢量。
     #[must_use]
     pub fn unit_vector(&self, row: usize, column: usize) -> Vec3 {
-        let (latitude, longitude) = self.point(row, column);
-        Geodetic::new(latitude, longitude, 0.0)
+        let (latitude_rad, longitude_rad) = self.point(row, column);
+        Geodetic::new(latitude_rad, longitude_rad, 0.0)
             .to_cartesian(WGS84)
             .normalize()
             .unwrap_or(Vec3::ZERO)

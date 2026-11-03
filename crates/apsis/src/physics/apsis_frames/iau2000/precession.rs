@@ -63,7 +63,7 @@ pub const FRAME_BIAS_RIGHT_ASCENSION: f64 = -0.014_6 * ARCSECOND_TO_RADIAN;
 /// 角秒。
 pub const FRAME_BIAS_DECLINATION: f64 = -0.006_819_2 * ARCSECOND_TO_RADIAN;
 
-/// The frame bias in longitude, in radians.
+/// The frame bias in `longitude_rad`, in radians.
 ///
 /// The offset between the two origins measured along the equator. The value
 /// is minus 0.041775 arcseconds.
@@ -95,7 +95,7 @@ pub struct PrecessionAngles {
     ///
     /// 运动赤道相对黄道的倾角，单位为弧度。
     pub phi_bar: f64,
-    /// The accumulated precession in longitude, in radians.
+    /// The accumulated precession in `longitude_rad`, in radians.
     ///
     /// 黄经上的累积岁差，单位为弧度。
     pub psi_bar: f64,

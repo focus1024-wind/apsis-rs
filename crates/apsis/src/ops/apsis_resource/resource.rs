@@ -293,7 +293,7 @@ impl Resource {
         self.windows
             .iter()
             .find(|window| window.duration() >= duration)
-            .map(|window| Window::new(window.start(), window.start() + duration))
+            .map(|window| Window::new(window.start_s(), window.start_s() + duration))
     }
 
     /// Returns the first window that can hold a request starting no earlier
@@ -310,9 +310,9 @@ impl Resource {
             return None;
         }
         self.windows.iter().find_map(|window| {
-            let start = window.start().max(not_before);
+            let start = window.start_s().max(not_before);
             let end = start + duration;
-            (end <= window.end()).then(|| Window::new(start, end))
+            (end <= window.end_s()).then(|| Window::new(start, end))
         })
     }
 
@@ -329,7 +329,7 @@ impl Resource {
         self.windows
             .iter()
             .find(|window| window.interval.contains(time))
-            .map(super::window::Window::end)
+            .map(super::window::Window::end_s)
     }
 }
 

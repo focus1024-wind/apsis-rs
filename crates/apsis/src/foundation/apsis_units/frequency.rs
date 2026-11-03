@@ -45,7 +45,7 @@ impl Hertz {
     ///
     /// 频率为零时返回 `f64::INFINITY`，这正是周期趋于无穷的正确极限。
     #[must_use]
-    pub fn period(self) -> f64 {
+    pub fn period_s(self) -> f64 {
         1.0 / self.0
     }
 }

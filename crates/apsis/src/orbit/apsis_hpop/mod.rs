@@ -17,11 +17,11 @@ pub struct HpopState {
     /// Position in the inertial frame, in kilometers.
     ///
     /// 惯性系中的位置，单位为千米。
-    pub position: Vec3,
+    pub position_km: Vec3,
     /// Velocity in the inertial frame, in kilometers per second.
     ///
     /// 惯性系中的速度，单位为千米每秒。
-    pub velocity: Vec3,
+    pub velocity_km_s: Vec3,
 }
 
 /// Exponential-atmosphere drag parameters.
@@ -111,20 +111,20 @@ impl Default for J2Model {
     }
 }
 
-fn acceleration(position: Vec3, velocity: Vec3, model: J2Model) -> Vec3 {
-    let radius = position.norm();
+fn acceleration(position_km: Vec3, velocity_km_s: Vec3, model: J2Model) -> Vec3 {
+    let radius = position_km.norm();
     if radius == 0.0 {
         return Vec3::new(0.0, 0.0, 0.0);
     }
-    let two_body = position * (-model.mu / radius.powi(3));
-    let z2 = position.z * position.z;
+    let two_body = position_km * (-model.mu / radius.powi(3));
+    let z2 = position_km.z * position_km.z;
     let r2 = radius * radius;
     let factor = 1.5 * model.j2 * model.mu * model.equatorial_radius_km.powi(2) / radius.powi(5);
     let common = 5.0 * z2 / r2;
     let j2 = Vec3::new(
-        factor * position.x * (common - 1.0),
-        factor * position.y * (common - 1.0),
-        factor * position.z * (common - 3.0),
+        factor * position_km.x * (common - 1.0),
+        factor * position_km.y * (common - 1.0),
+        factor * position_km.z * (common - 3.0),
     );
     let j4 = if model.j4 == 0.0 {
         Vec3::new(0.0, 0.0, 0.0)
@@ -133,9 +133,9 @@ fn acceleration(position: Vec3, velocity: Vec3, model: J2Model) -> Vec3 {
         let factor =
             0.625 * model.j4 * model.mu * model.equatorial_radius_km.powi(4) / radius.powi(7);
         Vec3::new(
-            factor * position.x * (3.0 - 30.0 * z2 / r2 + 35.0 * z4 / (r2 * r2)),
-            factor * position.y * (3.0 - 30.0 * z2 / r2 + 35.0 * z4 / (r2 * r2)),
-            factor * position.z * (15.0 - 70.0 * z2 / r2 + 63.0 * z4 / (r2 * r2)),
+            factor * position_km.x * (3.0 - 30.0 * z2 / r2 + 35.0 * z4 / (r2 * r2)),
+            factor * position_km.y * (3.0 - 30.0 * z2 / r2 + 35.0 * z4 / (r2 * r2)),
+            factor * position_km.z * (15.0 - 70.0 * z2 / r2 + 63.0 * z4 / (r2 * r2)),
         )
     };
     let drag = if let Some(drag) = model.drag {
@@ -144,8 +144,9 @@ fn acceleration(position: Vec3, velocity: Vec3, model: J2Model) -> Vec3 {
             let density = drag.reference_density_kg_m3
                 * (-(altitude - drag.reference_altitude_km) / drag.scale_height_km).exp();
             let earth_rate = crate::apsis_core::constant::EARTH_ROTATION_RATE;
-            let atmosphere = Vec3::new(-earth_rate * position.y, earth_rate * position.x, 0.0);
-            let relative = velocity - atmosphere;
+            let atmosphere =
+                Vec3::new(-earth_rate * position_km.y, earth_rate * position_km.x, 0.0);
+            let relative = velocity_km_s - atmosphere;
             // The state is in kilometers and kilometers per second, while the
             // drag equation is in SI units, so the speed is converted to
             // meters per second before the force is formed.
@@ -170,7 +171,7 @@ fn acceleration(position: Vec3, velocity: Vec3, model: J2Model) -> Vec3 {
     two_body + j2 + j4 + drag
 }
 
-/// A 6x6 state covariance matrix in position-then-velocity order.
+/// A 6x6 state covariance matrix in `position_km`-then-`velocity_km_s` order.
 ///
 /// 按位置后速度顺序排列的 6x6 状态协方差矩阵。
 pub type Covariance6 = [[f64; 6]; 6];
@@ -190,7 +191,7 @@ pub struct HpopCovariance {
     pub covariance: Covariance6,
 }
 
-/// Principal axes of a position covariance ellipsoid.
+/// Principal axes of a `position_km` covariance ellipsoid.
 ///
 /// 位置协方差椭球的三个主轴。
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -205,9 +206,9 @@ pub struct CovarianceEllipsoid {
     pub rotation: [[f64; 3]; 3],
 }
 
-/// Computes the position covariance ellipsoid at a requested sigma scale.
+/// Computes the `position_km` covariance ellipsoid at a requested sigma scale.
 ///
-/// Only the upper-left 3x3 position block is used. The symmetric matrix is
+/// Only the upper-left 3x3 `position_km` block is used. The symmetric matrix is
 /// diagonalized with Jacobi rotations. Negative eigenvalues from numerical
 /// roundoff are clamped to zero. Returns an error for non-finite input or a
 /// non-positive scale.
@@ -353,30 +354,36 @@ pub fn propagate_j2_covariance(
     let perturbations = [1.0e-3, 1.0e-3, 1.0e-3, 1.0e-6, 1.0e-6, 1.0e-6];
     for column in 0..6 {
         let epsilon = perturbations[column];
-        let mut position = initial_position;
-        let mut velocity = initial_velocity;
+        let mut position_km = initial_position;
+        let mut velocity_km_s = initial_velocity;
         if column < 3 {
             if column == 0 {
-                position.x += epsilon;
+                position_km.x += epsilon;
             }
             if column == 1 {
-                position.y += epsilon;
+                position_km.y += epsilon;
             }
             if column == 2 {
-                position.z += epsilon;
+                position_km.z += epsilon;
             }
         } else {
             if column == 3 {
-                velocity.x += epsilon;
+                velocity_km_s.x += epsilon;
             }
             if column == 4 {
-                velocity.y += epsilon;
+                velocity_km_s.y += epsilon;
             }
             if column == 5 {
-                velocity.z += epsilon;
+                velocity_km_s.z += epsilon;
             }
         }
-        let perturbed = propagate_j2(position, velocity, duration_seconds, step_seconds, model)?;
+        let perturbed = propagate_j2(
+            position_km,
+            velocity_km_s,
+            duration_seconds,
+            step_seconds,
+            model,
+        )?;
         let Some(end) = perturbed.last().copied() else {
             return Err(Error::with_message(
                 ErrorKind::Undefined,
@@ -384,12 +391,12 @@ pub fn propagate_j2_covariance(
             ));
         };
         let delta = [
-            end.position.x - final_state.position.x,
-            end.position.y - final_state.position.y,
-            end.position.z - final_state.position.z,
-            end.velocity.x - final_state.velocity.x,
-            end.velocity.y - final_state.velocity.y,
-            end.velocity.z - final_state.velocity.z,
+            end.position_km.x - final_state.position_km.x,
+            end.position_km.y - final_state.position_km.y,
+            end.position_km.z - final_state.position_km.z,
+            end.velocity_km_s.x - final_state.velocity_km_s.x,
+            end.velocity_km_s.y - final_state.velocity_km_s.y,
+            end.velocity_km_s.z - final_state.velocity_km_s.z,
         ];
         for row in 0..6 {
             transition[row][column] = delta[row] / epsilon;
@@ -448,7 +455,7 @@ pub fn propagate_j2(
     {
         return Err(Error::with_message(
             ErrorKind::InvalidInput,
-            "initial position and velocity must be finite and the position non-zero",
+            "initial position_km and velocity_km_s must be finite and the position_km non-zero",
         ));
     }
     if !model.mu.is_finite()
@@ -483,44 +490,44 @@ pub fn propagate_j2(
         }
     }
     let mut states = Vec::new();
-    let mut position = initial_position;
-    let mut velocity = initial_velocity;
+    let mut position_km = initial_position;
+    let mut velocity_km_s = initial_velocity;
     let mut seconds = 0.0;
     states.push(HpopState {
         seconds,
-        position,
-        velocity,
+        position_km,
+        velocity_km_s,
     });
     while seconds < duration_seconds {
         let dt = step_seconds.min(duration_seconds - seconds);
-        let (next_position, next_velocity) = rk4(position, velocity, dt, model);
+        let (next_position, next_velocity) = rk4(position_km, velocity_km_s, dt, model);
         seconds += dt;
-        position = next_position;
-        velocity = next_velocity;
+        position_km = next_position;
+        velocity_km_s = next_velocity;
         states.push(HpopState {
             seconds,
-            position,
-            velocity,
+            position_km,
+            velocity_km_s,
         });
     }
     Ok(states)
 }
 
-fn rk4(position: Vec3, velocity: Vec3, dt: f64, model: J2Model) -> (Vec3, Vec3) {
-    let k1_v = acceleration(position, velocity, model);
-    let k1_r = velocity;
+fn rk4(position_km: Vec3, velocity_km_s: Vec3, dt: f64, model: J2Model) -> (Vec3, Vec3) {
+    let k1_v = acceleration(position_km, velocity_km_s, model);
+    let k1_r = velocity_km_s;
 
-    let k2_r = velocity + k1_v * (dt / 2.0);
-    let k2_v = acceleration(position + k1_r * (dt / 2.0), k2_r, model);
+    let k2_r = velocity_km_s + k1_v * (dt / 2.0);
+    let k2_v = acceleration(position_km + k1_r * (dt / 2.0), k2_r, model);
 
-    let k3_r = velocity + k2_v * (dt / 2.0);
-    let k3_v = acceleration(position + k2_r * (dt / 2.0), k3_r, model);
+    let k3_r = velocity_km_s + k2_v * (dt / 2.0);
+    let k3_v = acceleration(position_km + k2_r * (dt / 2.0), k3_r, model);
 
-    let k4_r = velocity + k3_v * dt;
-    let k4_v = acceleration(position + k3_r * dt, k4_r, model);
+    let k4_r = velocity_km_s + k3_v * dt;
+    let k4_v = acceleration(position_km + k3_r * dt, k4_r, model);
 
-    let next_position = position + (k1_r + k2_r * 2.0 + k3_r * 2.0 + k4_r) * (dt / 6.0);
-    let next_velocity = velocity + (k1_v + k2_v * 2.0 + k3_v * 2.0 + k4_v) * (dt / 6.0);
+    let next_position = position_km + (k1_r + k2_r * 2.0 + k3_r * 2.0 + k4_r) * (dt / 6.0);
+    let next_velocity = velocity_km_s + (k1_v + k2_v * 2.0 + k3_v * 2.0 + k4_v) * (dt / 6.0);
     (next_position, next_velocity)
 }
 
@@ -543,10 +550,10 @@ mod tests {
 
     #[test]
     fn zero_j2_is_a_two_body_orbit() {
-        let (position, velocity) = circular_state();
+        let (position_km, velocity_km_s) = circular_state();
         let states = propagate_j2(
-            position,
-            velocity,
+            position_km,
+            velocity_km_s,
             600.0,
             10.0,
             J2Model {
@@ -557,20 +564,22 @@ mod tests {
         .expect("propagation");
         assert_eq!(states.len(), 61);
         for state in &states {
-            assert!((state.position.norm() - 7_000.0).abs() < 1e-6);
-            assert!((state.velocity.norm() - (398_600.441_8_f64 / 7_000.0).sqrt()).abs() < 1e-9);
+            assert!((state.position_km.norm() - 7_000.0).abs() < 1e-6);
+            assert!(
+                (state.velocity_km_s.norm() - (398_600.441_8_f64 / 7_000.0).sqrt()).abs() < 1e-9
+            );
         }
     }
 
     #[test]
     fn j4_perturbation_is_finite_and_changes_the_state() {
-        let position = Vec3::new(0.0, 6_778.137, 0.0);
-        let velocity = Vec3::new(7.660, 0.0, 0.0);
+        let position_km = Vec3::new(0.0, 6_778.137, 0.0);
+        let velocity_km_s = Vec3::new(7.660, 0.0, 0.0);
         let without =
-            propagate_j2(position, velocity, 600.0, 60.0, J2Model::default()).expect("J2");
+            propagate_j2(position_km, velocity_km_s, 600.0, 60.0, J2Model::default()).expect("J2");
         let with = propagate_j2(
-            position,
-            velocity,
+            position_km,
+            velocity_km_s,
             600.0,
             60.0,
             J2Model {
@@ -581,25 +590,31 @@ mod tests {
         .expect("J2+J4");
         let last_without = without.last().expect("state");
         let last_with = with.last().expect("state");
-        assert!(last_with.position.norm().is_finite());
-        assert!((last_with.position - last_without.position).norm() > 1.0e-12);
+        assert!(last_with.position_km.norm().is_finite());
+        assert!((last_with.position_km - last_without.position_km).norm() > 1.0e-12);
     }
 
     #[test]
     fn j2_changes_the_orbit_plane() {
-        let (position, velocity) = circular_state();
-        let states = propagate_j2(position, velocity, 86_400.0, 60.0, J2Model::default())
-            .expect("propagation");
+        let (position_km, velocity_km_s) = circular_state();
+        let states = propagate_j2(
+            position_km,
+            velocity_km_s,
+            86_400.0,
+            60.0,
+            J2Model::default(),
+        )
+        .expect("propagation");
         let initial = states.first().expect("initial");
         let final_state = states.last().expect("final");
         let h0 = initial
-            .position
-            .cross(initial.velocity)
+            .position_km
+            .cross(initial.velocity_km_s)
             .normalize()
             .expect("normal");
         let h1 = final_state
-            .position
-            .cross(final_state.velocity)
+            .position_km
+            .cross(final_state.velocity_km_s)
             .normalize()
             .expect("normal");
         assert!((h0.dot(h1) - 1.0).abs() > 1e-12);
@@ -609,13 +624,13 @@ mod tests {
     fn drag_removes_energy_and_changes_the_state() {
         let radius = 6_778.137_f64;
         let speed = (398_600.441_8 / radius).sqrt();
-        let position = Vec3::new(radius, 0.0, 0.0);
-        let velocity = Vec3::new(0.0, speed, 0.0);
+        let position_km = Vec3::new(radius, 0.0, 0.0);
+        let velocity_km_s = Vec3::new(0.0, speed, 0.0);
         let without =
-            propagate_j2(position, velocity, 600.0, 60.0, J2Model::default()).expect("J2");
+            propagate_j2(position_km, velocity_km_s, 600.0, 60.0, J2Model::default()).expect("J2");
         let with = propagate_j2(
-            position,
-            velocity,
+            position_km,
+            velocity_km_s,
             600.0,
             60.0,
             J2Model {
@@ -626,26 +641,27 @@ mod tests {
         .expect("J2+drag");
         let last_without = without.last().expect("state");
         let last_with = with.last().expect("state");
-        assert!((last_with.position - last_without.position).norm() > 1.0e-9);
-        assert!(last_with.velocity.norm() < last_without.velocity.norm() + 1.0e-12);
+        assert!((last_with.position_km - last_without.position_km).norm() > 1.0e-9);
+        assert!(last_with.velocity_km_s.norm() < last_without.velocity_km_s.norm() + 1.0e-12);
     }
 
     #[test]
     fn drag_removes_the_expected_order_of_speed_over_one_step() {
         // The drag deceleration at this altitude removes a few times
-        // 1e-6 km/s over a minute. A stage that used the wrong velocity in
+        // 1e-6 km/s over a minute. A stage that used the wrong velocity_km_s in
         // the Runge-Kutta step, or that left the speed in kilometers per
         // second, would be off by orders of magnitude.
         // 该高度处阻力在一分钟内带走数倍的 1e-6 km/s。若 Runge-Kutta 级使用了
         // 错误的速度，或速度仍以千米每秒参与运算，结果会差若干数量级。
         let radius = 6_778.137_f64;
         let speed = (398_600.441_8 / radius).sqrt();
-        let position = Vec3::new(radius, 0.0, 0.0);
-        let velocity = Vec3::new(0.0, speed, 0.0);
-        let without = propagate_j2(position, velocity, 60.0, 10.0, J2Model::default()).expect("J2");
+        let position_km = Vec3::new(radius, 0.0, 0.0);
+        let velocity_km_s = Vec3::new(0.0, speed, 0.0);
+        let without =
+            propagate_j2(position_km, velocity_km_s, 60.0, 10.0, J2Model::default()).expect("J2");
         let with = propagate_j2(
-            position,
-            velocity,
+            position_km,
+            velocity_km_s,
             60.0,
             10.0,
             J2Model {
@@ -656,22 +672,22 @@ mod tests {
         .expect("drag propagation");
         let last_without = without.last().expect("state");
         let last_with = with.last().expect("state");
-        let speed_loss = (last_with.velocity - last_without.velocity).norm();
+        let speed_loss = (last_with.velocity_km_s - last_without.velocity_km_s).norm();
         assert!(speed_loss > 1.0e-7, "speed loss {speed_loss} km/s");
         assert!(speed_loss < 1.0e-5, "speed loss {speed_loss} km/s");
     }
 
     #[test]
     fn an_invalid_drag_model_is_rejected() {
-        let (position, velocity) = circular_state();
+        let (position_km, velocity_km_s) = circular_state();
         let drag = DragModel {
             mass_kg: 0.0,
             ..DragModel::wgs84_defaults()
         };
         assert!(
             propagate_j2(
-                position,
-                velocity,
+                position_km,
+                velocity_km_s,
                 60.0,
                 10.0,
                 J2Model {
@@ -685,14 +701,14 @@ mod tests {
 
     #[test]
     fn covariance_propagation_is_finite_and_grows() {
-        let (position, velocity) = circular_state();
+        let (position_km, velocity_km_s) = circular_state();
         let mut covariance = [[0.0_f64; 6]; 6];
         for (index, row) in covariance.iter_mut().enumerate() {
             row[index] = if index < 3 { 1.0e-6 } else { 1.0e-10 };
         }
         let result = propagate_j2_covariance(
-            position,
-            velocity,
+            position_km,
+            velocity_km_s,
             600.0,
             60.0,
             J2Model::default(),
@@ -712,10 +728,10 @@ mod tests {
 
     #[test]
     fn zero_covariance_stays_zero() {
-        let (position, velocity) = circular_state();
+        let (position_km, velocity_km_s) = circular_state();
         let result = propagate_j2_covariance(
-            position,
-            velocity,
+            position_km,
+            velocity_km_s,
             600.0,
             60.0,
             J2Model::default(),
@@ -746,8 +762,8 @@ mod tests {
 
     #[test]
     fn invalid_sampling_is_rejected() {
-        let (position, velocity) = circular_state();
-        assert!(propagate_j2(position, velocity, -1.0, 10.0, J2Model::default()).is_err());
-        assert!(propagate_j2(position, velocity, 10.0, 0.0, J2Model::default()).is_err());
+        let (position_km, velocity_km_s) = circular_state();
+        assert!(propagate_j2(position_km, velocity_km_s, -1.0, 10.0, J2Model::default()).is_err());
+        assert!(propagate_j2(position_km, velocity_km_s, 10.0, 0.0, J2Model::default()).is_err());
     }
 }

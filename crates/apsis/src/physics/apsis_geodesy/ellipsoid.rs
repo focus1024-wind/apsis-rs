@@ -20,7 +20,7 @@
 /// 长度单位为米，角度单位为弧度。
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Ellipsoid {
-    semi_major_axis: f64,
+    semi_major_axis_m: f64,
     inverse_flattening: f64,
 }
 
@@ -40,9 +40,9 @@ impl Ellipsoid {
     /// 球。各值按原样保存，故调用方须提供可用值；[`Ellipsoid::is_valid`] 报告
     /// 它们是否可用。
     #[must_use]
-    pub const fn new(semi_major_axis: f64, inverse_flattening: f64) -> Self {
+    pub const fn new(semi_major_axis_m: f64, inverse_flattening: f64) -> Self {
         Self {
-            semi_major_axis,
+            semi_major_axis_m,
             inverse_flattening,
         }
     }
@@ -51,8 +51,8 @@ impl Ellipsoid {
     ///
     /// 返回半长轴，单位为米。
     #[must_use]
-    pub const fn semi_major_axis(self) -> f64 {
-        self.semi_major_axis
+    pub const fn semi_major_axis_m(self) -> f64 {
+        self.semi_major_axis_m
     }
 
     /// Returns the inverse flattening.
@@ -74,8 +74,8 @@ impl Ellipsoid {
     /// 半长轴须为正且有限，逆扁率须为正；接受正无穷，因为它描述一个球。
     #[must_use]
     pub fn is_valid(self) -> bool {
-        self.semi_major_axis.is_finite()
-            && self.semi_major_axis > 0.0
+        self.semi_major_axis_m.is_finite()
+            && self.semi_major_axis_m > 0.0
             && self.inverse_flattening > 0.0
     }
 
@@ -95,8 +95,8 @@ impl Ellipsoid {
     ///
     /// 返回半短轴，单位为米。
     #[must_use]
-    pub fn semi_minor_axis(self) -> f64 {
-        self.semi_major_axis * (1.0 - self.flattening())
+    pub fn semi_minor_axis_m(self) -> f64 {
+        self.semi_major_axis_m * (1.0 - self.flattening())
     }
 
     /// Returns the first eccentricity squared, a dimensionless number in
@@ -144,52 +144,52 @@ impl Ellipsoid {
     ///
     /// 它是极点处子午线上的曲率半径，等于 `a / sqrt(1 - e^2)`。
     #[must_use]
-    pub fn polar_radius_of_curvature(self) -> f64 {
-        self.semi_major_axis / (1.0 - self.eccentricity_squared()).sqrt()
+    pub fn polar_radius_of_curvature_m(self) -> f64 {
+        self.semi_major_axis_m / (1.0 - self.eccentricity_squared()).sqrt()
     }
 
     /// Returns the radius of curvature in the prime vertical at the given
-    /// geodetic latitude, in meters.
+    /// geodetic `latitude_rad`, in meters.
     ///
     /// This is the distance from the surface to the polar axis measured
     /// along the ellipsoid normal, and it grows from the semi-major axis at
-    /// the equator to [`Ellipsoid::polar_radius_of_curvature`] at the pole.
+    /// the equator to [`Ellipsoid::polar_radius_of_curvature_m`] at the pole.
     ///
-    /// The latitude is in radians.
+    /// The `latitude_rad` is in radians.
     ///
     /// 返回给定大地纬度处卯酉圈上的曲率半径，单位为米。
     ///
     /// 它是沿椭球法线从表面量到极轴的距离，由赤道处的半长轴增长到极点的
-    /// [`Ellipsoid::polar_radius_of_curvature`]。
+    /// [`Ellipsoid::polar_radius_of_curvature_m`]。
     ///
     /// 纬度单位为弧度。
     #[must_use]
-    pub fn prime_vertical_radius(self, latitude: f64) -> f64 {
-        let sin = latitude.sin();
-        self.semi_major_axis / (1.0 - self.eccentricity_squared() * sin * sin).sqrt()
+    pub fn prime_vertical_radius_m(self, latitude_rad: f64) -> f64 {
+        let sin = latitude_rad.sin();
+        self.semi_major_axis_m / (1.0 - self.eccentricity_squared() * sin * sin).sqrt()
     }
 
     /// Returns the radius of curvature in the meridian at the given
-    /// geodetic latitude, in meters.
+    /// geodetic `latitude_rad`, in meters.
     ///
-    /// The latitude is in radians.
+    /// The `latitude_rad` is in radians.
     ///
     /// 返回给定大地纬度处子午线上的曲率半径，单位为米。
     ///
     /// 纬度单位为弧度。
     #[must_use]
-    pub fn meridian_radius(self, latitude: f64) -> f64 {
-        let sin = latitude.sin();
+    pub fn meridian_radius_m(self, latitude_rad: f64) -> f64 {
+        let sin = latitude_rad.sin();
         let squared = self.eccentricity_squared();
         let denominator = 1.0 - squared * sin * sin;
-        self.semi_major_axis * (1.0 - squared) / denominator.powf(1.5)
+        self.semi_major_axis_m * (1.0 - squared) / denominator.powf(1.5)
     }
 
-    /// Returns the geocentric latitude corresponding to a geodetic
-    /// latitude, in radians.
+    /// Returns the geocentric `latitude_rad` corresponding to a geodetic
+    /// `latitude_rad`, in radians.
     ///
-    /// The geocentric latitude is measured from the equatorial plane to the
-    /// radius vector, while the geodetic latitude is measured to the
+    /// The geocentric `latitude_rad` is measured from the equatorial plane to the
+    /// radius vector, while the geodetic `latitude_rad` is measured to the
     /// ellipsoid normal. The geocentric value is the smaller of the two
     /// away from the equator and the poles.
     ///
@@ -198,9 +198,9 @@ impl Ellipsoid {
     /// 地心纬度自赤道面量到径向矢量，而大地纬度量到椭球法线。除赤道与极点外，
     /// 地心纬度小于大地纬度。
     #[must_use]
-    pub fn geocentric_latitude(self, geodetic_latitude: f64) -> f64 {
+    pub fn geocentric_latitude(self, geodetic_latitude_rad: f64) -> f64 {
         let squared = self.eccentricity_squared();
-        let tangent = (1.0 - squared) * geodetic_latitude.tan();
+        let tangent = (1.0 - squared) * geodetic_latitude_rad.tan();
         tangent.atan()
     }
 }

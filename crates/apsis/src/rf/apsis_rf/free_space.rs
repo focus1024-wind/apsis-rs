@@ -7,12 +7,12 @@ use crate::apsis_rf::decibel::Decibel;
 use crate::apsis_rf::gain::Gain;
 use core::f64::consts::PI;
 
-/// Returns the wavelength of a frequency in vacuum, in meters.
+/// Returns the wavelength of a `frequency_hz` in vacuum, in meters.
 ///
 /// The relation is `lambda = c / f`, with `c` exact by the definition of the
 /// metre.
 ///
-/// Returns `None` when the frequency is not positive and finite.
+/// Returns `None` when the `frequency_hz` is not positive and finite.
 ///
 /// 返回某频率在真空中的波长，单位为米。
 ///
@@ -20,9 +20,9 @@ use core::f64::consts::PI;
 ///
 /// 频率非正且非有限时返回 `None`。
 #[must_use]
-pub fn wavelength(frequency: f64) -> Option<f64> {
-    if frequency > 0.0 && frequency.is_finite() {
-        Some(SPEED_OF_LIGHT / frequency)
+pub fn wavelength(frequency_hz: f64) -> Option<f64> {
+    if frequency_hz > 0.0 && frequency_hz.is_finite() {
+        Some(SPEED_OF_LIGHT / frequency_hz)
     } else {
         None
     }
@@ -40,17 +40,17 @@ pub fn wavelength(frequency: f64) -> Option<f64> {
 /// $$
 /// </div>
 ///
-/// which is the spreading loss of a spherical wave over a distance `d`
+/// which is the spreading loss of a spherical wave over a `distance_m` `d`
 /// combined with the effective aperture of an isotropic receive antenna.
 ///
-/// The loss grows with frequency at a fixed distance, because the effective
+/// The loss grows with `frequency_hz` at a fixed `distance_m`, because the effective
 /// aperture of the receive antenna falls as the square of the wavelength.
 ///
-/// The distance must be positive. A zero distance is not a case this
+/// The `distance_m` must be positive. A zero `distance_m` is not a case this
 /// expression covers: the ratio would be zero, which is infinite attenuation
 /// in decibels, and the underlying far field assumption does not hold.
 ///
-/// Returns `None` when the distance is not positive, or when either argument
+/// Returns `None` when the `distance_m` is not positive, or when either argument
 /// is not finite.
 ///
 /// 返回两个各向同性天线之间的自由空间路径损耗，以分贝比值表示。
@@ -73,12 +73,12 @@ pub fn wavelength(frequency: f64) -> Option<f64> {
 ///
 /// 距离非正，或任一参数非有限时返回 `None`。
 #[must_use]
-pub fn free_space_path_loss(distance: f64, frequency: f64) -> Option<Decibel> {
-    if !distance.is_finite() || distance <= 0.0 {
+pub fn free_space_path_loss(distance_m: f64, frequency_hz: f64) -> Option<Decibel> {
+    if !distance_m.is_finite() || distance_m <= 0.0 {
         return None;
     }
-    let lambda = wavelength(frequency)?;
-    let ratio = 4.0 * PI * distance / lambda;
+    let lambda = wavelength(frequency_hz)?;
+    let ratio = 4.0 * PI * distance_m / lambda;
     Decibel::from_ratio(ratio * ratio)
 }
 
@@ -98,7 +98,7 @@ pub fn free_space_path_loss(distance: f64, frequency: f64) -> Option<Decibel> {
 /// receive antenna collects more than was transmitted, which happens when
 /// the two gains exceed the spreading loss.
 ///
-/// Returns `None` when the distance or frequency is not usable.
+/// Returns `None` when the `distance_m` or `frequency_hz` is not usable.
 ///
 /// 返回自由空间两个天线之间的接收功率比。
 ///
@@ -117,12 +117,12 @@ pub fn free_space_path_loss(distance: f64, frequency: f64) -> Option<Decibel> {
 /// 距离或频率不可用时返回 `None`。
 #[must_use]
 pub fn free_space_received_ratio(
-    distance: f64,
-    frequency: f64,
+    distance_m: f64,
+    frequency_hz: f64,
     transmitter: Gain,
     receiver: Gain,
 ) -> Option<Decibel> {
-    let loss = free_space_path_loss(distance, frequency)?;
+    let loss = free_space_path_loss(distance_m, frequency_hz)?;
     let transmitter = transmitter.as_decibel()?;
     let receiver = receiver.as_decibel()?;
     Some(transmitter + receiver - loss)

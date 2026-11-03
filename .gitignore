@@ -10,3 +10,6 @@
 # Python caches are never committed.
 __pycache__/
 *.pyc
+
+# Local scratch space, never committed.
+/tmp/

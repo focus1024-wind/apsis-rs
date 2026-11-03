@@ -16,8 +16,8 @@
 //!   `crate::apsis_sgp4::Satellite::propagate_at`, but the sampler only requires
 //!   a closure, so a test can use an analytic function.
 //!
-//! Interpolation is Hermite cubic, which uses both the position and the
-//! velocity at each end of an interval. Using the velocity is what makes it
+//! Interpolation is Hermite cubic, which uses both the `position_km` and the
+//! `velocity_km_s` at each end of an interval. Using the `velocity_km_s` is what makes it
 //! accurate: a cubic through two positions alone has no information about
 //! how fast the satellite is moving, while Hermite reconstruction matches
 //! the slope at both ends and so reproduces a smooth orbit far better for
@@ -35,21 +35,21 @@
 //!
 //! // A circular orbit at the Earth's equatorial radius.
 //! let elements = KeplerianElements {
-//!     semi_major_axis: 7_000.0,
+//!     semi_major_axis_km: 7_000.0,
 //!     eccentricity: 0.0,
-//!     inclination: 0.9,
-//!     right_ascension: 0.0,
-//!     argument_of_perigee: 0.0,
-//!     true_anomaly: 0.0,
+//!     inclination_rad: 0.9,
+//!     right_ascension_rad: 0.0,
+//!     argument_of_perigee_rad: 0.0,
+//!     true_anomaly_rad: 0.0,
 //! };
 //! let state_at = |seconds: f64| {
 //!     let mean = 2.0 * core::f64::consts::PI * seconds
-//!         / elements.period(GravityParameter::WGS84);
+//!         / elements.period_s(GravityParameter::WGS84);
 //!     let state = elements
-//!         .with_mean_anomaly(mean)
+//!         .with_mean_anomaly_rad(mean)
 //!         .to_state(GravityParameter::WGS84)
 //!         .expect("the orbit is valid");
-//!     Sample::new(seconds, state.position, state.velocity)
+//!     Sample::new(seconds, state.position_km, state.velocity_km_s)
 //! };
 //!
 //! let sampler = Sampler::new(0.0, 600.0, 60.0);
@@ -58,7 +58,7 @@
 //!
 //! // A query between two samples is interpolated.
 //! let state = ephemeris.state_at(30.0).expect("the time is covered");
-//! assert!(state.position.norm() > 6_900.0);
+//! assert!(state.position_km.norm() > 6_900.0);
 //! ```
 //!
 //! 星历采样与插值。

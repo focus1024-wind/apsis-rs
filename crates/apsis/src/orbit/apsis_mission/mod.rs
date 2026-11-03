@@ -80,13 +80,13 @@ pub fn plan_hohmann_with(
     let transfer = hohmann_transfer(from_radius_km, to_radius_km, parameter)
         .map_err(|error| maneuver_error(&error))?;
     Ok(HohmannPlan {
-        from_radius_km: transfer.from_radius,
-        to_radius_km: transfer.to_radius,
-        transfer_semi_major_axis_km: transfer.transfer_semi_major_axis,
-        first_burn_km_s: transfer.first_burn,
-        second_burn_km_s: transfer.second_burn,
+        from_radius_km: transfer.from_radius_km,
+        to_radius_km: transfer.to_radius_km,
+        transfer_semi_major_axis_km: transfer.transfer_semi_major_axis_km,
+        first_burn_km_s: transfer.first_burn_km_s,
+        second_burn_km_s: transfer.second_burn_km_s,
         total_delta_v_km_s: transfer.total_delta_v(),
-        transfer_time_seconds: transfer.transfer_time,
+        transfer_time_seconds: transfer.transfer_time_s,
         raises: transfer.is_raising(),
     })
 }
@@ -275,9 +275,9 @@ impl MissionSequence {
         for (index, segment) in self.segments.iter().enumerate() {
             match *segment {
                 Segment::Propagate { seconds } => {
-                    let mean_motion = (mu / elements.semi_major_axis.powi(3)).sqrt();
-                    let mean_anomaly = elements.mean_anomaly() + mean_motion * seconds;
-                    elements = elements.with_mean_anomaly(mean_anomaly);
+                    let mean_motion = (mu / elements.semi_major_axis_km.powi(3)).sqrt();
+                    let mean_anomaly = elements.mean_anomaly_rad() + mean_motion * seconds;
+                    elements = elements.with_mean_anomaly_rad(mean_anomaly);
                     elapsed += seconds;
                     events.push(MissionEvent {
                         segment_index: index,
@@ -296,8 +296,8 @@ impl MissionSequence {
                     let impulse =
                         Impulse::new(delta_v_km_s).map_err(|error| maneuver_error(&error))?;
                     let changed = State {
-                        position: state.position,
-                        velocity: impulse.apply_to_velocity(state.velocity),
+                        position_km: state.position_km,
+                        velocity_km_s: impulse.apply_to_velocity(state.velocity_km_s),
                     };
                     elements = KeplerianElements::from_state(&changed, self.parameter).ok_or_else(
                         || {

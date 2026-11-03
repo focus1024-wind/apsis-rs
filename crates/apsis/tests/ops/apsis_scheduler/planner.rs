@@ -48,7 +48,7 @@ fn a_single_task_is_placed_at_the_opening_of_its_window() {
         .expect("placed");
     // The resource is available from zero, so the task starts there.
     // 资源自零起可用，故任务从那里开始。
-    assert_eq!(placement.start, 0.0);
+    assert_eq!(placement.start_s, 0.0);
 }
 
 #[test]
@@ -72,7 +72,10 @@ fn tasks_on_one_exclusive_resource_are_placed_back_to_back() {
     // The two must not overlap: the second starts at or after the end of the
     // first.
     // 二者不得重叠：第二个在第一个结束处或之后开始。
-    assert!(second.start >= first.end(), "{second:?} against {first:?}");
+    assert!(
+        second.start_s >= first.end_s(),
+        "{second:?} against {first:?}"
+    );
     assert!(!result.schedule.has_overlapping_placements());
 }
 
@@ -157,7 +160,7 @@ fn a_mandatory_task_is_placed_before_a_more_valuable_optional_one() {
         .schedule
         .placement_of(TaskId::new(1))
         .expect("the mandatory task is placed");
-    assert_eq!(mandatory_placement.start, 0.0);
+    assert_eq!(mandatory_placement.start_s, 0.0);
 
     // With the rule turned off, and the improvement pass disabled so that
     // only the ordering is under test, the optional task goes first and the
@@ -172,7 +175,7 @@ fn a_mandatory_task_is_placed_before_a_more_valuable_optional_one() {
         .schedule
         .placement_of(TaskId::new(0))
         .expect("the optional task is placed");
-    assert_eq!(optional_placement.start, 0.0);
+    assert_eq!(optional_placement.start_s, 0.0);
 }
 
 #[test]
@@ -231,7 +234,7 @@ fn the_value_ordering_places_the_most_valuable_task_first() {
             .schedule
             .placement_of(TaskId::new(1))
             .expect("placed")
-            .start,
+            .start_s,
         0.0
     );
 }
@@ -253,8 +256,8 @@ fn two_tasks_on_a_shared_resource_can_overlap() {
         .expect("placed");
     // Both start as early as possible, because the capacity holds them both.
     // 二者都尽早开始，因为容量能容纳二者。
-    assert_eq!(first.start, 0.0);
-    assert_eq!(second.start, 0.0);
+    assert_eq!(first.start_s, 0.0);
+    assert_eq!(second.start_s, 0.0);
     assert!(result.schedule.has_overlapping_placements());
 }
 
@@ -278,7 +281,7 @@ fn a_task_is_placed_after_the_other_frees_its_resource() {
         .schedule
         .placement_of(TaskId::new(1))
         .expect("placed");
-    assert!(second_placement.start >= first_placement.end());
+    assert!(second_placement.start_s >= first_placement.end_s());
 }
 
 #[test]
@@ -512,5 +515,5 @@ fn a_task_without_requirements_is_placed_at_the_schedule_origin() {
         .schedule
         .placement_of(TaskId::new(0))
         .expect("placed at the origin");
-    assert_eq!(placement.start, 0.0);
+    assert_eq!(placement.start_s, 0.0);
 }

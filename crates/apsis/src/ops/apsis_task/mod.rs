@@ -6,7 +6,7 @@
 //! what amount, and what it is worth.
 //!
 //! A task requires all of its resources at the same time, for its whole
-//! duration. That is the model an observation has: the satellite and the
+//! `duration_s`. That is the model an observation has: the satellite and the
 //! ground station must both be available while the data is taken. A task that
 //! needs resources in sequence is expressed as two tasks joined by a
 //! precedence constraint in a [`PrecedenceGraph`], which says that one task
@@ -29,7 +29,7 @@
 //!     .try_require(ResourceId::new(1), 1.0)
 //!     .expect("the station is not yet required");
 //!
-//! assert_eq!(task.duration, 60.0);
+//! assert_eq!(task.duration_s, 60.0);
 //! assert_eq!(task.requirements.len(), 2);
 //! assert!(task.is_valid());
 //! ```

@@ -166,8 +166,8 @@ impl Orbit {
         // transferred explicitly rather than relying on a shared type.
         // 两个 crate 各自定义状态类型，故显式转移各分量，而不依赖共享类型。
         let kepler_state = crate::apsis_kepler::State {
-            position: state.position,
-            velocity: state.velocity,
+            position_km: state.position_km,
+            velocity_km_s: state.velocity_km_s,
         };
         KeplerianElements::from_state(&kepler_state, self.parameter).ok_or_else(|| {
             PropagationError::new(crate::apsis_sgp4::PropagationErrorKind::OutOfRange)
@@ -185,14 +185,15 @@ impl Orbit {
     /// 这为只需到地心距离的常见情形提供便利。
     pub fn radius_at(&self, minutes: f64) -> Result<f64, PropagationError> {
         self.propagate_minutes(minutes)
-            .map(|state| state.position.norm())
+            .map(|state| state.position_km.norm())
     }
 
     /// Returns the position at a number of minutes from the element epoch.
     ///
     /// 返回距根数历元若干分钟处的位置。
     pub fn position_at(&self, minutes: f64) -> Result<Vec3, PropagationError> {
-        self.propagate_minutes(minutes).map(|state| state.position)
+        self.propagate_minutes(minutes)
+            .map(|state| state.position_km)
     }
 
     /// Returns the Earth-fixed position at a Modified Julian Date on the UTC
@@ -230,7 +231,7 @@ impl Orbit {
             0.0,
             crate::apsis_frames::iau2000::PolarMotion::NONE,
         );
-        Ok(rotation * state.position)
+        Ok(rotation * state.position_km)
     }
 
     /// Samples the orbit into an ephemeris over a range of minutes.
@@ -280,9 +281,11 @@ impl Orbit {
             // so a non-integer step stays consistent with the grid.
             // 由采样器所用的秒数反推分钟，使非整数步长仍与网格一致。
             match self.propagate_minutes(seconds / 60.0) {
-                Ok(state) => {
-                    crate::apsis_ephemeris::Sample::new(seconds, state.position, state.velocity)
-                }
+                Ok(state) => crate::apsis_ephemeris::Sample::new(
+                    seconds,
+                    state.position_km,
+                    state.velocity_km_s,
+                ),
                 Err(error) => {
                     // The sampler cannot report the propagation failure, so
                     // it is recorded and the sample is filled with a value
@@ -333,8 +336,8 @@ impl Orbit {
             .propagate_minutes(minutes)
             .map_err(ManeuverApplicationError::Propagation)?;
         let kepler_state = crate::apsis_kepler::State {
-            position: state.position,
-            velocity: state.velocity,
+            position_km: state.position_km,
+            velocity_km_s: state.velocity_km_s,
         };
         let outcome = burn
             .apply(kepler_state, self.parameter, steps)
