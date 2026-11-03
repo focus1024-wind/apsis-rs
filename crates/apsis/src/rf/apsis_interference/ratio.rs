@@ -183,9 +183,9 @@ pub fn combine(first: Decibel, second: Decibel) -> Option<Decibel> {
     if !first.is_finite() || !second.is_finite() {
         return None;
     }
-    // A ratio of zero in decibels means an infinite impairment, so the
-    // combination is also infinite.
-    // 分贝表示的比为零意味着无穷的损伤，故合并也是无穷的。
+    // A non-finite linear ratio has no usable decibel representative, so the
+    // combination is refused instead of producing an infinity.
+    // 非有限的线性比值没有可用的分贝表示，故拒绝合并，而不是产生无穷。
     let first_ratio = first.ratio();
     let second_ratio = second.ratio();
     if !first_ratio.is_finite() || !second_ratio.is_finite() {

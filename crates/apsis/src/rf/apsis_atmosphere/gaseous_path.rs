@@ -404,7 +404,11 @@ pub fn slant_path_attenuation_exact(
         };
         angle = (leave_angle.sin() * ratio).clamp(-1.0, 1.0).asin();
         if !angle.is_finite() {
-            break;
+            // The ray could not be traced through this boundary, so the
+            // integral is incomplete and no attenuation is reported rather
+            // than a truncated one.
+            // 射线无法穿过该层界，故积分不完整；此时不返回被截断的衰减。
+            return None;
         }
     }
 
