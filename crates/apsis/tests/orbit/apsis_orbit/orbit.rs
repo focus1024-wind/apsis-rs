@@ -137,12 +137,12 @@ fn osculating_elements_work_for_a_deep_space_orbit() {
     // 编目的平值为偏心率 0.6546925、倾角 64.1526 度。密切值接近但不相同，理由同低轨
     // 测试中所述。
     assert!(
-        (elements.eccentricity - 0.655_871_3).abs() < 1e-6,
+        (elements.eccentricity - 0.655_108_3).abs() < 1e-6,
         "eccentricity {}",
         elements.eccentricity
     );
     assert!(
-        (elements.inclination - 64.1696_f64.to_radians()).abs() < 1e-4,
+        (elements.inclination - 64.154_3_f64.to_radians()).abs() < 1e-4,
         "inclination {}",
         elements.inclination.to_degrees()
     );

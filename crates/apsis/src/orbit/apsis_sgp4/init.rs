@@ -104,16 +104,16 @@ impl Elements {
     /// in the element set. The element set epoch is a UTC calendar instant,
     /// but the propagator treats it as a uniform time origin, which is the
     /// convention the theory was fitted under. Converting it to a uniform
-    /// scale first would shift the epoch by the leap second offset, about
-    /// 33 seconds, and that shift propagates into the solar and lunar series
+    /// scale first would shift the epoch by the leap second offset, tens of
+    /// seconds, and that shift propagates into the solar and lunar series
     /// of the deep space branch.
     ///
     /// 把已解析的根数集转换为传播器所用单位。
     ///
     /// 历元直接取根数集中原样写下的 UTC 修正儒略日（Modified Julian Date）。
     /// 根数集历元是 UTC 日历瞬时，但传播器把它当作均匀时间原点，这正是理论
-    /// 拟合所依据的约定。若先换算到均匀标度，历元会偏移一个闰秒量（约 33
-    /// 秒），而该偏移会传播进深空分支的日月级数。
+    /// 拟合所依据的约定。若先换算到均匀标度，历元会偏移一个闰秒量（数十秒），
+    /// 而该偏移会传播进深空分支的日月级数。
     #[must_use]
     pub fn from_tle(element: &TwoLineElement) -> Option<Self> {
         let epoch_mjd = element.epoch.mjd(crate::apsis_time::TimeScale::Utc)?;

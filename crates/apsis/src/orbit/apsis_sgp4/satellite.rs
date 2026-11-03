@@ -81,9 +81,9 @@ pub struct Satellite {
     ///
     /// `BSTAR` 阻力项，单位为地球半径的倒数。
     pub(crate) bstar: f64,
-    /// Epoch as a Modified Julian Date on the TAI scale.
+    /// Epoch as a Modified Julian Date on the UTC scale.
     ///
-    /// 历元，为 TAI 标度上的修正儒略日（Modified Julian Date）。
+    /// 历元，为 UTC 标度上的修正儒略日（Modified Julian Date）。
     pub(crate) epoch_mjd: f64,
     /// Which branch of the theory applies.
     ///
@@ -252,9 +252,9 @@ impl Satellite {
     }
 
     /// Returns the epoch of the elements as a Modified Julian Date on the
-    /// TAI scale.
+    /// UTC scale.
     ///
-    /// 返回根数历元，为 TAI 标度上的修正儒略日（Modified Julian Date）。
+    /// 返回根数历元，为 UTC 标度上的修正儒略日（Modified Julian Date）。
     #[must_use]
     pub fn epoch_mjd(&self) -> f64 {
         self.epoch_mjd
@@ -271,27 +271,31 @@ impl Satellite {
     /// Returns the number of minutes from the element set epoch to the
     /// given instant.
     ///
-    /// The instant is given as a Modified Julian Date on the TAI scale, the
-    /// same scale as [`Satellite::epoch_mjd`].
+    /// The instant is given as a Modified Julian Date on the UTC scale, the
+    /// same scale as [`Satellite::epoch_mjd`]. The element set epoch is a
+    /// UTC calendar instant, and the propagator measures time from it as if
+    /// it were a uniform scale, so passing a TAI value would introduce the
+    /// leap second offset.
     ///
     /// 返回自根数集历元到给定瞬时的分钟数。
     ///
-    /// 该瞬时以 TAI 标度上的修正儒略日（Modified Julian Date）给出，与
-    /// [`Satellite::epoch_mjd`] 同一标度。
+    /// 该瞬时以 UTC 标度上的修正儒略日（Modified Julian Date）给出，与
+    /// [`Satellite::epoch_mjd`] 同一标度。根数集历元是 UTC 日历瞬时，传播器把
+    /// 它当作均匀标度来度量时间，故传入 TAI 值会引入闰秒偏移。
     #[must_use]
-    pub fn minutes_since_epoch(&self, tai_mjd: f64) -> f64 {
-        (tai_mjd - self.epoch_mjd) * MINUTES_PER_DAY
+    pub fn minutes_since_epoch(&self, utc_mjd: f64) -> f64 {
+        (utc_mjd - self.epoch_mjd) * MINUTES_PER_DAY
     }
 
     /// Returns the state of the satellite at a given instant.
     ///
-    /// The instant is a Modified Julian Date on the TAI scale.
+    /// The instant is a Modified Julian Date on the UTC scale.
     ///
     /// 返回卫星在某瞬时的状态。
     ///
-    /// 该瞬时是 TAI 时标上的约化儒略日。
-    pub fn propagate_at(&self, tai_mjd: f64) -> Result<State, PropagationError> {
-        self.propagate_minutes(self.minutes_since_epoch(tai_mjd))
+    /// 该瞬时是 UTC 时标上的约化儒略日。
+    pub fn propagate_at(&self, utc_mjd: f64) -> Result<State, PropagationError> {
+        self.propagate_minutes(self.minutes_since_epoch(utc_mjd))
     }
 
     /// Returns the state of the satellite at a number of minutes from the

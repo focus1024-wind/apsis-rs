@@ -14,6 +14,7 @@ use apsis::apsis_sgp4::{
     GravityModel, Satellite, TwoLineElement, propagate_at, propagate_at_parallel,
     propagate_minutes_at, propagate_minutes_at_parallel,
 };
+use apsis::apsis_tle::line_checksum;
 
 const SAMPLE: &str = concat!(
     "1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927\r\n",
@@ -23,6 +24,21 @@ const SAMPLE: &str = concat!(
 fn satellite() -> Satellite {
     let element = TwoLineElement::parse(SAMPLE).expect("the sample parses");
     Satellite::from_element(&element, GravityModel::WGS72).expect("the orbit propagates")
+}
+
+/// A satellite whose mean motion puts its radius below the Earth at the
+/// epoch, so every propagation reports a decay.
+///
+/// 一颗平均运动使其在历元处半径低于地球的卫星，故每次传播都报告衰减。
+fn decayed_satellite() -> Satellite {
+    let first = "1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927";
+    let second = "2 25544  51.6416 247.4627 0006703 130.5360 325.0288 17.50000000    0";
+    let body: String = second.chars().take(68).collect();
+    let padded = format!("{body:<68}");
+    let line = format!("{padded}{}", line_checksum(&padded));
+    let text = format!("{first}\r\n{line}\r\n");
+    let element = TwoLineElement::parse(&text).expect("the decayed sample parses");
+    Satellite::from_element(&element, GravityModel::WGS72).expect("the orbit initialises")
 }
 
 #[test]
@@ -67,17 +83,25 @@ fn an_empty_track_is_empty() {
 }
 
 #[test]
-fn a_decayed_instant_is_reported_in_both_forms() {
-    // Far enough ahead that the drag term brings the satellite down, both
-    // forms must agree that the instant is unusable rather than one of them
-    // stopping early.
-    // 足够远，使阻力项把卫星带下来，两种形式必须一致认为该瞬时不可用，而非其中之
-    // 一提前停止。
+fn a_far_instant_matches_in_both_forms() {
+    // Far enough ahead that the drag term changes the orbit substantially,
+    // both forms must agree rather than one of them stopping early.
+    // 足够远，使阻力项显著改变轨道，两种形式必须一致，而非其中之一提前停止。
     let satellite = satellite();
     let minutes = vec![0.0, 1.0, 60.0 * 24.0 * 365.0 * 20.0];
     let sequential = propagate_minutes_at(&satellite, &minutes);
     let parallel = propagate_minutes_at_parallel(&satellite, &minutes);
     assert_eq!(parallel, sequential);
+}
+
+#[test]
+fn a_decayed_satellite_is_none_in_both_forms() {
+    let satellite = decayed_satellite();
+    let minutes = vec![0.0, 1.0];
+    let sequential = propagate_minutes_at(&satellite, &minutes);
+    let parallel = propagate_minutes_at_parallel(&satellite, &minutes);
+    assert_eq!(parallel, sequential);
+    assert_eq!(sequential, vec![None, None]);
 }
 
 #[test]

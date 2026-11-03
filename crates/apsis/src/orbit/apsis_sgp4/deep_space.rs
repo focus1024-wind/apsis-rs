@@ -483,6 +483,19 @@ pub(crate) fn initialise(satellite: &Satellite) -> DeepSpace {
     initialise_rates(satellite, &lunisolar, &mut deep);
     initialise_resonance(satellite, &lunisolar, &mut deep);
 
+    // The reference implementation evaluates the long period terms once at
+    // the epoch and stores them, so that later evaluations apply only the
+    // change since the epoch. Without this step the absolute terms would
+    // shift the mean elements at the epoch.
+    // 参考实现在历元处求值一次长周期项并保存，使此后的求值只施加相对历元的
+    // 变化。没有这一步，绝对项会在历元处移动平均根数。
+    let (peo, pinco, plo, pgho, pho) = long_period_terms(&deep, 0.0, true);
+    deep.peo = peo;
+    deep.pinco = pinco;
+    deep.plo = plo;
+    deep.pgho = pgho;
+    deep.pho = pho;
+
     deep
 }
 
@@ -947,6 +960,11 @@ fn initialise_resonance(satellite: &Satellite, ls: &Lunisolar, deep: &mut DeepSp
 /// Applies the deep space secular and resonance terms to the mean elements.
 ///
 /// 把深空长期项与共振项施加到平均根数上。
+// The eight arguments are the mean elements and the time: they follow the
+// calling convention of the reference implementation this function
+// transcribes, and reordering them into a struct would hide that mapping.
+// 八个参数是平均根数与时间：它们遵循本函数所转写的参考实现的调用约定，改排成
+// 结构体会掩盖这一对应关系。
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn dspace(
     satellite: &Satellite,
@@ -1104,36 +1122,23 @@ fn resonance_derivatives(
     }
 }
 
-/// Applies the deep space long period periodic perturbations.
+/// Evaluates the long period periodic terms at a time.
 ///
-/// The terms are evaluated on the solar and lunar mean anomalies at the
-/// requested time, except during initialisation, where they are evaluated at
-/// the epoch and stored as the reference values that later evaluations
-/// subtract.
+/// The five returned values are the eccentricity, inclination, longitude of
+/// perigee, argument of perigee, and mean anomaly perturbations, in radians.
+/// Passing `initialised = true` evaluates them at the epoch, which is the
+/// form used to compute the reference values stored on the deep space state.
 ///
-/// 施加深空长周期项。
+/// 在某一时刻求值长周期项。
 ///
-/// 各项在所请求时刻的太阳与月球平近点角上求值；初始化阶段除外，那是在历元
-/// 处求值并存为参考基准，供此后的求值相减。
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn dpper(
-    satellite: &Satellite,
+/// 返回的五个值是偏心率、倾角、近地点经度、近地点幅角与平近点角的摄动量，单位为
+/// 弧度。传入 `initialised = true` 时在历元处求值，这正是计算深空状态上所存
+/// 参考值所用的形式。
+fn long_period_terms(
+    deep: &DeepSpace,
     minutes: f64,
     initialised: bool,
-    eccentricity: f64,
-    inclination: f64,
-    node: f64,
-    argument: f64,
-    mean_anomaly: f64,
-) -> PerturbedElements {
-    let deep = &satellite.ds;
-
-    let mut ep = eccentricity;
-    let mut inclp = inclination;
-    let mut nodep = node;
-    let mut argpp = argument;
-    let mut mp = mean_anomaly;
-
+) -> (f64, f64, f64, f64, f64) {
     let mut zm = deep.zmos + ZNS * minutes;
     if initialised {
         zm = deep.zmos;
@@ -1162,11 +1167,43 @@ pub(crate) fn dpper(
     let sghl = deep.xgh2 * f2 + deep.xgh3 * f3 + deep.xgh4 * sinzf;
     let shll = deep.xh2 * f2 + deep.xh3 * f3;
 
-    let mut pe = ses + sel;
-    let mut pinc = sis + sil;
-    let mut pl = sls + sll;
-    let mut pgh = sghs + sghl;
-    let mut ph = shs + shll;
+    (ses + sel, sis + sil, sls + sll, sghs + sghl, shs + shll)
+}
+
+/// Applies the deep space long period periodic perturbations.
+///
+/// The terms are evaluated on the solar and lunar mean anomalies at the
+/// requested time, except during initialisation, where they are evaluated at
+/// the epoch and stored as the reference values that later evaluations
+/// subtract.
+///
+/// 施加深空长周期项。
+///
+/// 各项在所请求时刻的太阳与月球平近点角上求值；初始化阶段除外，那是在历元
+/// 处求值并存为参考基准，供此后的求值相减。
+// The argument list mirrors the reference implementation: the time, the
+// initialisation flag, and the five mean elements that the routine perturbs.
+// 参数表对应参考实现：时间、初始化标志，以及该例程所摄动的五个平均根数。
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn dpper(
+    satellite: &Satellite,
+    minutes: f64,
+    initialised: bool,
+    eccentricity: f64,
+    inclination: f64,
+    node: f64,
+    argument: f64,
+    mean_anomaly: f64,
+) -> PerturbedElements {
+    let deep = &satellite.ds;
+
+    let mut ep = eccentricity;
+    let mut inclp = inclination;
+    let mut nodep = node;
+    let mut argpp = argument;
+    let mut mp = mean_anomaly;
+
+    let (mut pe, mut pinc, mut pl, mut pgh, mut ph) = long_period_terms(deep, minutes, initialised);
 
     if !initialised {
         pe -= deep.peo;

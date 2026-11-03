@@ -77,19 +77,23 @@ pub fn propagate_minutes_at_parallel(satellite: &Satellite, minutes: &[f64]) -> 
 
 /// Propagates several satellites at one instant, in order.
 ///
-/// The per satellite work is independent, so a shell's state at a single
-/// instant is a natural batch. The satellites are read only, so they are
-/// shared across the threads by reference.
+/// The instant is a Modified Julian Date on the UTC scale, the scale of the
+/// element set epoch. The per satellite work is independent, so a shell's
+/// state at a single instant is a natural batch. The satellites are read
+/// only, so they are shared across the threads by reference.
 ///
 /// 按顺序在同一瞬时传播多颗卫星。
 ///
+/// 该瞬时是 UTC 标度上的修正儒略日（Modified Julian Date），与根数集历元的
+/// 标度相同。各卫星的工作彼此独立，故整壳在同一瞬时的状态是天然的批处理单元。
+/// 卫星只读，因此在各线程间按引用共享。
 /// 各卫星的工作彼此独立，故整壳在同一瞬时的状态是天然的批处理单元。卫星
 /// 只读，因此在各线程间按引用共享。
 #[must_use]
-pub fn propagate_at(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>> {
+pub fn propagate_at(satellites: &[Satellite], utc_mjd: f64) -> Vec<Option<State>> {
     satellites
         .iter()
-        .map(|satellite| satellite.propagate_at(tai_mjd).ok())
+        .map(|satellite| satellite.propagate_at(utc_mjd).ok())
         .collect()
 }
 
@@ -109,8 +113,8 @@ pub fn propagate_at(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>
 /// 覆盖计算需要的形式：它一次调用持有整壳，故线程为所有卫星启动一次而非
 /// 每颗一次，即便几百颗的壳也能获益。
 #[must_use]
-pub fn propagate_at_parallel(satellites: &[Satellite], tai_mjd: f64) -> Vec<Option<State>> {
+pub fn propagate_at_parallel(satellites: &[Satellite], utc_mjd: f64) -> Vec<Option<State>> {
     map_index(satellites.len(), |index| {
-        satellites[index].propagate_at(tai_mjd).ok()
+        satellites[index].propagate_at(utc_mjd).ok()
     })
 }
