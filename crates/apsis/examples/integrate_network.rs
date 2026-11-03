@@ -258,7 +258,7 @@ fn main() {
     println!(
         "route: 0 to {neighbour} in {} hop(s), cost {:.1} km",
         route.hop_count(),
-        route.cost
+        route.cost()
     );
     assert_eq!(route.source(), Some(0));
     assert_eq!(route.destination(), Some(neighbour));

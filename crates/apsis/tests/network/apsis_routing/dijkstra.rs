@@ -29,8 +29,8 @@ fn a_direct_link_is_the_shortest_route() {
     // The direct link costs five, the two hop route costs two.
     // 直接链路代价为五，两跳路由代价为二。
     let route = shortest_path(&topology, 0, 1).expect("a route exists");
-    assert_eq!(route.nodes, vec![0, 2, 1]);
-    assert!((route.cost - 2.0).abs() < 1e-12);
+    assert_eq!(route.nodes(), vec![0, 2, 1]);
+    assert!((route.cost() - 2.0).abs() < 1e-12);
     assert_eq!(route.hop_count(), 2);
     assert_eq!(route.source(), Some(0));
     assert_eq!(route.destination(), Some(1));
@@ -47,8 +47,8 @@ fn a_longer_route_in_hops_can_be_cheaper_in_cost() {
     topology.add_edge(0, 3, 10.0).expect("valid");
 
     let route = shortest_path(&topology, 0, 3).expect("a route exists");
-    assert_eq!(route.nodes, vec![0, 1, 2, 3]);
-    assert!((route.cost - 3.0).abs() < 1e-12);
+    assert_eq!(route.nodes(), vec![0, 1, 2, 3]);
+    assert!((route.cost() - 3.0).abs() < 1e-12);
     assert_eq!(route.hop_count(), 3);
 }
 
@@ -58,9 +58,9 @@ fn the_cost_is_the_sum_of_the_step_costs() {
     topology.add_edge(0, 1, 2.5).expect("valid");
     topology.add_edge(1, 2, 1.5).expect("valid");
     let route = shortest_path(&topology, 0, 2).expect("a route exists");
-    assert!((route.cost - 4.0).abs() < 1e-12);
-    let summed: f64 = route.steps.iter().map(|step| step.cost).sum();
-    assert!((route.cost - summed).abs() < 1e-12);
+    assert!((route.cost() - 4.0).abs() < 1e-12);
+    let summed: f64 = route.steps().iter().map(|step| step.cost).sum();
+    assert!((route.cost() - summed).abs() < 1e-12);
 }
 
 #[test]
@@ -69,9 +69,9 @@ fn a_route_records_its_steps() {
     topology.add_edge(0, 1, 2.0).expect("valid");
     topology.add_edge(1, 2, 3.0).expect("valid");
     let route = shortest_path(&topology, 0, 2).expect("a route exists");
-    assert_eq!(route.steps.len(), 2);
-    assert_eq!(route.steps[0], RouteStep::new(0, 1, 2.0));
-    assert_eq!(route.steps[1], RouteStep::new(1, 2, 3.0));
+    assert_eq!(route.steps().len(), 2);
+    assert_eq!(route.steps()[0], RouteStep::new(0, 1, 2.0));
+    assert_eq!(route.steps()[1], RouteStep::new(1, 2, 3.0));
 }
 
 #[test]
@@ -145,13 +145,13 @@ fn the_path_tree_reconstructs_each_route() {
     topology.add_edge(2, 3, 1.0).expect("valid");
     let tree = shortest_paths_from(&topology, 0).expect("valid");
     let route = tree.route_to(3, &topology).expect("a route exists");
-    assert_eq!(route.nodes, vec![0, 1, 2, 3]);
-    assert!((route.cost - 3.0).abs() < 1e-12);
+    assert_eq!(route.nodes(), vec![0, 1, 2, 3]);
+    assert!((route.cost() - 3.0).abs() < 1e-12);
 
     // The route to the source is the source alone.
     // 到源的路由只有源本身。
     let self_route = tree.route_to(0, &topology).expect("a route exists");
-    assert_eq!(self_route.nodes, vec![0]);
+    assert_eq!(self_route.nodes(), vec![0]);
     assert_eq!(self_route.hop_count(), 0);
 }
 
@@ -179,8 +179,8 @@ fn a_cheaper_route_replaces_a_more_expensive_one() {
     topology.add_edge(3, 1, 1.0).expect("valid");
 
     let route = shortest_path(&topology, 0, 1).expect("a route exists");
-    assert_eq!(route.nodes, vec![0, 2, 3, 1]);
-    assert!((route.cost - 3.0).abs() < 1e-12);
+    assert_eq!(route.nodes(), vec![0, 2, 3, 1]);
+    assert!((route.cost() - 3.0).abs() < 1e-12);
 }
 
 #[test]
@@ -198,9 +198,9 @@ fn a_route_can_be_reversed() {
     topology.add_bidirectional_edge(1, 2, 3.0).expect("valid");
     let route = shortest_path(&topology, 0, 2).expect("a route exists");
     let reversed = route.reversed();
-    assert_eq!(reversed.nodes, vec![2, 1, 0]);
-    assert!((reversed.cost - route.cost).abs() < 1e-12);
-    assert_eq!(reversed.steps[0], RouteStep::new(2, 1, 3.0));
+    assert_eq!(reversed.nodes(), vec![2, 1, 0]);
+    assert!((reversed.cost() - route.cost()).abs() < 1e-12);
+    assert_eq!(reversed.steps()[0], RouteStep::new(2, 1, 3.0));
 }
 
 #[test]
@@ -227,7 +227,7 @@ fn an_empty_topology_has_no_routes() {
 #[test]
 fn the_route_type_is_constructible_directly() {
     let route = Route::new(vec![0, 1], vec![RouteStep::new(0, 1, 2.0)]);
-    assert!((route.cost - 2.0).abs() < 1e-12);
+    assert!((route.cost() - 2.0).abs() < 1e-12);
     assert_eq!(route.hop_count(), 1);
     // An empty route has no endpoints.
     // 空路由没有端点。
@@ -251,8 +251,8 @@ fn a_route_over_a_series_uses_the_links_present_throughout() {
     .expect("the times increase");
 
     let leg = route_over_series(&series, 0, 2, 0.0, 20.0).expect("a route exists");
-    assert_eq!(leg.route.nodes, vec![0, 3, 2]);
-    assert!((leg.route.cost - 2.0).abs() < 1e-12);
+    assert_eq!(leg.route.nodes(), vec![0, 3, 2]);
+    assert!((leg.route.cost() - 2.0).abs() < 1e-12);
     // The leg is valid until the next change after the interval.
     // 该路段有效直到区间之后的下一处变化。
     assert_eq!(leg.start_seconds, 0.0);

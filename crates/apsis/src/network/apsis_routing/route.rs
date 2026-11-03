@@ -52,15 +52,15 @@ pub struct Route {
     /// The nodes in order, from the source to the destination.
     ///
     /// 按次序排列的节点，从源到目的地。
-    pub nodes: Vec<usize>,
+    nodes: Vec<usize>,
     /// The links traversed, in order.
     ///
     /// 按次序穿越的链路。
-    pub steps: Vec<RouteStep>,
+    steps: Vec<RouteStep>,
     /// The total cost of the route.
     ///
     /// 该路由的总代价。
-    pub cost: f64,
+    cost: f64,
 }
 
 impl Route {
@@ -76,6 +76,30 @@ impl Route {
     pub fn new(nodes: Vec<usize>, steps: Vec<RouteStep>) -> Self {
         let cost = steps.iter().map(|step| step.cost).sum();
         Self { nodes, steps, cost }
+    }
+
+    /// Returns the nodes in order, from the source to the destination.
+    ///
+    /// 按次序返回节点，从源到目的地。
+    #[must_use]
+    pub fn nodes(&self) -> &[usize] {
+        &self.nodes
+    }
+
+    /// Returns the links traversed, in order.
+    ///
+    /// 按次序返回所穿越的链路。
+    #[must_use]
+    pub fn steps(&self) -> &[RouteStep] {
+        &self.steps
+    }
+
+    /// Returns the total cost of the route.
+    ///
+    /// 返回该路由的总代价。
+    #[must_use]
+    pub fn cost(&self) -> f64 {
+        self.cost
     }
 
     /// Returns the number of hops.

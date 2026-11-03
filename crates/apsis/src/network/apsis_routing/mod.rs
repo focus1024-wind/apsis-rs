@@ -36,8 +36,8 @@
 //! topology.add_edge(1, 2, 1.0).expect("the nodes exist");
 //!
 //! let route = shortest_path(&topology, 0, 2).expect("a route exists");
-//! assert_eq!(route.nodes, vec![0, 1, 2]);
-//! assert!((route.cost - 2.0).abs() < 1e-12);
+//! assert_eq!(route.nodes(), &[0, 1, 2]);
+//! assert!((route.cost() - 2.0).abs() < 1e-12);
 //! ```
 //!
 //! 时变卫星拓扑上的路由。
